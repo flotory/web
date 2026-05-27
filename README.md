@@ -2,7 +2,7 @@
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
-The MVP focuses on digital stamp cards, venue-specific QR cards, a fast staff scanner, customer- and staff-managed reward redemption, multi-venue workspaces, team memberships, and simple retention analytics.
+The MVP focuses on digital stamp cards, venue-specific QR cards, a fast staff scanner, milestone-based progression rewards, multi-venue workspaces, team memberships, and retention analytics.
 
 ## Stack
 
@@ -126,7 +126,7 @@ All seeded accounts use password: **`password`**
 |--------|--------|----------------|
 | **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
-| **Customer** | `customer@example.com` | Loyalty card, rewards, swipe-to-redeem (100 stamps at Demo Cafe) |
+| **Customer** | `customer@example.com` | Loyalty card, milestone journey, unlock + claim flow |
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 
@@ -142,7 +142,7 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 
 1. Log in as `customer@example.com`
 2. Open **Card** or **Cafes** → join/open Demo Cafe
-3. Redeem an unlocked reward with swipe-to-redeem
+3. Claim an unlocked milestone reward from the journey
 
 **Team**
 
@@ -170,22 +170,24 @@ Permissions are checked via venue membership, not the global `users.role` field.
 - Multi-venue owner workspace (`/my-venues`)
 - Venue settings, logo upload, archive
 - Team invite/remove (`/team`)
-- Active venue context (`users.active_venue_id`)
+- Multi-venue workspace filter (all venues or one venue focus)
 - Staff scanner: add stars only (1–5 or custom)
 - Customer search fallback when QR scan fails
-- Customer reward redemption from card/rewards
-- Staff reward redemption (venue-scoped API)
+- Customer milestone claim from card/rewards
+- Staff milestone claim (venue-scoped API)
 - Realtime stamp updates on customer devices (Reverb)
 - Dashboard stats per active venue
 
-## Scanner And QR Model
+## Progression And QR Model
 
 - A customer has **one loyalty card per venue** they join (`customers` row per `user_id` + `venue_id`).
-- Each card has its own **QR token** and **stamp balance**.
+- Each card has its own **QR token** and **progress balance**.
 - Staff scan in the context of **one venue** (`POST /api/venues/{venue}/scanner/stamps`).
 - If the QR belongs to another venue, the API rejects the request.
-- Customers redeem from `/card` or `/rewards`. Staff can also redeem via the venue API when needed.
-- Open scanner for a specific venue: `/scanner?venue_id=<id>` without changing active workspace.
+- Milestones unlock at thresholds and can be claimed once per cycle.
+- Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
+- Customers claim from `/card` or `/rewards`. Staff can also claim via the venue API when needed.
+- Open scanner for a specific venue: `/scanner?venue_id=<id>` without changing workspace filter.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.
 

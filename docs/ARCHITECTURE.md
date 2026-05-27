@@ -1,6 +1,6 @@
 # Architecture
 
-This app is a Laravel/Vue monolith for hospitality loyalty. A user can belong to multiple venues with different roles, each venue membership has its own QR token and stamp balance, staff add stars in venue context, and customers or staff can redeem unlocked rewards with audit trails via `redeemed_by` and `created_by`.
+This app is a Laravel/Vue monolith for hospitality loyalty. A user can belong to multiple venues with different roles, each venue membership has its own QR token and progression balance, staff add stars in venue context, and customers or staff claim unlocked milestones with audit trails via `redeemed_by` and `created_by`.
 
 ## High-Level Structure
 
@@ -10,8 +10,8 @@ app/
   Events/                 Broadcast events (StampAdded)
   Http/Controllers/Api/   REST API controllers
   Http/Requests/          Request validation
-  Models/                 Venue, VenueUser, Customer, Reward, Visit, User
-  Services/               LoyaltyStampService
+  Models/                 Venue, VenueUser, Customer, Reward, RewardUnlock, CustomerRewardCycle, Visit, User
+  Services/               LoyaltyStampService (progression engine)
   Support/                VenueAccess (membership authorization)
 
 config/
@@ -19,8 +19,8 @@ config/
   reverb.php              Reverb WebSocket server config
 
 database/
-  migrations/             venues, venue_users, customers, rewards, visits
-  seeders/                Demo venues, memberships, customers, rewards
+  migrations/             venues, venue_users, customers, rewards, progression tables, visits
+  seeders/                Demo venues, memberships, customers, milestones
 
 resources/js/
   components/             UI and loyalty components (SwipeToRedeem, etc.)
@@ -44,7 +44,9 @@ routes/
 | `Venue` | Hospitality workspace (cafe, bar, restaurant). `owner_user_id`, soft deletes, profile fields. |
 | `VenueUser` | Membership pivot: `venue_id`, `user_id`, `role` (`owner`, `manager`, `staff`). |
 | `Customer` | One user’s loyalty card at one venue: `qr_token`, `stamps`. |
-| `Reward` | Venue reward tiers (`required_stamps`, `active`). |
+| `Reward` | Venue milestone definitions (`required_stamps`, optional description/image, `active`). |
+| `RewardUnlock` | Per-customer milestone unlock state for each cycle (including claim status). |
+| `CustomerRewardCycle` | Tracks cycle number and completion per customer. |
 | `Visit` | Stamp/visit history; `created_by` = staff user who added stars. |
 | `RewardRedemption` | Redemption record; `redeemed_by` = user who redeemed. |
 
@@ -69,17 +71,17 @@ Authorization uses `App\Support\VenueAccess`:
 - Otherwise require a `venue_users` row for the target venue.
 - Optional role list: e.g. `['owner', 'manager']` for team management.
 
-`users.active_venue_id` is the **current workspace** for dashboard, rewards, team, and default scanner — not the only way to scope the scanner (`?venue_id=` query param).
+Workspace selection is handled by a frontend venue filter (`all venues` or specific venue). Scanner can still be explicitly scoped with `?venue_id=` query param.
 
 ## Multi-Venue Workspaces
 
 Owners manage venues from `/my-venues`.
 
 - Creating a venue sets `owner_user_id` and creates `venue_users` with role `owner`.
-- Active workspace: `POST /api/venues/{venue}/select` updates `active_venue_id`.
+- Venue focus is controlled by client-side workspace filter state.
 - Archive: soft delete on `venues`.
 - Settings: `/my-venues/:id/settings` (logo upload to `public/uploads/venue-logos/`).
-- Team: `/team` lists and invites members for the active venue.
+- Team: `/team` lists and invites members for the filtered venue.
 
 ## Main Flows
 
@@ -101,13 +103,13 @@ Owners manage venues from `/my-venues`.
 
 Duplicate scan guard: same card cannot be stamped again within **5 seconds** (intentionally short so staff can correct mistakes).
 
-### Customer Redeems Reward
+### Customer Claims Milestone
 
 1. `/card` or `/rewards` → wallet overlay → swipe to redeem.
 2. `POST /api/customers/{customer}/rewards/{reward}/redeem`
-3. Validates card ownership, deducts stamps, sets `redeemed_by` to the customer.
+3. Validates card ownership, requires unlocked milestone in current cycle, marks claim, sets `redeemed_by` to the customer.
 
-### Staff Redeems Reward
+### Staff Claims Milestone
 
 1. `POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem`
 2. Requires venue membership (`owner`, `manager`, `staff`).
@@ -158,13 +160,13 @@ Auth: `POST /api/broadcasting/auth` with Sanctum bearer token.
 
 ### `app/Events/StampAdded.php`
 
-Broadcast payload keys: `customer`, `venue`, `previous_stamps`, `added_stamps`, `stamps`, `next_reward`, `available_rewards`, `message`, `occurred_at`.
+Broadcast payload keys include progression details: `customer`, `venue`, `previous_stamps`, `added_stamps`, `stamps`, `next_reward`, `available_rewards`, `milestones`, `current_cycle`, `cycle_completed`, `message`, `occurred_at`.
 
 ## Frontend Structure
 
 ### Workspace vs customer UI
 
-Router meta `workspace: true` enables owner/staff sidebar: Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings.
+Router `workspace` mode enables owner/staff sidebar: Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings.
 
 Customers see: Card, Cafes, Rewards.
 
@@ -181,7 +183,8 @@ Customers see: Card, Cafes, Rewards.
 
 ### Stores
 
-- `auth.ts` — token, user (`active_venue_id`, `active_venue`)
+- `auth.ts` — token, user identity
+- `workspace.ts` — venues and selected venue filter context
 - `realtime.ts` — Echo subscriptions, `venue_id` in redirects
 
 ## API Route Summary
@@ -208,6 +211,7 @@ Venues:
 - `POST|DELETE /api/venues/{venue}/logo`
 - `GET /api/venues/{venue}/customers`
 - `GET /api/venues/{venue}/dashboard`
+- `GET /api/dashboard?venue_id=`
 - `GET|POST|PUT|DELETE /api/venues/{venue}/rewards`
 - `POST /api/venues/{venue}/scanner/lookup`
 - `POST /api/venues/{venue}/scanner/stamps`
@@ -248,7 +252,7 @@ The `app` container broadcasts to Reverb via `host.docker.internal:8080` when Do
 
 ## Implementation Notes
 
-- Global `users.role` does not grant scanner or admin UI access; use `venue_users` or `active_venue_id`.
+- Global `users.role` does not grant scanner or admin UI access; use `venue_users`.
 - `owner_user_id` on `venues` is the creating owner record; permissions use `venue_users.role = owner`.
 - Logo files: `/uploads/venue-logos/`.
 - Staff invite creates new users with password `password` (MVP; replace with email invites later).
