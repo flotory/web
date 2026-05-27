@@ -8,8 +8,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
-﻿import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 import { useRealtimeStore } from '@/stores/realtime'
+import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, StampAddedPayload, Venue, Visit } from '@/types'
 
 interface RedemptionResponse {
@@ -21,6 +22,7 @@ interface RedemptionResponse {
 
 const auth = useAuthStore()
 const realtime = useRealtimeStore()
+const workspace = useWorkspaceStore()
 const rewards = ref<Reward[]>([])
 const customer = ref<Customer | null>(null)
 const venue = ref<Venue | null>(null)
@@ -34,7 +36,10 @@ const rewardType = ref('discount')
 const selectedReward = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 
-const canManageRewards = computed(() => auth.user?.role === 'admin' || Boolean(auth.user?.active_venue_id))
+const canManageRewards = computed(() => auth.user?.role === 'admin' || workspace.hasMembership)
+const needsVenuePick = computed(
+  () => canManageRewards.value && workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
+)
 const visibleRewards = computed(() => (canManageRewards.value ? rewards.value : rewards.value.filter((reward) => reward.active)))
 const customerStamps = computed(() => customer.value?.stamps ?? 0)
 
@@ -52,11 +57,10 @@ async function loadRewards(silent = false) {
 
   try {
     if (canManageRewards.value) {
-      const current = await api<{ venue: Venue | null }>('/venues/current')
-      venue.value = current.venue
-      rewards.value = current.venue
-        ? (await api<{ rewards: Reward[] }>(`/venues/${current.venue.id}/rewards`)).rewards
-        : []
+      await workspace.bootstrap()
+      const venueId = workspace.effectiveVenueId
+      venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
+      rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
     } else {
       const cards = await api<{ active_card: Customer | null }>('/customer/cards')
       customer.value = cards.active_card
@@ -170,6 +174,8 @@ watch(
     }
   },
 )
+
+watch(() => workspace.filterVenueId, () => loadRewards())
 </script>
 
 <template>
@@ -210,6 +216,10 @@ watch(
           </AppButton>
         </div>
       </form>
+    </AppCard>
+
+    <AppCard v-if="canManageRewards && needsVenuePick" wrapper-class="mb-4">
+      <p class="text-sm font-bold text-slate-500">Select a specific venue in the sidebar filter to manage its rewards.</p>
     </AppCard>
 
     <AppCard v-if="loading" wrapper-class="mb-4">

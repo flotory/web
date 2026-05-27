@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/customers/{customer}/rewards/{reward}/redeem', [CustomerLoyaltyController::class, 'redeem']);
     Route::post('/venues/{venue}/customers/{customer}/rewards/{reward}/redeem', [VenueStaffRedemptionController::class, 'redeem']);
 
+    Route::get('/dashboard', [VenueDashboardController::class, 'index']);
     Route::get('/venues/{venue}/dashboard', [VenueDashboardController::class, 'show']);
     Route::apiResource('/venues/{venue}/rewards', RewardController::class)->except(['show']);
 

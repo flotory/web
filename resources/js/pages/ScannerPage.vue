@@ -9,6 +9,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue, Visit } from '@/types'
 
 interface ScanResponse {
@@ -24,6 +25,7 @@ type CustomerWithVisits = Customer & { visits_count?: number }
 
 const router = useRouter()
 const route = useRoute()
+const workspace = useWorkspaceStore()
 const token = ref('')
 const scanning = ref(true)
 const status = ref<'idle' | 'processing' | 'success' | 'error'>('idle')
@@ -95,12 +97,10 @@ function selectPresetAmount(amount: number) {
 }
 
 async function loadRestaurant() {
-  if (scannerVenueId.value) {
-    const venues = (await api<{ venues: Venue[] }>('/venues')).venues
-    venue.value = venues.find((item) => item.id === scannerVenueId.value) ?? null
-  } else {
-    venue.value = (await api<{ venue: Venue | null }>('/venues/current')).venue
-  }
+  await workspace.bootstrap()
+  const venues = (await api<{ venues: Venue[] }>('/venues')).venues
+  const venueId = scannerVenueId.value ?? workspace.effectiveVenueId
+  venue.value = venueId ? (venues.find((item) => item.id === venueId) ?? null) : null
 
   if (!venue.value) {
     await router.push('/onboarding')

@@ -16,6 +16,7 @@ import SettingsPage from '@/pages/SettingsPage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,7 +31,7 @@ const router = createRouter({
     { path: '/cafes', name: 'cafes', component: CafesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true } },
+    { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: 'auto' } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true } },
@@ -38,8 +39,16 @@ const router = createRouter({
   ],
 })
 
+async function staffHomePath() {
+  const workspace = useWorkspaceStore()
+  await workspace.bootstrap()
+
+  return workspace.hasMembership ? '/dashboard' : '/card'
+}
+
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  const workspace = useWorkspaceStore()
 
   if (!auth.booted && auth.token) {
     await auth.fetchUser()
@@ -49,18 +58,22 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.workspace === true && auth.user?.role !== 'admin' && !auth.user?.active_venue_id) {
-    if (to.name !== 'my-venues' && to.name !== 'onboarding') {
-      return { name: 'my-venues' }
+  if (auth.isAuthenticated && (to.meta.workspace === true || to.meta.workspace === 'auto')) {
+    await workspace.bootstrap()
+
+    if (!workspace.hasMembership && auth.user?.role !== 'admin') {
+      if (to.name !== 'my-venues' && to.name !== 'onboarding') {
+        return { name: 'onboarding' }
+      }
     }
   }
 
   if (to.name === 'landing' && auth.isAuthenticated) {
-    return auth.user?.role === 'admin' || auth.user?.active_venue_id ? { name: 'dashboard' } : { name: 'customer-card' }
+    return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
   }
 
   if (to.meta.guest && auth.isAuthenticated) {
-    return auth.user?.role === 'admin' || auth.user?.active_venue_id ? { name: 'dashboard' } : { name: 'customer-card' }
+    return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
   }
 })
 

@@ -8,12 +8,14 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
 
 const router = useRouter()
+const auth = useAuthStore()
+const workspace = useWorkspaceStore()
 
-const venues = ref<Venue[]>([])
-const activeVenue = ref<Venue | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -24,8 +26,8 @@ const address = ref('')
 const phone = ref('')
 const website = ref('')
 
-const activeVenues = computed(() => venues.value.filter((venue) => !venue.archived))
-const archivedVenues = computed(() => venues.value.filter((venue) => venue.archived))
+const activeVenues = computed(() => workspace.activeVenues)
+const archivedVenues = computed(() => workspace.venues.filter((venue) => venue.archived))
 
 function resetForm() {
   name.value = ''
@@ -45,13 +47,7 @@ async function loadVenues() {
   error.value = ''
 
   try {
-    const [venuesResponse, currentResponse] = await Promise.all([
-      api<{ venues: Venue[] }>('/venues'),
-      api<{ venue: Venue | null }>('/venues/current'),
-    ])
-
-    venues.value = venuesResponse.venues
-    activeVenue.value = currentResponse.venue
+    await workspace.bootstrap(true)
   } catch {
     error.value = 'Could not load your venues.'
   } finally {
@@ -79,6 +75,7 @@ async function createVenue() {
 
     resetForm()
     formOpen.value = false
+    await auth.fetchUser()
     await loadVenues()
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
@@ -101,21 +98,9 @@ async function archiveVenue(venue: Venue) {
   }
 }
 
-async function selectVenue(venue: Venue, destination?: string) {
-  saving.value = true
-  error.value = ''
-
-  try {
-    activeVenue.value = (await api<{ venue: Venue }>(`/venues/${venue.id}/select`, { method: 'POST' })).venue
-
-    if (destination) {
-      await router.push(destination)
-    }
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : `Could not switch to ${venue.name}.`
-  } finally {
-    saving.value = false
-  }
+function openVenue(venue: Venue, path: string) {
+  workspace.setFilter(venue.id)
+  router.push(path)
 }
 
 onMounted(loadVenues)
@@ -205,7 +190,7 @@ onMounted(loadVenues)
     <AppCard v-if="loading" wrapper-class="mb-4">
       <p class="text-sm font-bold text-slate-500">Loading venues...</p>
     </AppCard>
-    <AppCard v-else-if="error && !venues.length" wrapper-class="mb-4">
+    <AppCard v-else-if="error && !activeVenues.length" wrapper-class="mb-4">
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
     </AppCard>
 
@@ -221,17 +206,8 @@ onMounted(loadVenues)
               <h2 class="text-2xl font-black text-slate-950">{{ venue.name }}</h2>
               <p class="mt-1 text-sm font-semibold text-slate-500">/{{ venue.slug }}</p>
               <p v-if="venue.address" class="mt-2 text-sm font-semibold text-slate-500">{{ venue.address }}</p>
-              <div v-if="venue.phone || venue.website" class="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-400">
-                <span v-if="venue.phone">{{ venue.phone }}</span>
-                <a v-if="venue.website" :href="venue.website" target="_blank" rel="noreferrer" class="text-blue-600 hover:text-blue-700" @click.stop>
-                  Website
-                </a>
-              </div>
             </div>
           </div>
-          <AppBadge :tone="activeVenue?.id === venue.id ? 'green' : 'slate'">
-            {{ activeVenue?.id === venue.id ? 'Active workspace' : 'Venue' }}
-          </AppBadge>
         </div>
 
         <AppButton class="mt-5 w-full" size="lg" @click="router.push(`/scanner?venue_id=${venue.id}`)">
@@ -245,13 +221,11 @@ onMounted(loadVenues)
         </div>
 
         <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <AppButton v-if="activeVenue?.id !== venue.id" variant="secondary" size="sm" :disabled="saving" @click="selectVenue(venue)">
-            Set active
-          </AppButton>
-          <AppButton variant="secondary" size="sm" @click="selectVenue(venue, '/dashboard')">Analytics</AppButton>
-          <AppButton variant="secondary" size="sm" @click="selectVenue(venue, '/rewards')">Rewards</AppButton>
-          <AppButton variant="secondary" size="sm" @click="selectVenue(venue, '/customers')">Customers</AppButton>
-          <AppButton variant="secondary" size="sm" @click="selectVenue(venue, '/team')">Team</AppButton>
+          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/dashboard')">Dashboard</AppButton>
+          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/analytics')">Analytics</AppButton>
+          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/rewards')">Rewards</AppButton>
+          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/customers')">Customers</AppButton>
+          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/team')">Team</AppButton>
           <AppButton variant="ghost" size="sm" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
           <AppButton variant="ghost" size="sm" :disabled="saving" @click="archiveVenue(venue)">Archive</AppButton>
         </div>
@@ -278,4 +252,3 @@ onMounted(loadVenues)
     </section>
   </AppShell>
 </template>
-

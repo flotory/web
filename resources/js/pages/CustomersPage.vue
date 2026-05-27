@@ -1,31 +1,61 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api } from '@/lib/api'
-import type { Customer, Venue } from '@/types'
+import { useWorkspaceStore } from '@/stores/workspace'
+import type { Customer } from '@/types'
 
+const workspace = useWorkspaceStore()
 const customers = ref<Array<Customer & { visits_count?: number }>>([])
 const loading = ref(true)
 const error = ref('')
+
+const needsVenuePick = computed(
+  () => workspace.activeVenues.length > 1 && workspace.filterVenueId === null,
+)
 
 async function loadCustomers() {
   loading.value = true
   error.value = ''
 
   try {
-    const current = await api<{ venue: Venue | null }>('/venues/current')
-    customers.value = current.venue
-      ? (await api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${current.venue.id}/customers`)).customers
-      : []
+    await workspace.bootstrap()
+
+    const venueId = workspace.effectiveVenueId
+
+    if (!venueId) {
+      customers.value = []
+      return
+    }
+
+    if (workspace.filterVenueId === null && workspace.activeVenues.length > 1) {
+      const responses = await Promise.all(
+        workspace.activeVenues.map((venue) =>
+          api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venue.id}/customers`),
+        ),
+      )
+      customers.value = responses.flatMap((response, index) =>
+        response.customers.map((customer) => ({
+          ...customer,
+          venue: workspace.activeVenues[index],
+        })),
+      )
+    } else {
+      customers.value = (
+        await api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venueId}/customers`)
+      ).customers
+    }
   } catch {
     error.value = 'Could not load customers.'
   } finally {
     loading.value = false
   }
 }
+
+watch(() => workspace.filterVenueId, loadCustomers)
 
 onMounted(loadCustomers)
 </script>
@@ -35,7 +65,9 @@ onMounted(loadCustomers)
     <div class="mb-6">
       <AppBadge tone="blue">Basic CRM</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Customers</h1>
-      <p class="mt-2 text-slate-500">A lightweight customer list focused on repeat visits.</p>
+      <p class="mt-2 text-slate-500">
+        {{ needsVenuePick ? 'Showing customers from all venues. Use the venue filter to focus on one.' : 'A lightweight customer list focused on repeat visits.' }}
+      </p>
     </div>
 
     <AppCard wrapper-class="overflow-hidden p-0">
@@ -47,6 +79,7 @@ onMounted(loadCustomers)
           <div>
             <p class="font-black text-slate-950">{{ customer.user?.name ?? 'Customer' }}</p>
             <p class="text-sm text-slate-500">{{ customer.user?.email }}</p>
+            <p v-if="customer.venue?.name" class="mt-1 text-xs font-bold text-slate-400">{{ customer.venue.name }}</p>
           </div>
           <div class="text-right">
             <AppBadge tone="amber">{{ customer.stamps }} stamps</AppBadge>

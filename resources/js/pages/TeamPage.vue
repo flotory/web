@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
 
 type TeamMember = {
@@ -16,6 +17,7 @@ type TeamMember = {
   user: { id: number; name: string; email: string }
 }
 
+const workspace = useWorkspaceStore()
 const venue = ref<Venue | null>(null)
 const members = ref<TeamMember[]>([])
 const loading = ref(true)
@@ -29,18 +31,26 @@ const inviteRole = ref<'manager' | 'staff'>('staff')
 const owners = computed(() => members.value.filter((member) => member.role === 'owner'))
 const others = computed(() => members.value.filter((member) => member.role !== 'owner'))
 
+const needsVenuePick = computed(
+  () => workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
+)
+
 async function load() {
   loading.value = true
   error.value = ''
 
   try {
-    venue.value = (await api<{ venue: Venue | null }>('/venues/current')).venue
-    if (!venue.value) {
+    await workspace.bootstrap()
+    const venueId = workspace.effectiveVenueId
+
+    if (!venueId) {
+      venue.value = null
       members.value = []
       return
     }
 
-    members.value = (await api<{ members: TeamMember[] }>(`/venues/${venue.value.id}/team`)).members
+    venue.value = workspace.activeVenues.find((item) => item.id === venueId) ?? null
+    members.value = (await api<{ members: TeamMember[] }>(`/venues/${venueId}/team`)).members
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not load team.'
   } finally {
@@ -49,13 +59,14 @@ async function load() {
 }
 
 async function invite() {
-  if (!venue.value) return
+  const venueId = workspace.effectiveVenueId
+  if (!venueId) return
 
   saving.value = true
   error.value = ''
 
   try {
-    const response = await api<{ member: TeamMember }>(`/venues/${venue.value.id}/team/invite`, {
+    const response = await api<{ member: TeamMember }>(`/venues/${venueId}/team/invite`, {
       method: 'POST',
       body: {
         email: inviteEmail.value,
@@ -76,13 +87,14 @@ async function invite() {
 }
 
 async function removeMember(member: TeamMember) {
-  if (!venue.value) return
+  const venueId = workspace.effectiveVenueId
+  if (!venueId) return
 
   saving.value = true
   error.value = ''
 
   try {
-    await api<void>(`/venues/${venue.value.id}/team/${member.user_id}`, { method: 'DELETE' })
+    await api<void>(`/venues/${venueId}/team/${member.user_id}`, { method: 'DELETE' })
     members.value = members.value.filter((item) => item.user_id !== member.user_id)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not remove team member.'
@@ -90,6 +102,8 @@ async function removeMember(member: TeamMember) {
     saving.value = false
   }
 }
+
+watch(() => workspace.filterVenueId, load)
 
 onMounted(load)
 </script>
@@ -99,7 +113,9 @@ onMounted(load)
     <div class="mb-6">
       <AppBadge tone="blue">Team access</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Team</h1>
-      <p class="mt-2 text-slate-500">Manage the team for the active venue workspace.</p>
+      <p class="mt-2 text-slate-500">
+        {{ venue ? `Managing team for ${venue.name}.` : 'Pick a venue in the sidebar filter to manage its team.' }}
+      </p>
     </div>
 
     <AppCard v-if="loading">
@@ -111,9 +127,8 @@ onMounted(load)
       <AppButton class="mt-4" variant="secondary" @click="load">Retry</AppButton>
     </AppCard>
 
-    <AppCard v-else-if="!venue">
-      <p class="text-sm font-bold text-slate-500">No active venue selected.</p>
-      <p class="mt-2 text-sm font-semibold text-slate-500">Go to My Venues and set an active workspace.</p>
+    <AppCard v-else-if="needsVenuePick">
+      <p class="text-sm font-bold text-slate-500">Select a specific venue in the filter above to manage its team.</p>
     </AppCard>
 
     <div v-else class="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
@@ -154,16 +169,11 @@ onMounted(load)
             </select>
           </div>
           <AppButton type="submit" :disabled="saving">{{ saving ? 'Inviting...' : 'Invite' }}</AppButton>
-          <p class="text-xs font-semibold text-slate-400">
-            MVP note: new accounts are created with password <span class="font-black text-slate-600">password</span>.
-          </p>
         </form>
       </AppCard>
 
       <AppCard>
         <h2 class="text-xl font-black text-slate-950">Members</h2>
-        <p class="mt-2 text-sm font-semibold text-slate-500">Everyone logs in with their own account for accountability.</p>
-
         <div class="mt-5 space-y-2">
           <div v-for="member in owners" :key="member.id" class="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
             <div>
@@ -192,4 +202,3 @@ onMounted(load)
     </div>
   </AppShell>
 </template>
-

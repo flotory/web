@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\Venue;
+use App\Models\VenueUser;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,16 +13,143 @@ use Illuminate\Support\Facades\DB;
 
 class VenueDashboardController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $venueId = $request->integer('venue_id') ?: null;
+
+        if ($venueId) {
+            $venue = Venue::query()->findOrFail($venueId);
+            VenueAccess::requireAccess($user, $venue, ['owner', 'manager', 'staff']);
+
+            return response()->json($this->dashboardForVenue($venue));
+        }
+
+        $venueIds = $this->accessibleVenueIds($user);
+
+        if ($venueIds === []) {
+            return response()->json([
+                'scope' => 'none',
+                'venue' => null,
+                'venues_count' => 0,
+                'stats' => [
+                    'total_customers' => 0,
+                    'repeat_customers' => 0,
+                    'total_visits' => 0,
+                    'rewards_redeemed' => 0,
+                ],
+                'most_loyal_customers' => [],
+                'monthly_activity' => [],
+                'venue_summaries' => [],
+            ]);
+        }
+
+        $venues = Venue::query()->whereIn('id', $venueIds)->get();
+
+        $stats = [
+            'total_customers' => 0,
+            'repeat_customers' => 0,
+            'total_visits' => 0,
+            'rewards_redeemed' => 0,
+        ];
+        $monthly = [];
+        $summaries = [];
+
+        foreach ($venues as $venue) {
+            $payload = $this->dashboardForVenue($venue);
+            $stats['total_customers'] += $payload['stats']['total_customers'];
+            $stats['repeat_customers'] += $payload['stats']['repeat_customers'];
+            $stats['total_visits'] += $payload['stats']['total_visits'];
+            $stats['rewards_redeemed'] += $payload['stats']['rewards_redeemed'];
+
+            foreach ($payload['monthly_activity'] as $row) {
+                $monthly[$row['month']] = ($monthly[$row['month']] ?? 0) + $row['visits'];
+            }
+
+            $summaries[] = [
+                'venue_id' => $venue->id,
+                'venue_name' => $venue->name,
+                'stats' => $payload['stats'],
+            ];
+        }
+
+        ksort($monthly);
+        $monthlyActivity = collect($monthly)
+            ->map(fn (int $visits, string $month) => ['month' => $month, 'visits' => $visits])
+            ->values()
+            ->take(-12);
+
+        $mostLoyal = DB::table('customers')
+            ->join('users', 'customers.user_id', '=', 'users.id')
+            ->join('venues', 'customers.venue_id', '=', 'venues.id')
+            ->whereIn('customers.venue_id', $venueIds)
+            ->orderByDesc('customers.stamps')
+            ->limit(5)
+            ->get([
+                'customers.id',
+                'customers.venue_id',
+                'customers.user_id',
+                'customers.stamps',
+                'users.name as user_name',
+                'users.email as user_email',
+                'venues.name as venue_name',
+            ])
+            ->map(fn ($row) => [
+                'id' => $row->id,
+                'venue_id' => $row->venue_id,
+                'user_id' => $row->user_id,
+                'stamps' => $row->stamps,
+                'venue' => ['id' => $row->venue_id, 'name' => $row->venue_name],
+                'user' => ['id' => $row->user_id, 'name' => $row->user_name, 'email' => $row->user_email],
+            ]);
+
+        return response()->json([
+            'scope' => 'all',
+            'venue' => null,
+            'venues_count' => count($venueIds),
+            'stats' => $stats,
+            'most_loyal_customers' => $mostLoyal,
+            'monthly_activity' => $monthlyActivity,
+            'venue_summaries' => $summaries,
+        ]);
+    }
+
     public function show(Request $request, Venue $venue): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
 
+        return response()->json($this->dashboardForVenue($venue));
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function accessibleVenueIds(User $user): array
+    {
+        if (VenueAccess::isAdmin($user)) {
+            return Venue::query()->pluck('id')->all();
+        }
+
+        return VenueUser::query()
+            ->where('user_id', $user->id)
+            ->pluck('venue_id')
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function dashboardForVenue(Venue $venue): array
+    {
         $repeatCustomers = $venue->customers()
             ->withCount('visits')
             ->having('visits_count', '>=', 2)
             ->count();
 
-        return response()->json([
+        return [
+            'scope' => 'venue',
+            'venue' => $venue->only(['id', 'name', 'slug']),
+            'venues_count' => 1,
             'stats' => [
                 'total_customers' => $venue->customers()->count(),
                 'repeat_customers' => $repeatCustomers,
@@ -41,7 +170,8 @@ class VenueDashboardController extends Controller
                 ->orderBy('month')
                 ->limit(12)
                 ->get(),
-        ]);
+            'venue_summaries' => [],
+        ];
     }
 }
 

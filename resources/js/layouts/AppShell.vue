@@ -1,13 +1,32 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import VenueFilter from '@/components/loyalty/VenueFilter.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
-const isWorkspace = computed(() => route.meta.workspace === true)
+const workspace = useWorkspaceStore()
+
+const isWorkspace = computed(() => {
+  if (route.meta.workspace === false) {
+    return false
+  }
+
+  if (route.meta.workspace === true) {
+    return true
+  }
+
+  if (route.meta.workspace === 'auto') {
+    return workspace.hasMembership
+  }
+
+  return false
+})
+
 const homePath = computed(() => (isWorkspace.value ? '/dashboard' : '/card'))
 
 const nav = computed(() =>
@@ -28,8 +47,21 @@ const nav = computed(() =>
       ],
 )
 
+watch(
+  () => auth.isAuthenticated,
+  (authenticated) => {
+    if (authenticated) {
+      workspace.bootstrap().catch(() => undefined)
+    } else {
+      workspace.$reset()
+    }
+  },
+  { immediate: true },
+)
+
 async function logout() {
   await auth.logout()
+  workspace.$reset()
   await router.push('/login')
 }
 </script>
@@ -38,6 +70,9 @@ async function logout() {
   <div class="min-h-screen bg-slate-100" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
     <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-slate-200 bg-white p-4 md:block">
       <RouterLink :to="homePath" class="block px-3 py-3 text-xl font-black tracking-tight text-slate-950">Loyalty</RouterLink>
+      <div class="mt-4 px-2">
+        <VenueFilter />
+      </div>
       <nav class="mt-6 space-y-1">
         <RouterLink
           v-for="item in nav"
@@ -79,6 +114,9 @@ async function logout() {
             Logout
           </button>
         </nav>
+      </div>
+      <div v-if="isWorkspace && workspace.activeVenues.length > 1" class="mx-auto max-w-6xl px-4 pb-3 md:hidden">
+        <VenueFilter />
       </div>
     </header>
 

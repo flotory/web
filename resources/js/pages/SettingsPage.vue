@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api } from '@/lib/api'
-import type { Venue } from '@/types'
+import { useWorkspaceStore } from '@/stores/workspace'
 
-const venue = ref<Venue | null>(null)
-const loading = ref(true)
+const router = useRouter()
+const workspace = useWorkspaceStore()
 
-onMounted(async () => {
-  try {
-    venue.value = (await api<{ venue: Venue | null }>('/venues/current')).venue
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(() => workspace.bootstrap())
 </script>
 
 <template>
@@ -24,17 +19,27 @@ onMounted(async () => {
     <div class="mb-6">
       <AppBadge tone="blue">Workspace settings</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Settings</h1>
-      <p class="mt-2 text-slate-500">Keep branch-level controls separate from the customer loyalty experience.</p>
+      <p class="mt-2 text-slate-500">Manage each venue from its own settings page.</p>
     </div>
 
     <AppCard>
-      <p class="text-sm font-bold text-slate-500">
-        {{ loading ? 'Loading workspace...' : `Active venue: ${venue?.name ?? 'No venue selected'}` }}
-      </p>
-      <h2 class="mt-3 text-2xl font-black text-slate-950">Simple settings will live here</h2>
-      <p class="mt-2 max-w-2xl text-slate-500">
-        The first settings pass should focus on venue profile details, loyalty defaults, and scanner behavior without turning the product into a heavy admin panel.
-      </p>
+      <h2 class="text-xl font-black text-slate-950">Your venues</h2>
+      <div class="mt-4 space-y-2">
+        <div
+          v-for="venue in workspace.activeVenues"
+          :key="venue.id"
+          class="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200"
+        >
+          <div>
+            <p class="font-black text-slate-950">{{ venue.name }}</p>
+            <p class="text-sm font-semibold text-slate-500">/{{ venue.slug }}</p>
+          </div>
+          <AppButton variant="secondary" size="sm" @click="router.push(`/my-venues/${venue.id}/settings`)">
+            Edit venue
+          </AppButton>
+        </div>
+        <p v-if="!workspace.activeVenues.length" class="text-sm font-semibold text-slate-500">No venues yet.</p>
+      </div>
     </AppCard>
   </AppShell>
 </template>

@@ -7,8 +7,10 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const auth = useAuthStore()
+const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -23,9 +25,12 @@ async function submit() {
 
   try {
     await auth.login({ email: email.value, password: password.value })
+    await workspace.bootstrap(true)
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
 
-    await router.push(redirect ?? (auth.user?.role === 'admin' || auth.user?.active_venue_id ? '/dashboard' : '/card'))
+    await router.push(
+      redirect ?? (auth.user?.role === 'admin' || workspace.hasMembership ? '/dashboard' : '/card'),
+    )
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
   } finally {
