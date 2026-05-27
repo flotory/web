@@ -10,11 +10,16 @@ check_url() {
   local expected="$2"
   local retries="${3:-1}"
   local delay_s="${4:-2}"
+  local accept_header="${5:-}"
   local actual
   local attempt=1
 
   while [[ ${attempt} -le ${retries} ]]; do
-    actual="$(curl -s -o /dev/null -w '%{http_code}' "${url}")"
+    if [[ -n "${accept_header}" ]]; then
+      actual="$(curl -s -o /dev/null -w '%{http_code}' -H "Accept: ${accept_header}" "${url}")"
+    else
+      actual="$(curl -s -o /dev/null -w '%{http_code}' "${url}")"
+    fi
     if [[ "${actual}" == "${expected}" ]]; then
       echo "OK ${url} -> ${actual}"
       return
@@ -33,6 +38,6 @@ check_url() {
 
 check_url "${APP_URL}/" "200" 12 2
 check_url "${APP_URL}/manifest.webmanifest" "200" 5 1
-check_url "${APP_URL}/api/customer/cards" "401" 5 1
+check_url "${APP_URL}/api/customer/cards" "401" 5 1 "application/json"
 
 echo "==> Smoke checks passed."
