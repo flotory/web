@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         attributes: ['middleware' => ['auth:sanctum']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
+        // API uses Bearer tokens (see resources/js/lib/api.ts), not cookie SPA auth.
+        // statefulApi() would require CSRF on /api/* from the production host.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

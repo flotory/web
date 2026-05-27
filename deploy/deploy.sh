@@ -28,7 +28,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 echo "==> Refreshing Laravel caches..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear
-docker compose -f docker-compose.prod.yml exec -T app php artisan config:cache
 docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
 docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
 
