@@ -9,6 +9,7 @@ use App\Models\Reward;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Support\VenueAccess;
@@ -66,7 +67,9 @@ class RewardController extends Controller
         if ($removeImage) {
             $this->deleteRewardImage($reward);
             $payload['image'] = null;
-            $payload['image_thumb'] = null;
+            if ($this->hasImageThumbColumn()) {
+                $payload['image_thumb'] = null;
+            }
         }
 
         if ($request->hasFile('image')) {
@@ -134,6 +137,21 @@ class RewardController extends Controller
 
         $seed = $reward?->id ? "{$reward->id}-{$venue->slug}" : $venue->slug;
         $base = Str::slug($seed).'-'.Str::lower(Str::random(12));
+
+        // If GD is unavailable in runtime, store original safely without processing.
+        if (! $this->canProcessImages()) {
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+            $filename = "{$base}.{$extension}";
+            $file->move($directory, $filename);
+
+            $path = "/uploads/reward-milestones/{$filename}";
+
+            return [
+                'image' => $path,
+                ...($this->hasImageThumbColumn() ? ['image_thumb' => $path] : []),
+            ];
+        }
+
         $imagePath = $directory.'/'.$base.'.webp';
         $thumbPath = $directory.'/'.$base.'-thumb.webp';
 
@@ -150,13 +168,13 @@ class RewardController extends Controller
 
         return [
             'image' => "/uploads/reward-milestones/{$base}.webp",
-            'image_thumb' => "/uploads/reward-milestones/{$base}-thumb.webp",
+            ...($this->hasImageThumbColumn() ? ['image_thumb' => "/uploads/reward-milestones/{$base}-thumb.webp"] : []),
         ];
     }
 
     private function deleteRewardImage(Reward $reward): void
     {
-        foreach ([$reward->image, $reward->image_thumb] as $path) {
+        foreach ([$reward->image, $reward->image_thumb ?? null] as $path) {
             if (! $path || ! str_starts_with($path, '/uploads/reward-milestones/')) {
                 continue;
             }
@@ -188,10 +206,10 @@ class RewardController extends Controller
         $mime = $meta['mime'] ?? '';
 
         $source = match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($path),
-            'image/png' => @imagecreatefrompng($path),
-            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
-            'image/gif' => @imagecreatefromgif($path),
+            'image/jpeg' => \function_exists('imagecreatefromjpeg') ? @\imagecreatefromjpeg($path) : false,
+            'image/png' => \function_exists('imagecreatefrompng') ? @\imagecreatefrompng($path) : false,
+            'image/webp' => \function_exists('imagecreatefromwebp') ? @\imagecreatefromwebp($path) : false,
+            'image/gif' => \function_exists('imagecreatefromgif') ? @\imagecreatefromgif($path) : false,
             default => false,
         };
 
@@ -200,21 +218,21 @@ class RewardController extends Controller
 
     private function writeWebpVariant($source, string $targetPath, int $maxWidth, int $quality, string $mime): void
     {
-        $width = imagesx($source);
-        $height = imagesy($source);
+        $width = \imagesx($source);
+        $height = \imagesy($source);
         $targetWidth = min($width, $maxWidth);
         $targetHeight = (int) max(1, round(($height / $width) * $targetWidth));
 
-        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
-        imagealphablending($canvas, true);
-        imagesavealpha($canvas, true);
+        $canvas = \imagecreatetruecolor($targetWidth, $targetHeight);
+        \imagealphablending($canvas, true);
+        \imagesavealpha($canvas, true);
 
         if ($mime === 'image/png' || $mime === 'image/gif') {
-            $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-            imagefill($canvas, 0, 0, $transparent);
+            $transparent = \imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+            \imagefill($canvas, 0, 0, $transparent);
         }
 
-        imagecopyresampled(
+        \imagecopyresampled(
             $canvas,
             $source,
             0,
@@ -227,7 +245,26 @@ class RewardController extends Controller
             $height,
         );
 
-        imagewebp($canvas, $targetPath, $quality);
-        imagedestroy($canvas);
+        \imagewebp($canvas, $targetPath, $quality);
+        \imagedestroy($canvas);
+    }
+
+    private function canProcessImages(): bool
+    {
+        return \function_exists('imagecreatetruecolor')
+            && \function_exists('imagecopyresampled')
+            && \function_exists('imagewebp')
+            && (\function_exists('imagecreatefromjpeg') || \function_exists('imagecreatefrompng') || \function_exists('imagecreatefromgif'));
+    }
+
+    private function hasImageThumbColumn(): bool
+    {
+        static $checked = null;
+
+        if ($checked === null) {
+            $checked = Schema::hasColumn('rewards', 'image_thumb');
+        }
+
+        return $checked;
     }
 }
