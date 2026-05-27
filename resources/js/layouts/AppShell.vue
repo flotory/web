@@ -120,7 +120,7 @@ async function logout() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-6 md:py-10">
+    <main class="mx-auto max-w-6xl px-4 py-6 pb-36 md:py-10 md:pb-10">
       <slot />
     </main>
 

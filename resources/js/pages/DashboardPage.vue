@@ -129,7 +129,7 @@ onMounted(loadDashboard)
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-xl font-black text-slate-950">Monthly activity</h2>
-            <p class="text-sm text-slate-500">Visits trend for the last 12 months.</p>
+            <p class="text-sm text-slate-500">Count of recorded visits (stamp events) by month for the selected venue scope.</p>
           </div>
         </div>
         <div class="mt-6 flex h-56 items-end gap-3">

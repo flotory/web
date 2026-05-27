@@ -34,8 +34,11 @@ const title = ref('')
 const description = ref('')
 const requiredStamps = ref(5)
 const imageFile = ref<File | null>(null)
+const imageInput = ref<HTMLInputElement | null>(null)
+const removeImage = ref(false)
 const journey = ref<RewardJourney | null>(null)
 const selectedReward = ref<Reward | null>(null)
+const editingReward = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 
 const canManageRewards = computed(() => auth.user?.role === 'admin' || workspace.hasMembership)
@@ -52,6 +55,37 @@ function resetForm() {
   description.value = ''
   requiredStamps.value = 5
   imageFile.value = null
+  removeImage.value = false
+  editingReward.value = null
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
+}
+
+function openImagePicker() {
+  imageInput.value?.click()
+}
+
+function clearImage() {
+  imageFile.value = null
+  removeImage.value = true
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
+}
+
+function startEditing(reward: Reward) {
+  formOpen.value = true
+  editingReward.value = reward
+  title.value = reward.title
+  description.value = reward.description ?? ''
+  requiredStamps.value = reward.required_stamps
+  imageFile.value = null
+  removeImage.value = false
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
+  error.value = ''
 }
 
 async function loadRewards(silent = false) {
@@ -61,8 +95,9 @@ async function loadRewards(silent = false) {
   }
 
   try {
+    await workspace.bootstrap()
+
     if (canManageRewards.value) {
-      await workspace.bootstrap()
       const venueId = workspace.effectiveVenueId
       venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
       rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
@@ -99,8 +134,20 @@ async function loadRewards(silent = false) {
   }
 }
 
-async function createReward() {
-  if (!venue.value) return
+function toggleMilestoneForm() {
+  if (!formOpen.value && needsVenuePick.value) {
+    error.value = 'Select a specific venue in the sidebar filter first.'
+    return
+  }
+
+  formOpen.value = !formOpen.value
+}
+
+async function saveReward() {
+  if (!venue.value) {
+    error.value = 'Select a venue in the sidebar filter first.'
+    return
+  }
 
   saving.value = true
   error.value = ''
@@ -112,20 +159,31 @@ async function createReward() {
     body.append('description', description.value)
     body.append('active', '1')
 
+    if (removeImage.value) {
+      body.append('remove_image', '1')
+    }
+
     if (imageFile.value) {
       body.append('image', imageFile.value)
     }
 
-    await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, {
-      method: 'POST',
-      body,
-    })
+    if (editingReward.value) {
+      await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${editingReward.value.id}`, {
+        method: 'PUT',
+        body,
+      })
+    } else {
+      await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, {
+        method: 'POST',
+        body,
+      })
+    }
 
     resetForm()
     formOpen.value = false
     await loadRewards()
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not create milestone.'
+    error.value = exception instanceof ApiError ? exception.message : 'Could not save milestone.'
   } finally {
     saving.value = false
   }
@@ -185,7 +243,7 @@ function applyRealtimeStamp(payload: StampAddedPayload) {
 }
 
 function refreshIfVisible() {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === 'visible' && !formOpen.value) {
     loadRewards(true)
   }
 }
@@ -193,13 +251,20 @@ function refreshIfVisible() {
 function onImageChange(event: Event) {
   const input = event.target as HTMLInputElement
   imageFile.value = input.files?.[0] ?? null
+  if (imageFile.value) {
+    removeImage.value = false
+  }
 }
 
 onMounted(() => {
   loadRewards()
   window.addEventListener('focus', refreshIfVisible)
   document.addEventListener('visibilitychange', refreshIfVisible)
-  refreshTimer = window.setInterval(() => loadRewards(true), 10000)
+  refreshTimer = window.setInterval(() => {
+    if (!formOpen.value) {
+      loadRewards(true)
+    }
+  }, 10000)
 })
 
 onUnmounted(() => {
@@ -228,13 +293,13 @@ watch(() => workspace.filterVenueId, () => loadRewards())
         <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards Journey</h1>
         <p class="mt-2 text-slate-500">Unlock milestones as customers keep visiting. Progress never goes backwards.</p>
       </div>
-      <AppButton v-if="canManageRewards" @click="formOpen = !formOpen">
+      <AppButton v-if="canManageRewards" @click="toggleMilestoneForm">
         {{ formOpen ? 'Close' : 'Create milestone' }}
       </AppButton>
     </div>
 
-    <AppCard v-if="formOpen && canManageRewards" wrapper-class="mb-4">
-      <form class="grid gap-4 md:grid-cols-2" @submit.prevent="createReward">
+    <AppCard v-if="formOpen && canManageRewards && !needsVenuePick" wrapper-class="mb-4 pb-8">
+      <form class="grid gap-4 md:grid-cols-2" @submit.prevent="saveReward">
         <div>
           <label class="text-sm font-bold text-slate-600" for="reward-title">Milestone title</label>
           <input id="reward-title" v-model="title" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Free Ice Cream">
@@ -243,18 +308,42 @@ watch(() => workspace.filterVenueId, () => loadRewards())
           <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock at visits</label>
           <input id="reward-stamps" v-model.number="requiredStamps" required min="1" max="100" type="number" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
         </div>
+        <div class="relative z-30 md:col-span-2">
+          <label class="text-sm font-bold text-slate-600" for="reward-image-input">Image (optional)</label>
+          <p class="mt-1 text-xs font-medium text-slate-400">Add a photo for this milestone card.</p>
+          <input
+            id="reward-image-input"
+            ref="imageInput"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            class="hidden"
+            @change="onImageChange"
+          >
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <AppButton type="button" variant="secondary" size="sm" @click="openImagePicker">
+              {{ imageFile ? 'Replace image' : 'Upload image' }}
+            </AppButton>
+            <AppButton v-if="imageFile || (editingReward?.image && !removeImage)" type="button" variant="ghost" size="sm" @click="clearImage">
+              Remove
+            </AppButton>
+            <p class="text-sm font-semibold text-slate-500">
+              {{ imageFile?.name ?? (removeImage ? 'Image will be removed' : (editingReward?.image ? 'Current image' : 'No image selected')) }}
+            </p>
+          </div>
+        </div>
         <div class="md:col-span-2">
           <label class="text-sm font-bold text-slate-600" for="reward-description">Description (optional)</label>
           <textarea id="reward-description" v-model="description" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" rows="3" placeholder="Describe the milestone reward." />
         </div>
-        <div>
-          <label class="text-sm font-bold text-slate-600" for="reward-image">Image (optional)</label>
-          <input id="reward-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="mt-2 block w-full text-sm" @change="onImageChange">
-        </div>
-        <div class="flex items-end justify-end">
-          <AppButton class="w-full" type="submit" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Save milestone' }}
-          </AppButton>
+        <div class="pb-20 md:col-span-2 md:pb-0">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <AppButton class="w-full sm:w-auto" type="submit" :disabled="saving">
+              {{ saving ? 'Saving...' : (editingReward ? 'Save changes' : 'Save milestone') }}
+            </AppButton>
+            <AppButton type="button" variant="ghost" class="w-full sm:w-auto" :disabled="saving" @click="() => { resetForm(); formOpen = false }">
+              Cancel
+            </AppButton>
+          </div>
         </div>
       </form>
     </AppCard>
@@ -312,6 +401,16 @@ watch(() => workspace.filterVenueId, () => loadRewards())
           @click.stop="deactivateReward(rewards.find((item) => item.id === milestone.id) as Reward)"
         >
           Deactivate
+        </AppButton>
+        <AppButton
+          v-if="canManageRewards && milestone.active"
+          class="mt-2"
+          variant="ghost"
+          size="sm"
+          :disabled="saving"
+          @click.stop="startEditing(rewards.find((item) => item.id === milestone.id) as Reward)"
+        >
+          Edit
         </AppButton>
         <p v-else-if="!canManageRewards" class="mt-5 text-sm font-bold text-slate-500">
           {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim milestone reward' : 'Keep progressing to unlock' }}

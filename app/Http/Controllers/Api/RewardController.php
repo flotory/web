@@ -29,6 +29,7 @@ class RewardController extends Controller
 
         $payload = $request->validated();
         unset($payload['image']);
+        unset($payload['remove_image']);
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
 
@@ -50,8 +51,15 @@ class RewardController extends Controller
 
         $payload = $request->validated();
         unset($payload['image']);
+        $removeImage = (bool) ($payload['remove_image'] ?? false);
+        unset($payload['remove_image']);
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
+
+        if ($removeImage) {
+            $this->deleteRewardImage($reward);
+            $payload['image'] = null;
+        }
 
         if ($request->hasFile('image')) {
             $this->deleteRewardImage($reward);

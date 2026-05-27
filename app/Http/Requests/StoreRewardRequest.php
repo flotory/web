@@ -12,6 +12,7 @@ class StoreRewardRequest extends FormRequest
             'required_stamps' => ['required', 'integer', 'min:1', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
             'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'remove_image' => ['sometimes', 'boolean'],
             'active' => ['sometimes', 'boolean'],
         ];
     }
