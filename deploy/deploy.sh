@@ -15,11 +15,13 @@ if ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
 fi
 
 echo "==> Building frontend assets..."
+rm -f public/hot
 docker run --rm \
   -v "$(pwd):/app" \
   -w /app \
   node:24-alpine \
   sh -c "npm ci && npm run build"
+rm -f public/hot
 
 echo "==> Starting production containers..."
 docker compose -f docker-compose.prod.yml up -d --build
