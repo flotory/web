@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
+import { completeVenueOnboarding } from '@/lib/onboarding'
+import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 
 const name = ref('')
@@ -16,6 +19,9 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+
+const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
+const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
 
 async function submit() {
   loading.value = true
@@ -29,7 +35,13 @@ async function submit() {
       password_confirmation: password.value,
     })
 
-    await router.push('/card')
+    if (venueSlug.value) {
+      const result = await completeVenueOnboarding(venueSlug.value)
+      await router.push(`/card?venue_id=${result.venueId}`)
+      return
+    }
+
+    await router.push(postAuthPath.value)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to create your account.'
   } finally {
@@ -66,7 +78,12 @@ async function submit() {
 
       <p class="mt-5 text-center text-sm text-slate-500">
         Already have an account?
-        <RouterLink to="/login" class="font-bold text-slate-950">Log in</RouterLink>
+        <RouterLink
+          :to="venueSlug ? `/login?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}` : '/login'"
+          class="font-bold text-slate-950"
+        >
+          Log in
+        </RouterLink>
       </p>
     </AppCard>
   </main>

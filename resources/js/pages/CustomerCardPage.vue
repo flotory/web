@@ -62,13 +62,7 @@ async function loadCard(silent = false) {
   }
 
   try {
-    let response = await fetchCard()
-
-    if (!response.active_card) {
-      await api<{ customer: Customer }>('/venues/demo-cafe/join', { method: 'POST' })
-      response = await fetchCard()
-    }
-
+    const response = await fetchCard()
     card.value = response.active_card
     nextReward.value = response.next_reward
     availableRewards.value = response.available_rewards

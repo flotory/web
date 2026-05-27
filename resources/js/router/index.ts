@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AnalyticsPage from '@/pages/AnalyticsPage.vue'
 import CafesPage from '@/pages/CafesPage.vue'
 import CustomerCardPage from '@/pages/CustomerCardPage.vue'
+import VenueLandingPage from '@/pages/VenueLandingPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
@@ -17,6 +18,7 @@ import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { sanitizeRedirect } from '@/lib/redirect'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -24,6 +26,7 @@ const router = createRouter({
     { path: '/', name: 'landing', component: LandingPage },
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
+    { path: '/v/:slug', name: 'venue-landing', component: VenueLandingPage, meta: { guest: true } },
     { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true } },
@@ -55,7 +58,7 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
   }
 
   if (auth.isAuthenticated && (to.meta.workspace === true || to.meta.workspace === 'auto')) {
@@ -72,7 +75,7 @@ router.beforeEach(async (to) => {
     return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
   }
 
-  if (to.meta.guest && auth.isAuthenticated) {
+  if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing') {
     return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
   }
 })

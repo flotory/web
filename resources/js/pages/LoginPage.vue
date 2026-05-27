@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
+import { completeVenueOnboarding } from '@/lib/onboarding'
+import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -19,6 +21,9 @@ const password = ref('password')
 const loading = ref(false)
 const error = ref('')
 
+const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
+const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
+
 async function submit() {
   loading.value = true
   error.value = ''
@@ -26,10 +31,21 @@ async function submit() {
   try {
     await auth.login({ email: email.value, password: password.value })
     await workspace.bootstrap(true)
+
+    if (venueSlug.value) {
+      const result = await completeVenueOnboarding(venueSlug.value)
+      await router.push(`/card?venue_id=${result.venueId}`)
+      return
+    }
+
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    if (redirect) {
+      await router.push(sanitizeRedirect(redirect))
+      return
+    }
 
     await router.push(
-      redirect ?? (auth.user?.role === 'admin' || workspace.hasMembership ? '/dashboard' : '/card'),
+      auth.user?.role === 'admin' || workspace.hasMembership ? '/dashboard' : '/card',
     )
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
@@ -37,6 +53,12 @@ async function submit() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  if (typeof route.query.email === 'string') {
+    email.value = route.query.email
+  }
+})
 </script>
 
 <template>
@@ -63,7 +85,12 @@ async function submit() {
 
       <p class="mt-5 text-center text-sm text-slate-500">
         New here?
-        <RouterLink to="/register" class="font-bold text-slate-950">Create an account</RouterLink>
+        <RouterLink
+          :to="venueSlug ? `/register?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}` : '/register'"
+          class="font-bold text-slate-950"
+        >
+          Create an account
+        </RouterLink>
       </p>
     </AppCard>
   </main>

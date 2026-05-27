@@ -68,6 +68,37 @@ class VenueController extends Controller
         ]);
     }
 
+    public function publicLanding(string $slug): JsonResponse
+    {
+        $venue = Venue::query()
+            ->where('slug', $slug)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $venue) {
+            abort(404, 'Venue not found');
+        }
+
+        $milestones = $venue->rewards()
+            ->where('active', true)
+            ->where('reward_type', 'milestone')
+            ->orderBy('required_stamps')
+            ->orderBy('sort_order')
+            ->limit(3)
+            ->get(['id', 'title', 'description', 'image', 'required_stamps']);
+
+        return response()->json([
+            'venue' => [
+                'id' => $venue->id,
+                'name' => $venue->name,
+                'slug' => $venue->slug,
+                'logo' => $venue->logo,
+                'address' => $venue->address,
+            ],
+            'milestones' => $milestones,
+        ]);
+    }
+
     public function current(Request $request): JsonResponse
     {
         return response()->json([
