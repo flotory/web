@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use App\Support\VenueAccess;
 
 class RewardController extends Controller
@@ -33,6 +34,8 @@ class RewardController extends Controller
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
 
+        $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps']);
+
         if ($request->hasFile('image')) {
             $payload['image'] = $this->storeRewardImage($request->file('image'), $venue, null);
         }
@@ -55,6 +58,8 @@ class RewardController extends Controller
         unset($payload['remove_image']);
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
+
+        $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps'], $reward->id);
 
         if ($removeImage) {
             $this->deleteRewardImage($reward);
@@ -102,5 +107,22 @@ class RewardController extends Controller
         }
 
         File::delete(public_path(ltrim($reward->image, '/')));
+    }
+
+    private function ensureUniqueMilestoneThreshold(Venue $venue, int $requiredStamps, ?int $ignoreRewardId = null): void
+    {
+        $query = $venue->rewards()
+            ->where('required_stamps', $requiredStamps)
+            ->where('reward_type', 'milestone');
+
+        if ($ignoreRewardId !== null) {
+            $query->where('id', '!=', $ignoreRewardId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'required_stamps' => ['A milestone already exists for this visits threshold.'],
+            ]);
+        }
     }
 }

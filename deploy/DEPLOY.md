@@ -52,7 +52,8 @@ git commit -m "Your change"
 |--------|-------|---------|
 | `push-prod.sh` | Mac | Push to GitHub + remote deploy |
 | `pull-and-deploy.sh` | Server | `git pull` + build |
-| `deploy.sh` | Server | Docker build, migrate, Nginx |
+| `deploy.sh` | Server | Docker build, migrate, Nginx, smoke checks |
+| `smoke.sh` | Server | Quick post-deploy HTTP health checks |
 | `setup-git-deploy.sh` | Server | Deploy key + git init (once) |
 | `setup-server.sh` | Server | Docker/Nginx/UFW (once) |
 | `config.sh` | Mac (gitignored) | Droplet IP/user |

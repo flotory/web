@@ -49,5 +49,8 @@ if [[ "${SEED_DATABASE:-}" == "1" ]]; then
   docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --force
 fi
 
+echo "==> Post-deploy smoke checks..."
+bash deploy/smoke.sh "${APP_URL:-http://127.0.0.1}"
+
 echo "==> Deploy complete."
 docker compose -f docker-compose.prod.yml ps

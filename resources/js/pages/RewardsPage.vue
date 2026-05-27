@@ -29,6 +29,7 @@ const venue = ref<Venue | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
+const successMessage = ref('')
 const formOpen = ref(false)
 const title = ref('')
 const description = ref('')
@@ -40,6 +41,7 @@ const journey = ref<RewardJourney | null>(null)
 const selectedReward = ref<Reward | null>(null)
 const editingReward = ref<Reward | null>(null)
 let refreshTimer: number | undefined
+let successTimer: number | undefined
 
 const canManageRewards = computed(() => auth.user?.role === 'admin' || workspace.hasMembership)
 const needsVenuePick = computed(
@@ -49,6 +51,16 @@ const milestones = computed(() => journey.value?.milestones ?? [])
 const customerStamps = computed(() => customer.value?.stamps ?? journey.value?.current_stamps ?? 0)
 const nextMilestone = computed(() => journey.value?.next_milestone ?? null)
 const nextDistance = computed(() => (nextMilestone.value ? Math.max(nextMilestone.value.required_stamps - customerStamps.value, 0) : 0))
+
+function showSuccess(message: string) {
+  successMessage.value = message
+  if (successTimer) {
+    window.clearTimeout(successTimer)
+  }
+  successTimer = window.setTimeout(() => {
+    successMessage.value = ''
+  }, 3500)
+}
 
 function resetForm() {
   title.value = ''
@@ -72,6 +84,7 @@ function clearImage() {
   if (imageInput.value) {
     imageInput.value.value = ''
   }
+  showSuccess('Image will be removed when you save.')
 }
 
 function startEditing(reward: Reward) {
@@ -153,6 +166,18 @@ async function saveReward() {
   error.value = ''
 
   try {
+    const duplicateThreshold = rewards.value.some(
+      (reward) => reward.required_stamps === requiredStamps.value && reward.id !== editingReward.value?.id,
+    )
+    if (duplicateThreshold) {
+      error.value = 'A milestone already exists for this visits threshold.'
+      return
+    }
+
+    const isEditing = Boolean(editingReward.value)
+    const replacingImage = Boolean(imageFile.value)
+    const removingImage = removeImage.value
+
     const body = new FormData()
     body.append('title', title.value)
     body.append('required_stamps', String(requiredStamps.value))
@@ -182,6 +207,17 @@ async function saveReward() {
     resetForm()
     formOpen.value = false
     await loadRewards()
+    if (isEditing) {
+      if (replacingImage) {
+        showSuccess('Milestone updated and image replaced.')
+      } else if (removingImage) {
+        showSuccess('Milestone updated and image removed.')
+      } else {
+        showSuccess('Milestone updated.')
+      }
+    } else {
+      showSuccess(replacingImage ? 'Milestone created with image.' : 'Milestone created.')
+    }
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not save milestone.'
   } finally {
@@ -253,6 +289,7 @@ function onImageChange(event: Event) {
   imageFile.value = input.files?.[0] ?? null
   if (imageFile.value) {
     removeImage.value = false
+    showSuccess(`Image selected: ${imageFile.value.name}`)
   }
 }
 
@@ -271,6 +308,9 @@ onUnmounted(() => {
   window.removeEventListener('focus', refreshIfVisible)
   document.removeEventListener('visibilitychange', refreshIfVisible)
   window.clearInterval(refreshTimer)
+  if (successTimer) {
+    window.clearTimeout(successTimer)
+  }
 })
 
 watch(
@@ -311,6 +351,9 @@ watch(() => workspace.filterVenueId, () => loadRewards())
         <div class="relative z-30 md:col-span-2">
           <label class="text-sm font-bold text-slate-600" for="reward-image-input">Image (optional)</label>
           <p class="mt-1 text-xs font-medium text-slate-400">Add a photo for this milestone card.</p>
+          <div v-if="editingReward?.image && !removeImage && !imageFile" class="mt-2 overflow-hidden rounded-2xl border border-slate-200">
+            <img :src="editingReward.image" alt="" class="h-32 w-full object-cover">
+          </div>
           <input
             id="reward-image-input"
             ref="imageInput"
@@ -370,6 +413,9 @@ watch(() => workspace.filterVenueId, () => loadRewards())
     </AppCard>
     <AppCard v-else-if="error" wrapper-class="mb-4">
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
+    </AppCard>
+    <AppCard v-else-if="successMessage" wrapper-class="mb-4 border-emerald-200 bg-emerald-50">
+      <p class="text-sm font-bold text-emerald-700">{{ successMessage }}</p>
     </AppCard>
 
     <div class="grid gap-4 md:grid-cols-2">
