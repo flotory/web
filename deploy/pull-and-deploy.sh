@@ -12,10 +12,11 @@ if [[ ! -d .git ]]; then
   exit 1
 fi
 
-echo "==> Pulling origin/${GIT_BRANCH}..."
+echo "==> Syncing origin/${GIT_BRANCH}..."
 git fetch origin "${GIT_BRANCH}"
 git checkout "${GIT_BRANCH}"
-git pull --ff-only origin "${GIT_BRANCH}"
+# Discard hotfixes and generated files (views, logs) so pulls never block.
+git reset --hard "origin/${GIT_BRANCH}"
 
 chmod +x deploy/deploy.sh
 ./deploy/deploy.sh

@@ -21,7 +21,7 @@ export const useWorkspaceStore = defineStore('workspace', {
         return null
       }
 
-      return state.activeVenues.find((venue) => venue.id === state.filterVenueId) ?? null
+      return state.venues.find((venue) => !venue.archived && venue.id === state.filterVenueId) ?? null
     },
     /** Venue id for pages that need a single venue (rewards, team, etc.). */
     effectiveVenueId(state): number | null {

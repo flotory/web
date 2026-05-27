@@ -3,6 +3,13 @@
 /public/build
 /public/hot
 /storage/*.key
+/storage/logs/
+/storage/framework/views/*.php
+!/storage/framework/views/.gitignore
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+/public/uploads/**/*
+!/public/uploads/venue-logos/.gitkeep
 /.env
 /.env.backup
 /deploy/config.sh
