@@ -10,6 +10,59 @@ The MVP focuses on digital stamp cards, venue-specific QR cards, a fast staff sc
 - Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
 - Monolith architecture for VPS deployment
 
+## Production deploy flow
+
+Git is the source of truth. The server pulls from GitHub; your Mac runs one deploy command.
+
+### One-time setup
+
+1. **Server bootstrap** (already done on `loyalty-prod`):
+   ```bash
+   ssh root@YOUR_IP 'bash -s' < deploy/setup-server.sh
+   ```
+
+2. **Git deploy on the server** (generates a deploy key — add it in GitHub):
+   ```bash
+   ssh root@YOUR_IP 'bash -s' < deploy/setup-git-deploy.sh
+   ```
+   GitHub → repo **Settings → Deploy keys → Add** → paste the printed public key (read-only).
+
+3. **Production `.env` on the server** (only once):
+   ```bash
+   ssh root@YOUR_IP
+   cp /var/www/loyalty/deploy/env.production.example /var/www/loyalty/.env
+   # Edit passwords, APP_URL, domain
+   SEED_DATABASE=1 /var/www/loyalty/deploy/deploy.sh
+   ```
+
+4. **Local config**:
+   ```bash
+   cp deploy/config.example.sh deploy/config.sh
+   ```
+
+### Every code change (normal flow)
+
+```bash
+git add .
+git commit -m "Describe your change"
+./deploy/push-prod.sh
+```
+
+That script:
+
+1. Pushes `main` to GitHub  
+2. SSHs to the droplet  
+3. Runs `git pull` + `deploy/deploy.sh` (build assets, Docker, migrations, Nginx)
+
+Manual server deploy (without pushing from Mac):
+
+```bash
+ssh root@YOUR_IP 'cd /var/www/loyalty && ./deploy/pull-and-deploy.sh'
+```
+
+- App: port 80 via Nginx → Laravel on `127.0.0.1:8000`  
+- HTTPS when you have a domain: `certbot --nginx -d yourdomain.com`
+
 ## Local Setup
 
 ### Docker (recommended)

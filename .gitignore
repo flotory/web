@@ -4,6 +4,7 @@
 /storage/*.key
 /.env
 /.env.backup
+/deploy/config.sh
 /.phpunit.result.cache
 /coverage
 npm-debug.log*
