@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-500: #2563eb;
+  --color-brand-600: #1d4ed8;
+  --color-brand-950: #172554;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+}

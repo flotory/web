@@ -1,0 +1,223 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRestaurantRequest;
+use App\Models\Venue;
+use App\Models\VenueUser;
+use App\Support\VenueAccess;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+
+class VenueController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (VenueAccess::isAdmin($user)) {
+            return response()->json([
+                'venues' => Venue::query()
+                    ->withTrashed()
+                    ->withCount(['customers', 'visits', 'rewards'])
+                    ->orderByRaw('deleted_at is not null')
+                    ->latest()
+                    ->get(),
+            ]);
+        }
+
+        return response()->json([
+            'venues' => Venue::query()
+                ->withTrashed()
+                ->withCount(['customers', 'visits', 'rewards'])
+                ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))
+                ->orderByRaw('deleted_at is not null')
+                ->latest()
+                ->get(),
+        ]);
+    }
+
+    public function discover(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'venues' => Venue::query()
+                ->withCount([
+                    'customers',
+                    'visits',
+                    'rewards',
+                    'customers as joined_count' => fn ($query) => $query->where('user_id', $user->id),
+                ])
+                ->orderBy('name')
+                ->get(),
+        ]);
+    }
+
+    public function current(Request $request): JsonResponse
+    {
+        return response()->json([
+            'venue' => $request->user()->activeVenue,
+        ]);
+    }
+
+    public function customers(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+
+        return response()->json([
+            'customers' => $venue->customers()
+                ->with('user:id,name,email')
+                ->withCount('visits')
+                ->orderByDesc('stamps')
+                ->get(),
+        ]);
+    }
+
+    public function show(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+
+        return response()->json([
+            'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function store(StoreRestaurantRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $venue = Venue::create([
+            'owner_user_id' => $user->id,
+            'name' => $request->string('name')->toString(),
+            'slug' => $request->filled('slug')
+                ? $request->string('slug')->toString()
+                : Str::slug($request->string('name')->toString()).'-'.Str::lower(Str::random(5)),
+            'logo' => null,
+            'address' => $request->string('address')->toString() ?: null,
+            'phone' => $request->string('phone')->toString() ?: null,
+            'website' => $request->string('website')->toString() ?: null,
+        ]);
+
+        VenueUser::create([
+            'venue_id' => $venue->id,
+            'user_id' => $user->id,
+            'role' => 'owner',
+        ]);
+
+        $user->forceFill([
+            'active_venue_id' => $venue->id,
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue,
+        ], 201);
+    }
+
+    public function update(StoreRestaurantRequest $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+
+        $venue->update([
+            'name' => $request->string('name')->toString(),
+            'slug' => $request->filled('slug')
+                ? $request->string('slug')->toString()
+                : $venue->slug,
+            'address' => $request->string('address')->toString() ?: null,
+            'phone' => $request->string('phone')->toString() ?: null,
+            'website' => $request->string('website')->toString() ?: null,
+        ]);
+
+        return response()->json([
+            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function uploadLogo(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+
+        $validated = $request->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $this->deleteLocalLogo($venue);
+
+        $file = $validated['logo'];
+        $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$file->extension();
+        $directory = public_path('uploads/venue-logos');
+
+        File::ensureDirectoryExists($directory);
+        $file->move($directory, $filename);
+
+        $venue->forceFill([
+            'logo' => "/uploads/venue-logos/{$filename}",
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function destroyLogo(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+
+        $this->deleteLocalLogo($venue);
+
+        $venue->forceFill([
+            'logo' => null,
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function destroy(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
+
+        $venue->delete();
+
+        if ($request->user()->active_venue_id === $venue->id) {
+            $nextVenueId = VenueUser::query()
+                ->where('user_id', $request->user()->id)
+                ->where('venue_id', '!=', $venue->id)
+                ->latest()
+                ->value('venue_id');
+
+            $request->user()->forceFill([
+                'active_venue_id' => $nextVenueId,
+            ])->save();
+        }
+
+        return response()->noContent();
+    }
+
+    public function select(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue);
+
+        $request->user()->forceFill([
+            'active_venue_id' => $venue->id,
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    private function deleteLocalLogo(Venue $venue): void
+    {
+        if (! $venue->logo || ! str_starts_with($venue->logo, '/uploads/venue-logos/')) {
+            return;
+        }
+
+        File::delete(public_path(ltrim($venue->logo, '/')));
+    }
+}
+
