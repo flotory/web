@@ -24,6 +24,16 @@ interface DashboardResponse {
   }
   most_loyal_customers: Customer[]
   monthly_activity: Array<{ month: string; visits: number }>
+  milestone_conversions: Array<{
+    reward_id: number
+    title: string
+    required_stamps: number
+    unlocked_count: number
+    claimed_count: number
+    claim_rate: number
+    venue_id?: number
+    venue_name?: string
+  }>
   venue_summaries: Array<{
     venue_id: number
     venue_name: string
@@ -55,6 +65,14 @@ const stats = computed(() => [
   { label: 'Total visits', value: dashboard.value?.stats.total_visits ?? 0 },
   { label: 'Milestones claimed', value: dashboard.value?.stats.milestones_claimed ?? 0 },
 ])
+
+const conversionOverview = computed(() => {
+  const rows = dashboard.value?.milestone_conversions ?? []
+  const unlocked = rows.reduce((sum, row) => sum + row.unlocked_count, 0)
+  const claimed = rows.reduce((sum, row) => sum + row.claimed_count, 0)
+  const rate = unlocked > 0 ? Math.round((claimed / unlocked) * 1000) / 10 : 0
+  return { unlocked, claimed, rate }
+})
 
 async function loadDashboard() {
   loading.value = true
@@ -108,6 +126,12 @@ onMounted(loadDashboard)
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
 
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <StatCard label="Milestones unlocked" :value="conversionOverview.unlocked" />
+      <StatCard label="Milestones claimed" :value="conversionOverview.claimed" />
+      <StatCard label="Claim rate" :value="`${conversionOverview.rate}%`" />
+    </div>
+
     <AppCard v-if="dashboard?.venue_summaries?.length" wrapper-class="mt-6">
       <h2 class="text-xl font-black text-slate-950">By venue</h2>
       <div class="mt-4 grid gap-3 md:grid-cols-2">
@@ -158,5 +182,43 @@ onMounted(loadDashboard)
         </div>
       </AppCard>
     </div>
+
+    <AppCard wrapper-class="mt-6">
+      <h2 class="text-xl font-black text-slate-950">Milestone conversion</h2>
+      <p class="mt-1 text-sm text-slate-500">Unlock-to-claim performance for each milestone.</p>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <th class="px-2 py-2">Milestone</th>
+              <th class="px-2 py-2">Visits</th>
+              <th class="px-2 py-2">Unlocked</th>
+              <th class="px-2 py-2">Claimed</th>
+              <th class="px-2 py-2">Claim rate</th>
+              <th v-if="dashboard?.scope === 'all'" class="px-2 py-2">Venue</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in dashboard?.milestone_conversions ?? []"
+              :key="`${row.venue_id ?? 'single'}-${row.reward_id}`"
+              class="border-b border-slate-100"
+            >
+              <td class="px-2 py-2 font-semibold text-slate-800">{{ row.title }}</td>
+              <td class="px-2 py-2 text-slate-600">{{ row.required_stamps }}</td>
+              <td class="px-2 py-2 text-slate-600">{{ row.unlocked_count }}</td>
+              <td class="px-2 py-2 text-slate-600">{{ row.claimed_count }}</td>
+              <td class="px-2 py-2 font-bold text-slate-900">{{ row.claim_rate }}%</td>
+              <td v-if="dashboard?.scope === 'all'" class="px-2 py-2 text-slate-500">{{ row.venue_name }}</td>
+            </tr>
+            <tr v-if="!(dashboard?.milestone_conversions?.length)">
+              <td class="px-2 py-3 text-sm font-semibold text-slate-500" :colspan="dashboard?.scope === 'all' ? 6 : 5">
+                No milestone conversion data yet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </AppCard>
   </AppShell>
 </template>

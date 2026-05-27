@@ -16,6 +16,7 @@ class Reward extends Model
         'title',
         'description',
         'image',
+        'image_thumb',
         'required_stamps',
         'sort_order',
         'reward_type',

@@ -31,13 +31,14 @@ class RewardController extends Controller
         $payload = $request->validated();
         unset($payload['image']);
         unset($payload['remove_image']);
+        unset($payload['image_thumb']);
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
 
         $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps']);
 
         if ($request->hasFile('image')) {
-            $payload['image'] = $this->storeRewardImage($request->file('image'), $venue, null);
+            $payload = array_merge($payload, $this->storeRewardImage($request->file('image'), $venue, null));
         }
 
         $reward = $venue->rewards()->create($payload);
@@ -56,6 +57,7 @@ class RewardController extends Controller
         unset($payload['image']);
         $removeImage = (bool) ($payload['remove_image'] ?? false);
         unset($payload['remove_image']);
+        unset($payload['image_thumb']);
         $payload['reward_type'] = 'milestone';
         $payload['sort_order'] = $payload['required_stamps'];
 
@@ -64,11 +66,12 @@ class RewardController extends Controller
         if ($removeImage) {
             $this->deleteRewardImage($reward);
             $payload['image'] = null;
+            $payload['image_thumb'] = null;
         }
 
         if ($request->hasFile('image')) {
             $this->deleteRewardImage($reward);
-            $payload['image'] = $this->storeRewardImage($request->file('image'), $venue, $reward);
+            $payload = array_merge($payload, $this->storeRewardImage($request->file('image'), $venue, $reward));
         }
 
         $reward->update($payload);
@@ -124,25 +127,42 @@ class RewardController extends Controller
         return response()->noContent();
     }
 
-    private function storeRewardImage($file, Venue $venue, ?Reward $reward): string
+    private function storeRewardImage($file, Venue $venue, ?Reward $reward): array
     {
         $directory = public_path('uploads/reward-milestones');
         File::ensureDirectoryExists($directory);
 
         $seed = $reward?->id ? "{$reward->id}-{$venue->slug}" : $venue->slug;
-        $filename = Str::slug($seed).'-'.Str::lower(Str::random(12)).'.'.$file->extension();
-        $file->move($directory, $filename);
+        $base = Str::slug($seed).'-'.Str::lower(Str::random(12));
+        $imagePath = $directory.'/'.$base.'.webp';
+        $thumbPath = $directory.'/'.$base.'-thumb.webp';
 
-        return "/uploads/reward-milestones/{$filename}";
+        [$source, $mime] = $this->makeImageSource($file->getPathname());
+        if (! $source) {
+            throw ValidationException::withMessages([
+                'image' => ['Unsupported image format. Use JPG, PNG, WEBP, or GIF.'],
+            ]);
+        }
+
+        $this->writeWebpVariant($source, $imagePath, 1600, 82, $mime);
+        $this->writeWebpVariant($source, $thumbPath, 480, 80, $mime);
+        imagedestroy($source);
+
+        return [
+            'image' => "/uploads/reward-milestones/{$base}.webp",
+            'image_thumb' => "/uploads/reward-milestones/{$base}-thumb.webp",
+        ];
     }
 
     private function deleteRewardImage(Reward $reward): void
     {
-        if (! $reward->image || ! str_starts_with($reward->image, '/uploads/reward-milestones/')) {
-            return;
-        }
+        foreach ([$reward->image, $reward->image_thumb] as $path) {
+            if (! $path || ! str_starts_with($path, '/uploads/reward-milestones/')) {
+                continue;
+            }
 
-        File::delete(public_path(ltrim($reward->image, '/')));
+            File::delete(public_path(ltrim($path, '/')));
+        }
     }
 
     private function ensureUniqueMilestoneThreshold(Venue $venue, int $requiredStamps, ?int $ignoreRewardId = null): void
@@ -160,5 +180,54 @@ class RewardController extends Controller
                 'required_stamps' => ['A milestone already exists for this visits threshold.'],
             ]);
         }
+    }
+
+    private function makeImageSource(string $path): array
+    {
+        $meta = @getimagesize($path);
+        $mime = $meta['mime'] ?? '';
+
+        $source = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            'image/gif' => @imagecreatefromgif($path),
+            default => false,
+        };
+
+        return [$source, $mime];
+    }
+
+    private function writeWebpVariant($source, string $targetPath, int $maxWidth, int $quality, string $mime): void
+    {
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $targetWidth = min($width, $maxWidth);
+        $targetHeight = (int) max(1, round(($height / $width) * $targetWidth));
+
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagealphablending($canvas, true);
+        imagesavealpha($canvas, true);
+
+        if ($mime === 'image/png' || $mime === 'image/gif') {
+            $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+            imagefill($canvas, 0, 0, $transparent);
+        }
+
+        imagecopyresampled(
+            $canvas,
+            $source,
+            0,
+            0,
+            0,
+            0,
+            $targetWidth,
+            $targetHeight,
+            $width,
+            $height,
+        );
+
+        imagewebp($canvas, $targetPath, $quality);
+        imagedestroy($canvas);
     }
 }

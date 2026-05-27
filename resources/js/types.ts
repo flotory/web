@@ -42,6 +42,7 @@ export interface Reward {
   title: string
   description?: string | null
   image?: string | null
+  image_thumb?: string | null
   required_stamps: number
   sort_order?: number
   active: boolean
@@ -52,6 +53,7 @@ export interface MilestoneProgress {
   title: string
   description?: string | null
   image?: string | null
+  image_thumb?: string | null
   required_stamps: number
   active: boolean
   unlocked: boolean

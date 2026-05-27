@@ -42,6 +42,7 @@ class VenueDashboardController extends Controller
                 ],
                 'most_loyal_customers' => [],
                 'monthly_activity' => [],
+                'milestone_conversions' => [],
                 'venue_summaries' => [],
             ]);
         }
@@ -57,6 +58,7 @@ class VenueDashboardController extends Controller
             'cycles_completed' => 0,
         ];
         $monthly = [];
+        $milestoneConversions = [];
         $summaries = [];
 
         foreach ($venues as $venue) {
@@ -70,6 +72,19 @@ class VenueDashboardController extends Controller
 
             foreach ($payload['monthly_activity'] as $row) {
                 $monthly[$row['month']] = ($monthly[$row['month']] ?? 0) + $row['visits'];
+            }
+
+            foreach ($payload['milestone_conversions'] as $row) {
+                $milestoneConversions[] = [
+                    'venue_id' => $venue->id,
+                    'venue_name' => $venue->name,
+                    'reward_id' => $row['reward_id'],
+                    'title' => $row['title'],
+                    'required_stamps' => $row['required_stamps'],
+                    'unlocked_count' => $row['unlocked_count'],
+                    'claimed_count' => $row['claimed_count'],
+                    'claim_rate' => $row['claim_rate'],
+                ];
             }
 
             $summaries[] = [
@@ -116,6 +131,7 @@ class VenueDashboardController extends Controller
             'stats' => $stats,
             'most_loyal_customers' => $mostLoyal,
             'monthly_activity' => $monthlyActivity,
+            'milestone_conversions' => $milestoneConversions,
             'venue_summaries' => $summaries,
         ]);
     }
@@ -185,6 +201,27 @@ class VenueDashboardController extends Controller
                 ->orderBy('month')
                 ->limit(12)
                 ->get(),
+            'milestone_conversions' => DB::table('reward_unlocks')
+                ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+                ->where('rewards.venue_id', $venue->id)
+                ->selectRaw('rewards.id as reward_id')
+                ->selectRaw('rewards.title')
+                ->selectRaw('rewards.required_stamps')
+                ->selectRaw('COUNT(*) as unlocked_count')
+                ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
+                ->groupBy('rewards.id', 'rewards.title', 'rewards.required_stamps')
+                ->orderBy('rewards.required_stamps')
+                ->get()
+                ->map(fn ($row) => [
+                    'reward_id' => $row->reward_id,
+                    'title' => $row->title,
+                    'required_stamps' => (int) $row->required_stamps,
+                    'unlocked_count' => (int) $row->unlocked_count,
+                    'claimed_count' => (int) $row->claimed_count,
+                    'claim_rate' => (int) $row->unlocked_count > 0
+                        ? round(((int) $row->claimed_count / (int) $row->unlocked_count) * 100, 1)
+                        : 0.0,
+                ]),
             'venue_summaries' => [],
         ];
     }
