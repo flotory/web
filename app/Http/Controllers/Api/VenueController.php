@@ -21,6 +21,8 @@ class VenueController extends Controller
         if (VenueAccess::isAdmin($user)) {
             return response()->json([
                 'venues' => Venue::query()
+                    ->select('venues.*')
+                    ->selectRaw("'owner' as membership_role")
                     ->withTrashed()
                     ->withCount(['customers', 'visits', 'rewards'])
                     ->orderByRaw('deleted_at is not null')
@@ -31,6 +33,15 @@ class VenueController extends Controller
 
         return response()->json([
             'venues' => Venue::query()
+                ->select('venues.*')
+                ->selectSub(
+                    VenueUser::query()
+                        ->select('role')
+                        ->whereColumn('venue_id', 'venues.id')
+                        ->where('user_id', $user->id)
+                        ->limit(1),
+                    'membership_role',
+                )
                 ->withTrashed()
                 ->withCount(['customers', 'visits', 'rewards'])
                 ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))

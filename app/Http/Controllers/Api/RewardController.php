@@ -80,12 +80,48 @@ class RewardController extends Controller
 
     public function destroy(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
+        return $this->archive($request, $venue, $reward);
+    }
+
+    public function archive(Request $request, Venue $venue, Reward $reward): JsonResponse
+    {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
         abort_unless($reward->venue_id === $venue->id, 404);
 
         $reward->update(['active' => false]);
 
-        return response()->json(status: 204);
+        return response()->json([
+            'reward' => $reward->fresh(),
+        ]);
+    }
+
+    public function reactivate(Request $request, Venue $venue, Reward $reward): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        abort_unless($reward->venue_id === $venue->id, 404);
+
+        $reward->update(['active' => true]);
+
+        return response()->json([
+            'reward' => $reward->fresh(),
+        ]);
+    }
+
+    public function purge(Request $request, Venue $venue, Reward $reward): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        abort_unless($reward->venue_id === $venue->id, 404);
+
+        if ($reward->active) {
+            throw ValidationException::withMessages([
+                'reward' => ['Archive this milestone before deleting it permanently.'],
+            ]);
+        }
+
+        $this->deleteRewardImage($reward);
+        $reward->delete();
+
+        return response()->noContent();
     }
 
     private function storeRewardImage($file, Venue $venue, ?Reward $reward): string

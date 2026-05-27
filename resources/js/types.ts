@@ -4,6 +4,7 @@ export interface Venue {
   id: number
   name: string
   slug: string
+  membership_role?: 'owner' | 'manager' | 'staff' | null
   logo?: string | null
   address?: string | null
   phone?: string | null

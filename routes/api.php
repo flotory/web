@@ -38,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/dashboard', [VenueDashboardController::class, 'index']);
     Route::get('/venues/{venue}/dashboard', [VenueDashboardController::class, 'show']);
     Route::apiResource('/venues/{venue}/rewards', RewardController::class)->except(['show']);
+    Route::patch('/venues/{venue}/rewards/{reward}/archive', [RewardController::class, 'archive']);
+    Route::patch('/venues/{venue}/rewards/{reward}/reactivate', [RewardController::class, 'reactivate']);
+    Route::delete('/venues/{venue}/rewards/{reward}/purge', [RewardController::class, 'purge']);
 
     Route::post('/venues/{venue}/scanner/lookup', [StaffScanController::class, 'lookup']);
     Route::post('/venues/{venue}/scanner/stamps', [StaffScanController::class, 'addStamp']);

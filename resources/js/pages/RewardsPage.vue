@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -30,12 +30,14 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const successMessage = ref('')
+const fieldErrors = ref<Record<string, string>>({})
 const formOpen = ref(false)
 const title = ref('')
 const description = ref('')
 const requiredStamps = ref(5)
 const imageFile = ref<File | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
+const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
 const journey = ref<RewardJourney | null>(null)
 const selectedReward = ref<Reward | null>(null)
@@ -51,6 +53,13 @@ const milestones = computed(() => journey.value?.milestones ?? [])
 const customerStamps = computed(() => customer.value?.stamps ?? journey.value?.current_stamps ?? 0)
 const nextMilestone = computed(() => journey.value?.next_milestone ?? null)
 const nextDistance = computed(() => (nextMilestone.value ? Math.max(nextMilestone.value.required_stamps - customerStamps.value, 0) : 0))
+const canEditRewards = computed(() => {
+  if (auth.user?.role === 'admin') {
+    return true
+  }
+  const role = venue.value?.membership_role
+  return role === 'owner' || role === 'manager'
+})
 
 function showSuccess(message: string) {
   successMessage.value = message
@@ -69,6 +78,7 @@ function resetForm() {
   imageFile.value = null
   removeImage.value = false
   editingReward.value = null
+  fieldErrors.value = {}
   if (imageInput.value) {
     imageInput.value.value = ''
   }
@@ -90,6 +100,7 @@ function clearImage() {
 function startEditing(reward: Reward) {
   formOpen.value = true
   editingReward.value = reward
+  fieldErrors.value = {}
   title.value = reward.title
   description.value = reward.description ?? ''
   requiredStamps.value = reward.required_stamps
@@ -99,6 +110,10 @@ function startEditing(reward: Reward) {
     imageInput.value.value = ''
   }
   error.value = ''
+  nextTick(() => {
+    titleInput.value?.focus()
+    titleInput.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
 }
 
 async function loadRewards(silent = false) {
@@ -153,6 +168,10 @@ function toggleMilestoneForm() {
     return
   }
 
+  if (editingReward.value) {
+    resetForm()
+  }
+  fieldErrors.value = {}
   formOpen.value = !formOpen.value
 }
 
@@ -164,6 +183,7 @@ async function saveReward() {
 
   saving.value = true
   error.value = ''
+  fieldErrors.value = {}
 
   try {
     const duplicateThreshold = rewards.value.some(
@@ -219,25 +239,79 @@ async function saveReward() {
       showSuccess(replacingImage ? 'Milestone created with image.' : 'Milestone created.')
     }
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not save milestone.'
+    if (exception instanceof ApiError) {
+      error.value = exception.message
+      fieldErrors.value = Object.fromEntries(
+        Object.entries(exception.errors).map(([key, messages]) => [key, messages[0] ?? 'Invalid value']),
+      )
+    } else {
+      error.value = 'Could not save milestone.'
+    }
   } finally {
     saving.value = false
   }
 }
 
-async function deactivateReward(reward: Reward) {
+async function archiveReward(reward: Reward) {
   if (!venue.value) return
 
   saving.value = true
   error.value = ''
+  fieldErrors.value = {}
 
   try {
-    await api<void>(`/venues/${venue.value.id}/rewards/${reward.id}`, {
-      method: 'DELETE',
+    await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${reward.id}/archive`, {
+      method: 'PATCH',
     })
     await loadRewards()
+    showSuccess('Milestone archived.')
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not deactivate milestone.'
+    error.value = exception instanceof ApiError ? exception.message : 'Could not archive milestone.'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function reactivateReward(reward: Reward) {
+  if (!venue.value) return
+
+  saving.value = true
+  error.value = ''
+  fieldErrors.value = {}
+
+  try {
+    await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${reward.id}/reactivate`, {
+      method: 'PATCH',
+    })
+    await loadRewards()
+    showSuccess('Milestone reactivated.')
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not reactivate milestone.'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function deleteReward(reward: Reward) {
+  if (!venue.value) return
+  if (!window.confirm(`Delete "${reward.title}" permanently? This cannot be undone.`)) return
+
+  saving.value = true
+  error.value = ''
+  fieldErrors.value = {}
+
+  try {
+    await api<void>(`/venues/${venue.value.id}/rewards/${reward.id}/purge`, {
+      method: 'DELETE',
+    })
+    if (editingReward.value?.id === reward.id) {
+      resetForm()
+      formOpen.value = false
+    }
+    await loadRewards()
+    showSuccess('Milestone deleted.')
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not delete milestone.'
   } finally {
     saving.value = false
   }
@@ -333,50 +407,50 @@ watch(() => workspace.filterVenueId, () => loadRewards())
         <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards Journey</h1>
         <p class="mt-2 text-slate-500">Unlock milestones as customers keep visiting. Progress never goes backwards.</p>
       </div>
-      <AppButton v-if="canManageRewards" @click="toggleMilestoneForm">
+      <AppButton v-if="canEditRewards" @click="toggleMilestoneForm">
         {{ formOpen ? 'Close' : 'Create milestone' }}
       </AppButton>
     </div>
+    <input
+      ref="imageInput"
+      type="file"
+      accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+      class="hidden"
+      @change="onImageChange"
+    >
 
-    <AppCard v-if="formOpen && canManageRewards && !needsVenuePick" wrapper-class="mb-4 pb-8">
+    <AppCard v-if="formOpen && canEditRewards && !needsVenuePick && !editingReward" wrapper-class="mb-4 pb-8">
       <form class="grid gap-4 md:grid-cols-2" @submit.prevent="saveReward">
         <div>
           <label class="text-sm font-bold text-slate-600" for="reward-title">Milestone title</label>
-          <input id="reward-title" v-model="title" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Free Ice Cream">
+          <input id="reward-title" ref="titleInput" v-model="title" required class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.title ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'" placeholder="Free Ice Cream">
+          <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.title }}</p>
         </div>
         <div>
           <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock at visits</label>
-          <input id="reward-stamps" v-model.number="requiredStamps" required min="1" max="100" type="number" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="reward-stamps" v-model.number="requiredStamps" required min="1" max="100" type="number" class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'">
+          <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
         </div>
         <div class="relative z-30 md:col-span-2">
-          <label class="text-sm font-bold text-slate-600" for="reward-image-input">Image (optional)</label>
+          <label class="text-sm font-bold text-slate-600">Image (optional)</label>
           <p class="mt-1 text-xs font-medium text-slate-400">Add a photo for this milestone card.</p>
-          <div v-if="editingReward?.image && !removeImage && !imageFile" class="mt-2 overflow-hidden rounded-2xl border border-slate-200">
-            <img :src="editingReward.image" alt="" class="h-32 w-full object-cover">
-          </div>
-          <input
-            id="reward-image-input"
-            ref="imageInput"
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-            class="hidden"
-            @change="onImageChange"
-          >
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <AppButton type="button" variant="secondary" size="sm" @click="openImagePicker">
               {{ imageFile ? 'Replace image' : 'Upload image' }}
             </AppButton>
-            <AppButton v-if="imageFile || (editingReward?.image && !removeImage)" type="button" variant="ghost" size="sm" @click="clearImage">
+            <AppButton v-if="imageFile" type="button" variant="ghost" size="sm" @click="clearImage">
               Remove
             </AppButton>
             <p class="text-sm font-semibold text-slate-500">
-              {{ imageFile?.name ?? (removeImage ? 'Image will be removed' : (editingReward?.image ? 'Current image' : 'No image selected')) }}
+              {{ imageFile?.name ?? (removeImage ? 'Image will be removed' : 'No image selected') }}
             </p>
           </div>
+          <p v-if="fieldErrors.image" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.image }}</p>
         </div>
         <div class="md:col-span-2">
           <label class="text-sm font-bold text-slate-600" for="reward-description">Description (optional)</label>
-          <textarea id="reward-description" v-model="description" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" rows="3" placeholder="Describe the milestone reward." />
+          <textarea id="reward-description" v-model="description" class="mt-2 w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.description ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'" rows="3" placeholder="Describe the milestone reward." />
+          <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.description }}</p>
         </div>
         <div class="pb-20 md:col-span-2 md:pb-0">
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -391,7 +465,7 @@ watch(() => workspace.filterVenueId, () => loadRewards())
       </form>
     </AppCard>
 
-    <AppCard v-if="canManageRewards && needsVenuePick" wrapper-class="mb-4">
+    <AppCard v-if="canEditRewards && needsVenuePick" wrapper-class="mb-4">
       <p class="text-sm font-bold text-slate-500">Select a specific venue in the sidebar filter to manage milestones.</p>
     </AppCard>
     <AppCard v-else-if="!canManageRewards && journey" wrapper-class="mb-4 bg-slate-950 text-white">
@@ -439,17 +513,17 @@ watch(() => workspace.filterVenueId, () => loadRewards())
           <img :src="milestone.image" alt="" class="h-36 w-full object-cover">
         </div>
         <AppButton
-          v-if="canManageRewards && milestone.active"
+          v-if="canEditRewards && milestone.active"
           class="mt-5"
           variant="secondary"
           size="sm"
           :disabled="saving"
-          @click.stop="deactivateReward(rewards.find((item) => item.id === milestone.id) as Reward)"
+          @click.stop="archiveReward(rewards.find((item) => item.id === milestone.id) as Reward)"
         >
-          Deactivate
+          Archive
         </AppButton>
         <AppButton
-          v-if="canManageRewards && milestone.active"
+          v-if="canEditRewards"
           class="mt-2"
           variant="ghost"
           size="sm"
@@ -458,6 +532,73 @@ watch(() => workspace.filterVenueId, () => loadRewards())
         >
           Edit
         </AppButton>
+        <AppButton
+          v-if="canEditRewards && !milestone.active"
+          class="mt-2"
+          variant="secondary"
+          size="sm"
+          :disabled="saving"
+          @click.stop="reactivateReward(rewards.find((item) => item.id === milestone.id) as Reward)"
+        >
+          Reactivate
+        </AppButton>
+        <AppButton
+          v-if="canEditRewards && !milestone.active"
+          class="mt-2"
+          variant="ghost"
+          size="sm"
+          :disabled="saving"
+          @click.stop="deleteReward(rewards.find((item) => item.id === milestone.id) as Reward)"
+        >
+          Delete
+        </AppButton>
+        <form
+          v-if="canEditRewards && editingReward?.id === milestone.id"
+          class="mt-5 grid gap-4 border-t border-slate-200 pt-4"
+          @submit.prevent="saveReward"
+        >
+          <div>
+            <label class="text-sm font-bold text-slate-600" for="reward-title-inline">Milestone title</label>
+            <input id="reward-title-inline" ref="titleInput" v-model="title" required class="mt-2 h-11 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.title ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'">
+            <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.title }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-bold text-slate-600" for="reward-stamps-inline">Unlock at visits</label>
+            <input id="reward-stamps-inline" v-model.number="requiredStamps" required min="1" max="100" type="number" class="mt-2 h-11 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'">
+            <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-bold text-slate-600">Image (optional)</label>
+            <div v-if="editingReward?.image && !removeImage && !imageFile" class="mt-2 overflow-hidden rounded-2xl border border-slate-200">
+              <img :src="editingReward.image" alt="" class="h-28 w-full object-cover">
+            </div>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <AppButton type="button" size="sm" variant="secondary" @click="openImagePicker">
+                {{ imageFile ? 'Replace image' : 'Upload image' }}
+              </AppButton>
+              <AppButton v-if="imageFile || (editingReward?.image && !removeImage)" type="button" size="sm" variant="ghost" @click="clearImage">
+                Remove
+              </AppButton>
+              <p class="text-sm font-semibold text-slate-500">
+                {{ imageFile?.name ?? (removeImage ? 'Image will be removed' : (editingReward?.image ? 'Current image' : 'No image selected')) }}
+              </p>
+            </div>
+            <p v-if="fieldErrors.image" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.image }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-bold text-slate-600" for="reward-description-inline">Description (optional)</label>
+            <textarea id="reward-description-inline" v-model="description" rows="3" class="mt-2 w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:bg-white" :class="fieldErrors.description ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'" />
+            <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.description }}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <AppButton size="sm" type="submit" :disabled="saving">
+              {{ saving ? 'Saving...' : 'Save changes' }}
+            </AppButton>
+            <AppButton size="sm" type="button" variant="ghost" :disabled="saving" @click="() => { resetForm(); formOpen = false }">
+              Cancel
+            </AppButton>
+          </div>
+        </form>
         <p v-else-if="!canManageRewards" class="mt-5 text-sm font-bold text-slate-500">
           {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim milestone reward' : 'Keep progressing to unlock' }}
         </p>
