@@ -43,7 +43,16 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   const payload = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new ApiError(payload.message ?? `API request failed with status ${response.status}`, response.status, payload.errors)
+    const fieldErrors = payload.errors as Record<string, string[]> | undefined
+    const firstFieldMessage = fieldErrors
+      ? Object.values(fieldErrors).flat().find((message) => typeof message === 'string' && message.length > 0)
+      : undefined
+
+    throw new ApiError(
+      firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`,
+      response.status,
+      fieldErrors ?? {},
+    )
   }
 
   return payload as T

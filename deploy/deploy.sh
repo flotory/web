@@ -14,6 +14,10 @@ if ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
   docker compose -f docker-compose.prod.yml run --rm --no-deps app php artisan key:generate --force
 fi
 
+echo "==> Upload directories..."
+mkdir -p public/uploads/venue-logos
+chmod -R 775 public/uploads 2>/dev/null || true
+
 echo "==> Building frontend assets..."
 rm -f public/hot
 docker run --rm \

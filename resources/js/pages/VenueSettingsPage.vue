@@ -86,6 +86,17 @@ async function uploadLogo(event: Event) {
 
   if (!file || !venue.value) return
 
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    error.value = 'Use a JPG, PNG, WebP, or GIF image. iPhone HEIC photos must be converted first (e.g. save to Photos as Most Compatible).'
+    return
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be 5 MB or smaller.'
+    return
+  }
+
   logoUploading.value = true
   error.value = ''
 
@@ -161,7 +172,7 @@ onMounted(loadVenue)
           <h2 class="mt-5 text-2xl font-black text-slate-950">Venue logo</h2>
           <p class="mt-2 text-sm font-semibold text-slate-500">Upload a square PNG, JPG, or WebP image.</p>
 
-          <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp" @change="uploadLogo">
+          <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
 
           <div class="mt-5 flex flex-wrap justify-center gap-2">
             <AppButton variant="secondary" :disabled="logoUploading" @click="openLogoPicker">

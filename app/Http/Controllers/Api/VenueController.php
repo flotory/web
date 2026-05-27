@@ -141,13 +141,14 @@ class VenueController extends Controller
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
 
         $validated = $request->validate([
-            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
         ]);
 
         $this->deleteLocalLogo($venue);
 
-        $file = $validated['logo'];
-        $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$file->extension();
+        $file = $request->file('logo');
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'png');
+        $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$extension;
         $directory = public_path('uploads/venue-logos');
 
         File::ensureDirectoryExists($directory);
