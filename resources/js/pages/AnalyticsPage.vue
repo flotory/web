@@ -11,9 +11,11 @@ import { useWorkspaceStore } from '@/stores/workspace'
 interface DashboardResponse {
   stats: {
     total_customers: number
-    repeat_customers: number
+    active_progressors: number
     total_visits: number
-    rewards_redeemed: number
+    milestones_claimed: number
+    milestones_unlocked: number
+    cycles_completed: number
   }
   monthly_activity: Array<{ month: string; visits: number }>
 }
@@ -29,14 +31,14 @@ const stats = computed(() => {
     return []
   }
 
-  const repeatRate = data.total_customers > 0 ? Math.round((data.repeat_customers / data.total_customers) * 100) : 0
-  const avgStamps = data.total_customers > 0 ? (data.total_visits / data.total_customers).toFixed(1) : '0'
+  const progressionRate = data.total_customers > 0 ? Math.round((data.active_progressors / data.total_customers) * 100) : 0
+  const avgVisits = data.total_customers > 0 ? (data.total_visits / data.total_customers).toFixed(1) : '0'
 
   return [
-    { label: 'Repeat rate', value: `${repeatRate}%`, hint: `${data.repeat_customers} repeat customers` },
-    { label: 'Avg visits/customer', value: avgStamps, hint: 'across selected scope' },
+    { label: 'Progression rate', value: `${progressionRate}%`, hint: `${data.active_progressors} active progressors` },
+    { label: 'Avg visits/customer', value: avgVisits, hint: 'across selected scope' },
     { label: 'Monthly visits', value: data.total_visits, hint: 'total recorded' },
-    { label: 'Rewards redeemed', value: data.rewards_redeemed, hint: 'all time' },
+    { label: 'Milestones claimed', value: data.milestones_claimed, hint: `${data.milestones_unlocked} unlocked` },
   ]
 })
 

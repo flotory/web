@@ -80,7 +80,9 @@ class DatabaseSeeder extends Seeder
                     'olive-street-kitchen' => 'Free dessert',
                     default => 'Free coffee upgrade',
                 },
-                'reward_type' => 'discount',
+                'description' => 'First milestone reward to kick off customer momentum.',
+                'reward_type' => 'milestone',
+                'sort_order' => 5,
                 'active' => true,
             ]);
 
@@ -93,7 +95,9 @@ class DatabaseSeeder extends Seeder
                     'olive-street-kitchen' => 'Free lunch bowl',
                     default => 'Free coffee',
                 },
-                'reward_type' => 'free_item',
+                'description' => 'Stronger reward after sustained repeat visits.',
+                'reward_type' => 'milestone',
+                'sort_order' => 10,
                 'active' => true,
             ]);
         });

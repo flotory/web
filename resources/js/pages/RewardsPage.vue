@@ -2,7 +2,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
-import ProgressStamps from '@/components/loyalty/ProgressStamps.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -11,12 +10,13 @@ import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useRealtimeStore } from '@/stores/realtime'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { Customer, Reward, StampAddedPayload, Venue, Visit } from '@/types'
+import type { Customer, Reward, RewardJourney, StampAddedPayload, Venue, Visit } from '@/types'
 
 interface RedemptionResponse {
   customer: Customer
   next_reward: Reward | null
   available_rewards: Reward[]
+  journey: RewardJourney
   recent_visits: Visit[]
 }
 
@@ -31,8 +31,10 @@ const saving = ref(false)
 const error = ref('')
 const formOpen = ref(false)
 const title = ref('')
+const description = ref('')
 const requiredStamps = ref(5)
-const rewardType = ref('discount')
+const imageFile = ref<File | null>(null)
+const journey = ref<RewardJourney | null>(null)
 const selectedReward = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 
@@ -40,13 +42,16 @@ const canManageRewards = computed(() => auth.user?.role === 'admin' || workspace
 const needsVenuePick = computed(
   () => canManageRewards.value && workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
 )
-const visibleRewards = computed(() => (canManageRewards.value ? rewards.value : rewards.value.filter((reward) => reward.active)))
-const customerStamps = computed(() => customer.value?.stamps ?? 0)
+const milestones = computed(() => journey.value?.milestones ?? [])
+const customerStamps = computed(() => customer.value?.stamps ?? journey.value?.current_stamps ?? 0)
+const nextMilestone = computed(() => journey.value?.next_milestone ?? null)
+const nextDistance = computed(() => (nextMilestone.value ? Math.max(nextMilestone.value.required_stamps - customerStamps.value, 0) : 0))
 
 function resetForm() {
   title.value = ''
+  description.value = ''
   requiredStamps.value = 5
-  rewardType.value = 'discount'
+  imageFile.value = null
 }
 
 async function loadRewards(silent = false) {
@@ -61,13 +66,27 @@ async function loadRewards(silent = false) {
       const venueId = workspace.effectiveVenueId
       venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
       rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
+      journey.value = venueId && rewards.value.length
+        ? {
+            current_cycle: 1,
+            current_stamps: 0,
+            next_milestone: rewards.value[0] ?? null,
+            milestones: rewards.value.map((reward) => ({
+              ...reward,
+              unlocked: false,
+              claimed: false,
+            })),
+          }
+        : null
     } else {
-      const cards = await api<{ active_card: Customer | null }>('/customer/cards')
+      const cards = await api<{ active_card: Customer | null; journey: RewardJourney | null }>('/customer/cards')
       customer.value = cards.active_card
       venue.value = cards.active_card?.venue ?? null
-      rewards.value = cards.active_card
-        ? (await api<{ rewards: Reward[] }>(`/customers/${cards.active_card.id}/rewards`)).rewards
-        : []
+      const rewardResponse = cards.active_card
+        ? await api<{ rewards: Reward[]; journey: RewardJourney }>(`/customers/${cards.active_card.id}/rewards`)
+        : null
+      rewards.value = rewardResponse?.rewards ?? []
+      journey.value = rewardResponse?.journey ?? cards.journey
     }
   } catch {
     if (!silent) {
@@ -87,21 +106,26 @@ async function createReward() {
   error.value = ''
 
   try {
+    const body = new FormData()
+    body.append('title', title.value)
+    body.append('required_stamps', String(requiredStamps.value))
+    body.append('description', description.value)
+    body.append('active', '1')
+
+    if (imageFile.value) {
+      body.append('image', imageFile.value)
+    }
+
     await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, {
       method: 'POST',
-      body: {
-        title: title.value,
-        required_stamps: requiredStamps.value,
-        reward_type: rewardType.value,
-        active: true,
-      },
+      body,
     })
 
     resetForm()
     formOpen.value = false
     await loadRewards()
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not create reward.'
+    error.value = exception instanceof ApiError ? exception.message : 'Could not create milestone.'
   } finally {
     saving.value = false
   }
@@ -119,14 +143,17 @@ async function deactivateReward(reward: Reward) {
     })
     await loadRewards()
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not deactivate reward.'
+    error.value = exception instanceof ApiError ? exception.message : 'Could not deactivate milestone.'
   } finally {
     saving.value = false
   }
 }
 
-function openCustomerReward(reward: Reward) {
-  if (canManageRewards.value) return
+function openCustomerReward(reward: Reward | undefined) {
+  if (canManageRewards.value || !reward) return
+
+  const milestone = milestones.value.find((item) => item.id === reward.id)
+  if (!milestone?.unlocked || milestone.claimed) return
 
   selectedReward.value = reward
 }
@@ -137,6 +164,7 @@ function closeCustomerReward() {
 
 function applyRedemption(response: RedemptionResponse) {
   customer.value = response.customer
+  journey.value = response.journey
 }
 
 function applyRealtimeStamp(payload: StampAddedPayload) {
@@ -145,12 +173,26 @@ function applyRealtimeStamp(payload: StampAddedPayload) {
   }
 
   customer.value = payload.customer
+  if (journey.value) {
+    journey.value = {
+      ...journey.value,
+      current_cycle: payload.current_cycle,
+      current_stamps: payload.customer.stamps,
+      milestones: payload.milestones,
+      next_milestone: payload.next_reward,
+    }
+  }
 }
 
 function refreshIfVisible() {
   if (document.visibilityState === 'visible') {
     loadRewards(true)
   }
+}
+
+function onImageChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  imageFile.value = input.files?.[0] ?? null
 }
 
 onMounted(() => {
@@ -182,48 +224,60 @@ watch(() => workspace.filterVenueId, () => loadRewards())
   <AppShell>
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <AppBadge tone="blue">{{ canManageRewards ? 'Reward management' : 'Your rewards' }}</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards</h1>
-        <p class="mt-2 text-slate-500">Keep rewards simple and easy for staff to explain.</p>
+        <AppBadge tone="blue">{{ canManageRewards ? 'Milestone builder' : 'Progress journey' }}</AppBadge>
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards Journey</h1>
+        <p class="mt-2 text-slate-500">Unlock milestones as customers keep visiting. Progress never goes backwards.</p>
       </div>
       <AppButton v-if="canManageRewards" @click="formOpen = !formOpen">
-        {{ formOpen ? 'Close' : 'Add reward' }}
+        {{ formOpen ? 'Close' : 'Create milestone' }}
       </AppButton>
     </div>
 
     <AppCard v-if="formOpen && canManageRewards" wrapper-class="mb-4">
-      <form class="grid gap-4 md:grid-cols-[1fr_140px_160px_auto]" @submit.prevent="createReward">
+      <form class="grid gap-4 md:grid-cols-2" @submit.prevent="createReward">
         <div>
-          <label class="text-sm font-bold text-slate-600" for="reward-title">Reward title</label>
-          <input id="reward-title" v-model="title" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Free coffee">
+          <label class="text-sm font-bold text-slate-600" for="reward-title">Milestone title</label>
+          <input id="reward-title" v-model="title" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Free Ice Cream">
         </div>
         <div>
-          <label class="text-sm font-bold text-slate-600" for="reward-stamps">Stamps</label>
+          <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock at visits</label>
           <input id="reward-stamps" v-model.number="requiredStamps" required min="1" max="100" type="number" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
         </div>
-        <div>
-          <label class="text-sm font-bold text-slate-600" for="reward-type">Type</label>
-          <select id="reward-type" v-model="rewardType" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
-            <option value="discount">Discount</option>
-            <option value="free_item">Free item</option>
-            <option value="upgrade">Upgrade</option>
-            <option value="custom">Custom</option>
-          </select>
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold text-slate-600" for="reward-description">Description (optional)</label>
+          <textarea id="reward-description" v-model="description" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" rows="3" placeholder="Describe the milestone reward." />
         </div>
-        <div class="flex items-end">
+        <div>
+          <label class="text-sm font-bold text-slate-600" for="reward-image">Image (optional)</label>
+          <input id="reward-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="mt-2 block w-full text-sm" @change="onImageChange">
+        </div>
+        <div class="flex items-end justify-end">
           <AppButton class="w-full" type="submit" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Save' }}
+            {{ saving ? 'Saving...' : 'Save milestone' }}
           </AppButton>
         </div>
       </form>
     </AppCard>
 
     <AppCard v-if="canManageRewards && needsVenuePick" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-slate-500">Select a specific venue in the sidebar filter to manage its rewards.</p>
+      <p class="text-sm font-bold text-slate-500">Select a specific venue in the sidebar filter to manage milestones.</p>
+    </AppCard>
+    <AppCard v-else-if="!canManageRewards && journey" wrapper-class="mb-4 bg-slate-950 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-white/60">Current cycle</p>
+          <p class="mt-2 text-3xl font-black">{{ journey.current_cycle }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-bold uppercase tracking-wide text-white/60">Progress</p>
+          <p class="mt-2 text-2xl font-black">{{ customerStamps }}</p>
+          <p v-if="nextMilestone" class="text-sm font-semibold text-white/70">{{ nextDistance }} to {{ nextMilestone.title }}</p>
+        </div>
+      </div>
     </AppCard>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-slate-500">Loading rewards...</p>
+      <p class="text-sm font-bold text-slate-500">Loading milestones...</p>
     </AppCard>
     <AppCard v-else-if="error" wrapper-class="mb-4">
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
@@ -231,32 +285,40 @@ watch(() => workspace.filterVenueId, () => loadRewards())
 
     <div class="grid gap-4 md:grid-cols-2">
       <AppCard
-        v-for="reward in visibleRewards"
-        :key="reward.id"
+        v-for="milestone in milestones"
+        :key="milestone.id"
         :wrapper-class="!canManageRewards ? 'cursor-pointer transition hover:-translate-y-0.5 hover:shadow-xl' : ''"
-        @click="openCustomerReward(reward)"
+        @click="openCustomerReward(rewards.find((item) => item.id === milestone.id))"
       >
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-2xl font-black text-slate-950">{{ reward.title }}</h2>
-            <p class="mt-1 text-sm font-semibold text-slate-500">{{ reward.reward_type }} · {{ reward.required_stamps }} stamps</p>
+            <h2 class="text-2xl font-black text-slate-950">{{ milestone.title }}</h2>
+            <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} visits milestone</p>
+            <p v-if="milestone.description" class="mt-2 text-sm text-slate-500">{{ milestone.description }}</p>
           </div>
-          <AppBadge :tone="canManageRewards ? (reward.active ? 'green' : 'slate') : (customerStamps >= reward.required_stamps ? 'green' : 'amber')">
-            {{ canManageRewards ? (reward.active ? 'Active' : 'Inactive') : (customerStamps >= reward.required_stamps ? 'Ready' : 'Locked') }}
+          <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
+            {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
           </AppBadge>
         </div>
-        <div class="mt-6">
-          <ProgressStamps :stamps="customerStamps" :required="reward.required_stamps" />
+        <div v-if="milestone.image" class="mt-4 overflow-hidden rounded-2xl">
+          <img :src="milestone.image" alt="" class="h-36 w-full object-cover">
         </div>
-        <AppButton v-if="canManageRewards && reward.active" class="mt-5" variant="secondary" size="sm" :disabled="saving" @click="deactivateReward(reward)">
+        <AppButton
+          v-if="canManageRewards && milestone.active"
+          class="mt-5"
+          variant="secondary"
+          size="sm"
+          :disabled="saving"
+          @click.stop="deactivateReward(rewards.find((item) => item.id === milestone.id) as Reward)"
+        >
           Deactivate
         </AppButton>
         <p v-else-if="!canManageRewards" class="mt-5 text-sm font-bold text-slate-500">
-          Tap to open reward
+          {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim milestone reward' : 'Keep progressing to unlock' }}
         </p>
       </AppCard>
-      <AppCard v-if="!loading && !visibleRewards.length">
-        <p class="text-sm font-semibold text-slate-500">No rewards yet.</p>
+      <AppCard v-if="!loading && !milestones.length">
+        <p class="text-sm font-semibold text-slate-500">No milestones yet.</p>
       </AppCard>
     </div>
 

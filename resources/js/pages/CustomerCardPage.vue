@@ -11,12 +11,13 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
 import AppShell from '@/layouts/AppShell.vue'
 import { useRealtimeStore } from '@/stores/realtime'
-import type { Customer, Reward, StampAddedPayload, Visit } from '@/types'
+import type { Customer, Reward, RewardJourney, StampAddedPayload, Visit } from '@/types'
 
 interface RedemptionResponse {
   customer: Customer
   next_reward: Reward | null
   available_rewards: Reward[]
+  journey: RewardJourney
   recent_visits: Visit[]
 }
 
@@ -27,6 +28,7 @@ const error = ref('')
 const card = ref<Customer | null>(null)
 const nextReward = ref<Reward | null>(null)
 const availableRewards = ref<Reward[]>([])
+const journey = ref<RewardJourney | null>(null)
 const recentVisits = ref<Visit[]>([])
 const successMessage = ref('')
 const highlightedStamp = ref<number | null>(null)
@@ -37,6 +39,7 @@ interface CardResponse {
   active_card: Customer | null
   next_reward: Reward | null
   available_rewards: Reward[]
+  journey: RewardJourney | null
   recent_visits: Visit[]
 }
 
@@ -69,6 +72,7 @@ async function loadCard(silent = false) {
     card.value = response.active_card
     nextReward.value = response.next_reward
     availableRewards.value = response.available_rewards
+    journey.value = response.journey
     recentVisits.value = response.recent_visits
   } catch {
     if (!silent) {
@@ -89,6 +93,15 @@ function applyRealtimeStamp(payload: StampAddedPayload) {
   card.value = payload.customer
   nextReward.value = payload.next_reward
   availableRewards.value = payload.available_rewards
+  if (journey.value) {
+    journey.value = {
+      ...journey.value,
+      current_cycle: payload.current_cycle,
+      current_stamps: payload.customer.stamps,
+      milestones: payload.milestones,
+      next_milestone: payload.next_reward,
+    }
+  }
   highlightedStamp.value = payload.stamps
   successMessage.value = payload.message
 
@@ -117,8 +130,9 @@ function applyRedemption(response: RedemptionResponse) {
   card.value = response.customer
   nextReward.value = response.next_reward
   availableRewards.value = response.available_rewards
+  journey.value = response.journey
   recentVisits.value = response.recent_visits
-  successMessage.value = `${selectedReward.value?.title ?? 'Reward'} redeemed. ${response.customer.stamps} stamps left.`
+  successMessage.value = `${selectedReward.value?.title ?? 'Reward'} claimed. Progress continues at ${response.customer.stamps} visits.`
 }
 
 onMounted(() => {

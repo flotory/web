@@ -30,6 +30,7 @@ class CustomerLoyaltyController extends Controller
             'active_card' => $activeCard,
             'next_reward' => $activeCard ? $loyalty->nextRewardFor($activeCard) : null,
             'available_rewards' => $activeCard ? $loyalty->availableRewardsFor($activeCard) : [],
+            'journey' => $activeCard ? $loyalty->journeyFor($activeCard) : null,
             'recent_visits' => $activeCard ? $activeCard->visits()->latest()->limit(10)->get() : [],
         ]);
     }
@@ -62,11 +63,12 @@ class CustomerLoyaltyController extends Controller
             'customer' => $customer,
             'next_reward' => $loyalty->nextRewardFor($customer),
             'available_rewards' => $loyalty->availableRewardsFor($customer),
+            'journey' => $loyalty->journeyFor($customer),
             'recent_visits' => $customer->visits()->latest()->limit(10)->get(),
         ]);
     }
 
-    public function rewards(Request $request, Customer $customer): JsonResponse
+    public function rewards(Request $request, Customer $customer, LoyaltyStampService $loyalty): JsonResponse
     {
         abort_unless($customer->user_id === $request->user()->id, 403);
 
@@ -75,6 +77,7 @@ class CustomerLoyaltyController extends Controller
                 ->where('active', true)
                 ->orderBy('required_stamps')
                 ->get(),
+            'journey' => $loyalty->journeyFor($customer),
         ]);
     }
 
@@ -90,6 +93,7 @@ class CustomerLoyaltyController extends Controller
             'customer' => $customer,
             'next_reward' => $loyalty->nextRewardFor($customer),
             'available_rewards' => $loyalty->availableRewardsFor($customer),
+            'journey' => $loyalty->journeyFor($customer),
             'recent_visits' => $customer->visits()->latest()->limit(10)->get(),
         ], 201);
     }

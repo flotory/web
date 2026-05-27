@@ -39,9 +39,30 @@ export interface Reward {
   id: number
   venue_id: number
   title: string
+  description?: string | null
+  image?: string | null
   required_stamps: number
-  reward_type: string
+  sort_order?: number
   active: boolean
+}
+
+export interface MilestoneProgress {
+  id: number
+  title: string
+  description?: string | null
+  image?: string | null
+  required_stamps: number
+  active: boolean
+  unlocked: boolean
+  claimed: boolean
+  claimed_at?: string | null
+}
+
+export interface RewardJourney {
+  current_cycle: number
+  current_stamps: number
+  next_milestone: Reward | null
+  milestones: MilestoneProgress[]
 }
 
 export interface Visit {
@@ -59,6 +80,9 @@ export interface StampAddedPayload {
   stamps: number
   next_reward: Reward | null
   available_rewards: Reward[]
+  milestones: MilestoneProgress[]
+  current_cycle: number
+  cycle_completed: boolean
   message: string
   occurred_at: string
 }

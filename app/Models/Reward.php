@@ -14,7 +14,10 @@ class Reward extends Model
     protected $fillable = [
         'venue_id',
         'title',
+        'description',
+        'image',
         'required_stamps',
+        'sort_order',
         'reward_type',
         'active',
     ];
@@ -24,6 +27,7 @@ class Reward extends Model
         return [
             'active' => 'boolean',
             'required_stamps' => 'integer',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -35,5 +39,10 @@ class Reward extends Model
     public function redemptions(): HasMany
     {
         return $this->hasMany(RewardRedemption::class);
+    }
+
+    public function unlocks(): HasMany
+    {
+        return $this->hasMany(RewardUnlock::class);
     }
 }

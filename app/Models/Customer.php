@@ -44,4 +44,14 @@ class Customer extends Model
     {
         return $this->hasMany(RewardRedemption::class);
     }
+
+    public function rewardCycles(): HasMany
+    {
+        return $this->hasMany(CustomerRewardCycle::class);
+    }
+
+    public function rewardUnlocks(): HasMany
+    {
+        return $this->hasMany(RewardUnlock::class);
+    }
 }

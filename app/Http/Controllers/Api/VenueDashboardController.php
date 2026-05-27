@@ -34,9 +34,11 @@ class VenueDashboardController extends Controller
                 'venues_count' => 0,
                 'stats' => [
                     'total_customers' => 0,
-                    'repeat_customers' => 0,
+                    'active_progressors' => 0,
                     'total_visits' => 0,
-                    'rewards_redeemed' => 0,
+                    'milestones_claimed' => 0,
+                    'milestones_unlocked' => 0,
+                    'cycles_completed' => 0,
                 ],
                 'most_loyal_customers' => [],
                 'monthly_activity' => [],
@@ -48,9 +50,11 @@ class VenueDashboardController extends Controller
 
         $stats = [
             'total_customers' => 0,
-            'repeat_customers' => 0,
+            'active_progressors' => 0,
             'total_visits' => 0,
-            'rewards_redeemed' => 0,
+            'milestones_claimed' => 0,
+            'milestones_unlocked' => 0,
+            'cycles_completed' => 0,
         ];
         $monthly = [];
         $summaries = [];
@@ -58,9 +62,11 @@ class VenueDashboardController extends Controller
         foreach ($venues as $venue) {
             $payload = $this->dashboardForVenue($venue);
             $stats['total_customers'] += $payload['stats']['total_customers'];
-            $stats['repeat_customers'] += $payload['stats']['repeat_customers'];
+            $stats['active_progressors'] += $payload['stats']['active_progressors'];
             $stats['total_visits'] += $payload['stats']['total_visits'];
-            $stats['rewards_redeemed'] += $payload['stats']['rewards_redeemed'];
+            $stats['milestones_claimed'] += $payload['stats']['milestones_claimed'];
+            $stats['milestones_unlocked'] += $payload['stats']['milestones_unlocked'];
+            $stats['cycles_completed'] += $payload['stats']['cycles_completed'];
 
             foreach ($payload['monthly_activity'] as $row) {
                 $monthly[$row['month']] = ($monthly[$row['month']] ?? 0) + $row['visits'];
@@ -141,7 +147,7 @@ class VenueDashboardController extends Controller
      */
     private function dashboardForVenue(Venue $venue): array
     {
-        $repeatCustomers = $venue->customers()
+        $activeProgressors = $venue->customers()
             ->withCount('visits')
             ->having('visits_count', '>=', 2)
             ->count();
@@ -152,11 +158,20 @@ class VenueDashboardController extends Controller
             'venues_count' => 1,
             'stats' => [
                 'total_customers' => $venue->customers()->count(),
-                'repeat_customers' => $repeatCustomers,
+                'active_progressors' => $activeProgressors,
                 'total_visits' => $venue->visits()->count(),
-                'rewards_redeemed' => DB::table('reward_redemptions')
+                'milestones_claimed' => DB::table('reward_redemptions')
                     ->join('rewards', 'reward_redemptions.reward_id', '=', 'rewards.id')
                     ->where('rewards.venue_id', $venue->id)
+                    ->count(),
+                'milestones_unlocked' => DB::table('reward_unlocks')
+                    ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+                    ->where('rewards.venue_id', $venue->id)
+                    ->count(),
+                'cycles_completed' => DB::table('customer_reward_cycles')
+                    ->join('customers', 'customer_reward_cycles.customer_id', '=', 'customers.id')
+                    ->where('customers.venue_id', $venue->id)
+                    ->whereNotNull('customer_reward_cycles.completed_at')
                     ->count(),
             ],
             'most_loyal_customers' => $venue->customers()

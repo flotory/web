@@ -16,9 +16,11 @@ interface DashboardResponse {
   venues_count: number
   stats: {
     total_customers: number
-    repeat_customers: number
+    active_progressors: number
     total_visits: number
-    rewards_redeemed: number
+    milestones_claimed: number
+    milestones_unlocked: number
+    cycles_completed: number
   }
   most_loyal_customers: Customer[]
   monthly_activity: Array<{ month: string; visits: number }>
@@ -49,9 +51,9 @@ const title = computed(() => {
 
 const stats = computed(() => [
   { label: 'Total customers', value: dashboard.value?.stats.total_customers ?? 0 },
-  { label: 'Repeat customers', value: dashboard.value?.stats.repeat_customers ?? 0 },
+  { label: 'Active progressors', value: dashboard.value?.stats.active_progressors ?? 0 },
   { label: 'Total visits', value: dashboard.value?.stats.total_visits ?? 0 },
-  { label: 'Rewards redeemed', value: dashboard.value?.stats.rewards_redeemed ?? 0 },
+  { label: 'Milestones claimed', value: dashboard.value?.stats.milestones_claimed ?? 0 },
 ])
 
 async function loadDashboard() {

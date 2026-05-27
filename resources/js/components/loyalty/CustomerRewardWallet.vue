@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
-import type { Customer, Reward, Venue, Visit } from '@/types'
+import type { Customer, Reward, RewardJourney, Venue, Visit } from '@/types'
 
 import ProgressStamps from './ProgressStamps.vue'
 import SuccessCheck from './SuccessCheck.vue'
@@ -13,6 +13,7 @@ interface RedemptionResponse {
   customer: Customer
   next_reward: Reward | null
   available_rewards: Reward[]
+  journey: RewardJourney
   recent_visits: Visit[]
 }
 
@@ -99,7 +100,7 @@ async function redeemReward() {
                   <h3 class="mt-6 text-4xl font-black">Redeemed</h3>
                   <p class="mt-2 text-lg font-semibold text-white/75">{{ reward.title }}</p>
                   <p class="mt-4 rounded-full bg-white/15 px-5 py-2 text-sm font-black text-white/85">
-                    {{ currentCustomer.stamps }} stamps remaining
+                    Progress stays at {{ currentCustomer.stamps }} visits
                   </p>
                 </div>
               </div>
@@ -125,8 +126,8 @@ async function redeemReward() {
                     <p class="mt-2 text-2xl font-black">{{ currentCustomer.stamps }}</p>
                   </div>
                   <div class="rounded-3xl bg-white/12 p-4 ring-1 ring-white/15">
-                    <p class="text-xs font-black uppercase tracking-wide text-white/45">After redeem</p>
-                    <p class="mt-2 text-2xl font-black">{{ Math.max(currentCustomer.stamps - reward.required_stamps, 0) }}</p>
+                    <p class="text-xs font-black uppercase tracking-wide text-white/45">Milestone</p>
+                    <p class="mt-2 text-2xl font-black">{{ reward.required_stamps }}</p>
                   </div>
                 </div>
 
@@ -134,7 +135,7 @@ async function redeemReward() {
                   {{ error }}
                 </p>
                 <p v-else class="mt-6 rounded-3xl bg-white/10 p-4 text-sm font-bold text-white/70 ring-1 ring-white/15">
-                  Slide when you are ready to use this reward.
+                  Slide to claim this unlocked milestone.
                 </p>
               </div>
             </div>

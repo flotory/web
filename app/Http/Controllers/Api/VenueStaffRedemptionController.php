@@ -27,6 +27,7 @@ class VenueStaffRedemptionController extends Controller
             'customer' => $customer,
             'next_reward' => $loyalty->nextRewardFor($customer),
             'available_rewards' => $loyalty->availableRewardsFor($customer),
+            'journey' => $loyalty->journeyFor($customer),
             'recent_visits' => $customer->visits()->latest()->limit(10)->get(),
         ], 201);
     }

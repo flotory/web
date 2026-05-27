@@ -23,6 +23,9 @@ class StampAdded implements ShouldBroadcastNow
         public int $addedStamps,
         public ?Reward $nextReward,
         public Collection $availableRewards,
+        public Collection $milestones,
+        public int $currentCycle,
+        public bool $cycleCompleted,
     ) {
         $this->customer->loadMissing('venue', 'user');
     }
@@ -47,6 +50,9 @@ class StampAdded implements ShouldBroadcastNow
             'stamps' => $this->customer->stamps,
             'next_reward' => $this->nextReward,
             'available_rewards' => $this->availableRewards,
+            'milestones' => $this->milestones,
+            'current_cycle' => $this->currentCycle,
+            'cycle_completed' => $this->cycleCompleted,
             'message' => "{$this->addedStamps} ".str('star')->plural($this->addedStamps)." added at {$this->customer->venue->name}.",
             'occurred_at' => now()->toISOString(),
         ];
