@@ -22,10 +22,10 @@ const saving = ref(false)
 const error = ref('')
 const formOpen = ref(false)
 const menuVenueId = ref<number | null>(null)
+const deleteVenueTarget = ref<Venue | null>(null)
 const search = ref('')
 const typeFilter = ref<'all' | 'cafe' | 'restaurant' | 'bar'>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
-const recentOnly = ref(false)
 
 const name = ref('')
 const slug = ref('')
@@ -51,10 +51,6 @@ const filteredVenues = computed(() => {
 
   if (typeFilter.value !== 'all') {
     items = items.filter((venue) => inferVenueType(venue) === typeFilter.value)
-  }
-
-  if (recentOnly.value) {
-    items = items.filter((venue) => (venue.visits_count ?? 0) > 0 || (venue.customers_count ?? 0) > 0)
   }
 
   if (sortBy.value === 'name') {
@@ -138,27 +134,39 @@ async function createVenue() {
 }
 
 async function deleteVenue(venue: Venue) {
-  if (!window.confirm(`Delete ${venue.name}? This is a soft delete and can be restored later.`)) {
-    return
-  }
-
   saving.value = true
   error.value = ''
 
   try {
     await api<void>(`/venues/${venue.id}`, { method: 'DELETE' })
+    workspace.venues = workspace.venues.filter((item) => item.id !== venue.id)
+    if (workspace.filterVenueId === venue.id) {
+      const next = workspace.activeVenues[0] ?? null
+      workspace.setFilter(next ? next.id : null)
+    }
     await loadVenues()
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not delete venue.'
   } finally {
     saving.value = false
     menuVenueId.value = null
+    deleteVenueTarget.value = null
   }
 }
 
 function openVenue(venue: Venue, path: string) {
   workspace.setFilter(venue.id)
   router.push(path)
+}
+
+function openDeleteModal(venue: Venue) {
+  deleteVenueTarget.value = venue
+  menuVenueId.value = null
+}
+
+function closeDeleteModal() {
+  if (saving.value) return
+  deleteVenueTarget.value = null
 }
 
 onMounted(loadVenues)
@@ -179,7 +187,7 @@ onMounted(loadVenues)
     </div>
 
     <AppCard wrapper-class="mb-5 border-slate-200/80 bg-white/95 backdrop-blur">
-      <div class="grid gap-3 md:grid-cols-[1.2fr_0.8fr_0.8fr_auto]">
+      <div class="grid gap-3 md:grid-cols-[1.3fr_0.85fr_0.85fr]">
         <input
           v-model="search"
           class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
@@ -196,14 +204,6 @@ onMounted(loadVenues)
           <option value="name">Sort by name</option>
           <option value="customers">Sort by customers</option>
         </select>
-        <button
-          type="button"
-          class="h-11 rounded-2xl px-4 text-sm font-bold transition"
-          :class="recentOnly ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-          @click="recentOnly = !recentOnly"
-        >
-          Recently active
-        </button>
       </div>
     </AppCard>
 
@@ -282,9 +282,9 @@ onMounted(loadVenues)
           </div>
           <div class="relative">
             <button type="button" class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-200" @click="toggleMenu(venue.id)">⋯</button>
-            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-10 mt-2 w-40 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
+            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
               <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
-              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50" :disabled="saving" @click="deleteVenue(venue)">Delete venue</button>
+              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
             </div>
           </div>
         </div>
@@ -325,6 +325,34 @@ onMounted(loadVenues)
 
       <AppCard v-if="!loading && !filteredVenues.length">
         <p class="text-sm font-semibold text-slate-500">No venues match this filter yet.</p>
+      </AppCard>
+    </div>
+
+    <button
+      v-if="menuVenueId !== null"
+      type="button"
+      class="fixed inset-0 z-30 cursor-default bg-transparent"
+      aria-label="Close venue menu"
+      @click="menuVenueId = null"
+    />
+
+    <div
+      v-if="deleteVenueTarget"
+      class="fixed inset-0 z-40 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm"
+      @click.self="closeDeleteModal"
+    >
+      <AppCard wrapper-class="w-full max-w-md border-slate-200 bg-white p-6">
+        <h2 class="text-2xl font-black text-slate-950">Delete venue?</h2>
+        <p class="mt-2 text-sm text-slate-600">
+          This will soft-delete <span class="font-bold text-slate-900">{{ deleteVenueTarget.name }}</span>.
+          You can restore it later from the database.
+        </p>
+        <div class="mt-5 grid gap-2 sm:grid-cols-2">
+          <AppButton variant="secondary" :disabled="saving" @click="closeDeleteModal">Cancel</AppButton>
+          <AppButton :disabled="saving" class="bg-red-600 text-white hover:bg-red-700" @click="deleteVenue(deleteVenueTarget)">
+            {{ saving ? 'Deleting...' : 'Yes, delete venue' }}
+          </AppButton>
+        </div>
       </AppCard>
     </div>
   </AppShell>
