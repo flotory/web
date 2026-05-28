@@ -1,6 +1,6 @@
 {
-  "name": "Loyalty App",
-  "short_name": "Loyalty",
+  "name": "Flotory",
+  "short_name": "Flotory",
   "description": "Digital loyalty cards and QR rewards for cafes and restaurants.",
   "start_url": "/card",
   "scope": "/",

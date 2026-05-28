@@ -6,9 +6,9 @@ return [
     'connections' => [
         'reverb' => [
             'driver' => 'reverb',
-            'key' => env('REVERB_APP_KEY', 'loyalty-local-key'),
-            'secret' => env('REVERB_APP_SECRET', 'loyalty-local-secret'),
-            'app_id' => env('REVERB_APP_ID', 'loyalty-local-app'),
+            'key' => env('REVERB_APP_KEY', 'flotory-local-key'),
+            'secret' => env('REVERB_APP_SECRET', 'flotory-local-secret'),
+            'app_id' => env('REVERB_APP_ID', 'flotory-local-app'),
             'options' => [
                 'host' => env('REVERB_BROADCAST_HOST', env('REVERB_HOST', '127.0.0.1')),
                 'port' => env('REVERB_PORT', 8080),

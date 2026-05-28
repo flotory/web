@@ -30,7 +30,7 @@ export function getEcho(token: string) {
 
   echo = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY || 'loyalty-local-key',
+    key: import.meta.env.VITE_REVERB_APP_KEY || 'flotory-local-key',
     wsHost,
     wsPort: port,
     wssPort: port,

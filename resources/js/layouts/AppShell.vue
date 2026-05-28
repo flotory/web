@@ -69,7 +69,7 @@ async function logout() {
 <template>
   <div class="min-h-screen bg-slate-100" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
     <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-slate-200 bg-white p-4 md:block">
-      <RouterLink :to="homePath" class="block px-3 py-3 text-xl font-black tracking-tight text-slate-950">Loyalty</RouterLink>
+      <RouterLink :to="homePath" class="block px-3 py-3 text-xl font-black tracking-tight text-slate-950">Flotory</RouterLink>
       <div class="mt-4 px-2">
         <VenueFilter />
       </div>
@@ -94,7 +94,7 @@ async function logout() {
     <div>
     <header class="sticky top-0 z-20 border-b border-white/60 bg-slate-100/85 backdrop-blur-xl" :class="isWorkspace && 'md:hidden'">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <RouterLink :to="homePath" class="text-lg font-black tracking-tight text-slate-950">Loyalty</RouterLink>
+        <RouterLink :to="homePath" class="text-lg font-black tracking-tight text-slate-950">Flotory</RouterLink>
         <button class="rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm ring-1 ring-slate-200 md:hidden" @click="logout">
           Logout
         </button>

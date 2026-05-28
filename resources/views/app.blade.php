@@ -7,9 +7,9 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Loyalty">
+    <meta name="apple-mobile-web-app-title" content="Flotory">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>{{ config('app.name', 'Loyalty App') }}</title>
+    <title>{{ config('app.name', 'Flotory') }}</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">

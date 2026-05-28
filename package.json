@@ -1,5 +1,5 @@
 {
-  "name": "loyalty-app",
+  "name": "flotory-web",
   "version": "1.0.0",
   "description": "Restaurant loyalty SaaS platform built with Laravel, Vue, TailwindCSS, and shadcn-vue style components.",
   "private": true,

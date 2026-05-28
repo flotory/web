@@ -1,4 +1,4 @@
-# Loyalty App
+# Flotory
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
@@ -126,7 +126,7 @@ All seeded accounts use password: **`password`**
 |--------|--------|----------------|
 | **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
-| **Customer** | `customer@example.com` | Loyalty card, milestone journey, unlock + claim flow |
+| **Customer** | `customer@example.com` | Flotory card, milestone journey, unlock + claim flow |
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 

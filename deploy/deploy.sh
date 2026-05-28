@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy / update Loyalty on the VPS. Run from /var/www/loyalty as root.
+# Deploy / update Flotory on the VPS. Run from /var/www/loyalty as root.
 set -euo pipefail
 
 cd /var/www/loyalty

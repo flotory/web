@@ -33,11 +33,11 @@ class BroadcastAuthController extends Controller
         $signature = hash_hmac(
             'sha256',
             "{$validated['socket_id']}:{$validated['channel_name']}",
-            config('broadcasting.connections.reverb.secret') ?: 'loyalty-local-secret',
+            config('broadcasting.connections.reverb.secret') ?: 'flotory-local-secret',
         );
 
         return response()->json([
-            'auth' => (config('broadcasting.connections.reverb.key') ?: 'loyalty-local-key').":{$signature}",
+            'auth' => (config('broadcasting.connections.reverb.key') ?: 'flotory-local-key').":{$signature}",
         ]);
     }
 

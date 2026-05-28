@@ -77,8 +77,8 @@ services:
     env_file:
       - .env
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-loyalty_app}
-      MYSQL_USER: ${DB_USERNAME:-loyalty}
+      MYSQL_DATABASE: ${DB_DATABASE:-flotory_app}
+      MYSQL_USER: ${DB_USERNAME:-flotory}
       MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
     volumes:

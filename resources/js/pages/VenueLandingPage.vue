@@ -87,7 +87,7 @@ onMounted(async () => {
 
       <template v-else-if="landing">
         <div class="flex items-center justify-between">
-          <AppBadge tone="blue">Loyalty rewards</AppBadge>
+          <AppBadge tone="blue">Flotory rewards</AppBadge>
           <p class="text-xs font-semibold uppercase tracking-wide text-white/60">{{ landing.venue.name }}</p>
         </div>
 

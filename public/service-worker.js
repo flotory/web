@@ -1,4 +1,4 @@
-const CACHE_NAME = 'loyalty-app-v4'
+const CACHE_NAME = 'flotory-v1'
 const APP_SHELL = ['/dashboard', '/card', '/login', '/cafes', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']
 
 self.addEventListener('install', (event) => {
