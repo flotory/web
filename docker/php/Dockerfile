@@ -15,6 +15,8 @@ RUN apt-get update \
     && docker-php-ext-install pcntl pdo_mysql zip gd \
     && rm -rf /var/lib/apt/lists/*
 
+COPY docker/php/conf.d/ /usr/local/etc/php/conf.d/
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 EXPOSE 8000 8080

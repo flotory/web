@@ -30,8 +30,16 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     headers.set('Authorization', `Bearer ${auth.token}`)
   }
 
+  // PHP does not populate uploaded files on PUT/PATCH — use POST + method spoofing.
+  let method = options.method ?? 'GET'
+  if (body instanceof FormData && method && ['PUT', 'PATCH'].includes(method.toUpperCase())) {
+    body.append('_method', method.toUpperCase())
+    method = 'POST'
+  }
+
   const response = await fetch(`/api${path}`, {
     ...options,
+    method,
     headers,
     body,
   })

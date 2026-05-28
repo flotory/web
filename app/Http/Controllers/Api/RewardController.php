@@ -135,40 +135,39 @@ class RewardController extends Controller
         $directory = public_path('uploads/reward-milestones');
         File::ensureDirectoryExists($directory);
 
-        $seed = $reward?->id ? "{$reward->id}-{$venue->slug}" : $venue->slug;
-        $base = Str::slug($seed).'-'.Str::lower(Str::random(12));
-
-        // If GD is unavailable in runtime, store original safely without processing.
-        if (! $this->canProcessImages()) {
-            $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-            $filename = "{$base}.{$extension}";
-            $file->move($directory, $filename);
-
-            $path = "/uploads/reward-milestones/{$filename}";
-
-            return [
-                'image' => $path,
-                ...($this->hasImageThumbColumn() ? ['image_thumb' => $path] : []),
-            ];
-        }
-
-        $imagePath = $directory.'/'.$base.'.webp';
-        $thumbPath = $directory.'/'.$base.'-thumb.webp';
-
-        [$source, $mime] = $this->makeImageSource($file->getPathname());
-        if (! $source) {
+        if (! is_writable($directory)) {
             throw ValidationException::withMessages([
-                'image' => ['Unsupported image format. Use JPG, PNG, WEBP, or GIF.'],
+                'image' => ['Upload folder is not writable on the server. Please contact support.'],
             ]);
         }
 
-        $this->writeWebpVariant($source, $imagePath, 1600, 82, $mime);
-        $this->writeWebpVariant($source, $thumbPath, 480, 80, $mime);
-        imagedestroy($source);
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
+        if (! in_array($extension, $allowed, true)) {
+            throw ValidationException::withMessages([
+                'image' => ['Use JPG, PNG, WEBP, or GIF. iPhone HEIC photos are not supported — choose Most Compatible in Camera settings.'],
+            ]);
+        }
+
+        $seed = $reward?->id ? "{$reward->id}-{$venue->slug}" : $venue->slug;
+        $filename = Str::slug($seed).'-'.Str::lower(Str::random(12)).'.'.$extension;
+
+        try {
+            $file->move($directory, $filename);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            throw ValidationException::withMessages([
+                'image' => ['The image could not be saved. Try a smaller JPG or PNG under 5 MB.'],
+            ]);
+        }
+
+        $path = "/uploads/reward-milestones/{$filename}";
 
         return [
-            'image' => "/uploads/reward-milestones/{$base}.webp",
-            ...($this->hasImageThumbColumn() ? ['image_thumb' => "/uploads/reward-milestones/{$base}-thumb.webp"] : []),
+            'image' => $path,
+            ...($this->hasImageThumbColumn() ? ['image_thumb' => $path] : []),
         ];
     }
 
@@ -198,63 +197,6 @@ class RewardController extends Controller
                 'required_stamps' => ['A milestone already exists for this visits threshold.'],
             ]);
         }
-    }
-
-    private function makeImageSource(string $path): array
-    {
-        $meta = @getimagesize($path);
-        $mime = $meta['mime'] ?? '';
-
-        $source = match ($mime) {
-            'image/jpeg' => \function_exists('imagecreatefromjpeg') ? @\imagecreatefromjpeg($path) : false,
-            'image/png' => \function_exists('imagecreatefrompng') ? @\imagecreatefrompng($path) : false,
-            'image/webp' => \function_exists('imagecreatefromwebp') ? @\imagecreatefromwebp($path) : false,
-            'image/gif' => \function_exists('imagecreatefromgif') ? @\imagecreatefromgif($path) : false,
-            default => false,
-        };
-
-        return [$source, $mime];
-    }
-
-    private function writeWebpVariant($source, string $targetPath, int $maxWidth, int $quality, string $mime): void
-    {
-        $width = \imagesx($source);
-        $height = \imagesy($source);
-        $targetWidth = min($width, $maxWidth);
-        $targetHeight = (int) max(1, round(($height / $width) * $targetWidth));
-
-        $canvas = \imagecreatetruecolor($targetWidth, $targetHeight);
-        \imagealphablending($canvas, true);
-        \imagesavealpha($canvas, true);
-
-        if ($mime === 'image/png' || $mime === 'image/gif') {
-            $transparent = \imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-            \imagefill($canvas, 0, 0, $transparent);
-        }
-
-        \imagecopyresampled(
-            $canvas,
-            $source,
-            0,
-            0,
-            0,
-            0,
-            $targetWidth,
-            $targetHeight,
-            $width,
-            $height,
-        );
-
-        \imagewebp($canvas, $targetPath, $quality);
-        \imagedestroy($canvas);
-    }
-
-    private function canProcessImages(): bool
-    {
-        return \function_exists('imagecreatetruecolor')
-            && \function_exists('imagecopyresampled')
-            && \function_exists('imagewebp')
-            && (\function_exists('imagecreatefromjpeg') || \function_exists('imagecreatefrompng') || \function_exists('imagecreatefromgif'));
     }
 
     private function hasImageThumbColumn(): bool

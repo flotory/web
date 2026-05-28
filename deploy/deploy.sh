@@ -15,7 +15,7 @@ if ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
 fi
 
 echo "==> Upload directories..."
-mkdir -p public/uploads/venue-logos
+mkdir -p public/uploads/venue-logos public/uploads/reward-milestones
 chmod -R 775 public/uploads 2>/dev/null || true
 
 echo "==> Building frontend assets..."

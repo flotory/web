@@ -16,4 +16,12 @@ class StoreRewardRequest extends FormRequest
             'active' => ['sometimes', 'boolean'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'image.mimes' => 'Use JPG, PNG, WEBP, or GIF. iPhone HEIC photos are not supported yet.',
+            'image.max' => 'Image must be 5 MB or smaller.',
+        ];
+    }
 }
