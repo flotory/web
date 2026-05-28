@@ -56,13 +56,8 @@ async function submit() {
     }
 
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    if (redirect) {
-      await router.push(sanitizeRedirect(redirect))
-      return
-    }
-
     await router.push(
-      resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId),
+      resolvePostLoginDestination(redirect, auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId),
     )
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
