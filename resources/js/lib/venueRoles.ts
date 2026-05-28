@@ -25,6 +25,10 @@ export function hasTeamMembership(venues: Venue[]): boolean {
   return venues.some((venue) => !venue.archived && (venue.membership_role === 'owner' || venue.membership_role === 'staff'))
 }
 
+export function hasOwnerMembership(venues: Venue[]): boolean {
+  return venues.some((venue) => !venue.archived && venue.membership_role === 'owner')
+}
+
 /** Where to send the user right after login (owners → dashboard, staff → scanner, guests → card). */
 export function resolveAuthenticatedHomePath(
   authRole: string | undefined,

@@ -20,7 +20,12 @@ import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
-import { isStaffOnlyMember, resolveAuthenticatedHomePath, staffScannerPath } from '@/lib/venueRoles'
+import {
+  hasOwnerMembership,
+  hasTeamMembership,
+  resolveAuthenticatedHomePath,
+  staffScannerPath,
+} from '@/lib/venueRoles'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -37,7 +42,7 @@ const router = createRouter({
     { path: '/cafes', name: 'cafes', component: CafesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: 'auto' } },
+    { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -54,16 +59,6 @@ async function workspaceHomePath() {
   return resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId)
 }
 
-function shouldUseStaffNav(workspace: ReturnType<typeof useWorkspaceStore>): boolean {
-  if (workspace.isStaffOnlyMember) {
-    return true
-  }
-
-  const venue = workspace.effectiveVenue
-
-  return venue?.membership_role === 'staff'
-}
-
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const workspace = useWorkspaceStore()
@@ -76,29 +71,32 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
   }
 
-  if (auth.isAuthenticated && (to.meta.workspace === true || to.meta.workspace === 'auto')) {
-    await workspace.bootstrap()
+  if (auth.isAuthenticated) {
+    const needsWorkspaceContext = to.meta.workspace === true || to.meta.workspace === 'auto'
 
-    const teamMember = workspace.activeVenues.some(
-      (venue) => !venue.archived && (venue.membership_role === 'owner' || venue.membership_role === 'staff'),
-    )
-
-    if (!teamMember && auth.user?.role !== 'admin') {
-      if (to.name !== 'my-venues' && to.name !== 'onboarding') {
-        return { name: 'onboarding' }
-      }
+    if (needsWorkspaceContext) {
+      await workspace.bootstrap()
     }
 
-    if (to.meta.ownerOnly && shouldUseStaffNav(workspace)) {
-      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    const teamMember = hasTeamMembership(workspace.activeVenues)
+    const ownerMember = hasOwnerMembership(workspace.activeVenues)
+    const home = needsWorkspaceContext
+      ? resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId)
+      : await workspaceHomePath()
+
+    if (needsWorkspaceContext && !teamMember && auth.user?.role !== 'admin') {
+      return { path: home }
     }
 
-    if (to.name === 'rewards' && shouldUseStaffNav(workspace)) {
-      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    if (to.meta.ownerOnly && auth.user?.role !== 'admin' && !ownerMember) {
+      return { path: home }
     }
 
-    if (to.name === 'dashboard' && shouldUseStaffNav(workspace)) {
-      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    const ownerOnboarding =
+      to.name === 'onboarding' || to.name === 'onboarding-create-venue' || to.name === 'my-venues'
+
+    if (ownerOnboarding && auth.user?.role !== 'admin' && !ownerMember && to.query.intent !== 'owner') {
+      return { path: home }
     }
   }
 
