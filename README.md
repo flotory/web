@@ -2,11 +2,11 @@
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
-The MVP focuses on digital stamp cards, venue-specific QR cards, a fast staff scanner, milestone-based progression rewards, multi-venue workspaces, team memberships, and retention analytics.
+The MVP focuses on venue QR onboarding, digital stamp cards, a fast staff scanner, milestone-based progression rewards, multi-venue workspaces, team memberships, Google sign-in, and retention analytics.
 
 ## Stack
 
-- Laravel 12, PHP 8.3+, MySQL, Sanctum, REST APIs, Reverb
+- Laravel 12, PHP 8.3+, MySQL, Sanctum, REST APIs, Reverb, Laravel Socialite (Google)
 - Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
 - Monolith architecture for VPS deployment
 
@@ -20,6 +20,7 @@ Git is the source of truth. The server pulls from GitHub; your Mac runs one depl
 - Redirect: `https://www.flotory.com` → `https://flotory.com`
 - Droplet IP: `64.226.84.118`
 - App path on server: `/var/www/web`
+- GitHub repo: `git@github.com:flotory/web.git`
 
 ### One-time setup
 
@@ -38,7 +39,7 @@ Git is the source of truth. The server pulls from GitHub; your Mac runs one depl
    ```bash
    ssh root@YOUR_IP
    cp /var/www/web/deploy/env.production.example /var/www/web/.env
-   # Edit passwords, APP_URL, domain
+   # Edit passwords, APP_URL, GOOGLE_CLIENT_SECRET, Reverb keys
    SEED_DATABASE=1 /var/www/web/deploy/deploy.sh
    ```
 
@@ -46,6 +47,8 @@ Git is the source of truth. The server pulls from GitHub; your Mac runs one depl
    ```bash
    cp deploy/config.example.sh deploy/config.sh
    ```
+
+See [deploy/DEPLOY.md](deploy/DEPLOY.md) for the full production checklist.
 
 ### Every code change (normal flow)
 
@@ -83,13 +86,20 @@ docker compose up --build
 Open:
 
 - App: http://localhost:8000
-- Vite: http://localhost:5173
-- Reverb WebSocket: ws://localhost:8080
+- Vite HMR (dev): http://localhost:5173
+
+**Important:** For Google OAuth and post-login redirects, set `FRONTEND_URL=http://localhost:8000` in `.env` (the Laravel app URL, not the Vite dev server). OAuth callbacks still use `APP_URL`.
 
 Reset database after schema changes:
 
 ```bash
 docker compose exec app php artisan migrate:fresh --seed
+```
+
+Run pending migrations only:
+
+```bash
+docker compose exec app php artisan migrate --force
 ```
 
 ### Native
@@ -106,6 +116,43 @@ npm run dev
 php artisan serve
 php artisan reverb:start --host=0.0.0.0 --port=8080
 ```
+
+## Google Sign-In
+
+1. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/).
+2. Set authorized redirect URI:
+   - Local: `http://localhost:8000/auth/google/callback`
+   - Production: `https://flotory.com/auth/google/callback`
+3. Add to `.env`:
+   ```env
+   GOOGLE_CLIENT_ID=your-client-id
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+   FRONTEND_URL=http://localhost:8000
+   ```
+4. Run migrations (adds `google_id` / `google_avatar` on `users`).
+
+OAuth preserves onboarding intent:
+
+- **Customer** (from venue QR): returns to loyalty card after sign-in.
+- **Owner** (`intent=owner` from homepage): continues to `/onboarding/create-venue`.
+
+## Onboarding Flows
+
+### Customer (QR scan)
+
+1. Guest opens `/v/{venue-slug}` (public landing with rewards preview).
+2. Taps **Join** → register or Google sign-in.
+3. After auth, auto-joins the venue and opens `/card`.
+
+### Owner (homepage)
+
+1. Clicks **Get started free** → `/register?intent=owner`.
+2. Creates account (email or Google).
+3. 5-step wizard: venue name → category → logo → rewards presets → QR.
+4. Lands on `/dashboard?onboarding=completed` with a success toast.
+
+Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
 
 ## Phone Testing
 
@@ -143,19 +190,25 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 **Owner / staff workspace**
 
 1. Log in as `owner@example.com` or `staff@example.com`
-2. Open **Scanner** (or **My Venues** → Scan at a venue)
+2. Open **Scanner** (header) or **My Venues → Open scanner**
 3. Scan or search for `customer@example.com` and add stars
+4. Download QR from dashboard hero or venue settings
 
 **Customer**
 
 1. Log in as `customer@example.com`
-2. Open **Card** or **Cafes** → join/open Demo Cafe
+2. Open **Card** or visit `/v/demo-cafe` as a guest, then join
 3. Claim an unlocked milestone reward from the journey
 
 **Team**
 
 1. Log in as `owner@example.com`
 2. Open **Team** → invite a new email (new users are created with password `password`)
+
+**QR onboarding (guest)**
+
+1. Open `http://localhost:8000/v/demo-cafe` (no login required to preview)
+2. Register as a new customer and confirm auto-join to Demo Cafe
 
 ## Roles
 
@@ -166,36 +219,40 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 
 ### Per venue (`venue_users.role`)
 
-- **owner** — full venue control, archive venue, manage team
+- **owner** — full venue control, delete venue (soft delete), manage team
 - **manager** — edit venue, rewards, logo, invite staff
 - **staff** — scanner, customers list, staff redemption
 
-Permissions are checked via venue membership, not the global `users.role` field.
+Permissions are checked via venue membership (`VenueAccess`), not the global `users.role` field. Scanner routes require an active `venue_users` row for the target venue.
 
 ## MVP Scope
 
-- Customer registration/login and personal QR loyalty card per venue
-- Multi-venue owner workspace (`/my-venues`)
-- Venue settings, logo upload, archive
+- Guest venue landing page (`/v/:slug`) with public reward preview
+- Customer registration/login (email + Google) with intent-based redirects
+- Owner 5-step onboarding wizard and dashboard success state
+- Customer loyalty card per venue with QR token
+- Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
+- Single-venue-focused dashboard (auto-selects first venue)
+- Venue settings, logo upload, QR download PNG, soft delete
 - Team invite/remove (`/team`)
-- Multi-venue workspace filter (all venues or one venue focus)
-- Staff scanner: add stars only (1–5 or custom)
+- Staff scanner: add stars only (1–5 or custom); venue-scoped authorization
 - Customer search fallback when QR scan fails
 - Customer milestone claim from card/rewards
 - Staff milestone claim (venue-scoped API)
 - Realtime stamp updates on customer devices (Reverb)
-- Dashboard stats per active venue
+- Dashboard stats and guided empty states per active venue
 
 ## Progression And QR Model
 
 - A customer has **one loyalty card per venue** they join (`customers` row per `user_id` + `venue_id`).
 - Each card has its own **QR token** and **progress balance**.
 - Staff scan in the context of **one venue** (`POST /api/venues/{venue}/scanner/stamps`).
+- `VenueAccess::requireAccess` enforces membership before scanner operations.
 - If the QR belongs to another venue, the API rejects the request.
 - Milestones unlock at thresholds and can be claimed once per cycle.
 - Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
 - Customers claim from `/card` or `/rewards`. Staff can also claim via the venue API when needed.
-- Open scanner for a specific venue: `/scanner?venue_id=<id>` without changing workspace filter.
+- Open scanner for a specific venue: `/scanner?venue_id=<id>`.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.
 

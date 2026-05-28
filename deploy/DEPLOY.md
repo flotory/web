@@ -46,6 +46,17 @@ git commit -m "Your change"
 ./deploy/push-prod.sh
 ```
 
+`push-prod.sh` requires a clean working tree (commit first). It pushes `main` to GitHub, then SSHs to the droplet and runs `pull-and-deploy.sh`.
+
+### Post-deploy checks
+
+- https://flotory.com loads the SPA
+- Owner login: `owner@example.com` / `password`
+- Google sign-in (if `GOOGLE_CLIENT_SECRET` is set on the server)
+- Guest venue landing: `https://flotory.com/v/demo-cafe`
+
+If migrations were added locally, they run automatically via `deploy.sh` on the server.
+
 ## Files
 
 | Script | Where | Purpose |
