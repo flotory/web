@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Deploy / update Flotory on the VPS. Run from /var/www/loyalty as root.
+# Deploy / update Flotory on the VPS. Run from /var/www/web as root.
 set -euo pipefail
 
-cd /var/www/loyalty
+cd /var/www/web
 
 if [[ ! -f .env ]]; then
   echo "ERROR: .env missing. Copy deploy/env.production.example to .env and set secrets."

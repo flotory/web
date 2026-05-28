@@ -2,7 +2,7 @@
 # Run on the VPS after git is configured. Pulls latest code and deploys.
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/var/www/loyalty}"
+APP_DIR="${APP_DIR:-/var/www/web}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 
 cd "${APP_DIR}"

@@ -14,9 +14,16 @@ The MVP focuses on digital stamp cards, venue-specific QR cards, a fast staff sc
 
 Git is the source of truth. The server pulls from GitHub; your Mac runs one deploy command.
 
+### Current production
+
+- Domain: `https://flotory.com`
+- Redirect: `https://www.flotory.com` → `https://flotory.com`
+- Droplet IP: `64.226.84.118`
+- App path on server: `/var/www/web`
+
 ### One-time setup
 
-1. **Server bootstrap** (already done on `loyalty-prod`):
+1. **Server bootstrap**:
    ```bash
    ssh root@YOUR_IP 'bash -s' < deploy/setup-server.sh
    ```
@@ -30,9 +37,9 @@ Git is the source of truth. The server pulls from GitHub; your Mac runs one depl
 3. **Production `.env` on the server** (only once):
    ```bash
    ssh root@YOUR_IP
-   cp /var/www/loyalty/deploy/env.production.example /var/www/loyalty/.env
+   cp /var/www/web/deploy/env.production.example /var/www/web/.env
    # Edit passwords, APP_URL, domain
-   SEED_DATABASE=1 /var/www/loyalty/deploy/deploy.sh
+   SEED_DATABASE=1 /var/www/web/deploy/deploy.sh
    ```
 
 4. **Local config**:
@@ -57,11 +64,12 @@ That script:
 Manual server deploy (without pushing from Mac):
 
 ```bash
-ssh root@YOUR_IP 'cd /var/www/loyalty && ./deploy/pull-and-deploy.sh'
+ssh root@YOUR_IP 'cd /var/www/web && ./deploy/pull-and-deploy.sh'
 ```
 
 - App: port 80 via Nginx → Laravel on `127.0.0.1:8000`  
-- HTTPS when you have a domain: `certbot --nginx -d yourdomain.com`
+- Reverb/WebSocket proxy: `/app/` → `127.0.0.1:8080`
+- HTTPS certs: Let's Encrypt via Certbot (auto-renew with `certbot.timer`)
 
 ## Local Setup
 

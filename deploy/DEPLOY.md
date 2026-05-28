@@ -10,16 +10,16 @@ Mac: edit code → git commit → ./deploy/push-prod.sh
                          Droplet: git pull → deploy.sh
 ```
 
-## One-time (remaining step)
+## One-time setup
 
 Add the server deploy key to GitHub:
 
-1. Open https://github.com/narekdivdaryan/loyalty/settings/keys
-2. **Add deploy key** → Title: `loyalty-prod`
+1. Open https://github.com/flotory/web/settings/keys
+2. **Add deploy key** → Title: `flotory-prod`
 3. Key (from server):
 
 ```bash
-ssh root@159.89.111.79 'cat /root/.ssh/loyalty_deploy.pub'
+ssh root@64.226.84.118 'cat /root/.ssh/flotory_deploy.pub'
 ```
 
 4. Enable **Allow write access** only if you need the server to push (not required).
@@ -27,7 +27,7 @@ ssh root@159.89.111.79 'cat /root/.ssh/loyalty_deploy.pub'
 5. Finish git on the server:
 
 ```bash
-ssh root@159.89.111.79 'bash /var/www/loyalty/deploy/setup-git-deploy.sh'
+ssh root@64.226.84.118 'bash /var/www/web/deploy/setup-git-deploy.sh'
 ```
 
 6. Commit deploy tooling and push from your Mac:
@@ -56,4 +56,12 @@ git commit -m "Your change"
 | `smoke.sh` | Server | Quick post-deploy HTTP health checks |
 | `setup-git-deploy.sh` | Server | Deploy key + git init (once) |
 | `setup-server.sh` | Server | Docker/Nginx/UFW (once) |
-| `config.sh` | Mac (gitignored) | Droplet IP/user |
+| `config.sh` | Mac (gitignored) | Droplet IP/user/app path |
+
+## Current production values
+
+- Repo: `git@github.com:flotory/web.git`
+- Host: `64.226.84.118`
+- App dir: `/var/www/web`
+- Domain: `https://flotory.com`
+- `www` redirect: `https://www.flotory.com` → `https://flotory.com`

@@ -32,13 +32,13 @@ ufw allow 443/tcp
 ufw --force enable
 
 echo "==> App directory..."
-mkdir -p /var/www/loyalty
-chown -R root:root /var/www/loyalty
+mkdir -p /var/www/web
+chown -R root:root /var/www/web
 
 echo "==> Scheduler cron (Laravel)..."
-cat > /etc/cron.d/loyalty <<'CRON'
-* * * * * root cd /var/www/loyalty && docker compose -f docker-compose.prod.yml exec -T app php artisan schedule:run >> /var/log/loyalty-schedule.log 2>&1
+cat > /etc/cron.d/flotory <<'CRON'
+* * * * * root cd /var/www/web && docker compose -f docker-compose.prod.yml exec -T app php artisan schedule:run >> /var/log/flotory-schedule.log 2>&1
 CRON
-chmod 644 /etc/cron.d/loyalty
+chmod 644 /etc/cron.d/flotory
 
-echo "==> Done. Next: sync code to /var/www/loyalty and run deploy/deploy.sh"
+echo "==> Done. Next: sync code to /var/www/web and run deploy/deploy.sh"
