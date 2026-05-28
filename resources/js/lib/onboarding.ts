@@ -52,6 +52,18 @@ export function buildRegisterRedirectWithVenue(slug: string, nextPath = '/card')
   return `/register?${params.toString()}`
 }
 
+export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/card'): string {
+  const params = new URLSearchParams({
+    redirect: nextPath,
+  })
+
+  if (venueSlug) {
+    params.set('venue_slug', venueSlug)
+  }
+
+  return `/auth/google/redirect?${params.toString()}`
+}
+
 export async function fetchVenueLanding(slug: string): Promise<VenueLandingPayload> {
   return api<VenueLandingPayload>(`/public/venues/${encodeURIComponent(slug)}/landing`)
 }

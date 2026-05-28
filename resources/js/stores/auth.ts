@@ -55,6 +55,16 @@ export const useAuthStore = defineStore('auth', {
         this.booted = true
       }
     },
+    async loginWithToken(token: string) {
+      this.token = token
+      this.booted = false
+      localStorage.setItem('auth_token', token)
+      await this.fetchUser()
+
+      if (!this.user) {
+        throw new Error('OAuth session could not be initialized')
+      }
+    },
     async logout() {
       if (this.token) {
         await api<void>('/auth/logout', { method: 'POST' }).catch(() => undefined)
