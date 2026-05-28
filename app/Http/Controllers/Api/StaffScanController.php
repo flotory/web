@@ -15,7 +15,7 @@ class StaffScanController extends Controller
 {
     public function lookup(AddStampRequest $request, Venue $venue, LoyaltyStampService $loyalty): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         $customer = Customer::query()
             ->where('venue_id', $venue->id)
@@ -40,7 +40,7 @@ class StaffScanController extends Controller
 
     public function addStamp(AddStampRequest $request, Venue $venue, LoyaltyStampService $loyalty): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         $customer = Customer::query()
             ->where('venue_id', $venue->id)

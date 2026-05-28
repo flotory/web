@@ -247,7 +247,7 @@ class LoyaltyStampService
 
         if ($recentVisitExists) {
             throw ValidationException::withMessages([
-                'qr_token' => 'This loyalty card was stamped just now. Please wait a few seconds before adding more stars.',
+                'qr_token' => 'This loyalty card was stamped just now. Please wait a few seconds before adding more stamps.',
             ]);
         }
     }

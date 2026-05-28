@@ -93,6 +93,7 @@ const title = ref('')
 const description = ref('')
 const requiredStamps = ref(5)
 const imageFile = ref<File | null>(null)
+const imagePreviewUrl = ref<string | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
 const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
@@ -118,7 +119,7 @@ const canEditRewards = computed(() => {
     return true
   }
   const role = venue.value?.membership_role
-  return role === 'owner' || role === 'manager'
+  return role === 'owner'
 })
 
 const sortedOwnerRewards = computed(() =>
@@ -148,11 +149,19 @@ function showSuccess(message: string) {
   }, 3500)
 }
 
+function revokeImagePreview() {
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+    imagePreviewUrl.value = null
+  }
+}
+
 function resetForm() {
   title.value = ''
   description.value = ''
   requiredStamps.value = suggestedNextStamp()
   imageFile.value = null
+  revokeImagePreview()
   removeImage.value = false
   editingReward.value = null
   showTemplatePicker.value = false
@@ -177,6 +186,7 @@ function openImagePicker() {
 
 function clearImage() {
   imageFile.value = null
+  revokeImagePreview()
   removeImage.value = true
   if (imageInput.value) {
     imageInput.value.value = ''
@@ -553,9 +563,11 @@ function refreshIfVisible() {
 
 function onImageChange(event: Event) {
   const input = event.target as HTMLInputElement
+  revokeImagePreview()
   imageFile.value = input.files?.[0] ?? null
   if (imageFile.value) {
     removeImage.value = false
+    imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
     showSuccess(`Image selected: ${imageFile.value.name}`)
   }
 }
@@ -585,6 +597,7 @@ onUnmounted(() => {
   window.removeEventListener('focus', refreshIfVisible)
   document.removeEventListener('visibilitychange', refreshIfVisible)
   window.clearInterval(refreshTimer)
+  revokeImagePreview()
   if (successTimer) {
     window.clearTimeout(successTimer)
   }
@@ -698,70 +711,102 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           </button>
         </div>
 
-        <form class="grid gap-4 p-5 sm:grid-cols-2 sm:p-6" @submit.prevent="saveReward">
-          <div>
-            <label class="text-sm font-bold text-slate-600" for="reward-title">Reward title</label>
-            <input
-              id="reward-title"
-              ref="titleInput"
-              v-model="title"
-              required
-              class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white"
-              :class="fieldErrors.title ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
-              placeholder="Free signature coffee"
-            >
-            <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.title }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock after visits</label>
-            <input
-              id="reward-stamps"
-              v-model.number="requiredStamps"
-              required
-              min="1"
-              max="100"
-              type="number"
-              class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white"
-              :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
-            >
-            <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="text-sm font-bold text-slate-600" for="reward-description">Emotional description</label>
-            <textarea
-              id="reward-description"
-              v-model="description"
-              rows="3"
-              class="mt-2 w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:bg-white"
-              :class="fieldErrors.description ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
-              placeholder="Reward regular guests with a free signature coffee they'll talk about."
-            />
-            <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.description }}</p>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="text-sm font-bold text-slate-600">Reward visual</label>
-            <p class="mt-1 text-xs text-slate-400">Upload a photo or we'll generate a premium fallback automatically.</p>
-            <div v-if="editingReward?.image && !removeImage && !imageFile" class="mt-3 overflow-hidden rounded-2xl border border-slate-200">
-              <img :src="editingReward.image" alt="" class="h-36 w-full object-cover">
+        <form class="space-y-6 p-5 sm:p-6" @submit.prevent="saveReward">
+          <section class="space-y-4">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">1. Reward details</p>
+            <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_132px]">
+              <div>
+                <label class="text-sm font-bold text-slate-600" for="reward-title">Reward title</label>
+                <input
+                  id="reward-title"
+                  ref="titleInput"
+                  v-model="title"
+                  required
+                  class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white"
+                  :class="fieldErrors.title ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                  placeholder="Free signature coffee"
+                >
+                <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.title }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock after</label>
+                <div class="relative mt-2">
+                  <input
+                    id="reward-stamps"
+                    v-model.number="requiredStamps"
+                    required
+                    min="1"
+                    max="100"
+                    type="number"
+                    class="h-12 w-full rounded-2xl border bg-slate-50 px-4 pr-14 text-sm font-medium outline-none focus:bg-white"
+                    :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                  >
+                  <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">visits</span>
+                </div>
+                <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
+              </div>
             </div>
-            <div class="mt-3 flex flex-wrap items-center gap-2">
-              <AppButton type="button" variant="secondary" size="sm" @click="openImagePicker">
-                {{ imageFile ? 'Replace image' : 'Upload image' }}
-              </AppButton>
-              <AppButton v-if="imageFile || (editingReward?.image && !removeImage)" type="button" variant="ghost" size="sm" @click="clearImage">
-                Remove
-              </AppButton>
-              <p class="text-sm font-semibold text-slate-500">
-                {{ imageFile?.name ?? (removeImage ? 'Image will be removed' : 'Auto illustration if empty') }}
-              </p>
+            <div>
+              <label class="text-sm font-bold text-slate-600" for="reward-description">Guest-facing description</label>
+              <textarea
+                id="reward-description"
+                v-model="description"
+                rows="2"
+                class="mt-2 w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:bg-white"
+                :class="fieldErrors.description ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                placeholder="Reward regular guests with a free signature coffee they'll talk about."
+              />
+              <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.description }}</p>
             </div>
-            <p v-if="fieldErrors.image" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.image }}</p>
-          </div>
-          <div class="flex flex-wrap gap-2 sm:col-span-2">
+          </section>
+
+          <section class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">2. Reward visual</p>
+            <p class="mt-1 text-sm text-slate-500">Guests see this on their loyalty card. JPG or PNG, max 5 MB.</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
+              <div
+                class="reward-media-frame reward-media-frame--editor rounded-2xl border border-slate-200 shadow-inner"
+                :class="(imagePreviewUrl || (editingReward?.image && !removeImage && !imageFile)) ? 'bg-slate-100' : rewardFallbackStyle(title || 'reward')"
+              >
+                <img
+                  v-if="imagePreviewUrl || (editingReward?.image && !removeImage && !imageFile)"
+                  :src="imagePreviewUrl ?? editingReward?.image ?? ''"
+                  alt=""
+                  class="reward-media-img"
+                >
+                <div v-else class="reward-media-fallback">
+                  <p class="text-3xl">{{ rewardIcon(title || 'reward') }}</p>
+                  <p class="mt-2 text-[10px] font-bold uppercase tracking-wide text-white/80">Auto illustration</p>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3">
+                <p class="text-sm font-semibold text-slate-700">
+                  {{ imageFile?.name ?? (removeImage ? 'Image will be removed on save' : (editingReward?.image ? 'Current milestone image' : 'No image yet — fallback will be used')) }}
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <AppButton type="button" variant="secondary" size="sm" @click="openImagePicker">
+                    {{ imageFile ? 'Replace image' : 'Upload image' }}
+                  </AppButton>
+                  <AppButton
+                    v-if="imageFile || (editingReward?.image && !removeImage)"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    @click="clearImage"
+                  >
+                    Remove
+                  </AppButton>
+                </div>
+                <p v-if="fieldErrors.image" class="text-xs font-semibold text-red-600">{{ fieldErrors.image }}</p>
+              </div>
+            </div>
+          </section>
+
+          <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+            <AppButton type="button" variant="ghost" :disabled="saving" @click="closeCreateForm">Cancel</AppButton>
             <AppButton type="submit" :disabled="saving">
               {{ saving ? 'Saving...' : (editingReward ? 'Save changes' : 'Publish milestone') }}
             </AppButton>
-            <AppButton type="button" variant="ghost" :disabled="saving" @click="closeCreateForm">Cancel</AppButton>
           </div>
         </form>
       </div>
@@ -815,15 +860,18 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
               :class="{ 'milestone-card--paused': !reward.active }"
             >
               <div class="relative">
-                <div v-if="reward.image" class="h-40 overflow-hidden">
-                  <img :src="reward.image" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]">
-                </div>
-                <div v-else class="relative h-40 overflow-hidden px-5 py-4 text-white" :class="rewardFallbackStyle(reward.title)">
-                  <div class="milestone-shimmer pointer-events-none absolute inset-0 opacity-30" />
-                  <p class="relative text-4xl">{{ rewardIcon(reward.title) }}</p>
-                  <p class="relative mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                    {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
-                  </p>
+                <div
+                  class="reward-media-frame"
+                  :class="reward.image ? 'bg-slate-100' : rewardFallbackStyle(reward.title)"
+                >
+                  <img v-if="reward.image" :src="reward.image" alt="" class="reward-media-img milestone-card-img">
+                  <div v-else class="reward-media-fallback">
+                    <div class="milestone-shimmer pointer-events-none absolute inset-0 opacity-30" />
+                    <p class="relative text-4xl">{{ rewardIcon(reward.title) }}</p>
+                    <p class="relative mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                      {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
+                    </p>
+                  </div>
                 </div>
                 <div class="absolute left-3 top-3 flex flex-wrap gap-2">
                   <span class="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
@@ -983,13 +1031,13 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           class="customer-milestone cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           @click="openCustomerReward(rewards.find((item) => item.id === milestone.id))"
         >
-          <div v-if="milestone.image" class="h-36 overflow-hidden">
-            <img :src="milestone.image" alt="" class="h-full w-full object-cover">
-          </div>
-          <div v-else class="flex h-36 items-end px-5 py-4 text-white" :class="rewardFallbackStyle(milestone.title)">
-            <div>
-              <p class="text-3xl">{{ rewardIcon(milestone.title) }}</p>
-              <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/80">{{ milestone.required_stamps }} visits</p>
+          <div class="reward-media-frame" :class="milestone.image ? 'bg-slate-100' : rewardFallbackStyle(milestone.title)">
+            <img v-if="milestone.image" :src="milestone.image" alt="" class="reward-media-img">
+            <div v-else class="reward-media-fallback items-end px-5 py-4">
+              <div>
+                <p class="text-3xl">{{ rewardIcon(milestone.title) }}</p>
+                <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/80">{{ milestone.required_stamps }} visits</p>
+              </div>
             </div>
           </div>
           <div class="p-5">
@@ -1079,9 +1127,9 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                 class="rounded-2xl border border-white/10 bg-white/5 p-3"
               >
                 <div class="flex items-center gap-3">
-                  <span class="grid size-10 place-items-center rounded-xl text-lg" :class="reward.image ? '' : rewardFallbackStyle(reward.title)">
-                    <img v-if="reward.image" :src="reward.image" alt="" class="size-full rounded-xl object-cover">
-                    <span v-else>{{ rewardIcon(reward.title) }}</span>
+                  <span class="reward-media-frame reward-media-frame--thumb rounded-xl" :class="reward.image ? 'bg-slate-800' : rewardFallbackStyle(reward.title)">
+                    <img v-if="reward.image" :src="reward.image" alt="" class="reward-media-img">
+                    <span v-else class="reward-media-fallback text-lg">{{ rewardIcon(reward.title) }}</span>
                   </span>
                   <div class="min-w-0 flex-1">
                     <p class="truncate font-bold text-white">{{ reward.title }}</p>
@@ -1137,6 +1185,58 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
   top: 5.5rem;
   height: 2px;
   background: linear-gradient(90deg, rgb(99 102 241 / 0.2), rgb(34 211 238 / 0.5), rgb(99 102 241 / 0.2));
+}
+
+.reward-media-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.reward-media-frame--editor {
+  width: 180px;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.reward-media-frame--thumb {
+  width: 2.5rem;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.reward-media-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+}
+
+.milestone-card:hover .milestone-card-img {
+  transform: scale(1.03);
+}
+
+.milestone-card-img {
+  transition: transform 0.45s ease;
+}
+
+.reward-media-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  color: #fff;
 }
 
 .milestone-card--paused {

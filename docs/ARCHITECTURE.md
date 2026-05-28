@@ -44,7 +44,7 @@ routes/
 |-------|---------|
 | `User` | Login identity. Global role: `admin` or `customer`. Optional `google_id`, `google_avatar`. |
 | `Venue` | Hospitality workspace (cafe, bar, restaurant). `owner_user_id`, soft deletes, profile fields. |
-| `VenueUser` | Membership pivot: `venue_id`, `user_id`, `role` (`owner`, `manager`, `staff`). |
+| `VenueUser` | Membership pivot: `venue_id`, `user_id`, `role` (`owner`, `staff`). |
 | `Customer` | One user’s loyalty card at one venue: `qr_token`, `stamps`. |
 | `Reward` | Venue milestone definitions (`required_stamps`, optional description/image, `active`). |
 | `RewardUnlock` | Per-customer milestone unlock state for each cycle (including claim status). |
@@ -62,16 +62,15 @@ Global (users.role)
   customer  → default for everyone (including venue owners and staff)
 
 Venue-scoped (venue_users.role)
-  owner     → full venue + team + soft delete
-  manager   → edit venue, rewards, logo, invite staff
-  staff     → scanner, customers, staff redemption
+  owner     → dashboard, rewards, analytics, settings, team, venues, scanner
+  staff     → scanner, customers (read), staff redemption
 ```
 
 Authorization uses `App\Support\VenueAccess`:
 
 - Platform admin bypasses membership checks.
 - Otherwise require a `venue_users` row for the target venue.
-- Optional role list: e.g. `['owner', 'manager']` for team management.
+- Optional role list: e.g. `['owner']` for team management.
 - Scanner and venue dashboard APIs call `requireAccess` before processing.
 
 Workspace selection auto-selects the first active venue when none is chosen (MVP single-venue UX). The venue filter no longer exposes an “all venues” aggregate view on dashboard/customers.
@@ -137,7 +136,7 @@ Owners manage venues from `/my-venues`.
 2. Choose star amount (1–5 preset or custom 1–100).
 3. Scan QR or use customer search fallback.
 4. `POST /api/venues/{venue}/scanner/stamps` with `qr_token` and `stamps`.
-5. `VenueAccess::requireAccess($user, $venue, ['owner', 'manager', 'staff'])`.
+5. `VenueAccess::requireAccess($user, $venue, ['owner', 'staff'])`.
 6. `LoyaltyStampService::addStamp()` updates stamps, creates `Visit` with `created_by`, broadcasts `StampAdded`.
 
 Duplicate scan guard: same card cannot be stamped again within **5 seconds**.
@@ -151,7 +150,7 @@ Duplicate scan guard: same card cannot be stamped again within **5 seconds**.
 ### Staff Claims Milestone
 
 1. `POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem`
-2. Requires venue membership (`owner`, `manager`, `staff`).
+2. Requires venue membership (`owner`, `staff`).
 
 ### Realtime
 

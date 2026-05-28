@@ -58,7 +58,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('role')->index(); // owner | manager | staff
+            $table->string('role')->index(); // owner | staff
             $table->timestamps();
 
             $table->unique(['venue_id', 'user_id']);

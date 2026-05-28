@@ -108,7 +108,7 @@ class VenueController extends Controller
 
     public function customers(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         return response()->json([
             'customers' => $venue->customers()
@@ -121,7 +121,7 @@ class VenueController extends Controller
 
     public function show(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         return response()->json([
             'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
@@ -161,7 +161,7 @@ class VenueController extends Controller
 
     public function update(StoreRestaurantRequest $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         $venue->update([
             'name' => $request->string('name')->toString(),
@@ -180,7 +180,7 @@ class VenueController extends Controller
 
     public function uploadLogo(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         $validated = $request->validate([
             'logo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
@@ -207,7 +207,7 @@ class VenueController extends Controller
 
     public function destroyLogo(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         $this->deleteLocalLogo($venue);
 
@@ -238,7 +238,7 @@ class VenueController extends Controller
             ])->save();
         }
 
-        return response()->noContent();
+        return response()->json(status: 204);
     }
 
     public function select(Request $request, Venue $venue): JsonResponse

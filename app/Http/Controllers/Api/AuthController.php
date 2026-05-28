@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -59,5 +60,24 @@ class AuthController extends Controller
         $request->user()?->currentAccessToken()?->delete();
 
         return response()->json(status: 204);
+    }
+
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! Hash::check($request->string('current_password')->toString(), $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => 'Your current password is incorrect.',
+            ]);
+        }
+
+        $user->forceFill([
+            'password' => $request->string('password')->toString(),
+        ])->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
+        ]);
     }
 }

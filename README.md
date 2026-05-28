@@ -220,7 +220,6 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 ### Per venue (`venue_users.role`)
 
 - **owner** — full venue control, delete venue (soft delete), manage team
-- **manager** — edit venue, rewards, logo, invite staff
 - **staff** — scanner, customers list, staff redemption
 
 Permissions are checked via venue membership (`VenueAccess`), not the global `users.role` field. Scanner routes require an active `venue_users` row for the target venue.

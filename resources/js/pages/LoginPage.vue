@@ -8,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
+import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -18,8 +19,8 @@ const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
 
-const email = ref('customer@example.com')
-const password = ref('password')
+const email = ref('')
+const password = ref('')
 const loading = ref(false)
 const oauthLoading = ref(false)
 const error = ref('')
@@ -28,6 +29,7 @@ const landing = ref<VenueLandingPayload | null>(null)
 const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
 const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
+const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 
 function continueWithGoogle() {
   window.location.href = buildGoogleAuthUrlWithIntent(venueSlug.value, postAuthPath.value, authIntent.value)
@@ -138,10 +140,20 @@ onMounted(() => {
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <AppBadge tone="blue">{{ venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+        <p class="font-black">Staff invite</p>
+        <p class="mt-1 font-semibold text-amber-900">
+          Your manager already created your account. <strong>Log in below</strong> — do not use Create account.
+        </p>
+        <p class="mt-2 text-xs font-semibold text-amber-800">
+          First login: use the one-time password from your manager, then open <strong>Account</strong> to choose your own password.
+        </p>
+      </div>
+
+      <AppBadge tone="blue">{{ isStaffInvite ? 'Staff access' : venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ isStaffInvite ? 'Log in to open scanner' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-500">
-        {{ venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
+        {{ isStaffInvite ? 'After login, set your own password on Account, then use the scanner.' : venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
       </p>
 
       <AppButton
@@ -170,11 +182,11 @@ onMounted(() => {
       <form class="mt-6 space-y-4" @submit.prevent="submit">
         <div>
           <label class="text-sm font-bold text-slate-600" for="email">Email</label>
-          <input id="email" v-model="email" type="email" autocomplete="email" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="email" v-model="email" type="email" autocomplete="email" :class="authFieldClass">
         </div>
         <div>
           <label class="text-sm font-bold text-slate-600" for="password">Password</label>
-          <input id="password" v-model="password" type="password" autocomplete="current-password" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="password" v-model="password" type="password" autocomplete="current-password" :class="authFieldClass" :placeholder="isStaffInvite ? 'Temporary password from your manager' : undefined">
         </div>
         <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
         <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
@@ -182,7 +194,7 @@ onMounted(() => {
         </AppButton>
       </form>
 
-      <p class="mt-5 text-center text-sm text-slate-500">
+      <p v-if="!isStaffInvite" class="mt-5 text-center text-sm text-slate-500">
         New here?
         <RouterLink
           :to="venueSlug
@@ -194,6 +206,10 @@ onMounted(() => {
         >
           Create an account
         </RouterLink>
+      </p>
+      <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-slate-500">
+        Forgot your password?
+        <span class="block mt-1 text-slate-600">Ask your manager to tap <strong>Reset password</strong> on Team — they will share a new one-time password.</span>
       </p>
       </AppCard>
     </section>

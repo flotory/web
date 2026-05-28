@@ -15,7 +15,7 @@ class VenueStaffRedemptionController extends Controller
 {
     public function redeem(Request $request, Venue $venue, Customer $customer, Reward $reward, LoyaltyStampService $loyalty): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
         abort_unless($customer->venue_id === $venue->id, 404);
         abort_unless($reward->venue_id === $venue->id, 404);
 

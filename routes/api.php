@@ -18,6 +18,7 @@ Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLand
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/broadcasting/auth', BroadcastAuthController::class);
 
@@ -51,4 +52,5 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue}/team/invite', [VenueTeamController::class, 'invite']);
     Route::patch('/venues/{venue}/team/{user}', [VenueTeamController::class, 'update']);
     Route::delete('/venues/{venue}/team/{user}', [VenueTeamController::class, 'destroy']);
+    Route::post('/venues/{venue}/team/{user}/reset-password', [VenueTeamController::class, 'resetPassword']);
 });

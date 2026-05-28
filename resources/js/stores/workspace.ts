@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { api } from '@/lib/api'
+import { isStaffOnlyMember, isVenueOwner, isVenueStaff } from '@/lib/venueRoles'
 import type { Venue } from '@/types'
 
 const FILTER_KEY = 'loyalty_venue_filter'
@@ -32,6 +33,32 @@ export const useWorkspaceStore = defineStore('workspace', {
       const active = state.venues.filter((venue) => !venue.archived)
 
       return active.length === 1 ? active[0].id : null
+    },
+    effectiveVenue(state): Venue | null {
+      const id = state.filterVenueId !== null
+        ? state.filterVenueId
+        : (() => {
+            const active = state.venues.filter((venue) => !venue.archived)
+            return active.length === 1 ? active[0].id : null
+          })()
+
+      if (id === null) {
+        return null
+      }
+
+      return state.venues.find((venue) => !venue.archived && venue.id === id) ?? null
+    },
+    isStaffOnlyMember(): boolean {
+      return isStaffOnlyMember(this.activeVenues)
+    },
+    isStaffAtEffectiveVenue(): boolean {
+      return isVenueStaff(this.effectiveVenue)
+    },
+    isOwnerAtEffectiveVenue(): boolean {
+      return isVenueOwner(this.effectiveVenue)
+    },
+    usesStaffNav(): boolean {
+      return this.isStaffOnlyMember || this.isStaffAtEffectiveVenue
     },
   },
   actions: {

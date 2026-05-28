@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
+import { staffScannerPath } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -28,25 +29,46 @@ const isWorkspace = computed(() => {
   return false
 })
 
-const homePath = computed(() => (isWorkspace.value ? '/dashboard' : '/card'))
+const homePath = computed(() => {
+  if (!isWorkspace.value) {
+    return '/card'
+  }
 
-const nav = computed(() =>
-  isWorkspace.value
-    ? [
-        { label: 'Dashboard', to: '/dashboard', icon: '◈' },
-        { label: 'My Venues', to: '/my-venues', icon: '⌂' },
-        { label: 'Customers', to: '/customers', icon: '◎' },
-        { label: 'Rewards', to: '/rewards', icon: '★' },
-        { label: 'Analytics', to: '/analytics', icon: '◔' },
-        { label: 'Team', to: '/team', icon: '◧' },
-        { label: 'Settings', to: '/settings', icon: '⚙' },
-      ]
-    : [
-        { label: 'Card', to: '/card', icon: '◍' },
-        { label: 'Cafes', to: '/cafes', icon: '⌂' },
-        { label: 'Rewards', to: '/rewards', icon: '★' },
-      ],
-)
+  if (workspace.usesStaffNav) {
+    return staffScannerPath(workspace.effectiveVenueId)
+  }
+
+  return '/dashboard'
+})
+
+const nav = computed(() => {
+  if (!isWorkspace.value) {
+    return [
+      { label: 'Card', to: '/card', icon: '◍' },
+      { label: 'Cafes', to: '/cafes', icon: '⌂' },
+      { label: 'Rewards', to: '/rewards', icon: '★' },
+    ]
+  }
+
+  if (workspace.usesStaffNav) {
+    return [
+      { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
+      { label: 'Customers', to: '/customers', icon: '◍' },
+      { label: 'Account', to: '/account', icon: '⚙' },
+    ]
+  }
+
+  return [
+    { label: 'Dashboard', to: '/dashboard', icon: '◈' },
+    { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
+    { label: 'My Venues', to: '/my-venues', icon: '⌂' },
+    { label: 'Customers', to: '/customers', icon: '◍' },
+    { label: 'Rewards', to: '/rewards', icon: '★' },
+    { label: 'Analytics', to: '/analytics', icon: '◔' },
+    { label: 'Team', to: '/team', icon: '◧' },
+    { label: 'Settings', to: '/settings', icon: '⚙' },
+  ]
+})
 
 watch(
   () => auth.isAuthenticated,
@@ -73,7 +95,7 @@ async function logout() {
       <RouterLink :to="homePath" class="block px-3 py-3">
         <FlotoryLogo size="lg" />
       </RouterLink>
-      <div class="mt-4 px-2">
+      <div v-if="!workspace.usesStaffNav || workspace.activeVenues.length > 1" class="mt-4 px-2">
         <VenueFilter />
       </div>
       <nav class="mt-6 space-y-1">
@@ -83,12 +105,12 @@ async function logout() {
           :to="item.to"
           :class="[
             'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition',
-            route.path === item.to
+            route.path === item.to || (item.routeName && route.name === item.routeName)
               ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/20'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 hover:shadow-sm',
           ]"
         >
-          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="route.path === item.to && 'bg-white/20 text-white'">{{ item.icon }}</span>
+          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="(route.path === item.to || (item.routeName && route.name === item.routeName)) && 'bg-white/20 text-white'">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
@@ -113,7 +135,7 @@ async function logout() {
             :to="item.to"
             :class="[
               'rounded-full px-4 py-2 text-sm font-semibold transition',
-              route.path === item.to ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-950',
+              route.path === item.to || (item.routeName && route.name === item.routeName) ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-950',
             ]"
           >
             {{ item.label }}
@@ -139,7 +161,7 @@ async function logout() {
         :to="item.to"
         :class="[
           'min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
-          route.path === item.to ? 'bg-white text-slate-950' : 'text-white/65',
+          route.path === item.to || (item.routeName && route.name === item.routeName) ? 'bg-white text-slate-950' : 'text-white/65',
         ]"
       >
         {{ item.label }}

@@ -8,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
+import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -26,6 +27,30 @@ const landing = ref<VenueLandingPayload | null>(null)
 const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
 const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
+const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
+
+const loginLink = computed(() => {
+  const query: Record<string, string> = {}
+  if (venueSlug.value) {
+    query.venue_slug = venueSlug.value
+  }
+  if (route.query.redirect && typeof route.query.redirect === 'string') {
+    query.redirect = route.query.redirect
+  }
+  if (isStaffInvite.value) {
+    query.staff = '1'
+  }
+  if (typeof route.query.email === 'string') {
+    query.email = route.query.email
+  }
+  if (authIntent.value === 'owner') {
+    query.intent = 'owner'
+  }
+
+  const params = new URLSearchParams(query)
+
+  return params.toString() ? `/login?${params.toString()}` : '/login'
+})
 
 function continueWithGoogle() {
   window.location.href = buildGoogleAuthUrlWithIntent(venueSlug.value, postAuthPath.value, authIntent.value)
@@ -56,13 +81,26 @@ async function submit() {
 
     await router.push(postAuthPath.value)
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Unable to create your account.'
+    if (exception instanceof ApiError && exception.message.toLowerCase().includes('already been taken')) {
+      error.value = 'This email already has an account — usually from a staff invite. Log in instead.'
+    } else {
+      error.value = exception instanceof ApiError ? exception.message : 'Unable to create your account.'
+    }
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
+  if (isStaffInvite.value) {
+    void router.replace(loginLink.value)
+    return
+  }
+
+  if (typeof route.query.email === 'string') {
+    email.value = route.query.email
+  }
+
   if (venueSlug.value) {
     fetchVenueLanding(venueSlug.value)
       .then((payload) => {
@@ -150,17 +188,22 @@ onMounted(() => {
       <form class="mt-6 space-y-4" @submit.prevent="submit">
         <div>
           <label class="text-sm font-bold text-slate-600" for="name">Name</label>
-          <input id="name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="name" v-model="name" required :class="authFieldClass">
         </div>
         <div>
           <label class="text-sm font-bold text-slate-600" for="email">Email</label>
-          <input id="email" v-model="email" required type="email" autocomplete="email" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
         </div>
         <div>
           <label class="text-sm font-bold text-slate-600" for="password">Password</label>
-          <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+          <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
         </div>
-        <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+        <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+          {{ error }}
+          <RouterLink v-if="error.includes('Log in')" :to="loginLink" class="mt-2 block font-black text-red-900 underline">
+            Go to log in
+          </RouterLink>
+        </p>
         <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
           {{ loading ? 'Creating account...' : 'Create account' }}
         </AppButton>
@@ -168,14 +211,7 @@ onMounted(() => {
 
       <p class="mt-5 text-center text-sm text-slate-500">
         Already have an account?
-        <RouterLink
-          :to="venueSlug
-            ? `/login?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}`
-            : authIntent === 'owner'
-              ? '/login?intent=owner'
-              : '/login'"
-          class="font-bold text-slate-950"
-        >
+        <RouterLink :to="loginLink" class="font-bold text-slate-950">
           Log in
         </RouterLink>
       </p>

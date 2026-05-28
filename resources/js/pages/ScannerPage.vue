@@ -157,10 +157,10 @@ async function addStamp() {
     applyScanResponse(response)
     status.value = 'success'
     const addedStamps = response.added_stamps ?? selectedStampAmount.value
-    const starLabel = addedStamps === 1 ? 'star' : 'stars'
+    const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
     message.value = response.available_rewards.length
-      ? `${addedStamps} ${starLabel} added. ${response.customer.user?.name ?? 'Customer'} now has ${response.customer.stamps} stamps. Reward is unlocked.`
-      : `${addedStamps} ${starLabel} added. ${response.customer.user?.name ?? 'Customer'} now has ${response.customer.stamps} stamps.`
+      ? `${addedStamps} ${stampLabel} added. ${response.customer.user?.name ?? 'Customer'} now has ${response.customer.stamps} stamps. Reward is unlocked.`
+      : `${addedStamps} ${stampLabel} added. ${response.customer.user?.name ?? 'Customer'} now has ${response.customer.stamps} stamps.`
     scheduleReset(response.available_rewards.length ? 2300 : 1700)
   } catch (exception) {
     status.value = 'error'
@@ -200,7 +200,7 @@ watch(scannerVenueId, () => {
       <div class="mb-5">
         <AppBadge tone="green">Staff scanner</AppBadge>
         <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Scan loyalty QR</h1>
-        <p class="mt-2 text-slate-500">{{ venue ? `Add loyalty stars at ${venue.name}. Customers redeem rewards from their account.` : 'Designed for a sub-3-second cashier flow.' }}</p>
+        <p class="mt-2 text-slate-500">{{ venue ? `Add loyalty stamps at ${venue.name}. Customers redeem rewards from their account.` : 'Designed for a sub-3-second cashier flow.' }}</p>
       </div>
 
       <AppCard wrapper-class="overflow-hidden p-0">
@@ -236,7 +236,7 @@ watch(scannerVenueId, () => {
 
         <div class="space-y-5 p-5">
           <div>
-            <p class="text-sm font-black text-slate-950">Stars to add</p>
+            <p class="text-sm font-black text-slate-950">Stamps to add</p>
             <div class="mt-3 grid grid-cols-5 gap-2">
               <button
                 v-for="amount in [1, 2, 3, 4, 5]"
@@ -259,7 +259,7 @@ watch(scannerVenueId, () => {
               max="100"
               type="number"
               class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none transition focus:border-slate-400 focus:bg-white"
-              placeholder="Custom stars"
+              placeholder="Custom stamps"
               @focus="useCustomStamps = true"
             >
           </div>
@@ -282,7 +282,7 @@ watch(scannerVenueId, () => {
             <div v-if="selectedCustomer" class="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-3 ring-1 ring-emerald-100">
               <div>
                 <p class="font-black text-emerald-950">{{ selectedCustomer.user?.name ?? 'Customer' }}</p>
-                <p class="text-sm font-semibold text-emerald-700">{{ selectedCustomer.stamps }} current stars</p>
+                <p class="text-sm font-semibold text-emerald-700">{{ selectedCustomer.stamps }} current stamps</p>
               </div>
               <button type="button" class="text-sm font-black text-emerald-700" @click="clearSelectedCustomer">
                 Clear
@@ -301,7 +301,7 @@ watch(scannerVenueId, () => {
                   <span class="block font-black text-slate-950">{{ item.user?.name ?? 'Customer' }}</span>
                   <span class="block text-sm font-semibold text-slate-500">{{ item.user?.email }}</span>
                 </span>
-                <span class="text-sm font-black text-slate-500">{{ item.stamps }} stars</span>
+                <span class="text-sm font-black text-slate-500">{{ item.stamps }} stamps</span>
               </button>
               <p v-if="!customerLoading && !filteredCustomers.length" class="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
                 No matching customers.
@@ -310,7 +310,7 @@ watch(scannerVenueId, () => {
           </div>
 
           <AppButton class="w-full" size="lg" :disabled="loading || !selectedCustomer" @click="addStamp">
-            {{ loading ? 'Adding stars...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'star' : 'stars'}` }}
+            {{ loading ? 'Adding stamps...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'}` }}
           </AppButton>
           <AppButton v-if="status === 'error'" class="w-full" variant="secondary" @click="resetScanner">
             Scan another customer

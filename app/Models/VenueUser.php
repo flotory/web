@@ -15,7 +15,7 @@ class VenueUser extends Model
     protected $fillable = [
         'venue_id',
         'user_id',
-        'role', // owner | manager | staff
+        'role', // owner | staff
     ];
 
     public function venue(): BelongsTo

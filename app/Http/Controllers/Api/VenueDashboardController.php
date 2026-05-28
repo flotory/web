@@ -20,12 +20,12 @@ class VenueDashboardController extends Controller
 
         if ($venueId) {
             $venue = Venue::query()->findOrFail($venueId);
-            VenueAccess::requireAccess($user, $venue, ['owner', 'manager', 'staff']);
+            VenueAccess::requireAccess($user, $venue, ['owner']);
 
             return response()->json($this->dashboardForVenue($venue));
         }
 
-        $venueIds = $this->accessibleVenueIds($user);
+        $venueIds = $this->ownerVenueIds($user);
 
         if ($venueIds === []) {
             return response()->json([
@@ -138,7 +138,7 @@ class VenueDashboardController extends Controller
 
     public function show(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         return response()->json($this->dashboardForVenue($venue));
     }
@@ -146,7 +146,7 @@ class VenueDashboardController extends Controller
     /**
      * @return array<int, int>
      */
-    private function accessibleVenueIds(User $user): array
+    private function ownerVenueIds(User $user): array
     {
         if (VenueAccess::isAdmin($user)) {
             return Venue::query()->pluck('id')->all();
@@ -154,6 +154,7 @@ class VenueDashboardController extends Controller
 
         return VenueUser::query()
             ->where('user_id', $user->id)
+            ->where('role', 'owner')
             ->pluck('venue_id')
             ->all();
     }

@@ -1,4 +1,4 @@
-const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/cafes', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/']
+const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/cafes', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
 
 export function isSafeInternalRedirect(path: string): boolean {
   if (!path.startsWith('/')) {

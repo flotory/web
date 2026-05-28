@@ -18,7 +18,7 @@ class RewardController extends Controller
 {
     public function index(Request $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager', 'staff']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         return response()->json([
             'rewards' => $venue->rewards()->orderBy('required_stamps')->orderBy('sort_order')->get(),
@@ -27,7 +27,7 @@ class RewardController extends Controller
 
     public function store(StoreRewardRequest $request, Venue $venue): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         $payload = $request->validated();
         unset($payload['image']);
@@ -51,7 +51,7 @@ class RewardController extends Controller
 
     public function update(StoreRewardRequest $request, Venue $venue, Reward $reward): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
         abort_unless($reward->venue_id === $venue->id, 404);
 
         $payload = $request->validated();
@@ -91,7 +91,7 @@ class RewardController extends Controller
 
     public function archive(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
         abort_unless($reward->venue_id === $venue->id, 404);
 
         $reward->update(['active' => false]);
@@ -103,7 +103,7 @@ class RewardController extends Controller
 
     public function reactivate(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
         abort_unless($reward->venue_id === $venue->id, 404);
 
         $reward->update(['active' => true]);
@@ -115,7 +115,7 @@ class RewardController extends Controller
 
     public function purge(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'manager']);
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
         abort_unless($reward->venue_id === $venue->id, 404);
 
         if ($reward->active) {
@@ -127,7 +127,7 @@ class RewardController extends Controller
         $this->deleteRewardImage($reward);
         $reward->delete();
 
-        return response()->noContent();
+        return response()->json(status: 204);
     }
 
     private function storeRewardImage($file, Venue $venue, ?Reward $reward): array

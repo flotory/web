@@ -13,12 +13,14 @@ import OnboardingPage from '@/pages/OnboardingPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import RewardsPage from '@/pages/RewardsPage.vue'
 import ScannerPage from '@/pages/ScannerPage.vue'
+import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { isStaffOnlyMember, staffScannerPath } from '@/lib/venueRoles'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -27,27 +29,51 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/v/:slug', name: 'venue-landing', component: VenueLandingPage, meta: { guest: true } },
-    { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true } },
+    { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/cafes', name: 'cafes', component: CafesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: 'auto' } },
-    { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true } },
+    { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/card', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false } },
   ],
 })
 
-async function staffHomePath() {
+async function workspaceHomePath() {
+  const auth = useAuthStore()
   const workspace = useWorkspaceStore()
   await workspace.bootstrap()
 
-  return workspace.hasMembership ? '/dashboard' : '/card'
+  if (auth.user?.role === 'admin') {
+    return '/dashboard'
+  }
+
+  if (!workspace.hasMembership) {
+    return '/card'
+  }
+
+  if (isStaffOnlyMember(workspace.activeVenues)) {
+    return staffScannerPath(workspace.effectiveVenueId)
+  }
+
+  return '/dashboard'
+}
+
+function shouldUseStaffNav(workspace: ReturnType<typeof useWorkspaceStore>): boolean {
+  if (workspace.isStaffOnlyMember) {
+    return true
+  }
+
+  const venue = workspace.effectiveVenue
+
+  return venue?.membership_role === 'staff'
 }
 
 router.beforeEach(async (to) => {
@@ -70,14 +96,26 @@ router.beforeEach(async (to) => {
         return { name: 'onboarding' }
       }
     }
+
+    if (to.meta.ownerOnly && shouldUseStaffNav(workspace)) {
+      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    }
+
+    if (to.name === 'rewards' && shouldUseStaffNav(workspace)) {
+      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    }
+
+    if (to.name === 'dashboard' && shouldUseStaffNav(workspace)) {
+      return { path: staffScannerPath(workspace.effectiveVenueId) }
+    }
   }
 
   if (to.name === 'landing' && auth.isAuthenticated) {
-    return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
+    return { path: await workspaceHomePath() }
   }
 
   if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing') {
-    return auth.user?.role === 'admin' ? { name: 'dashboard' } : { path: await staffHomePath() }
+    return { path: await workspaceHomePath() }
   }
 })
 
