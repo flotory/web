@@ -10,6 +10,7 @@ import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -61,7 +62,7 @@ async function submit() {
     }
 
     await router.push(
-      auth.user?.role === 'admin' || workspace.hasMembership ? '/dashboard' : '/card',
+      resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId),
     )
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
@@ -89,8 +90,10 @@ onMounted(() => {
           return
         }
 
-        const safeRedirect = sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card')
-        await router.replace(safeRedirect)
+        const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+        await router.replace(
+          resolvePostLoginDestination(redirect, auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId),
+        )
       })
       .catch(() => {
         error.value = 'Google sign in failed. Please try again.'

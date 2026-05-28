@@ -20,7 +20,7 @@ import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
-import { isStaffOnlyMember, staffScannerPath } from '@/lib/venueRoles'
+import { isStaffOnlyMember, resolveAuthenticatedHomePath, staffScannerPath } from '@/lib/venueRoles'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -51,19 +51,7 @@ async function workspaceHomePath() {
   const workspace = useWorkspaceStore()
   await workspace.bootstrap()
 
-  if (auth.user?.role === 'admin') {
-    return '/dashboard'
-  }
-
-  if (!workspace.hasMembership) {
-    return '/card'
-  }
-
-  if (isStaffOnlyMember(workspace.activeVenues)) {
-    return staffScannerPath(workspace.effectiveVenueId)
-  }
-
-  return '/dashboard'
+  return resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId)
 }
 
 function shouldUseStaffNav(workspace: ReturnType<typeof useWorkspaceStore>): boolean {
@@ -91,7 +79,11 @@ router.beforeEach(async (to) => {
   if (auth.isAuthenticated && (to.meta.workspace === true || to.meta.workspace === 'auto')) {
     await workspace.bootstrap()
 
-    if (!workspace.hasMembership && auth.user?.role !== 'admin') {
+    const teamMember = workspace.activeVenues.some(
+      (venue) => !venue.archived && (venue.membership_role === 'owner' || venue.membership_role === 'staff'),
+    )
+
+    if (!teamMember && auth.user?.role !== 'admin') {
       if (to.name !== 'my-venues' && to.name !== 'onboarding') {
         return { name: 'onboarding' }
       }
