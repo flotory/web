@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 
@@ -77,7 +78,21 @@ onBeforeUnmount(() => {
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(99,102,241,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(14,165,233,0.14),transparent_35%)]" />
     <div class="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-indigo-400/20 blur-[120px] soft-drift" />
 
-    <section class="relative mx-auto grid min-h-screen max-w-6xl gap-12 px-4 py-14 sm:py-20 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:py-28">
+    <header class="relative mx-auto flex max-w-6xl items-center justify-between px-4 pt-8 sm:pt-10">
+      <RouterLink to="/">
+        <FlotoryLogo size="lg" inverted />
+      </RouterLink>
+      <div class="flex items-center gap-2">
+        <RouterLink to="/login">
+          <AppButton variant="ghost" class="text-white ring-1 ring-white/20 hover:bg-white/10 hover:text-white">Log in</AppButton>
+        </RouterLink>
+        <RouterLink to="/register?intent=owner">
+          <AppButton variant="secondary" size="sm" class="btn-glow">Start free</AppButton>
+        </RouterLink>
+      </div>
+    </header>
+
+    <section class="relative mx-auto grid max-w-6xl gap-12 px-4 py-10 sm:py-14 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:py-20">
       <div class="space-y-9">
         <p class="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-blue-100 ring-1 ring-white/15">
           Built for cafes, bars, and restaurants

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import {
@@ -86,9 +87,12 @@ onMounted(async () => {
       </div>
 
       <template v-else-if="landing">
-        <div class="flex items-center justify-between">
-          <AppBadge tone="blue">Flotory rewards</AppBadge>
-          <p class="text-xs font-semibold uppercase tracking-wide text-white/60">{{ landing.venue.name }}</p>
+        <div class="flex items-center justify-between gap-3">
+          <FlotoryLogo inverted size="sm" :show-wordmark="false" />
+          <div class="text-right">
+            <p class="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">Flotory rewards</p>
+            <p class="text-xs font-semibold text-white/60">{{ landing.venue.name }}</p>
+          </div>
         </div>
 
         <div class="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur">

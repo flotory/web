@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
+import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -114,6 +115,10 @@ onMounted(() => {
 <template>
   <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_55%)] px-4 py-8 text-slate-100 sm:py-12">
     <section class="mx-auto w-full max-w-md">
+      <RouterLink to="/" class="mb-6 inline-flex">
+        <FlotoryLogo inverted size="lg" />
+      </RouterLink>
+
       <div v-if="landing" class="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
         <div class="mt-3 flex items-center gap-3">

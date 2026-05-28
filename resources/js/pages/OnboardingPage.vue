@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
+import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -177,6 +178,9 @@ async function openDashboard() {
       <AppCard wrapper-class="w-full rounded-3xl border border-white/10 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
         <div class="mb-5 flex items-center justify-between gap-3">
           <div>
+            <div class="mb-3">
+              <FlotoryLogo />
+            </div>
             <AppBadge tone="blue">Owner onboarding</AppBadge>
             <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Launch your loyalty system</h1>
           </div>

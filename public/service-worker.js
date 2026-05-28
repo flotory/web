@@ -1,5 +1,15 @@
-const CACHE_NAME = 'flotory-v1'
-const APP_SHELL = ['/dashboard', '/card', '/login', '/cafes', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']
+const CACHE_NAME = 'flotory-v4'
+const APP_SHELL = [
+  '/dashboard',
+  '/card',
+  '/login',
+  '/cafes',
+  '/manifest.webmanifest',
+  '/favicon.png',
+  '/icons/icon-180.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)))

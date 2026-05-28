@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 
 import { cn } from '@/lib/utils'
+
+defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +18,8 @@ const props = withDefaults(
   },
 )
 
+const attrs = useAttrs()
+
 const classes = computed(() =>
   cn(
     'inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
@@ -29,12 +33,13 @@ const classes = computed(() =>
       md: 'h-11 px-5 text-sm',
       lg: 'h-12 px-6 text-base',
     }[props.size],
+    attrs.class,
   ),
 )
 </script>
 
 <template>
-  <button :type="type" :class="classes">
+  <button :type="type" :class="classes" v-bind="{ ...attrs, class: undefined }">
     <slot />
   </button>
 </template>
