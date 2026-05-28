@@ -175,6 +175,24 @@ onMounted(() => {
         </RouterLink>
       </p>
       </AppCard>
+
+      <div class="mt-4 grid gap-2 rounded-3xl border border-white/15 bg-white/5 p-3 backdrop-blur">
+        <p class="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">How it works</p>
+        <div class="grid gap-2 sm:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-sm font-bold text-white">Scan QR</p>
+            <p class="mt-1 text-xs text-white/70">Guests scan table QR and join instantly.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-sm font-bold text-white">Collect visits</p>
+            <p class="mt-1 text-xs text-white/70">Staff stamps visits in seconds.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-sm font-bold text-white">Unlock rewards</p>
+            <p class="mt-1 text-xs text-white/70">Guests return to claim milestone rewards.</p>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </template>

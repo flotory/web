@@ -44,18 +44,27 @@ export const useWorkspaceStore = defineStore('workspace', {
       this.venues = response.venues
 
       const stored = sessionStorage.getItem(FILTER_KEY)
-      if (stored === '' || stored === 'all') {
-        this.filterVenueId = null
-      } else if (stored) {
+      const active = this.activeVenues
+      if (stored) {
         const id = Number(stored)
-        this.filterVenueId = this.activeVenues.some((venue) => venue.id === id) ? id : null
+        this.filterVenueId = active.some((venue) => venue.id === id) ? id : null
+      }
+
+      if (this.filterVenueId === null && active.length > 0) {
+        this.filterVenueId = active[0].id
+        sessionStorage.setItem(FILTER_KEY, String(active[0].id))
       }
 
       this.loaded = true
     },
     setFilter(venueId: number | null) {
       this.filterVenueId = venueId
-      sessionStorage.setItem(FILTER_KEY, venueId === null ? 'all' : String(venueId))
+      if (venueId === null) {
+        sessionStorage.removeItem(FILTER_KEY)
+        return
+      }
+
+      sessionStorage.setItem(FILTER_KEY, String(venueId))
     },
   },
 })

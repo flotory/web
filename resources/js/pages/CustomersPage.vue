@@ -13,10 +13,6 @@ const customers = ref<Array<Customer & { visits_count?: number }>>([])
 const loading = ref(true)
 const error = ref('')
 
-const needsVenuePick = computed(
-  () => workspace.activeVenues.length > 1 && workspace.filterVenueId === null,
-)
-
 async function loadCustomers() {
   loading.value = true
   error.value = ''
@@ -31,23 +27,9 @@ async function loadCustomers() {
       return
     }
 
-    if (workspace.filterVenueId === null && workspace.activeVenues.length > 1) {
-      const responses = await Promise.all(
-        workspace.activeVenues.map((venue) =>
-          api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venue.id}/customers`),
-        ),
-      )
-      customers.value = responses.flatMap((response, index) =>
-        response.customers.map((customer) => ({
-          ...customer,
-          venue: workspace.activeVenues[index],
-        })),
-      )
-    } else {
-      customers.value = (
-        await api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venueId}/customers`)
-      ).customers
-    }
+    customers.value = (
+      await api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venueId}/customers`)
+    ).customers
   } catch {
     error.value = 'Could not load customers.'
   } finally {
@@ -65,9 +47,7 @@ onMounted(loadCustomers)
     <div class="mb-6">
       <AppBadge tone="blue">Basic CRM</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Customers</h1>
-      <p class="mt-2 text-slate-500">
-        {{ needsVenuePick ? 'Showing customers from all venues. Use the venue filter to focus on one.' : 'A lightweight customer list focused on repeat visits.' }}
-      </p>
+      <p class="mt-2 text-slate-500">A lightweight customer list focused on repeat visits.</p>
     </div>
 
     <AppCard wrapper-class="overflow-hidden p-0">

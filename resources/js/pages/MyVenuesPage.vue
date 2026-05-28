@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import QrcodeVue from 'qrcode.vue'
 
-import StatCard from '@/components/loyalty/StatCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
@@ -20,6 +21,12 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const formOpen = ref(false)
+const menuVenueId = ref<number | null>(null)
+const search = ref('')
+const typeFilter = ref<'all' | 'cafe' | 'restaurant' | 'bar'>('all')
+const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
+const recentOnly = ref(false)
+
 const name = ref('')
 const slug = ref('')
 const address = ref('')
@@ -27,7 +34,51 @@ const phone = ref('')
 const website = ref('')
 
 const activeVenues = computed(() => workspace.activeVenues)
-const archivedVenues = computed(() => workspace.venues.filter((venue) => venue.archived))
+
+const totals = computed(() => ({
+  venues: activeVenues.value.length,
+  visits: activeVenues.value.reduce((sum, venue) => sum + (venue.visits_count ?? 0), 0),
+  rewards: activeVenues.value.reduce((sum, venue) => sum + (venue.rewards_count ?? 0), 0),
+}))
+
+const filteredVenues = computed(() => {
+  let items = [...activeVenues.value]
+
+  const query = search.value.trim().toLowerCase()
+  if (query) {
+    items = items.filter((venue) => `${venue.name} ${venue.slug} ${venue.address ?? ''}`.toLowerCase().includes(query))
+  }
+
+  if (typeFilter.value !== 'all') {
+    items = items.filter((venue) => inferVenueType(venue) === typeFilter.value)
+  }
+
+  if (recentOnly.value) {
+    items = items.filter((venue) => (venue.visits_count ?? 0) > 0 || (venue.customers_count ?? 0) > 0)
+  }
+
+  if (sortBy.value === 'name') {
+    items.sort((a, b) => a.name.localeCompare(b.name))
+  } else if (sortBy.value === 'customers') {
+    items.sort((a, b) => (b.customers_count ?? 0) - (a.customers_count ?? 0))
+  } else {
+    items.sort((a, b) => (b.visits_count ?? 0) - (a.visits_count ?? 0))
+  }
+
+  return items
+})
+
+function inferVenueType(venue: Venue): 'cafe' | 'restaurant' | 'bar' {
+  const text = `${venue.name} ${venue.slug}`.toLowerCase()
+  if (text.includes('bar') || text.includes('cocktail') || text.includes('pub')) return 'bar'
+  if (text.includes('restaurant') || text.includes('grill') || text.includes('kitchen')) return 'restaurant'
+  return 'cafe'
+}
+
+function venueTypeLabel(venue: Venue): string {
+  const type = inferVenueType(venue)
+  return type.charAt(0).toUpperCase() + type.slice(1)
+}
 
 function resetForm() {
   name.value = ''
@@ -40,6 +91,10 @@ function resetForm() {
 function openCreateForm() {
   resetForm()
   formOpen.value = true
+}
+
+function toggleMenu(venueId: number) {
+  menuVenueId.value = menuVenueId.value === venueId ? null : venueId
 }
 
 async function loadVenues() {
@@ -60,17 +115,15 @@ async function createVenue() {
   error.value = ''
 
   try {
-    const payload = {
-      name: name.value,
-      slug: slug.value || undefined,
-      address: address.value || undefined,
-      phone: phone.value || undefined,
-      website: website.value || undefined,
-    }
-
     await api<{ venue: Venue }>('/venues', {
       method: 'POST',
-      body: payload,
+      body: {
+        name: name.value,
+        slug: slug.value || undefined,
+        address: address.value || undefined,
+        phone: phone.value || undefined,
+        website: website.value || undefined,
+      },
     })
 
     resetForm()
@@ -84,7 +137,11 @@ async function createVenue() {
   }
 }
 
-async function archiveVenue(venue: Venue) {
+async function deleteVenue(venue: Venue) {
+  if (!window.confirm(`Delete ${venue.name}? This is a soft delete and can be restored later.`)) {
+    return
+  }
+
   saving.value = true
   error.value = ''
 
@@ -92,9 +149,10 @@ async function archiveVenue(venue: Venue) {
     await api<void>(`/venues/${venue.id}`, { method: 'DELETE' })
     await loadVenues()
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not archive venue.'
+    error.value = exception instanceof ApiError ? exception.message : 'Could not delete venue.'
   } finally {
     saving.value = false
+    menuVenueId.value = null
   }
 }
 
@@ -112,10 +170,42 @@ onMounted(loadVenues)
       <div>
         <AppBadge tone="blue">Workspace</AppBadge>
         <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">My Venues</h1>
-        <p class="mt-2 text-slate-500">Create and manage the venues your team operates every day.</p>
+        <p class="mt-2 text-slate-500">Manage loyalty across your locations.</p>
+        <p class="mt-2 text-sm font-semibold text-slate-400">
+          {{ totals.venues }} venues • {{ totals.visits }} scans this week • {{ totals.rewards }} active rewards
+        </p>
       </div>
-      <AppButton @click="openCreateForm">Create venue</AppButton>
+      <AppButton class="bg-slate-950 text-white shadow-lg shadow-slate-950/25 hover:bg-slate-800" @click="openCreateForm">+ Create new venue</AppButton>
     </div>
+
+    <AppCard wrapper-class="mb-5 border-slate-200/80 bg-white/95 backdrop-blur">
+      <div class="grid gap-3 md:grid-cols-[1.2fr_0.8fr_0.8fr_auto]">
+        <input
+          v-model="search"
+          class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+          placeholder="Search venue"
+        >
+        <select v-model="typeFilter" class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-slate-400 focus:bg-white">
+          <option value="all">All types</option>
+          <option value="cafe">Cafe</option>
+          <option value="restaurant">Restaurant</option>
+          <option value="bar">Bar</option>
+        </select>
+        <select v-model="sortBy" class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-slate-400 focus:bg-white">
+          <option value="activity">Sort by activity</option>
+          <option value="name">Sort by name</option>
+          <option value="customers">Sort by customers</option>
+        </select>
+        <button
+          type="button"
+          class="h-11 rounded-2xl px-4 text-sm font-bold transition"
+          :class="recentOnly ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          @click="recentOnly = !recentOnly"
+        >
+          Recently active
+        </button>
+      </div>
+    </AppCard>
 
     <AppCard v-if="formOpen" wrapper-class="mb-5">
       <form class="grid gap-4" @submit.prevent="createVenue">
@@ -132,49 +222,23 @@ onMounted(loadVenues)
         <div class="grid gap-4 md:grid-cols-[1fr_180px]">
           <div>
             <label class="text-sm font-bold text-slate-600" for="venue-name">Venue name</label>
-            <input
-              id="venue-name"
-              v-model="name"
-              required
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
-              placeholder="Harbor Coffee"
-            >
+            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Harbor Coffee">
           </div>
           <div>
             <label class="text-sm font-bold text-slate-600" for="venue-slug">Slug</label>
-            <input
-              id="venue-slug"
-              v-model="slug"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
-              placeholder="harbor-coffee"
-            >
+            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="harbor-coffee">
           </div>
           <div>
             <label class="text-sm font-bold text-slate-600" for="venue-website">Website optional</label>
-            <input
-              id="venue-website"
-              v-model="website"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
-              placeholder="https://example.com"
-            >
+            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="https://example.com">
           </div>
           <div>
             <label class="text-sm font-bold text-slate-600" for="venue-address">Address optional</label>
-            <input
-              id="venue-address"
-              v-model="address"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
-              placeholder="12 Market Street"
-            >
+            <input id="venue-address" v-model="address" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="12 Market Street">
           </div>
           <div>
             <label class="text-sm font-bold text-slate-600" for="venue-phone">Phone optional</label>
-            <input
-              id="venue-phone"
-              v-model="phone"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
-              placeholder="+1 555 0100"
-            >
+            <input id="venue-phone" v-model="phone" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="+1 555 0100">
           </div>
         </div>
 
@@ -194,61 +258,74 @@ onMounted(loadVenues)
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
     </AppCard>
 
-    <div class="grid gap-4 lg:grid-cols-2">
-      <AppCard v-for="venue in activeVenues" :key="venue.id">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-start gap-4">
-            <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-3xl bg-slate-100 text-xl font-black text-slate-400 ring-1 ring-slate-200">
+    <div class="grid gap-5 lg:grid-cols-2">
+      <AppCard
+        v-for="venue in filteredVenues"
+        :key="venue.id"
+        wrapper-class="group relative overflow-hidden border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+      >
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.08),transparent_45%)]" />
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-100 text-xl font-black text-slate-400 ring-1 ring-slate-200">
               <img v-if="venue.logo" :src="venue.logo" alt="" class="size-full object-cover">
               <span v-else>{{ venue.name.slice(0, 1) }}</span>
             </div>
             <div>
-              <h2 class="text-2xl font-black text-slate-950">{{ venue.name }}</h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-2xl font-black text-slate-950">{{ venue.name }}</h2>
+                <AppBadge tone="green">Active</AppBadge>
+                <AppBadge tone="blue">{{ venueTypeLabel(venue) }}</AppBadge>
+              </div>
               <p class="mt-1 text-sm font-semibold text-slate-500">/{{ venue.slug }}</p>
-              <p v-if="venue.address" class="mt-2 text-sm font-semibold text-slate-500">{{ venue.address }}</p>
+            </div>
+          </div>
+          <div class="relative">
+            <button type="button" class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-200" @click="toggleMenu(venue.id)">⋯</button>
+            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-10 mt-2 w-40 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
+              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
+              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50" :disabled="saving" @click="deleteVenue(venue)">Delete venue</button>
             </div>
           </div>
         </div>
 
-        <AppButton class="mt-5 w-full" size="lg" @click="router.push(`/scanner?venue_id=${venue.id}`)">
-          Scan customers at {{ venue.name }}
-        </AppButton>
-
-        <div class="mt-5 grid grid-cols-3 gap-3">
-          <StatCard label="Customers" :value="venue.customers_count ?? 0" />
-          <StatCard label="Visits" :value="venue.visits_count ?? 0" />
-          <StatCard label="Rewards" :value="venue.rewards_count ?? 0" />
+        <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">◎ Guests</p>
+            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.customers_count ?? 0 }}</p>
+          </div>
+          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">↻ Visits</p>
+            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.visits_count ?? 0 }}</p>
+          </div>
+          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">◈ Rewards</p>
+            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.rewards_count ?? 0 }}</p>
+          </div>
+          <div class="grid place-items-center rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <div class="inline-flex rounded-lg bg-white p-1 ring-1 ring-slate-200">
+              <QrcodeVue :value="buildVenueLandingUrl(venue.slug)" :size="42" level="M" render-as="canvas" :margin="1" />
+            </div>
+          </div>
         </div>
 
-        <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/dashboard')">Dashboard</AppButton>
-          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/analytics')">Analytics</AppButton>
-          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/rewards')">Rewards</AppButton>
-          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/customers')">Customers</AppButton>
-          <AppButton variant="secondary" size="sm" @click="openVenue(venue, '/team')">Team</AppButton>
-          <AppButton variant="ghost" size="sm" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
-          <AppButton variant="ghost" size="sm" :disabled="saving" @click="archiveVenue(venue)">Archive</AppButton>
+        <div class="mt-4 grid gap-2">
+          <div class="grid gap-2 sm:grid-cols-3">
+            <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
+            <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/scanner?venue_id=${venue.id}`)">Open scanner</AppButton>
+            <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-3">
+            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/rewards')">Rewards</AppButton>
+            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/customers')">Customers</AppButton>
+            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/analytics')">Analytics</AppButton>
+          </div>
         </div>
       </AppCard>
 
-      <AppCard v-if="!loading && !activeVenues.length">
-        <p class="text-sm font-semibold text-slate-500">No active venues yet. Create your first venue to start.</p>
+      <AppCard v-if="!loading && !filteredVenues.length">
+        <p class="text-sm font-semibold text-slate-500">No venues match this filter yet.</p>
       </AppCard>
     </div>
-
-    <section v-if="archivedVenues.length" class="mt-8">
-      <h2 class="text-xl font-black text-slate-950">Archived venues</h2>
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
-        <AppCard v-for="venue in archivedVenues" :key="venue.id" wrapper-class="opacity-70">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="font-black text-slate-950">{{ venue.name }}</p>
-              <p class="text-sm font-semibold text-slate-500">/{{ venue.slug }}</p>
-            </div>
-            <AppBadge>Archived</AppBadge>
-          </div>
-        </AppCard>
-      </div>
-    </section>
   </AppShell>
 </template>

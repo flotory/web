@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -21,6 +22,8 @@ interface RedemptionResponse {
 }
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 const realtime = useRealtimeStore()
 const workspace = useWorkspaceStore()
 const rewards = ref<Reward[]>([])
@@ -116,6 +119,15 @@ function startEditing(reward: Reward) {
   })
 }
 
+function applyRouteEditingIntent() {
+  const rewardId = Number(route.query.reward_id)
+  if (!rewardId || !canEditRewards.value) return
+  const reward = rewards.value.find((item) => item.id === rewardId)
+  if (!reward) return
+  startEditing(reward)
+  void router.replace({ query: { ...route.query, reward_id: undefined } })
+}
+
 async function loadRewards(silent = false) {
   if (!silent) {
     loading.value = true
@@ -126,6 +138,10 @@ async function loadRewards(silent = false) {
     await workspace.bootstrap()
 
     if (canManageRewards.value) {
+      const forcedVenueId = typeof route.query.venue_id === 'string' ? Number(route.query.venue_id) : null
+      if (forcedVenueId && workspace.activeVenues.some((item) => item.id === forcedVenueId)) {
+        workspace.setFilter(forcedVenueId)
+      }
       const venueId = workspace.effectiveVenueId
       venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
       rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
@@ -151,6 +167,8 @@ async function loadRewards(silent = false) {
       rewards.value = rewardResponse?.rewards ?? []
       journey.value = rewardResponse?.journey ?? cards.journey
     }
+
+    applyRouteEditingIntent()
   } catch {
     if (!silent) {
       error.value = 'Could not load rewards.'
@@ -397,6 +415,7 @@ watch(
 )
 
 watch(() => workspace.filterVenueId, () => loadRewards())
+watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 </script>
 
 <template>

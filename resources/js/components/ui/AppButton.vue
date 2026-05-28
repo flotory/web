@@ -18,7 +18,7 @@ const props = withDefaults(
 
 const classes = computed(() =>
   cn(
-    'inline-flex items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
     {
       primary: 'bg-slate-950 text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800',
       secondary: 'bg-white text-slate-950 ring-1 ring-slate-200 hover:bg-slate-50',

@@ -14,12 +14,11 @@ const selectStyle = {
   <div v-if="workspace.activeVenues.length > 1" class="flex flex-wrap items-center gap-2">
     <label class="text-xs font-bold uppercase tracking-wide text-slate-400">Venue</label>
     <select
-      :value="workspace.filterVenueId ?? 'all'"
+      :value="workspace.filterVenueId ?? workspace.activeVenues[0]?.id"
       class="h-10 min-w-[180px] appearance-none rounded-xl border border-slate-200 bg-white bg-[length:14px_14px] bg-no-repeat px-3 pr-9 text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
       :style="selectStyle"
-      @change="workspace.setFilter(($event.target as HTMLSelectElement).value === 'all' ? null : Number(($event.target as HTMLSelectElement).value))"
+      @change="workspace.setFilter(Number(($event.target as HTMLSelectElement).value))"
     >
-      <option value="all">All venues</option>
       <option v-for="venue in workspace.activeVenues" :key="venue.id" :value="venue.id">
         {{ venue.name }}
       </option>

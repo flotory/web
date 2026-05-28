@@ -32,18 +32,18 @@ const homePath = computed(() => (isWorkspace.value ? '/dashboard' : '/card'))
 const nav = computed(() =>
   isWorkspace.value
     ? [
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'My Venues', to: '/my-venues' },
-        { label: 'Customers', to: '/customers' },
-        { label: 'Rewards', to: '/rewards' },
-        { label: 'Analytics', to: '/analytics' },
-        { label: 'Team', to: '/team' },
-        { label: 'Settings', to: '/settings' },
+        { label: 'Dashboard', to: '/dashboard', icon: '◈' },
+        { label: 'My Venues', to: '/my-venues', icon: '⌂' },
+        { label: 'Customers', to: '/customers', icon: '◎' },
+        { label: 'Rewards', to: '/rewards', icon: '★' },
+        { label: 'Analytics', to: '/analytics', icon: '◔' },
+        { label: 'Team', to: '/team', icon: '◧' },
+        { label: 'Settings', to: '/settings', icon: '⚙' },
       ]
     : [
-        { label: 'Card', to: '/card' },
-        { label: 'Cafes', to: '/cafes' },
-        { label: 'Rewards', to: '/rewards' },
+        { label: 'Card', to: '/card', icon: '◍' },
+        { label: 'Cafes', to: '/cafes', icon: '⌂' },
+        { label: 'Rewards', to: '/rewards', icon: '★' },
       ],
 )
 
@@ -68,7 +68,7 @@ async function logout() {
 
 <template>
   <div class="min-h-screen bg-slate-100" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
-    <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-slate-200 bg-white p-4 md:block">
+    <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-slate-200/80 bg-white/95 p-4 backdrop-blur md:block">
       <RouterLink :to="homePath" class="block px-3 py-3 text-xl font-black tracking-tight text-slate-950">Flotory</RouterLink>
       <div class="mt-4 px-2">
         <VenueFilter />
@@ -79,11 +79,14 @@ async function logout() {
           :key="item.to"
           :to="item.to"
           :class="[
-            'block rounded-2xl px-4 py-3 text-sm font-bold transition',
-            route.path === item.to ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/15' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950',
+            'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition',
+            route.path === item.to
+              ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/20'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 hover:shadow-sm',
           ]"
         >
-          {{ item.label }}
+          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="route.path === item.to && 'bg-white/20 text-white'">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
       <button class="mt-6 w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-950" @click="logout">
