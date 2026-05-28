@@ -64,6 +64,26 @@ export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/card')
   return `/auth/google/redirect?${params.toString()}`
 }
 
+export function buildGoogleAuthUrlWithIntent(
+  venueSlug: string | null,
+  nextPath = '/card',
+  intent: 'owner' | null = null,
+): string {
+  const params = new URLSearchParams({
+    redirect: nextPath,
+  })
+
+  if (venueSlug) {
+    params.set('venue_slug', venueSlug)
+  }
+
+  if (intent) {
+    params.set('intent', intent)
+  }
+
+  return `/auth/google/redirect?${params.toString()}`
+}
+
 export async function fetchVenueLanding(slug: string): Promise<VenueLandingPayload> {
   return api<VenueLandingPayload>(`/public/venues/${encodeURIComponent(slug)}/landing`)
 }

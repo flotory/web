@@ -28,6 +28,7 @@ const router = createRouter({
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/v/:slug', name: 'venue-landing', component: VenueLandingPage, meta: { guest: true } },
     { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true } },
+    { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true } },

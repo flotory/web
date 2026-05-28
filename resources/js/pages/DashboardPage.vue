@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import AppShell from '@/layouts/AppShell.vue'
 import StatCard from '@/components/loyalty/StatCard.vue'
@@ -42,10 +42,12 @@ interface DashboardResponse {
 }
 
 const router = useRouter()
+const route = useRoute()
 const workspace = useWorkspaceStore()
 const dashboard = ref<DashboardResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
+const success = ref('')
 
 const title = computed(() => {
   if (dashboard.value?.scope === 'venue' && dashboard.value.venue) {
@@ -98,6 +100,13 @@ async function loadDashboard() {
 watch(() => workspace.filterVenueId, loadDashboard)
 
 onMounted(loadDashboard)
+
+onMounted(() => {
+  if (route.query.onboarding === 'completed') {
+    success.value = 'Your loyalty system is live.'
+    void router.replace({ query: { ...route.query, onboarding: undefined } })
+  }
+})
 </script>
 
 <template>
@@ -120,6 +129,9 @@ onMounted(loadDashboard)
     </AppCard>
     <AppCard v-else-if="error" wrapper-class="mb-4">
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
+    </AppCard>
+    <AppCard v-else-if="success" wrapper-class="mb-4 border-emerald-200 bg-emerald-50">
+      <p class="text-sm font-bold text-emerald-700">{{ success }}</p>
     </AppCard>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -6,7 +6,7 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
-import { buildGoogleAuthUrl, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
+import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -26,9 +26,10 @@ const landing = ref<VenueLandingPayload | null>(null)
 
 const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
 const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
+const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 
 function continueWithGoogle() {
-  window.location.href = buildGoogleAuthUrl(venueSlug.value, postAuthPath.value)
+  window.location.href = buildGoogleAuthUrlWithIntent(venueSlug.value, postAuthPath.value, authIntent.value)
 }
 
 async function submit() {
@@ -42,6 +43,11 @@ async function submit() {
     if (venueSlug.value) {
       const result = await completeVenueOnboarding(venueSlug.value)
       await router.push(`/card?venue_id=${result.venueId}`)
+      return
+    }
+
+    if (authIntent.value === 'owner') {
+      await router.push('/onboarding/create-venue')
       return
     }
 
@@ -72,6 +78,11 @@ onMounted(() => {
         if (venueSlug.value) {
           const result = await completeVenueOnboarding(venueSlug.value)
           await router.replace(`/card?venue_id=${result.venueId}`)
+          return
+        }
+
+        if (authIntent.value === 'owner') {
+          await router.replace('/onboarding/create-venue')
           return
         }
 
@@ -122,19 +133,27 @@ onMounted(() => {
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <AppBadge tone="blue">{{ venueSlug ? 'Start collecting rewards' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Join your favorite venue' : 'Log in' }}</h1>
+      <AppBadge tone="blue">{{ venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-500">
-        {{ venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : 'Sign in to manage venues, staff, and rewards.' }}
+        {{ venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
       </p>
 
       <AppButton
-        class="mt-6 w-full border border-slate-200 bg-white text-slate-900 shadow-sm transition hover:bg-slate-50"
+        class="mt-6 w-full border border-slate-300 bg-slate-50 text-slate-900 shadow-sm transition hover:bg-slate-100"
         size="lg"
         :disabled="loading || oauthLoading"
         @click="continueWithGoogle"
       >
-        {{ oauthLoading ? 'Connecting Google...' : 'Continue with Google' }}
+        <span class="inline-flex items-center gap-2">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+            <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.8-6-6.2s2.7-6.2 6-6.2c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3 14.5 2 12 2 6.9 2 2.8 6.5 2.8 12s4.1 10 9.2 10c5.3 0 8.8-3.7 8.8-8.9 0-.6-.1-1.1-.2-1.6H12z"/>
+            <path fill="#34A853" d="M3.8 7.3l3.2 2.4C7.9 8 9.8 6.6 12 6.6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3 14.5 2 12 2 8.4 2 5.2 4.1 3.8 7.3z"/>
+            <path fill="#FBBC05" d="M12 22c2.4 0 4.5-.8 6.1-2.3l-2.8-2.3c-.8.6-1.9 1-3.3 1-2.5 0-4.6-1.6-5.4-3.9l-3.3 2.5C4.7 20.1 8 22 12 22z"/>
+            <path fill="#4285F4" d="M21.8 12.9c0-.6-.1-1.1-.2-1.6H12v3.9h5.5c-.3 1.2-1.1 2.2-2.2 2.9l2.8 2.3c1.6-1.5 2.7-3.8 2.7-7.5z"/>
+          </svg>
+          {{ oauthLoading ? 'Connecting Google...' : 'Continue with Google' }}
+        </span>
       </AppButton>
 
       <div class="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -161,7 +180,11 @@ onMounted(() => {
       <p class="mt-5 text-center text-sm text-slate-500">
         New here?
         <RouterLink
-          :to="venueSlug ? `/register?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}` : '/register'"
+          :to="venueSlug
+            ? `/register?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}`
+            : authIntent === 'owner'
+              ? '/register?intent=owner'
+              : '/register'"
           class="font-bold text-slate-950"
         >
           Create an account

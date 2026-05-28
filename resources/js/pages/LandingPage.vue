@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <RouterLink to="/register">
+          <RouterLink to="/register?intent=owner">
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
           <a href="#how-it-works">
@@ -287,10 +287,10 @@ onBeforeUnmount(() => {
         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Final CTA</p>
         <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Launch your loyalty program in minutes.</h2>
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <RouterLink to="/register">
+          <RouterLink to="/register?intent=owner">
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
-          <RouterLink to="/login">
+          <RouterLink to="/login?intent=owner">
             <AppButton size="lg" variant="ghost" class="text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white">Book demo</AppButton>
           </RouterLink>
         </div>

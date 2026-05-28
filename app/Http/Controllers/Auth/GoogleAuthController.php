@@ -19,6 +19,7 @@ class GoogleAuthController extends Controller
         $request->session()->put('google_auth.intent', [
             'venue_slug' => $this->sanitizeVenueSlug($request->query('venue_slug')),
             'redirect' => $this->sanitizeRedirect($request->query('redirect')),
+            'intent' => $this->sanitizeIntent($request->query('intent')),
         ]);
 
         return Socialite::driver('google')->redirect();
@@ -35,6 +36,7 @@ class GoogleAuthController extends Controller
                 'error' => 'google_auth_failed',
                 'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null),
                 'venue_slug' => $this->sanitizeVenueSlug($intent['venue_slug'] ?? null),
+                'intent' => $this->sanitizeIntent($intent['intent'] ?? null),
             ]));
         }
 
@@ -62,6 +64,7 @@ class GoogleAuthController extends Controller
             'oauth_token' => $token,
             'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null),
             'venue_slug' => $this->sanitizeVenueSlug($intent['venue_slug'] ?? null),
+            'intent' => $this->sanitizeIntent($intent['intent'] ?? null),
         ]));
     }
 
@@ -98,5 +101,10 @@ class GoogleAuthController extends Controller
         }
 
         return preg_match('/^[a-z0-9-]{2,80}$/', $slug) === 1 ? $slug : null;
+    }
+
+    private function sanitizeIntent(mixed $intent): ?string
+    {
+        return $intent === 'owner' ? 'owner' : null;
     }
 }
