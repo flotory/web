@@ -267,11 +267,11 @@ async function openDashboard() {
             We start with a {{ categoryLabel(activeCategory).toLowerCase() }}-style look. Upload your own logo anytime.
           </p>
           <div class="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 ring-1 ring-slate-200">
-            <div class="relative h-28 overflow-hidden">
+            <div class="relative z-0 h-28 overflow-hidden">
               <img :src="previewCoverUrl" alt="" class="h-full w-full object-cover">
               <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
             </div>
-            <div class="grid place-items-center px-5 pb-5 -mt-10">
+            <div class="relative z-10 grid place-items-center px-5 pb-5 -mt-10">
               <div class="grid size-24 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg ring-2 ring-white">
                 <img :src="previewLogoUrl" :alt="venue?.name ?? 'Venue'" class="size-full object-cover">
               </div>

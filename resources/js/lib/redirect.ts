@@ -1,5 +1,23 @@
 const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/cafes', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
 
+const OWNER_WORKSPACE_PREFIXES = [
+  '/dashboard',
+  '/onboarding',
+  '/my-venues',
+  '/rewards',
+  '/analytics',
+  '/team',
+  '/settings',
+  '/scanner',
+  '/customers',
+]
+
+export function isOwnerWorkspacePath(path: string): boolean {
+  const base = path.split('?')[0] ?? path
+
+  return OWNER_WORKSPACE_PREFIXES.some((prefix) => base === prefix || base.startsWith(`${prefix}/`))
+}
+
 export function isSafeInternalRedirect(path: string): boolean {
   if (!path.startsWith('/')) {
     return false

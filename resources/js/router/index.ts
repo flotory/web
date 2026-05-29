@@ -24,7 +24,9 @@ import { sanitizeRedirect } from '@/lib/redirect'
 import {
   hasOwnerMembership,
   hasTeamMembership,
+  ownerBootstrapPath,
   resolveAuthenticatedHomePath,
+  resolvePostLoginDestination,
   staffScannerPath,
 } from '@/lib/venueRoles'
 
@@ -101,11 +103,36 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'landing' && auth.isAuthenticated) {
-    return { path: await workspaceHomePath() }
+    const workspace = useWorkspaceStore()
+    await workspace.bootstrap()
+    return {
+      path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+    }
   }
 
   if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing' && !to.meta.inviteFlow) {
-    return { path: await workspaceHomePath() }
+    const workspace = useWorkspaceStore()
+    await workspace.bootstrap()
+
+    const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
+    if (to.name === 'login' && redirect) {
+      return {
+        path: resolvePostLoginDestination(
+          redirect,
+          auth.user?.is_admin,
+          workspace.activeVenues,
+          workspace.effectiveVenueId,
+        ),
+      }
+    }
+
+    if (to.query.intent === 'owner') {
+      return { path: '/onboarding/create-venue' }
+    }
+
+    return {
+      path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+    }
   }
 })
 

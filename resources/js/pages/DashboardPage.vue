@@ -55,7 +55,6 @@ const dashboard = ref<DashboardResponse | null>(null)
 const rewards = ref<Reward[]>([])
 const loading = ref(true)
 const error = ref('')
-const success = ref('')
 
 const selectedVenue = computed(() => {
   if (workspace.filterVenueId && workspace.filteredVenue) {
@@ -198,7 +197,6 @@ function downloadQrPng() {
 function copyInviteLink() {
   if (!landingUrl.value) return
   void navigator.clipboard.writeText(landingUrl.value)
-  success.value = 'Invite link copied.'
 }
 
 async function loadDashboard() {
@@ -234,7 +232,6 @@ onMounted(loadDashboard)
 
 onMounted(() => {
   if (route.query.onboarding === 'completed') {
-    success.value = 'Your loyalty system is live.'
     void router.replace({ query: { ...route.query, onboarding: undefined } })
   }
 })
@@ -269,10 +266,6 @@ onMounted(() => {
     <AppCard v-else-if="error" wrapper-class="mb-4">
       <p class="text-sm font-bold text-red-600">{{ error }}</p>
     </AppCard>
-    <AppCard v-else-if="success" wrapper-class="mb-4 border-emerald-200 bg-emerald-50">
-      <p class="text-sm font-bold text-emerald-700">{{ success }}</p>
-    </AppCard>
-
     <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>

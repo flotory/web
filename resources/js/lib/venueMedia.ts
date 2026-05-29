@@ -32,7 +32,8 @@ export function venueLogoUrl(
   const category = resolveVenueCategory(venue, categoryOverride)
   const uploaded = pickMediaPath(venue?.logo_thumb, venue?.logo)
 
-  return uploaded ?? defaultVenueLogoImage(category)
+  const seed = venue?.name ?? category
+  return uploaded ?? defaultVenueLogoImage(category, seed)
 }
 
 export function venueCoverUrl(
@@ -42,7 +43,8 @@ export function venueCoverUrl(
   const category = resolveVenueCategory(venue, categoryOverride)
   const uploaded = pickMediaPath(venue?.cover_image)
 
-  return uploaded ?? defaultVenueCoverImage(category)
+  const seed = venue?.name ?? category
+  return uploaded ?? defaultVenueCoverImage(category, seed)
 }
 
 export function venueHasCustomLogo(venue: VenueMediaFields | null | undefined): boolean {

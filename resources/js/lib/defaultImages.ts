@@ -2,25 +2,64 @@ import type { RewardCategory } from '@/lib/rewardVisuals'
 
 export type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
 
-/** Unsplash — stable crop URLs for hospitality imagery */
+/** Local default assets (downloaded from Unsplash and committed) */
 function unsplash(photoId: string, width = 900, height?: number): string {
-  const h = height ? `&h=${height}` : ''
-
-  return `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}${h}&q=80`
+  const size = height ? `${width}x${height}` : `${width}`
+  return `/images/defaults/${photoId}-${size}.jpg`
 }
 
-const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string> = {
-  cafe: unsplash('photo-1501339847302-ac426a4a7cbb', 512, 512),
-  bar: unsplash('photo-1514933651103-005eec06c04b', 512, 512),
-  restaurant: unsplash('photo-1414235077428-338989a2e8c0', 512, 512),
-  bakery: unsplash('photo-1509440159596-0249088772ff', 512, 512),
+const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string[]> = {
+  cafe: [
+    unsplash('photo-1501339847302-ac426a4a7cbb', 512, 512),
+    unsplash('photo-1495474472287-4d71bcdd2085', 512, 512),
+    unsplash('photo-1509042239860-f550ce710b93', 512, 512),
+    unsplash('photo-1554118811-1e0d58224f24', 512, 512),
+  ],
+  bar: [
+    unsplash('photo-1470337458703-46ad1756a187', 512, 512),
+    unsplash('photo-1514933651103-005eec06c04b', 512, 512),
+    unsplash('photo-1776763019214-9658490d8b65', 512, 512),
+    unsplash('photo-1555396273-367ea4eb4db5', 512, 512),
+  ],
+  restaurant: [
+    unsplash('photo-1414235077428-338989a2e8c0', 512, 512),
+    unsplash('photo-1517248135467-4c7edcad34c4', 512, 512),
+    unsplash('photo-1546069901-ba9599a7e63c', 512, 512),
+    unsplash('photo-1504674900247-0877df9cc836', 512, 512),
+  ],
+  bakery: [
+    unsplash('photo-1509440159596-0249088772ff', 512, 512),
+    unsplash('photo-1555507036-ab1f4038808a', 512, 512),
+    unsplash('photo-1578985545062-69928b1d9587', 512, 512),
+    unsplash('photo-1711672284661-bd70e38f31b2', 512, 512),
+  ],
 }
 
-const VENUE_COVER_DEFAULTS: Record<VenueCategory, string> = {
-  cafe: unsplash('photo-1554118811-1e0d58224f24', 1400, 700),
-  bar: unsplash('photo-1572116469696-31de0fa17a2a', 1400, 700),
-  restaurant: unsplash('photo-1517248135467-4c7edcad34c4', 1400, 700),
-  bakery: unsplash('photo-1486427946789-8ebfd54fb9a3', 1400, 700),
+const VENUE_COVER_DEFAULTS: Record<VenueCategory, string[]> = {
+  cafe: [
+    unsplash('photo-1554118811-1e0d58224f24', 1400, 700),
+    unsplash('photo-1495474472287-4d71bcdd2085', 1400, 700),
+    unsplash('photo-1501339847302-ac426a4a7cbb', 1400, 700),
+    unsplash('photo-1509042239860-f550ce710b93', 1400, 700),
+  ],
+  bar: [
+    unsplash('photo-1776763019214-9658490d8b65', 1400, 700),
+    unsplash('photo-1514933651103-005eec06c04b', 1400, 700),
+    unsplash('photo-1470337458703-46ad1756a187', 1400, 700),
+    unsplash('photo-1555396273-367ea4eb4db5', 1400, 700),
+  ],
+  restaurant: [
+    unsplash('photo-1517248135467-4c7edcad34c4', 1400, 700),
+    unsplash('photo-1414235077428-338989a2e8c0', 1400, 700),
+    unsplash('photo-1546069901-ba9599a7e63c', 1400, 700),
+    unsplash('photo-1504674900247-0877df9cc836', 1400, 700),
+  ],
+  bakery: [
+    unsplash('photo-1711672284661-bd70e38f31b2', 1400, 700),
+    unsplash('photo-1509440159596-0249088772ff', 1400, 700),
+    unsplash('photo-1555507036-ab1f4038808a', 1400, 700),
+    unsplash('photo-1778940517177-3ff09530ef98', 1400, 700),
+  ],
 }
 
 const REWARD_IMAGE_DEFAULTS: Record<RewardCategory, string> = {
@@ -29,7 +68,7 @@ const REWARD_IMAGE_DEFAULTS: Record<RewardCategory, string> = {
   free_item: unsplash('photo-1504674900247-0877df9cc836', 800, 600),
   discount: unsplash('photo-1555396273-367ea4eb4db5', 800, 600),
   vip: unsplash('photo-1414235077428-338989a2e8c0', 800, 600),
-  special_reward: unsplash('photo-1464347755200-ca2363482b24', 800, 600),
+  special_reward: unsplash('photo-1501339847302-ac426a4a7cbb', 800, 600),
 }
 
 export type RewardPreset = {
@@ -70,14 +109,14 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       title: 'Free cocktail after 5 visits',
       required_stamps: 5,
       description: 'Signature drink on the house.',
-      image: unsplash('photo-1514362545857-3bc16c4c7d8e', 800, 600),
+      image: unsplash('photo-1470337458703-46ad1756a187', 800, 600),
     },
     {
       id: 'discount',
       title: '20% off your tab after 10 visits',
       required_stamps: 10,
       description: 'Keep regulars coming back on busy nights.',
-      image: unsplash('photo-1572116469696-31de0fa17a2a', 800, 600),
+      image: unsplash('photo-1776763019214-9658490d8b65', 800, 600),
     },
     {
       id: 'round',
@@ -123,7 +162,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       title: 'Free loaf after 10 visits',
       required_stamps: 10,
       description: 'Fresh bread for your most loyal guests.',
-      image: unsplash('photo-1486427946789-8ebfd54fb9a3', 800, 600),
+      image: unsplash('photo-1711672284661-bd70e38f31b2', 800, 600),
     },
     {
       id: 'cake',
@@ -146,12 +185,29 @@ export function normalizeVenueCategory(category: string | null | undefined): Ven
   return 'cafe'
 }
 
-export function defaultVenueLogoImage(category: VenueCategory): string {
-  return VENUE_LOGO_DEFAULTS[category]
+function hashSeed(seed: string): number {
+  // djb2, stable and fast
+  let hash = 5381
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 33) ^ seed.charCodeAt(i)
+  }
+  return Math.abs(hash)
 }
 
-export function defaultVenueCoverImage(category: VenueCategory): string {
-  return VENUE_COVER_DEFAULTS[category]
+function pickStable(list: string[], seed: string): string {
+  if (!list.length) {
+    return ''
+  }
+
+  return list[hashSeed(seed) % list.length]
+}
+
+export function defaultVenueLogoImage(category: VenueCategory, seed: string = category): string {
+  return pickStable(VENUE_LOGO_DEFAULTS[category], seed)
+}
+
+export function defaultVenueCoverImage(category: VenueCategory, seed: string = category): string {
+  return pickStable(VENUE_COVER_DEFAULTS[category], seed)
 }
 
 export function defaultRewardImage(category: RewardCategory): string {
