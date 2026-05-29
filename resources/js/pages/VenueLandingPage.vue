@@ -3,16 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import {
   buildAuthRedirectWithVenue,
   buildRegisterRedirectWithVenue,
   buildVenueLandingUrl,
   completeVenueOnboarding,
   fetchVenueLanding,
-  QR_MESSAGE_PRESETS,
-  type QrMessagePresetId,
 } from '@/lib/onboarding'
 import { rewardImageUrl } from '@/lib/rewardMedia'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
@@ -25,12 +25,10 @@ const auth = useAuthStore()
 
 const slug = computed(() => String(route.params.slug ?? ''))
 const loading = ref(true)
-const joining = ref(false)
+const joinAction = useAsyncAction()
 const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
-const selectedPreset = ref<QrMessagePresetId>('collect')
 
-const headline = computed(() => QR_MESSAGE_PRESETS.find((item) => item.id === selectedPreset.value)?.headline ?? 'Join & collect rewards')
 const milestones = computed(() => landing.value?.milestones ?? [])
 const joinNextPath = computed(() => `/card?venue_id=${landing.value?.venue.id ?? ''}`)
 
@@ -55,16 +53,20 @@ async function handleJoin() {
     return
   }
 
-  joining.value = true
-  error.value = ''
-
   try {
-    const result = await completeVenueOnboarding(slug.value)
-    await router.push(`/card?venue_id=${result.venueId}`)
+    await joinAction.run(async () => {
+      error.value = ''
+
+      try {
+        const result = await completeVenueOnboarding(slug.value)
+        await router.push(`/card?venue_id=${result.venueId}`)
+      } catch {
+        error.value = 'Could not join this venue right now. Please try again.'
+        throw new Error('join-failed')
+      }
+    })
   } catch {
-    error.value = 'Could not join this venue right now. Please try again.'
-  } finally {
-    joining.value = false
+    // Button shows Failed.
   }
 }
 
@@ -105,7 +107,7 @@ onMounted(async () => {
             </div>
             <div>
               <h1 class="text-3xl font-black tracking-tight">{{ landing.venue.name }}</h1>
-              <p class="mt-2 text-sm text-white/70">{{ headline }}</p>
+              <p class="mt-2 text-sm text-white/70">Join & collect rewards</p>
             </div>
           </div>
         </div>
@@ -129,9 +131,18 @@ onMounted(async () => {
         </div>
 
         <div class="mt-8 space-y-3">
-          <AppButton class="w-full" size="lg" :disabled="joining" @click="handleJoin">
-            {{ joining ? 'Joining...' : 'Join & collect rewards' }}
-          </AppButton>
+          <AsyncActionButton
+            class="w-full"
+            block
+            size="lg"
+            idle-label="Join & collect rewards"
+            loading-label="Joining…"
+            success-label="Joined ✓"
+            :loading="joinAction.loading"
+            :success="joinAction.success"
+            :error="joinAction.error"
+            @click="handleJoin"
+          />
           <AppButton
             variant="ghost"
             class="w-full border border-white/20 text-white hover:bg-white/10"

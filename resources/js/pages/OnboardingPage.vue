@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
@@ -31,6 +31,8 @@ const categories: Array<{ id: VenueCategory; label: string; emoji: string }> = [
 const router = useRouter()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
+const ONBOARDING_DRAFT_VENUE_KEY = 'owner_onboarding_draft_venue_id'
+const ONBOARDING_DRAFT_STEP_KEY = 'owner_onboarding_draft_step'
 
 const step = ref<OnboardingStep>(1)
 const loading = ref(false)
@@ -56,13 +58,31 @@ function syncRewardSelection() {
   selectedRewards.value = rewardPresets.value.map((preset) => preset.id)
 }
 
+function persistOnboardingDraft() {
+  if (!venue.value) return
+
+  sessionStorage.setItem(ONBOARDING_DRAFT_VENUE_KEY, String(venue.value.id))
+  sessionStorage.setItem(ONBOARDING_DRAFT_STEP_KEY, String(step.value))
+}
+
+function clearOnboardingDraft() {
+  sessionStorage.removeItem(ONBOARDING_DRAFT_VENUE_KEY)
+  sessionStorage.removeItem(ONBOARDING_DRAFT_STEP_KEY)
+}
+
 function setStep(next: OnboardingStep) {
   step.value = next
   error.value = ''
   success.value = ''
+  persistOnboardingDraft()
 }
 
 async function createVenueAndContinue() {
+  if (venue.value) {
+    setStep(2)
+    return
+  }
+
   if (!venueName.value.trim()) {
     error.value = 'Venue name is required.'
     return
@@ -83,6 +103,7 @@ async function createVenueAndContinue() {
     await auth.fetchUser()
     await workspace.bootstrap(true)
     success.value = 'Venue created. Next, choose your category.'
+    persistOnboardingDraft()
     setStep(2)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Unable to create venue.'
@@ -112,6 +133,7 @@ async function saveCategoryAndContinue() {
     })
     venue.value = response.venue
     syncRewardSelection()
+    persistOnboardingDraft()
     setStep(3)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not save category.'
@@ -142,6 +164,7 @@ async function uploadLogo(event: Event) {
       body,
     })
     venue.value = response.venue
+    persistOnboardingDraft()
     success.value = 'Logo uploaded.'
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not upload logo.'
@@ -194,9 +217,34 @@ function toggleReward(id: string) {
 }
 
 async function openDashboard() {
+  clearOnboardingDraft()
   await workspace.bootstrap(true)
   await router.push('/dashboard?onboarding=completed')
 }
+
+onMounted(async () => {
+  await workspace.bootstrap(true)
+
+  const draftVenueId = Number(sessionStorage.getItem(ONBOARDING_DRAFT_VENUE_KEY) || 0)
+  const draftStep = Number(sessionStorage.getItem(ONBOARDING_DRAFT_STEP_KEY) || 1)
+
+  if (draftVenueId > 0) {
+    const draftVenue = workspace.activeVenues.find((item) => item.id === draftVenueId) ?? null
+    if (draftVenue) {
+      venue.value = draftVenue
+      venueName.value = draftVenue.name
+      venueSlug.value = draftVenue.slug
+      category.value = normalizeVenueCategory(draftVenue.category)
+      syncRewardSelection()
+      if (draftStep >= 1 && draftStep <= 5) {
+        step.value = draftStep as OnboardingStep
+      }
+      return
+    }
+
+    clearOnboardingDraft()
+  }
+})
 </script>
 
 <template>

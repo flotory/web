@@ -24,14 +24,6 @@ export interface VenueLandingPayload {
   }>
 }
 
-export const QR_MESSAGE_PRESETS = [
-  { id: 'collect', headline: 'Scan to collect rewards', sub: 'Join our loyalty program in seconds.' },
-  { id: 'regular', headline: 'Become a regular', sub: 'Unlock rewards every time you visit.' },
-  { id: 'unlock', headline: 'Unlock free drinks', sub: 'Your next reward is closer than you think.' },
-] as const
-
-export type QrMessagePresetId = (typeof QR_MESSAGE_PRESETS)[number]['id']
-
 export function buildVenueLandingPath(slug: string): string {
   return `/v/${encodeURIComponent(slug)}`
 }

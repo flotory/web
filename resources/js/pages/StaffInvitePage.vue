@@ -3,9 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
 import { authFieldClass } from '@/lib/authForm'
 import { staffScannerPath } from '@/lib/venueRoles'
@@ -28,7 +30,8 @@ const workspace = useWorkspaceStore()
 
 const token = computed(() => String(route.params.token))
 const loading = ref(true)
-const submitting = ref(false)
+const acceptAction = useAsyncAction()
+const registerAction = useAsyncAction()
 const error = ref('')
 const inviteValid = ref(true)
 const invalidMessage = ref('')
@@ -74,46 +77,54 @@ async function finishJoin(venueId: number) {
 }
 
 async function acceptInvitation() {
-  submitting.value = true
-  error.value = ''
-
   try {
-    const response = await api<{ venue_id: number }>(`/invites/${token.value}/accept`, {
-      method: 'POST',
-    })
+    await acceptAction.run(async () => {
+      error.value = ''
 
-    await finishJoin(response.venue_id)
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not accept invitation.'
-  } finally {
-    submitting.value = false
+      try {
+        const response = await api<{ venue_id: number }>(`/invites/${token.value}/accept`, {
+          method: 'POST',
+        })
+
+        await finishJoin(response.venue_id)
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not accept invitation.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
 async function registerAndJoin() {
-  submitting.value = true
-  error.value = ''
-
   try {
-    const response = await api<{ token: string; user: { id: number; name: string; email: string }; venue_id: number }>(
-      `/invites/${token.value}/register`,
-      {
-        method: 'POST',
-        includeAuth: false,
-        body: {
-          name: name.value,
-          password: password.value,
-          password_confirmation: passwordConfirmation.value,
-        },
-      },
-    )
+    await registerAction.run(async () => {
+      error.value = ''
 
-    await auth.loginWithToken(response.token)
-    await finishJoin(response.venue_id)
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not create your account.'
-  } finally {
-    submitting.value = false
+      try {
+        const response = await api<{ token: string; user: { id: number; name: string; email: string }; venue_id: number }>(
+          `/invites/${token.value}/register`,
+          {
+            method: 'POST',
+            includeAuth: false,
+            body: {
+              name: name.value,
+              password: password.value,
+              password_confirmation: passwordConfirmation.value,
+            },
+          },
+        )
+
+        await auth.loginWithToken(response.token)
+        await finishJoin(response.venue_id)
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not create your account.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
@@ -188,9 +199,18 @@ async function logoutForInvite() {
           </div>
 
           <div v-else-if="auth.isAuthenticated && emailMatches" class="mt-6">
-            <AppButton class="w-full" size="lg" :disabled="submitting" @click="acceptInvitation">
-              {{ submitting ? 'Joining...' : 'Accept invitation' }}
-            </AppButton>
+            <AsyncActionButton
+              class="w-full"
+              block
+              size="lg"
+              idle-label="Accept invitation"
+              loading-label="Joining…"
+              success-label="Joined ✓"
+              :loading="acceptAction.loading"
+              :success="acceptAction.success"
+              :error="acceptAction.error"
+              @click="acceptInvitation"
+            />
           </div>
 
           <form v-else class="mt-6 grid gap-3" @submit.prevent="registerAndJoin">
@@ -210,9 +230,18 @@ async function logoutForInvite() {
               <label class="text-sm font-bold text-slate-600" for="invite-password-confirm">Confirm password</label>
               <input id="invite-password-confirm" v-model="passwordConfirmation" required type="password" autocomplete="new-password" :class="authFieldClass">
             </div>
-            <AppButton type="submit" class="w-full" size="lg" :disabled="submitting">
-              {{ submitting ? 'Creating account...' : 'Create account and join' }}
-            </AppButton>
+            <AsyncActionButton
+              class="w-full"
+              block
+              size="lg"
+              type="submit"
+              idle-label="Create account and join"
+              loading-label="Creating…"
+              success-label="Created ✓"
+              :loading="registerAction.loading"
+              :success="registerAction.success"
+              :error="registerAction.error"
+            />
           </form>
         </template>
       </AppCard>

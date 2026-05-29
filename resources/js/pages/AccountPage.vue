@@ -2,9 +2,11 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { authFieldClass } from '@/lib/authForm'
 import { staffScannerPath } from '@/lib/venueRoles'
@@ -19,9 +21,8 @@ const router = useRouter()
 const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
-const saving = ref(false)
+const passwordAction = useAsyncAction()
 const error = ref('')
-const success = ref('')
 
 const isStaff = computed(() => workspace.usesStaffNav)
 
@@ -31,28 +32,30 @@ async function submit() {
     return
   }
 
-  saving.value = true
-  error.value = ''
-  success.value = ''
-
   try {
-    const response = await api<{ message: string }>('/auth/password', {
-      method: 'PUT',
-      body: {
-        current_password: currentPassword.value,
-        password: newPassword.value,
-        password_confirmation: confirmPassword.value,
-      },
-    })
+    await passwordAction.run(async () => {
+      error.value = ''
 
-    success.value = response.message
-    currentPassword.value = ''
-    newPassword.value = ''
-    confirmPassword.value = ''
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not update password.'
-  } finally {
-    saving.value = false
+      try {
+        await api<{ message: string }>('/auth/password', {
+          method: 'PUT',
+          body: {
+            current_password: currentPassword.value,
+            password: newPassword.value,
+            password_confirmation: confirmPassword.value,
+          },
+        })
+
+        currentPassword.value = ''
+        newPassword.value = ''
+        confirmPassword.value = ''
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not update password.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
@@ -124,11 +127,19 @@ function goBack() {
           </div>
 
           <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
-          <p v-if="success" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ success }}</p>
 
-          <AppButton class="w-full" size="lg" type="submit" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Update password' }}
-          </AppButton>
+          <AsyncActionButton
+            class="w-full"
+            block
+            size="lg"
+            type="submit"
+            idle-label="Update password"
+            loading-label="Saving…"
+            success-label="Saved ✓"
+            :loading="passwordAction.loading"
+            :success="passwordAction.success"
+            :error="passwordAction.error"
+          />
           <AppButton class="w-full" variant="secondary" type="button" @click="goBack">
             {{ isStaff ? 'Back to scanner' : 'Back to dashboard' }}
           </AppButton>

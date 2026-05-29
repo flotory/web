@@ -3,17 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PhoneInput from '@/components/ui/PhoneInput.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
-import {
-  buildVenueLandingUrl,
-  QR_MESSAGE_PRESETS,
-  type QrMessagePresetId,
-} from '@/lib/onboarding'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverUrl, venueHasCustomCover, venueHasCustomLogo, venueLogoUrl } from '@/lib/venueMedia'
 import type { Venue, VenueCategory } from '@/types'
 
@@ -22,13 +21,12 @@ const router = useRouter()
 
 const venue = ref<Venue | null>(null)
 const loading = ref(true)
-const saving = ref(false)
+const saveVenueAction = useAsyncAction()
 const logoUploading = ref(false)
 const coverUploading = ref(false)
 const error = ref('')
 const logoInput = ref<HTMLInputElement | null>(null)
 const coverInput = ref<HTMLInputElement | null>(null)
-const qrPreviewRef = ref<HTMLElement | null>(null)
 const name = ref('')
 const slug = ref('')
 const address = ref('')
@@ -43,13 +41,17 @@ const categoryOptions: Array<{ id: VenueCategory; label: string }> = [
   { id: 'bakery', label: 'Bakery' },
 ]
 
-const venueId = computed(() => Number(route.params.id))
+const selectChevronStyle = {
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+  backgroundPosition: 'right 0.75rem center',
+}
 
-const landingUrl = computed(() => (venue.value ? buildVenueLandingUrl(venue.value.slug) : ''))
-const selectedPreset = ref<QrMessagePresetId>('collect')
-const selectedHeadline = computed(
-  () => QR_MESSAGE_PRESETS.find((item) => item.id === selectedPreset.value)?.headline ?? 'Scan to collect rewards',
-)
+const venueId = computed(() => Number(route.params.id))
+const linkCopied = ref(false)
+
+const publicSlug = computed(() => slug.value.trim() || venue.value?.slug || '')
+const landingUrl = computed(() => (publicSlug.value ? buildVenueLandingUrl(publicSlug.value) : ''))
 
 function hydrateForm(item: Venue) {
   venue.value = item
@@ -78,27 +80,31 @@ async function loadVenue() {
 async function saveVenue() {
   if (!venue.value) return
 
-  saving.value = true
-  error.value = ''
-
   try {
-    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}`, {
-      method: 'PUT',
-      body: {
-        name: name.value,
-        slug: slug.value || undefined,
-        address: address.value || undefined,
-        phone: phone.value || undefined,
-        website: website.value || undefined,
-        category: category.value,
-      },
-    })
+    await saveVenueAction.run(async () => {
+      error.value = ''
 
-    hydrateForm(response.venue)
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not save venue.'
-  } finally {
-    saving.value = false
+      try {
+        const response = await api<{ venue: Venue }>(`/venues/${venue.value!.id}`, {
+          method: 'PUT',
+          body: {
+            name: name.value,
+            slug: slug.value || undefined,
+            address: address.value || undefined,
+            phone: phone.value || undefined,
+            website: website.value || undefined,
+            category: category.value,
+          },
+        })
+
+        hydrateForm(response.venue)
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not save venue.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed; field error stays inline.
   }
 }
 
@@ -224,103 +230,53 @@ async function deleteCover() {
   }
 }
 
-function copyLandingUrl() {
+async function copyLandingUrl() {
   if (!landingUrl.value) return
-  void navigator.clipboard.writeText(landingUrl.value)
+
+  try {
+    await navigator.clipboard.writeText(landingUrl.value)
+    linkCopied.value = true
+    window.setTimeout(() => {
+      linkCopied.value = false
+    }, 2000)
+  } catch {
+    error.value = 'Could not copy link. Copy the URL manually.'
+  }
 }
 
-function triggerPngDownload(dataUrl: string) {
-  const link = document.createElement('a')
-  link.download = `${venue.value?.slug ?? 'venue'}-qr.png`
-  link.href = dataUrl
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-}
-
-function exportCanvasToPng(source: HTMLCanvasElement, exportSize = 512) {
-  const exportCanvas = document.createElement('canvas')
-  exportCanvas.width = exportSize
-  exportCanvas.height = exportSize
-  const ctx = exportCanvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('Could not prepare export canvas')
-  }
-
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, exportSize, exportSize)
-  ctx.drawImage(source, 0, 0, exportSize, exportSize)
-  triggerPngDownload(exportCanvas.toDataURL('image/png'))
-}
-
-function exportSvgToPng(svg: SVGElement, exportSize = 512) {
-  const clone = svg.cloneNode(true) as SVGElement
-  clone.setAttribute('width', String(exportSize))
-  clone.setAttribute('height', String(exportSize))
-
-  const svgString = new XMLSerializer().serializeToString(clone)
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-  const objectUrl = URL.createObjectURL(blob)
-  const image = new Image()
-
-  image.onload = () => {
-    try {
-      const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = exportSize
-      exportCanvas.height = exportSize
-      const ctx = exportCanvas.getContext('2d')
-      if (!ctx) {
-        throw new Error('Could not prepare export canvas')
-      }
-
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, exportSize, exportSize)
-      ctx.drawImage(image, 0, 0, exportSize, exportSize)
-      triggerPngDownload(exportCanvas.toDataURL('image/png'))
-    } catch {
-      error.value = 'Could not export QR. Try again or copy the link instead.'
-    } finally {
-      URL.revokeObjectURL(objectUrl)
-    }
-  }
-
-  image.onerror = () => {
-    URL.revokeObjectURL(objectUrl)
-    error.value = 'Could not export QR. Try again or copy the link instead.'
-  }
-
-  image.src = objectUrl
+function openPublicPage() {
+  if (!landingUrl.value) return
+  window.open(landingUrl.value, '_blank', 'noopener,noreferrer')
 }
 
 function downloadQrPng() {
-  if (!landingUrl.value || !venue.value) {
+  if (!landingUrl.value || !venue.value) return
+
+  const canvas = document.querySelector<HTMLCanvasElement>('#venue-settings-qr canvas')
+  if (!canvas) {
+    error.value = 'QR is not ready yet. Wait a moment and try again.'
     return
   }
 
-  error.value = ''
-  const preview = qrPreviewRef.value
-  if (!preview) {
-    error.value = 'QR preview is not ready yet. Wait a moment and try again.'
+  const exportCanvas = document.createElement('canvas')
+  exportCanvas.width = 512
+  exportCanvas.height = 512
+  const ctx = exportCanvas.getContext('2d')
+  if (!ctx) {
+    error.value = 'Could not export QR. Try again.'
     return
   }
 
-  const canvas = preview.querySelector('canvas')
-  if (canvas) {
-    try {
-      exportCanvasToPng(canvas)
-    } catch {
-      error.value = 'Could not export QR. Try again or copy the link instead.'
-    }
-    return
-  }
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, 512, 512)
+  ctx.drawImage(canvas, 0, 0, 512, 512)
 
-  const svg = preview.querySelector('svg')
-  if (svg) {
-    exportSvgToPng(svg)
-    return
-  }
-
-  error.value = 'QR preview is not ready yet. Wait a moment and try again.'
+  const link = document.createElement('a')
+  link.download = `${publicSlug.value || venue.value.slug}-qr.png`
+  link.href = exportCanvas.toDataURL('image/png')
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
 }
 
 onMounted(loadVenue)
@@ -349,50 +305,6 @@ onMounted(loadVenue)
     </AppCard>
 
     <div v-else-if="venue" class="grid gap-5">
-      <AppCard wrapper-class="border-2 border-dashed border-slate-200 bg-slate-50/80">
-        <AppBadge tone="blue">Customer acquisition</AppBadge>
-        <h2 class="mt-4 text-2xl font-black text-slate-950">Venue QR codes</h2>
-        <p class="mt-2 text-sm text-slate-500">
-          Print this QR at tables, counters, and windows so customers can join instantly.
-        </p>
-
-        <div class="mt-4 flex flex-wrap gap-2">
-          <button
-            v-for="preset in QR_MESSAGE_PRESETS"
-            :key="preset.id"
-            type="button"
-            class="rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm"
-            :class="selectedPreset === preset.id ? 'bg-slate-950 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200'"
-            @click="selectedPreset = preset.id"
-          >
-            {{ preset.headline }}
-          </button>
-        </div>
-
-        <div class="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
-          <div ref="qrPreviewRef" class="flex justify-center rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-            <QrcodeVue
-              v-if="landingUrl"
-              :value="landingUrl"
-              :size="220"
-              level="M"
-              render-as="canvas"
-              class="mx-auto rounded-2xl"
-              :margin="2"
-            />
-          </div>
-          <div class="space-y-2 text-center">
-            <p class="break-all text-sm font-semibold text-slate-700">{{ landingUrl }}</p>
-            <AppButton variant="secondary" size="sm" @click="copyLandingUrl">Copy link</AppButton>
-            <AppButton variant="secondary" size="sm" @click="downloadQrPng">Download PNG</AppButton>
-          </div>
-        </div>
-
-        <p class="rounded-2xl bg-white p-4 text-center text-sm font-semibold text-slate-600">
-          Suggested copy: <span class="text-slate-950">{{ selectedHeadline }}</span>
-        </p>
-      </AppCard>
-
       <div class="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
         <div class="space-y-5">
           <AppCard wrapper-class="overflow-hidden p-0">
@@ -435,8 +347,37 @@ onMounted(loadVenue)
           </AppCard>
         </div>
 
-        <AppCard>
-          <form class="grid gap-4" @submit.prevent="saveVenue">
+        <AppCard wrapper-class="relative">
+          <h2 class="text-xl font-black text-slate-950">Public venue</h2>
+          <p class="mt-2 text-sm font-semibold text-slate-500">
+            Customers use this link to join your loyalty program. It updates when you change the slug (save to apply).
+          </p>
+          <p class="mt-4 break-all rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 ring-1 ring-slate-200">
+            {{ landingUrl || 'Save a slug to generate your public link' }}
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <AppButton variant="secondary" size="sm" :disabled="!landingUrl" @click="copyLandingUrl">
+              {{ linkCopied ? 'Copied' : 'Copy link' }}
+            </AppButton>
+            <AppButton variant="secondary" size="sm" :disabled="!landingUrl" @click="openPublicPage">
+              Open public page
+            </AppButton>
+            <AppButton variant="secondary" size="sm" :disabled="!landingUrl" @click="downloadQrPng">
+              Download QR
+            </AppButton>
+          </div>
+          <div id="venue-settings-qr" class="pointer-events-none absolute -left-[9999px] top-0 opacity-0" aria-hidden="true">
+            <QrcodeVue
+              v-if="landingUrl"
+              :value="landingUrl"
+              :size="220"
+              level="M"
+              render-as="canvas"
+              :margin="2"
+            />
+          </div>
+
+          <form class="mt-8 grid gap-4 border-t border-slate-200 pt-8" @submit.prevent="saveVenue">
           <div class="grid gap-4 md:grid-cols-[1fr_180px]">
             <div>
               <label class="text-sm font-bold text-slate-600" for="edit-venue-name">Venue name</label>
@@ -448,7 +389,12 @@ onMounted(loadVenue)
             </div>
             <div>
               <label class="text-sm font-bold text-slate-600" for="edit-venue-category">Category</label>
-              <select id="edit-venue-category" v-model="category" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+              <select
+                id="edit-venue-category"
+                v-model="category"
+                class="mt-2 h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+                :style="selectChevronStyle"
+              >
                 <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
               </select>
             </div>
@@ -456,10 +402,7 @@ onMounted(loadVenue)
               <label class="text-sm font-bold text-slate-600" for="edit-venue-website">Website optional</label>
               <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="https://example.com">
             </div>
-            <div>
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-phone">Phone optional</label>
-              <input id="edit-venue-phone" v-model="phone" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="+1 555 0100">
-            </div>
+            <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />
             <div class="md:col-span-2">
               <label class="text-sm font-bold text-slate-600" for="edit-venue-address">Address optional</label>
               <input id="edit-venue-address" v-model="address" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="12 Market Street">
@@ -467,7 +410,15 @@ onMounted(loadVenue)
           </div>
 
           <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
-            <AppButton type="submit" :disabled="saving">{{ saving ? 'Saving...' : 'Save venue' }}</AppButton>
+            <AsyncActionButton
+              type="submit"
+              idle-label="Save venue"
+              loading-label="Saving…"
+              success-label="Saved ✓"
+              :loading="saveVenueAction.loading"
+              :success="saveVenueAction.success"
+              :error="saveVenueAction.error"
+            />
           </form>
         </AppCard>
       </div>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import StatCard from '@/components/loyalty/StatCard.vue'
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -36,7 +37,6 @@ async function loadCafes() {
 }
 
 async function joinCafe(cafe: Venue) {
-  joiningId.value = cafe.id
   error.value = ''
 
   try {
@@ -44,8 +44,7 @@ async function joinCafe(cafe: Venue) {
     await loadCafes()
   } catch {
     error.value = `Could not join ${cafe.name}.`
-  } finally {
-    joiningId.value = null
+    throw new Error('join-failed')
   }
 }
 
@@ -99,9 +98,15 @@ onMounted(loadCafes)
           <RouterLink v-if="cafe.joined_count" :to="`/card?venue_id=${cafe.id}`">
             <AppButton class="w-full">Open card</AppButton>
           </RouterLink>
-          <AppButton v-else class="w-full" :disabled="joiningId === cafe.id" @click="joinCafe(cafe)">
-            {{ joiningId === cafe.id ? 'Joining...' : 'Join cafe' }}
-          </AppButton>
+          <AsyncActionButton
+            v-else
+            class="w-full"
+            block
+            idle-label="Join cafe"
+            loading-label="Joining…"
+            success-label="Joined ✓"
+            :action="() => joinCafe(cafe)"
+          />
         </div>
         </div>
       </AppCard>

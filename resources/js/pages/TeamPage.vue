@@ -2,9 +2,11 @@
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { useVenueTeam } from '@/composables/useVenueTeam'
 import { api, ApiError } from '@/lib/api'
@@ -36,39 +38,45 @@ const {
 } = useVenueTeam()
 
 const inviteEmail = ref('')
+const inviteAction = useAsyncAction()
 
 async function invite() {
   const venueId = venue.value?.id
   if (!venueId) return
 
-  saving.value = true
-  error.value = ''
-  statusNote.value = ''
-
   try {
-    const response = await api<{ invitation: StaffInvitation }>(`/venues/${venueId}/team/invite`, {
-      method: 'POST',
-      body: {
-        email: inviteEmail.value,
-        role: 'staff',
-      },
-    })
+    await inviteAction.run(async () => {
+      error.value = ''
+      statusNote.value = ''
 
-    replaceInvitation(response.invitation)
-    inviteEmail.value = ''
-    statusNote.value = `Invitation sent to ${response.invitation.email}.`
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not send invitation.'
-  } finally {
-    saving.value = false
+      try {
+        const response = await api<{ invitation: StaffInvitation }>(`/venues/${venueId}/team/invite`, {
+          method: 'POST',
+          body: {
+            email: inviteEmail.value,
+            role: 'staff',
+          },
+        })
+
+        replaceInvitation(response.invitation)
+        inviteEmail.value = ''
+        statusNote.value = `Invitation sent to ${response.invitation.email}.`
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not send invitation.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
 async function resendInvitation(invitation: StaffInvitation) {
   const venueId = venue.value?.id
-  if (!venueId) return
+  if (!venueId) {
+    throw new Error('Venue not selected')
+  }
 
-  saving.value = true
   error.value = ''
 
   try {
@@ -81,8 +89,7 @@ async function resendInvitation(invitation: StaffInvitation) {
     statusNote.value = `Invitation resent to ${response.invitation.email}.`
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not resend invitation.'
-  } finally {
-    saving.value = false
+    throw exception
   }
 }
 
@@ -185,7 +192,15 @@ onMounted(loadTeam)
               <p class="text-sm font-bold text-slate-700">Role: Staff</p>
               <p class="mt-1 text-xs font-semibold text-slate-500">Scanner and customer tools only.</p>
             </div>
-            <AppButton type="submit" :disabled="saving">{{ saving ? 'Sending...' : 'Invite staff member' }}</AppButton>
+            <AsyncActionButton
+              type="submit"
+              idle-label="Invite staff member"
+              loading-label="Sending…"
+              success-label="Sent ✓"
+              :loading="inviteAction.loading"
+              :success="inviteAction.success"
+              :error="inviteAction.error"
+            />
           </form>
         </AppCard>
 
@@ -246,9 +261,14 @@ onMounted(loadTeam)
                   </AppBadge>
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
-                  <AppButton variant="secondary" size="sm" :disabled="saving" @click="resendInvitation(invitation)">
-                    Resend invitation
-                  </AppButton>
+                  <AsyncActionButton
+                    variant="secondary"
+                    size="sm"
+                    idle-label="Resend invitation"
+                    loading-label="Sending…"
+                    success-label="Sent ✓"
+                    :action="() => resendInvitation(invitation)"
+                  />
                   <AppButton variant="ghost" size="sm" :disabled="saving" @click="cancelInvitation(invitation)">
                     Cancel
                   </AppButton>
@@ -284,16 +304,16 @@ onMounted(loadTeam)
                     {{ invitationStatusLabel(invitation.status) }}
                   </AppBadge>
                 </div>
-                <AppButton
+                <AsyncActionButton
                   v-if="invitation.status === 'expired'"
                   class="mt-3"
                   variant="secondary"
                   size="sm"
-                  :disabled="saving"
-                  @click="resendInvitation(invitation)"
-                >
-                  Resend invitation
-                </AppButton>
+                  idle-label="Resend invitation"
+                  loading-label="Sending…"
+                  success-label="Sent ✓"
+                  :action="() => resendInvitation(invitation)"
+                />
               </div>
 
               <p v-if="!invitationHistory.length" class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500 ring-1 ring-slate-200">

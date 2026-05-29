@@ -3,10 +3,12 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
 import { rewardImageUrl, rewardHasCustomImage } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
@@ -80,6 +82,7 @@ const customer = ref<Customer | null>(null)
 const venue = ref<Venue | null>(null)
 const loading = ref(true)
 const saving = ref(false)
+const saveRewardAction = useAsyncAction()
 const error = ref('')
 const successMessage = ref('')
 const fieldErrors = ref<Record<string, string>>({})
@@ -306,74 +309,64 @@ async function saveReward() {
     return
   }
 
-  saving.value = true
-  error.value = ''
   fieldErrors.value = {}
 
+  const duplicateThreshold = rewards.value.some(
+    (reward) => reward.required_stamps === requiredStamps.value && reward.id !== editingReward.value?.id,
+  )
+  if (duplicateThreshold) {
+    error.value = 'A milestone already exists for this visits threshold.'
+    return
+  }
+
   try {
-    const duplicateThreshold = rewards.value.some(
-      (reward) => reward.required_stamps === requiredStamps.value && reward.id !== editingReward.value?.id,
-    )
-    if (duplicateThreshold) {
-      error.value = 'A milestone already exists for this visits threshold.'
-      return
-    }
+    await saveRewardAction.run(async () => {
+      error.value = ''
 
-    const isEditing = Boolean(editingReward.value)
-    const replacingImage = Boolean(imageFile.value)
-    const removingImage = removeImage.value
+      try {
+        const body = new FormData()
+        body.append('title', title.value)
+        body.append('required_stamps', String(requiredStamps.value))
+        body.append('description', description.value)
+        body.append('active', '1')
 
-    const body = new FormData()
-    body.append('title', title.value)
-    body.append('required_stamps', String(requiredStamps.value))
-    body.append('description', description.value)
-    body.append('active', '1')
+        if (removeImage.value) {
+          body.append('remove_image', '1')
+        }
 
-    if (removeImage.value) {
-      body.append('remove_image', '1')
-    }
+        if (imageFile.value) {
+          body.append('image', imageFile.value)
+        }
 
-    if (imageFile.value) {
-      body.append('image', imageFile.value)
-    }
+        if (editingReward.value) {
+          await api<{ reward: Reward }>(`/venues/${venue.value!.id}/rewards/${editingReward.value.id}`, {
+            method: 'PUT',
+            body,
+          })
+        } else {
+          await api<{ reward: Reward }>(`/venues/${venue.value!.id}/rewards`, {
+            method: 'POST',
+            body,
+          })
+        }
 
-    if (editingReward.value) {
-      await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${editingReward.value.id}`, {
-        method: 'PUT',
-        body,
-      })
-    } else {
-      await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, {
-        method: 'POST',
-        body,
-      })
-    }
-
-    resetForm()
-    formOpen.value = false
-    await loadRewards()
-    if (isEditing) {
-      if (replacingImage) {
-        showSuccess('Milestone updated and image replaced.')
-      } else if (removingImage) {
-        showSuccess('Milestone updated and image removed.')
-      } else {
-        showSuccess('Milestone updated.')
+        resetForm()
+        formOpen.value = false
+        await loadRewards()
+      } catch (exception) {
+        if (exception instanceof ApiError) {
+          error.value = exception.message
+          fieldErrors.value = Object.fromEntries(
+            Object.entries(exception.errors).map(([key, messages]) => [key, messages[0] ?? 'Invalid value']),
+          )
+        } else {
+          error.value = 'Could not save milestone.'
+        }
+        throw exception
       }
-    } else {
-      showSuccess(replacingImage ? 'Milestone created with image.' : 'Milestone created.')
-    }
-  } catch (exception) {
-    if (exception instanceof ApiError) {
-      error.value = exception.message
-      fieldErrors.value = Object.fromEntries(
-        Object.entries(exception.errors).map(([key, messages]) => [key, messages[0] ?? 'Invalid value']),
-      )
-    } else {
-      error.value = 'Could not save milestone.'
-    }
-  } finally {
-    saving.value = false
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
@@ -795,10 +788,18 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           </section>
 
           <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-            <AppButton type="button" variant="ghost" :disabled="saving" @click="closeCreateForm">Cancel</AppButton>
-            <AppButton type="submit" :disabled="saving">
-              {{ saving ? 'Saving...' : (editingReward ? 'Save changes' : 'Publish milestone') }}
+            <AppButton type="button" variant="ghost" :disabled="saving || saveRewardAction.loading" @click="closeCreateForm">
+              Cancel
             </AppButton>
+            <AsyncActionButton
+              type="submit"
+              :idle-label="editingReward ? 'Save changes' : 'Create reward'"
+              :loading-label="editingReward ? 'Saving…' : 'Creating…'"
+              :success-label="editingReward ? 'Saved ✓' : 'Created ✓'"
+              :loading="saveRewardAction.loading"
+              :success="saveRewardAction.success"
+              :error="saveRewardAction.error"
+            />
           </div>
         </form>
       </div>

@@ -3,9 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
+import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PhoneInput from '@/components/ui/PhoneInput.vue'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
@@ -20,6 +23,7 @@ const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 
 const loading = ref(true)
+const createVenueAction = useAsyncAction()
 const saving = ref(false)
 const error = ref('')
 const formOpen = ref(false)
@@ -102,29 +106,33 @@ async function loadVenues() {
 }
 
 async function createVenue() {
-  saving.value = true
-  error.value = ''
-
   try {
-    await api<{ venue: Venue }>('/venues', {
-      method: 'POST',
-      body: {
-        name: name.value,
-        slug: slug.value || undefined,
-        address: address.value || undefined,
-        phone: phone.value || undefined,
-        website: website.value || undefined,
-      },
-    })
+    await createVenueAction.run(async () => {
+      error.value = ''
 
-    resetForm()
-    formOpen.value = false
-    await auth.fetchUser()
-    await loadVenues()
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
-  } finally {
-    saving.value = false
+      try {
+        await api<{ venue: Venue }>('/venues', {
+          method: 'POST',
+          body: {
+            name: name.value,
+            slug: slug.value || undefined,
+            address: address.value || undefined,
+            phone: phone.value || undefined,
+            website: website.value || undefined,
+          },
+        })
+
+        resetForm()
+        formOpen.value = false
+        await auth.fetchUser()
+        await loadVenues()
+      } catch (exception) {
+        error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed.
   }
 }
 
@@ -232,16 +240,21 @@ onMounted(loadVenues)
             <label class="text-sm font-bold text-slate-600" for="venue-address">Address optional</label>
             <input id="venue-address" v-model="address" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="12 Market Street">
           </div>
-          <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-phone">Phone optional</label>
-            <input id="venue-phone" v-model="phone" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="+1 555 0100">
-          </div>
+          <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
         </div>
 
         <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
 
         <div class="flex flex-wrap gap-2">
-          <AppButton type="submit" :disabled="saving">{{ saving ? 'Saving...' : 'Create venue' }}</AppButton>
+          <AsyncActionButton
+            type="submit"
+            idle-label="Create venue"
+            loading-label="Creating…"
+            success-label="Created ✓"
+            :loading="createVenueAction.loading"
+            :success="createVenueAction.success"
+            :error="createVenueAction.error"
+          />
           <AppButton type="button" variant="secondary" @click="formOpen = false">Cancel</AppButton>
         </div>
       </form>
@@ -258,7 +271,7 @@ onMounted(loadVenues)
       <AppCard
         v-for="venue in filteredVenues"
         :key="venue.id"
-        wrapper-class="group relative overflow-hidden border-slate-200/80 p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+        wrapper-class="group relative overflow-hidden border-slate-200/80 p-0 shadow-sm transition hover:shadow-xl"
       >
         <img :src="venueCoverUrl(venue)" alt="" class="h-24 w-full object-cover">
         <div class="relative p-5">
@@ -305,17 +318,10 @@ onMounted(loadVenues)
           </div>
         </div>
 
-        <div class="mt-4 grid gap-2">
-          <div class="grid gap-2 sm:grid-cols-3">
-            <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
-            <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/scanner?venue_id=${venue.id}`)">Open scanner</AppButton>
-            <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
-          </div>
-          <div class="grid gap-2 sm:grid-cols-3">
-            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/rewards')">Rewards</AppButton>
-            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/customers')">Customers</AppButton>
-            <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/analytics')">Analytics</AppButton>
-          </div>
+        <div class="mt-4 grid gap-2 sm:grid-cols-3">
+          <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
+          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/scanner?venue_id=${venue.id}`)">Open scanner</AppButton>
+          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>
         </div>
       </AppCard>
