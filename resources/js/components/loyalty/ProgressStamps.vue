@@ -29,7 +29,7 @@ const slots = computed(() => Array.from({ length: props.required }, (_, index) =
     </div>
     <p class="text-sm font-medium text-slate-500">
       <span v-if="remaining === 0">Reward unlocked. Ready to redeem.</span>
-      <span v-else>{{ remaining }} more {{ remaining === 1 ? 'visit' : 'visits' }} for reward</span>
+      <span v-else>{{ remaining }} more {{ remaining === 1 ? 'stamp' : 'stamps' }} for reward</span>
     </p>
   </div>
 </template>

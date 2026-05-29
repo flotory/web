@@ -120,7 +120,7 @@ onMounted(async () => {
           >
             <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="h-28 w-full object-cover">
             <div class="p-4">
-              <p class="text-xs font-bold uppercase tracking-wide text-emerald-300">{{ milestone.required_stamps }} visits</p>
+              <p class="text-xs font-bold uppercase tracking-wide text-emerald-300">{{ milestone.required_stamps }} stamps</p>
               <p class="mt-1 text-lg font-black">{{ milestone.title }}</p>
               <p v-if="milestone.description" class="mt-1 text-sm text-white/65">{{ milestone.description }}</p>
             </div>

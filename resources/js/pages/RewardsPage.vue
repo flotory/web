@@ -40,7 +40,7 @@ const rewardTemplates: RewardTemplate[] = [
     emoji: '☕',
     description: 'Fast wins for coffee shops',
     rewards: [
-      { title: '50% off one coffee', required_stamps: 5, description: 'Half price on any coffee after five visits.' },
+      { title: '50% off one coffee', required_stamps: 5, description: 'Half price on any coffee after five stamps.' },
       { title: 'Free coffee', required_stamps: 10, description: 'A complimentary coffee on the house.' },
       { title: 'Free coffee', required_stamps: 15, description: 'Another free coffee for loyal regulars.' },
     ],
@@ -59,7 +59,7 @@ const rewardTemplates: RewardTemplate[] = [
     id: 'restaurant-retention',
     name: 'Restaurant Retention',
     emoji: '🍕',
-    description: 'Drive repeat dining visits',
+    description: 'Drive repeat stamp collection',
     rewards: [
       { title: '20% OFF', required_stamps: 8, description: 'A loyalty discount guests love to unlock.' },
       { title: 'Free appetizer', required_stamps: 14, description: 'Shareable reward that feels generous.' },
@@ -69,7 +69,7 @@ const rewardTemplates: RewardTemplate[] = [
 
 const bestPractices = [
   'Smaller rewards unlock faster — guests stay motivated when progress feels close.',
-  '5–7 visit milestones perform best for cafes and bars.',
+  '5–7 stamp milestones perform best for cafes and bars.',
   'Visible progress bars increase completion rates more than hidden thresholds.',
 ]
 
@@ -316,7 +316,7 @@ async function saveReward() {
     (reward) => reward.required_stamps === requiredStamps.value && reward.id !== editingReward.value?.id,
   )
   if (duplicateThreshold) {
-    error.value = 'A milestone already exists for this visits threshold.'
+    error.value = 'A milestone already exists for this stamp threshold.'
     return
   }
 
@@ -411,7 +411,7 @@ async function duplicateReward(reward: Reward) {
     stamps += 1
   }
   if (used.has(stamps)) {
-    error.value = 'No free visit threshold available to duplicate.'
+    error.value = 'No free stamp threshold available to duplicate.'
     return
   }
 
@@ -631,7 +631,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <p v-if="!needsVenuePick && venue" class="mt-4 text-sm font-semibold text-cyan-200/90">
               {{ activeRewardCount }} active rewards
               <span class="text-white/40">•</span>
-              Avg unlock: {{ avgUnlockVisits || '—' }} visits
+              Avg unlock: {{ avgUnlockVisits || '—' }} stamps
               <span v-if="venue.name" class="text-white/40">•</span>
               <span v-if="venue.name">{{ venue.name }}</span>
             </p>
@@ -673,7 +673,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             {{ editingReward ? 'Edit milestone' : 'Create a collectible milestone' }}
           </h2>
           <p class="mt-1 text-sm text-slate-500">
-            {{ editingReward ? 'Update how guests unlock this reward.' : 'Pick a template or craft your own — achievable rewards drive repeat visits.' }}
+            {{ editingReward ? 'Update how guests unlock this reward.' : 'Pick a template or craft your own — achievable rewards drive repeat stamps.' }}
           </p>
         </div>
 
@@ -692,7 +692,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
               <p class="mt-2 font-black text-slate-900">{{ template.name }}</p>
               <p class="mt-1 text-xs text-slate-500">{{ template.description }}</p>
               <p class="mt-3 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
-                {{ template.rewards.map((item) => `${item.required_stamps} visits`).join(' → ') }}
+                {{ template.rewards.map((item) => `${item.required_stamps} stamps`).join(' → ') }}
               </p>
             </button>
           </div>
@@ -731,7 +731,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                     class="h-12 w-full rounded-2xl border bg-slate-50 px-4 pr-14 text-sm font-medium outline-none focus:bg-white"
                     :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
                   >
-                  <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">visits</span>
+                  <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">stamps</span>
                 </div>
                 <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
               </div>
@@ -813,7 +813,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         <p class="text-4xl">🎁</p>
         <h2 class="mt-4 text-3xl font-black text-slate-950">Create your first reward</h2>
         <p class="mx-auto mt-2 max-w-lg text-sm text-slate-600">
-          Customers return more often when rewards feel achievable. Start with a 5-visit win — guests love seeing progress move.
+          Customers return more often when rewards feel achievable. Start with a 5-stamp win — guests love seeing progress move.
         </p>
         <div class="mt-6 flex flex-wrap justify-center gap-2">
           <AppButton @click="openCreateForm">Create first milestone</AppButton>
@@ -919,12 +919,12 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                   <div>
                     <h3 class="text-xl font-black text-slate-950">{{ reward.title }}</h3>
                     <p class="mt-1 text-sm font-semibold text-indigo-600">
-                      Unlock after {{ reward.required_stamps }} {{ reward.required_stamps === 1 ? 'visit' : 'visits' }}
+                      Unlock after {{ reward.required_stamps }} {{ reward.required_stamps === 1 ? 'stamp' : 'stamps' }}
                     </p>
                   </div>
                 </div>
                 <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                  {{ reward.description || 'Reward regular guests and make every visit feel closer to something special.' }}
+                  {{ reward.description || 'Reward regular guests and make every stamp feel closer to something special.' }}
                 </p>
                 <div class="mt-4">
                   <div class="flex items-center justify-between text-xs font-bold text-slate-500">
@@ -964,7 +964,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         <AppCard wrapper-class="relative overflow-hidden border-slate-800 bg-gradient-to-br from-slate-950 to-indigo-950 text-white">
           <div class="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-cyan-400/20 blur-2xl" />
           <h2 class="relative text-lg font-black">Analytics preview</h2>
-          <p class="relative mt-1 text-sm text-white/60">Unlocks after your first guest visits.</p>
+          <p class="relative mt-1 text-sm text-white/60">Unlocks after your first guest stamp.</p>
           <div class="relative mt-4 space-y-2 opacity-70">
             <div class="h-16 rounded-xl bg-white/10" />
             <div class="grid grid-cols-3 gap-2">
@@ -973,7 +973,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
               <div class="h-10 rounded-lg bg-white/10" />
             </div>
           </div>
-          <p class="relative mt-4 text-xs font-semibold text-cyan-200/80">Track repeat visits • Busiest hours • Reward performance</p>
+          <p class="relative mt-4 text-xs font-semibold text-cyan-200/80">Track repeat stamps • Busiest hours • Reward performance</p>
         </AppCard>
       </div>
     </template>
@@ -984,7 +984,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         <div>
           <AppBadge tone="blue">Progress journey</AppBadge>
           <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards Journey</h1>
-          <p class="mt-2 text-slate-500">Unlock milestones as you keep visiting. Progress never goes backwards.</p>
+          <p class="mt-2 text-slate-500">Unlock milestones as you keep collecting stamps. Progress never goes backwards.</p>
         </div>
       </div>
 
@@ -1020,14 +1020,14 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="reward-media-img">
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
             <p class="absolute bottom-4 left-4 text-xs font-bold uppercase tracking-wide text-white/90">
-              {{ milestone.required_stamps }} visits
+              {{ milestone.required_stamps }} stamps
             </p>
           </div>
           <div class="p-5">
             <div class="flex items-start justify-between gap-3">
               <div>
                 <h2 class="text-2xl font-black text-slate-950">{{ milestone.title }}</h2>
-                <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} visits milestone</p>
+                <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} stamps milestone</p>
               </div>
               <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
                 {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
@@ -1101,7 +1101,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <div class="bg-gradient-to-r from-indigo-600 to-cyan-500 px-4 py-5 text-white">
               <p class="text-xs font-bold uppercase tracking-wide text-white/70">{{ venue?.name ?? 'Your venue' }}</p>
               <p class="mt-2 text-2xl font-black">Loyalty card</p>
-              <p class="mt-1 text-sm text-white/80">{{ demoProgressStamps }} visits collected</p>
+              <p class="mt-1 text-sm text-white/80">{{ demoProgressStamps }} stamps collected</p>
             </div>
             <div class="space-y-3 p-4">
               <div
@@ -1115,7 +1115,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                   </span>
                   <div class="min-w-0 flex-1">
                     <p class="truncate font-bold text-white">{{ reward.title }}</p>
-                    <p class="text-xs text-white/60">{{ reward.required_stamps }} visits</p>
+                    <p class="text-xs text-white/60">{{ reward.required_stamps }} stamps</p>
                     <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                       <div
                         class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300"

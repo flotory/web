@@ -176,7 +176,7 @@ async function logoutForInvite() {
 
           <ul class="mt-4 space-y-2 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600 ring-1 ring-slate-200">
             <li>Open the scanner</li>
-            <li>Scan customer visits</li>
+            <li>Add customer stamps</li>
             <li>Help customers redeem rewards</li>
           </ul>
 

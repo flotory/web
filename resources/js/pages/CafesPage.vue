@@ -57,7 +57,7 @@ onMounted(loadCafes)
       <AppBadge tone="blue">{{ isCustomer ? 'Explore cafes' : 'Demo cafes' }}</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Cafes</h1>
       <p class="mt-2 text-slate-500">
-        {{ isCustomer ? 'Join cafes and open the right loyalty card for each place.' : 'Seeded restaurant workspaces with customers, visits, and rewards.' }}
+        {{ isCustomer ? 'Join cafes and open the right loyalty card for each place.' : 'Seeded restaurant workspaces with customers, stamps, and rewards.' }}
       </p>
     </div>
 
@@ -90,7 +90,7 @@ onMounted(loadCafes)
 
         <div class="mt-5 grid grid-cols-3 gap-3">
           <StatCard label="Customers" :value="cafe.customers_count ?? 0" />
-          <StatCard label="Visits" :value="cafe.visits_count ?? 0" />
+          <StatCard label="Stamps" :value="cafe.visits_count ?? 0" />
           <StatCard label="Rewards" :value="cafe.rewards_count ?? 0" />
         </div>
 

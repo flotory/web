@@ -190,7 +190,7 @@ class RewardController extends Controller
 
         if ($query->exists()) {
             throw ValidationException::withMessages([
-                'required_stamps' => ['A milestone already exists for this visits threshold.'],
+                'required_stamps' => ['A milestone already exists for this stamp threshold.'],
             ]);
         }
     }

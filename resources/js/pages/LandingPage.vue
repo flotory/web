@@ -16,18 +16,18 @@ const trustPoints = [
 const flowSteps = [
   {
     title: 'Place QR in venue',
-    copy: 'Add table stands, posters, or counter cards once and start collecting repeat visits.',
+    copy: 'Add table stands, posters, or counter cards once and start collecting stamps.',
     image:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
   },
   {
     title: 'Customers scan and join instantly',
-    copy: 'Guests open a digital loyalty card in seconds and start collecting visits immediately.',
+    copy: 'Guests open a digital loyalty card in seconds and start collecting stamps immediately.',
     image:
       'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
   },
   {
-    title: 'Staff stamps visits in seconds',
+    title: 'Staff add stamps in seconds',
     copy: 'Open scanner, scan once, confirm. Fast enough for rush hour service.',
     image:
       'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
@@ -41,7 +41,7 @@ const flowSteps = [
 ]
 
 const analyticsMetrics = [
-  { label: 'Repeat visits', value: '+34%' },
+  { label: 'Repeat stamps', value: '+34%' },
   { label: 'Active customers', value: '1,248' },
   { label: 'Redemption rate', value: '22%' },
   { label: 'Top reward', value: 'Free latte' },
@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
             <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Customer progress</p>
               <p class="mt-3 text-lg font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">2 visits until free cocktail</p>
+              <p class="text-sm text-emerald-300">2 stamps until free cocktail</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10 sm:col-span-2">
               <div class="flex items-center justify-between">
@@ -186,14 +186,14 @@ onBeforeUnmount(() => {
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Reward Psychology</p>
             <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Progress that guests want to complete.</h2>
             <p class="max-w-xl text-sm leading-8 text-slate-300 sm:text-base">
-              Flotory turns visits into visible progress, milestones, and celebration moments that keep guests coming back.
+              Flotory turns stamps into visible progress, milestones, and celebration moments that keep guests coming back.
             </p>
           </div>
           <div class="grid gap-3">
             <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-slate-200">Progress toward next reward</p>
               <p class="mt-2 text-2xl font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">2 visits until free cocktail</p>
+              <p class="text-sm text-emerald-300">2 stamps until free cocktail</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-slate-200">Milestone unlocked</p>
@@ -219,7 +219,7 @@ onBeforeUnmount(() => {
               <p class="text-sm font-semibold text-slate-200">2) Scan customer QR</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-emerald-300">3) Visit stamped instantly</p>
+              <p class="text-sm font-semibold text-emerald-300">3) Stamp added instantly</p>
             </div>
           </div>
         </AppCard>

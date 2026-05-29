@@ -1,3 +1,4 @@
+import { hasOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { isOwnerWorkspacePath, isSafeInternalRedirect } from '@/lib/redirect'
 import type { Venue } from '@/types'
 
@@ -66,7 +67,11 @@ export function ownerBootstrapPath(
 ): string {
   const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
 
-  return home === '/card' ? OWNER_ONBOARDING_PATH : home
+  if (home === '/card' && hasOwnerOnboardingIntent()) {
+    return OWNER_ONBOARDING_PATH
+  }
+
+  return home
 }
 
 /** Honors an explicit redirect unless it would send a venue owner/staff to the customer card by mistake. */
@@ -89,7 +94,7 @@ export function resolvePostLoginDestination(
     return home
   }
 
-  if (isOwnerWorkspacePath(safe) && !hasTeam && !isAdmin) {
+  if (isOwnerWorkspacePath(safe) && !hasTeam && !isAdmin && hasOwnerOnboardingIntent()) {
     return OWNER_ONBOARDING_PATH
   }
 

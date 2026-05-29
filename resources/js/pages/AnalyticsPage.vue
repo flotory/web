@@ -36,8 +36,8 @@ const stats = computed(() => {
 
   return [
     { label: 'Progression rate', value: `${progressionRate}%`, hint: `${data.active_progressors} active progressors` },
-    { label: 'Avg visits/customer', value: avgVisits, hint: 'across selected scope' },
-    { label: 'Monthly visits', value: data.total_visits, hint: 'total recorded' },
+    { label: 'Avg stamps/customer', value: avgVisits, hint: 'across selected scope' },
+    { label: 'Monthly stamps', value: data.total_visits, hint: 'total recorded' },
     { label: 'Milestones claimed', value: data.milestones_claimed, hint: `${data.milestones_unlocked} unlocked` },
   ]
 })
@@ -94,7 +94,7 @@ onMounted(load)
           </div>
           <span class="w-10 text-right text-sm font-bold text-slate-500">{{ activity.visits }}</span>
         </div>
-        <p v-if="!dashboard?.monthly_activity?.length" class="text-sm font-semibold text-slate-500">No visits yet.</p>
+        <p v-if="!dashboard?.monthly_activity?.length" class="text-sm font-semibold text-slate-500">No stamps yet.</p>
       </div>
     </AppCard>
   </AppShell>

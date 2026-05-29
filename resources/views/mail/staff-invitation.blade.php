@@ -6,7 +6,7 @@
 As a staff member you can:
 
 - Open the scanner
-- Scan customer visits
+- Add customer stamps
 - Help customers redeem rewards
 
 <x-mail::button :url="$acceptUrl">

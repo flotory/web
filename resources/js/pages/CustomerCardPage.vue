@@ -128,7 +128,7 @@ function applyRedemption(response: RedemptionResponse) {
   availableRewards.value = response.available_rewards
   journey.value = response.journey
   recentVisits.value = response.recent_visits
-  successMessage.value = `${selectedReward.value?.title ?? 'Reward'} claimed. Progress continues at ${response.customer.stamps} visits.`
+  successMessage.value = `${selectedReward.value?.title ?? 'Reward'} claimed. Progress continues at ${response.customer.stamps} stamps.`
 }
 
 onMounted(() => {
@@ -199,7 +199,7 @@ watch(
             <p class="mt-1 text-4xl font-black">{{ card.stamps }} / {{ requiredStamps }}</p>
           </div>
           <AppBadge tone="blue">
-            {{ remainingVisits === 0 ? 'Unlocked' : `${remainingVisits} visits left` }}
+            {{ remainingVisits === 0 ? 'Unlocked' : `${remainingVisits} stamps left` }}
           </AppBadge>
         </div>
         <div class="mt-8 rounded-[1.5rem] bg-white p-5">
@@ -221,7 +221,7 @@ watch(
             <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="size-12 shrink-0 rounded-lg object-cover">
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-bold text-white">{{ milestone.title }}</p>
-              <p class="text-xs text-white/60">{{ milestone.required_stamps }} visits</p>
+              <p class="text-xs text-white/60">{{ milestone.required_stamps }} stamps</p>
             </div>
             <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
               {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}

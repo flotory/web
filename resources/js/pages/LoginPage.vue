@@ -10,6 +10,7 @@ import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -59,6 +60,7 @@ async function submit() {
     }
 
     if (authIntent.value === 'owner') {
+      markOwnerOnboardingIntent()
       await router.push('/onboarding/create-venue')
       return
     }
@@ -75,6 +77,10 @@ async function submit() {
 }
 
 onMounted(() => {
+  if (authIntent.value === 'owner') {
+    markOwnerOnboardingIntent()
+  }
+
   const oauthToken = typeof route.query.oauth_token === 'string' ? route.query.oauth_token : null
   if (oauthToken) {
     oauthLoading.value = true
@@ -89,6 +95,7 @@ onMounted(() => {
         }
 
         if (authIntent.value === 'owner') {
+          markOwnerOnboardingIntent()
           await router.replace('/onboarding/create-venue')
           return
         }
@@ -142,10 +149,10 @@ onMounted(() => {
           <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}
-            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
+            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} stamps</span>
           </p>
         </div>
-        <p v-else class="mt-3 text-sm text-white/85">Start collecting rewards on your next visit.</p>
+        <p v-else class="mt-3 text-sm text-white/85">Start collecting rewards on your next stamp.</p>
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">

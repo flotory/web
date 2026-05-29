@@ -21,6 +21,7 @@ import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { clearOwnerOnboardingIntent, hasOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import {
   hasOwnerMembership,
   hasTeamMembership,
@@ -97,6 +98,24 @@ router.beforeEach(async (to) => {
       return { path: home }
     }
 
+    if (
+      (to.name === 'onboarding' || to.name === 'onboarding-create-venue')
+      && ownerMember
+    ) {
+      return { path: '/dashboard' }
+    }
+
+    if (
+      (to.name === 'onboarding' || to.name === 'onboarding-create-venue')
+      && !ownerMember
+    ) {
+      if (to.query.intent === 'owner') {
+        markOwnerOnboardingIntent()
+      } else if (!hasOwnerOnboardingIntent()) {
+        return { path: home }
+      }
+    }
+
     if (to.name === 'my-venues' && !auth.user?.is_admin && !ownerMember && to.query.intent !== 'owner') {
       return { path: home }
     }
@@ -105,9 +124,14 @@ router.beforeEach(async (to) => {
   if (to.name === 'landing' && auth.isAuthenticated) {
     const workspace = useWorkspaceStore()
     await workspace.bootstrap()
-    return {
-      path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+
+    if (hasOwnerOnboardingIntent() || hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues) || auth.user?.is_admin) {
+      return {
+        path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+      }
     }
+
+    return true
   }
 
   if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing' && !to.meta.inviteFlow) {
@@ -127,6 +151,7 @@ router.beforeEach(async (to) => {
     }
 
     if (to.query.intent === 'owner') {
+      markOwnerOnboardingIntent()
       return { path: '/onboarding/create-venue' }
     }
 

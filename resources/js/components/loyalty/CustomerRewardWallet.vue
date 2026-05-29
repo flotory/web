@@ -102,7 +102,7 @@ async function redeemReward() {
                   <h3 class="mt-6 text-4xl font-black">Redeemed</h3>
                   <p class="mt-2 text-lg font-semibold text-white/75">{{ reward.title }}</p>
                   <p class="mt-4 rounded-full bg-white/15 px-5 py-2 text-sm font-black text-white/85">
-                    Progress stays at {{ currentCustomer.stamps }} visits
+                    Progress stays at {{ currentCustomer.stamps }} stamps
                   </p>
                 </div>
               </div>

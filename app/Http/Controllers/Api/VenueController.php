@@ -173,6 +173,9 @@ class VenueController extends Controller
             'slug' => $request->filled('slug')
                 ? $request->string('slug')->toString()
                 : $venue->slug,
+            'category' => $request->filled('category')
+                ? $request->string('category')->toString()
+                : $venue->category,
             'address' => $request->string('address')->toString() ?: null,
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,

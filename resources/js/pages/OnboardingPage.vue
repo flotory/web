@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
@@ -15,6 +15,7 @@ import {
   type VenueCategory,
 } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { clearOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -29,6 +30,7 @@ const categories: Array<{ id: VenueCategory; label: string; emoji: string }> = [
 ]
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const ONBOARDING_DRAFT_VENUE_KEY = 'owner_onboarding_draft_venue_id'
@@ -218,12 +220,34 @@ function toggleReward(id: string) {
 
 async function openDashboard() {
   clearOnboardingDraft()
+  clearOwnerOnboardingIntent()
   await workspace.bootstrap(true)
   await router.push('/dashboard?onboarding=completed')
 }
 
+async function leaveForCustomerExperience() {
+  clearOnboardingDraft()
+  clearOwnerOnboardingIntent()
+  await router.push('/cafes')
+}
+
+async function logout() {
+  clearOnboardingDraft()
+  await auth.logout()
+  await router.push('/')
+}
+
 onMounted(async () => {
-  await workspace.bootstrap(true)
+  if (route.query.intent === 'owner') {
+    markOwnerOnboardingIntent()
+  }
+
+  try {
+    await workspace.bootstrap(true)
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not load your account. Try refreshing the page.'
+    return
+  }
 
   const draftVenueId = Number(sessionStorage.getItem(ONBOARDING_DRAFT_VENUE_KEY) || 0)
   const draftStep = Number(sessionStorage.getItem(ONBOARDING_DRAFT_STEP_KEY) || 1)
@@ -382,6 +406,16 @@ onMounted(async () => {
           </div>
         </div>
       </AppCard>
+
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-white/70">
+        <button type="button" class="font-semibold text-white/90 underline-offset-2 hover:underline" @click="leaveForCustomerExperience">
+          I&apos;m collecting stamps, not setting up a venue
+        </button>
+        <span class="hidden text-white/30 sm:inline">·</span>
+        <button type="button" class="font-semibold text-white/90 underline-offset-2 hover:underline" @click="logout">
+          Log out
+        </button>
+      </div>
     </section>
   </main>
 </template>

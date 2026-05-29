@@ -85,7 +85,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       id: 'half-off',
       title: '50% off one coffee',
       required_stamps: 5,
-      description: 'Half price on any coffee drink after your fifth visit.',
+      description: 'Half price on any coffee drink after your fifth stamp.',
       image: unsplash('photo-1509042239860-f550ce710b93', 800, 600),
     },
     {
@@ -108,7 +108,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       id: 'half-off',
       title: '50% off one cocktail',
       required_stamps: 5,
-      description: 'Half price on any signature cocktail after your fifth visit.',
+      description: 'Half price on any signature cocktail after your fifth stamp.',
       image: unsplash('photo-1776763019214-9658490d8b65', 800, 600),
     },
     {
@@ -131,7 +131,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       id: 'half-off',
       title: '50% off one starter',
       required_stamps: 5,
-      description: 'Half price on any starter after your fifth visit.',
+      description: 'Half price on any starter after your fifth stamp.',
       image: unsplash('photo-1414235077428-338989a2e8c0', 800, 600),
     },
     {
@@ -154,7 +154,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
       id: 'half-off',
       title: '50% off one pastry',
       required_stamps: 5,
-      description: 'Half price on any pastry after your fifth visit.',
+      description: 'Half price on any pastry after your fifth stamp.',
       image: unsplash('photo-1555396273-367ea4eb4db5', 800, 600),
     },
     {

@@ -10,6 +10,7 @@ import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
 import { rewardImageUrl } from '@/lib/rewardMedia'
@@ -83,6 +84,7 @@ async function submit() {
     }
 
     if (authIntent.value === 'owner') {
+      markOwnerOnboardingIntent()
       await router.push('/onboarding/create-venue')
       return
     }
@@ -100,6 +102,10 @@ async function submit() {
 }
 
 onMounted(() => {
+  if (authIntent.value === 'owner') {
+    markOwnerOnboardingIntent()
+  }
+
   if (isStaffInvite.value) {
     void router.replace(loginLink.value)
     return
@@ -130,7 +136,7 @@ onMounted(() => {
       <AppBadge tone="green">{{ venueSlug ? 'Join rewards in seconds' : authIntent === 'owner' ? 'Launch Flotory' : 'Join Flotory' }}</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-500">
-        {{ venueSlug ? 'Create your account and open this venue loyalty card instantly.' : authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting repeat visits.' : 'Create your account in seconds and keep your loyalty progress in one place.' }}
+        {{ venueSlug ? 'Create your account and open this venue loyalty card instantly.' : authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting stamps.' : 'Create your account in seconds and keep your loyalty progress in one place.' }}
       </p>
 
       <AppButton
@@ -203,10 +209,10 @@ onMounted(() => {
           <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}
-            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
+            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} stamps</span>
           </p>
         </div>
-        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you visit more.</p>
+        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you collect more stamps.</p>
       </div>
 
       <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
@@ -222,8 +228,8 @@ onMounted(() => {
           </li>
           <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">2</p>
-            <p class="mt-1 text-sm font-bold text-white">Staff stamp visits</p>
-            <p class="mt-1 text-xs text-white/70">Each visit adds progress in seconds.</p>
+            <p class="mt-1 text-sm font-bold text-white">Staff add stamps</p>
+            <p class="mt-1 text-xs text-white/70">Each stamp adds progress in seconds.</p>
           </li>
           <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">3</p>

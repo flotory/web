@@ -73,7 +73,7 @@ const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
 
 const stats = computed(() => [
-  { label: 'Visits today', value: dashboard.value?.stats.total_visits ?? 0 },
+  { label: 'Stamps today', value: dashboard.value?.stats.total_visits ?? 0 },
   { label: 'Returning guests', value: dashboard.value?.stats.active_progressors ?? 0 },
   { label: 'Rewards unlocked', value: dashboard.value?.stats.milestones_unlocked ?? 0 },
   { label: 'Repeat rate', value: `${conversionOverview.value.rate}%` },
@@ -107,7 +107,7 @@ const activityItems = computed(() => {
   const unlocked = dashboard.value.stats.milestones_unlocked
   return [
     `${guests} guests joined loyalty`,
-    `${visits} visits recorded`,
+    `${visits} stamps recorded`,
     `${unlocked} rewards unlocked`,
     'Scanner and QR flow are active',
   ]
@@ -125,7 +125,7 @@ const activityFeed = computed(() => {
 
   return [
     { icon: '🟢', title: `${dashboard.value?.stats.total_customers ?? 0} guests joined loyalty`, time: 'today' },
-    { icon: '🟢', title: `${dashboard.value?.stats.total_visits ?? 0} visits recorded`, time: 'today' },
+    { icon: '🟢', title: `${dashboard.value?.stats.total_visits ?? 0} stamps recorded`, time: 'today' },
     { icon: '🟢', title: `${dashboard.value?.stats.milestones_unlocked ?? 0} rewards unlocked`, time: 'today' },
     { icon: '🟢', title: 'Scanner and QR flow active', time: 'live' },
   ]
@@ -285,7 +285,7 @@ onMounted(() => {
               <span class="inline-flex items-center gap-1 rounded-full bg-indigo-400/15 px-2.5 py-1 ring-1 ring-indigo-300/30"><span class="live-dot" /> Scanner ready</span>
             </div>
             <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your loyalty program is live</h2>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Guests can now scan your QR, collect visits, and unlock rewards.</p>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Guests can now scan your QR, collect stamps, and unlock rewards.</p>
           </div>
 
           <div class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -306,7 +306,7 @@ onMounted(() => {
                 </div>
                 <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
                   <p class="text-sm font-semibold text-white">Guests unlock rewards</p>
-                  <p class="mt-1 text-xs text-white/70">Progress updates automatically after each visit.</p>
+                  <p class="mt-1 text-xs text-white/70">Progress updates automatically after each stamp.</p>
                 </div>
               </div>
               <p class="mt-3 text-xs font-medium text-white/65">Operational status: waiting for first guests.</p>
@@ -321,7 +321,7 @@ onMounted(() => {
                 <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
               </div>
               <p class="mt-3 text-xs leading-relaxed text-slate-300">
-                Print and place on tables. Guests scan to join and collect visits instantly.
+                Print and place on tables. Guests scan to join and collect stamps instantly.
               </p>
             </div>
           </div>
@@ -353,7 +353,7 @@ onMounted(() => {
                 <AppBadge :tone="reward.active ? 'green' : 'amber'">{{ reward.active ? 'Active' : 'Paused' }}</AppBadge>
               </div>
               <p class="text-xs text-slate-500">{{ reward.description || 'Reward ready for guests to unlock.' }}</p>
-              <p class="text-sm font-semibold text-slate-700">{{ reward.required_stamps }} visits required</p>
+              <p class="text-sm font-semibold text-slate-700">{{ reward.required_stamps }} stamps required</p>
               <div class="h-2 overflow-hidden rounded-full bg-slate-200">
                 <div class="h-full rounded-full bg-slate-900/80" :style="{ width: `${Math.min((dashboard?.stats.total_visits ?? 0) / reward.required_stamps * 100, 100)}%` }" />
               </div>
@@ -363,7 +363,7 @@ onMounted(() => {
         </div>
         <div v-else class="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
           <p class="font-semibold text-slate-700">No rewards yet</p>
-          <p class="mt-1 text-sm text-slate-500">Add your first reward to start motivating repeat visits.</p>
+          <p class="mt-1 text-sm text-slate-500">Add your first reward to start motivating repeat stamps.</p>
           <RouterLink to="/rewards" class="mt-3 inline-flex"><AppButton size="sm">Create first reward</AppButton></RouterLink>
         </div>
       </AppCard>
@@ -413,9 +413,9 @@ onMounted(() => {
       <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <h2 class="text-xl font-black">Analytics preview</h2>
-          <p class="mt-1 text-sm text-white/70">Analytics will appear after your first guest visits.</p>
+          <p class="mt-1 text-sm text-white/70">Analytics will appear after your first guest stamps.</p>
           <ul class="mt-4 space-y-2 text-sm font-semibold text-white/80">
-            <li>• Track repeat visits</li>
+            <li>• Track repeat stamps</li>
             <li>• See busiest hours</li>
             <li>• Measure reward performance</li>
           </ul>
@@ -448,7 +448,7 @@ onMounted(() => {
         >
           <p class="font-black text-slate-950">{{ summary.venue_name }}</p>
           <p class="mt-2 text-sm font-semibold text-slate-500">
-            {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} visits
+            {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} stamps
           </p>
         </div>
       </div>
@@ -460,21 +460,21 @@ onMounted(() => {
       <div class="mt-4 grid gap-3 md:grid-cols-3">
         <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
           <p class="text-sm font-black text-slate-900">☕ Free coffee reward</p>
-          <p class="mt-1 text-xs text-slate-500">5 visits required</p>
+          <p class="mt-1 text-xs text-slate-500">5 stamps required</p>
           <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-3/5 rounded-full bg-emerald-500" /></div>
-          <p class="mt-2 text-xs font-semibold text-slate-600">Unlocked after visit #5</p>
+          <p class="mt-2 text-xs font-semibold text-slate-600">Unlocked after stamp #5</p>
           <AppBadge tone="green" class="mt-2">Most popular</AppBadge>
         </div>
         <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
           <p class="text-sm font-black text-slate-900">🏷 20% OFF reward</p>
-          <p class="mt-1 text-xs text-slate-500">10 visits required</p>
+          <p class="mt-1 text-xs text-slate-500">10 stamps required</p>
           <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-2/5 rounded-full bg-blue-500" /></div>
           <p class="mt-2 text-xs font-semibold text-slate-600">Claimed when customer redeems</p>
           <AppBadge tone="blue" class="mt-2">Next unlock</AppBadge>
         </div>
         <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
           <p class="text-sm font-black text-slate-900">🍰 Free dessert reward</p>
-          <p class="mt-1 text-xs text-slate-500">15 visits required</p>
+          <p class="mt-1 text-xs text-slate-500">15 stamps required</p>
           <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-1/4 rounded-full bg-indigo-500" /></div>
           <p class="mt-2 text-xs font-semibold text-slate-600">Encourages long-term retention</p>
           <AppBadge tone="amber" class="mt-2">VIP journey</AppBadge>
@@ -484,10 +484,10 @@ onMounted(() => {
 
     <AppCard wrapper-class="mt-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white ring-1 ring-white/10">
       <h2 class="text-xl font-black">Guest journey preview</h2>
-      <p class="mt-1 text-sm text-white/70">Scan → collect visits → unlock reward. Your venue is ready for this loop.</p>
+      <p class="mt-1 text-sm text-white/70">Scan → collect stamps → unlock reward. Your venue is ready for this loop.</p>
       <div class="mt-4 grid gap-2 sm:grid-cols-3">
         <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">1) Guest scans table QR</div>
-        <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">2) Staff stamps visit instantly</div>
+        <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">2) Staff adds stamps instantly</div>
         <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">3) Reward unlock drives return</div>
       </div>
     </AppCard>

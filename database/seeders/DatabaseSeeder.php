@@ -73,22 +73,22 @@ class DatabaseSeeder extends Seeder
 
             $milestones = match ($venue->category) {
                 'restaurant' => [
-                    [5, '50% off one starter', 'Half price on any starter after your fifth visit.'],
+                    [5, '50% off one starter', 'Half price on any starter after your fifth stamp.'],
                     [10, 'Free starter', 'A complimentary starter on the house.'],
                     [15, 'Free starter', 'Another free starter for returning guests.'],
                 ],
                 'bar' => [
-                    [5, '50% off one cocktail', 'Half price on any signature cocktail after your fifth visit.'],
+                    [5, '50% off one cocktail', 'Half price on any signature cocktail after your fifth stamp.'],
                     [10, 'Free cocktail', 'A complimentary cocktail on the house.'],
                     [15, 'Free cocktail', 'Another free cocktail for your best regulars.'],
                 ],
                 'bakery' => [
-                    [5, '50% off one pastry', 'Half price on any pastry after your fifth visit.'],
+                    [5, '50% off one pastry', 'Half price on any pastry after your fifth stamp.'],
                     [10, 'Free pastry', 'A complimentary pastry from the counter.'],
                     [15, 'Free pastry', 'Another free pastry for loyal guests.'],
                 ],
                 default => [
-                    [5, '50% off one coffee', 'Half price on any coffee drink after your fifth visit.'],
+                    [5, '50% off one coffee', 'Half price on any coffee drink after your fifth stamp.'],
                     [10, 'Free coffee', 'A complimentary coffee on the house.'],
                     [15, 'Free coffee', 'Another free coffee for your most loyal regulars.'],
                 ],

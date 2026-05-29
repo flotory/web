@@ -47,7 +47,7 @@ onMounted(loadCustomers)
     <div class="mb-6">
       <AppBadge tone="blue">Basic CRM</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Customers</h1>
-      <p class="mt-2 text-slate-500">A lightweight customer list focused on repeat visits.</p>
+      <p class="mt-2 text-slate-500">A lightweight customer list focused on stamp progress.</p>
     </div>
 
     <AppCard wrapper-class="overflow-hidden p-0">
@@ -63,7 +63,7 @@ onMounted(loadCustomers)
           </div>
           <div class="text-right">
             <AppBadge tone="amber">{{ customer.stamps }} stamps</AppBadge>
-            <p class="mt-2 text-xs font-semibold text-slate-400">{{ customer.visits_count ?? 0 }} visits</p>
+            <p class="mt-2 text-xs font-semibold text-slate-400">{{ customer.visits_count ?? 0 }} stamps</p>
           </div>
         </div>
       </div>
