@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Toaster } from 'vue-sonner'
+import 'vue-sonner/style.css'
 
 import { useAuthStore } from '@/stores/auth'
 import { useRealtimeStore } from '@/stores/realtime'
@@ -25,4 +27,5 @@ watch(
 
 <template>
   <RouterView />
+  <Toaster position="top-center" rich-colors close-button />
 </template>

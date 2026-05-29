@@ -40,8 +40,9 @@ const rewardTemplates: RewardTemplate[] = [
     emoji: '☕',
     description: 'Fast wins for coffee shops',
     rewards: [
-      { title: 'Free coffee', required_stamps: 5, description: 'Reward regular guests with a signature coffee.' },
-      { title: 'Free dessert', required_stamps: 10, description: 'Celebrate loyalty with a sweet treat.' },
+      { title: '50% off one coffee', required_stamps: 5, description: 'Half price on any coffee after five visits.' },
+      { title: 'Free coffee', required_stamps: 10, description: 'A complimentary coffee on the house.' },
+      { title: 'Free coffee', required_stamps: 15, description: 'Another free coffee for loyal regulars.' },
     ],
   },
   {
