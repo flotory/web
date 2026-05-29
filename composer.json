@@ -9,7 +9,8 @@
     "laravel/reverb": "^1.10",
     "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.27",
-    "laravel/tinker": "^2.10"
+    "laravel/tinker": "^2.10",
+    "resend/resend-laravel": "^1.4"
   },
   "require-dev": {
     "fakerphp/faker": "^1.24",

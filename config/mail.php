@@ -10,6 +10,9 @@ return [
         'array' => [
             'transport' => 'array',
         ],
+        'resend' => [
+            'transport' => 'resend',
+        ],
     ],
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),

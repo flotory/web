@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\VenueDashboardController;
 use App\Http\Controllers\Api\VenueStaffRedemptionController;
 use App\Http\Controllers\Api\VenueTeamController;
 use App\Http\Controllers\Api\RewardController;
+use App\Http\Controllers\Api\StaffInvitationController;
 use App\Http\Controllers\Api\StaffScanController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,10 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLanding']);
+
+Route::get('/invites/{token}', [StaffInvitationController::class, 'show']);
+Route::post('/invites/{token}/register', [StaffInvitationController::class, 'register']);
+Route::post('/invites/{token}/accept', [StaffInvitationController::class, 'accept'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -52,7 +57,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/venues/{venue}/team', [VenueTeamController::class, 'index']);
     Route::post('/venues/{venue}/team/invite', [VenueTeamController::class, 'invite']);
+    Route::post('/venues/{venue}/team/invitations/{invitation}/resend', [VenueTeamController::class, 'resendInvitation']);
+    Route::delete('/venues/{venue}/team/invitations/{invitation}', [VenueTeamController::class, 'cancelInvitation']);
     Route::patch('/venues/{venue}/team/{user}', [VenueTeamController::class, 'update']);
     Route::delete('/venues/{venue}/team/{user}', [VenueTeamController::class, 'destroy']);
-    Route::post('/venues/{venue}/team/{user}/reset-password', [VenueTeamController::class, 'resetPassword']);
 });

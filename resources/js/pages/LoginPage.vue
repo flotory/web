@@ -143,20 +143,17 @@ onMounted(() => {
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-        <p class="font-black">Staff invite</p>
-        <p class="mt-1 font-semibold text-amber-900">
-          Your manager already created your account. <strong>Log in below</strong> — do not use Create account.
-        </p>
-        <p class="mt-2 text-xs font-semibold text-amber-800">
-          First login: use the one-time password from your manager, then open <strong>Account</strong> to choose your own password.
+      <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-950">
+        <p class="font-black">Staff invitation</p>
+        <p class="mt-1 font-semibold text-cyan-900">
+          Sign in with the email that received the invite. You will return to accept and join the team.
         </p>
       </div>
 
-      <AppBadge tone="blue">{{ isStaffInvite ? 'Staff access' : venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ isStaffInvite ? 'Log in to open scanner' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <AppBadge tone="blue">{{ isStaffInvite ? 'Staff invitation' : venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ isStaffInvite ? 'Sign in to join the team' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-500">
-        {{ isStaffInvite ? 'After login, set your own password on Account, then use the scanner.' : venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
+        {{ isStaffInvite ? 'After login you can accept the invitation and open the scanner.' : venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
       </p>
 
       <AppButton

@@ -15,6 +15,7 @@ import RewardsPage from '@/pages/RewardsPage.vue'
 import ScannerPage from '@/pages/ScannerPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
+import StaffInvitePage from '@/pages/StaffInvitePage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -104,7 +105,7 @@ router.beforeEach(async (to) => {
     return { path: await workspaceHomePath() }
   }
 
-  if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing') {
+  if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing' && !to.meta.inviteFlow) {
     return { path: await workspaceHomePath() }
   }
 })

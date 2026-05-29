@@ -2,6 +2,7 @@ import { useAuthStore } from '@/stores/auth'
 
 export type ApiOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null
+  includeAuth?: boolean
 }
 
 export class ApiError extends Error {
@@ -26,7 +27,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     body = JSON.stringify(body)
   }
 
-  if (auth.token) {
+  if (options.includeAuth !== false && auth.token) {
     headers.set('Authorization', `Bearer ${auth.token}`)
   }
 

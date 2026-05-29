@@ -135,7 +135,7 @@ function goBack() {
         </form>
 
         <p v-if="isStaff" class="mt-5 rounded-2xl bg-slate-50 p-3 text-xs font-semibold leading-relaxed text-slate-600 ring-1 ring-slate-200">
-          Forgot your password and cannot log in? Ask your manager to use <strong>Reset password</strong> on the Team page. The old temporary password will not work after you have set your own.
+          Forgot your password? Ask your venue owner to send a new staff invitation from the Team page.
         </p>
       </AppCard>
     </div>
