@@ -115,14 +115,6 @@ onBeforeUnmount(() => {
             </AppButton>
           </a>
         </div>
-        <div class="flex flex-wrap items-center gap-4 text-sm text-slate-300">
-          <div class="flex -space-x-2">
-            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80" alt="Owner portrait" class="size-8 rounded-full ring-2 ring-slate-950">
-            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80" alt="Bar staff portrait" class="size-8 rounded-full ring-2 ring-slate-950">
-            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80" alt="Cafe owner portrait" class="size-8 rounded-full ring-2 ring-slate-950">
-          </div>
-          <p>Trusted by modern neighborhood venues for effortless repeat visits.</p>
-        </div>
       </div>
 
       <div class="relative floating-phone">

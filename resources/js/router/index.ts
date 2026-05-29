@@ -56,7 +56,7 @@ async function workspaceHomePath() {
   const workspace = useWorkspaceStore()
   await workspace.bootstrap()
 
-  return resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId)
+  return resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
 }
 
 router.beforeEach(async (to) => {
@@ -81,21 +81,21 @@ router.beforeEach(async (to) => {
     const teamMember = hasTeamMembership(workspace.activeVenues)
     const ownerMember = hasOwnerMembership(workspace.activeVenues)
     const home = needsWorkspaceContext
-      ? resolveAuthenticatedHomePath(auth.user?.role, workspace.activeVenues, workspace.effectiveVenueId)
+      ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
       : await workspaceHomePath()
 
-    if (needsWorkspaceContext && !teamMember && auth.user?.role !== 'admin') {
+    if (needsWorkspaceContext && !teamMember && !auth.user?.is_admin) {
       return { path: home }
     }
 
-    if (to.meta.ownerOnly && auth.user?.role !== 'admin' && !ownerMember) {
+    if (to.meta.ownerOnly && !auth.user?.is_admin && !ownerMember) {
       return { path: home }
     }
 
     const ownerOnboarding =
       to.name === 'onboarding' || to.name === 'onboarding-create-venue' || to.name === 'my-venues'
 
-    if (ownerOnboarding && auth.user?.role !== 'admin' && !ownerMember && to.query.intent !== 'owner') {
+    if (ownerOnboarding && !auth.user?.is_admin && !ownerMember && to.query.intent !== 'owner') {
       return { path: home }
     }
   }

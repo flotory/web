@@ -10,9 +10,9 @@ const realtime = useRealtimeStore()
 const router = useRouter()
 
 watch(
-  () => [auth.token, auth.user?.id, auth.user?.role],
+  () => [auth.token, auth.user?.id, auth.user?.is_admin],
   () => {
-    if (auth.user?.role === 'customer' && auth.token) {
+    if (auth.token && auth.user && !auth.user.is_admin) {
       realtime.startCustomerListeners(router).catch(() => undefined)
       return
     }

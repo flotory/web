@@ -1,11 +1,14 @@
-export type UserRole = 'admin' | 'customer'
+export type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
 
 export interface Venue {
   id: number
   name: string
   slug: string
+  category?: VenueCategory | null
   membership_role?: 'owner' | 'staff' | null
   logo?: string | null
+  logo_thumb?: string | null
+  cover_image?: string | null
   address?: string | null
   phone?: string | null
   website?: string | null
@@ -21,7 +24,7 @@ export interface User {
   id: number
   name: string
   email: string
-  role: UserRole
+  is_admin: boolean
   active_venue_id?: number | null
   active_venue?: Venue | null
 }

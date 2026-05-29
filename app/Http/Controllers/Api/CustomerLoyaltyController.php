@@ -85,11 +85,11 @@ class CustomerLoyaltyController extends Controller
     {
         abort_unless($customer->user_id === $request->user()->id, 403);
 
-        $redemption = $loyalty->redeemReward($customer, $reward, $request->user());
+        $unlock = $loyalty->redeemReward($customer, $reward, $request->user());
         $customer = $customer->fresh()->load('venue', 'user');
 
         return response()->json([
-            'redemption' => $redemption->load('reward'),
+            'unlock' => $unlock,
             'customer' => $customer,
             'next_reward' => $loyalty->nextRewardFor($customer),
             'available_rewards' => $loyalty->availableRewardsFor($customer),

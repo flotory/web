@@ -40,11 +40,6 @@ class Customer extends Model
         return $this->hasMany(Visit::class);
     }
 
-    public function redemptions(): HasMany
-    {
-        return $this->hasMany(RewardRedemption::class);
-    }
-
     public function rewardCycles(): HasMany
     {
         return $this->hasMany(CustomerRewardCycle::class);

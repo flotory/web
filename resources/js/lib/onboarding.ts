@@ -1,12 +1,17 @@
 import { api } from '@/lib/api'
 import type { Customer } from '@/types'
 
+import type { VenueCategory } from '@/types'
+
 export interface VenueLandingPayload {
   venue: {
     id: number
     name: string
     slug: string
+    category?: VenueCategory | null
     logo: string | null
+    logo_thumb?: string | null
+    cover_image?: string | null
     address: string | null
   }
   milestones: Array<{
@@ -14,6 +19,7 @@ export interface VenueLandingPayload {
     title: string
     description: string | null
     image: string | null
+    image_thumb?: string | null
     required_stamps: number
   }>
 }

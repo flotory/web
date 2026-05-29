@@ -13,7 +13,6 @@ class CustomerRewardCycle extends Model
     protected $fillable = [
         'customer_id',
         'cycle_number',
-        'max_milestone_stamps',
         'completed_at',
     ];
 
@@ -21,7 +20,6 @@ class CustomerRewardCycle extends Model
     {
         return [
             'cycle_number' => 'integer',
-            'max_milestone_stamps' => 'integer',
             'completed_at' => 'datetime',
         ];
     }

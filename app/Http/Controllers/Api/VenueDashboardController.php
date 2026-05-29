@@ -177,9 +177,10 @@ class VenueDashboardController extends Controller
                 'total_customers' => $venue->customers()->count(),
                 'active_progressors' => $activeProgressors,
                 'total_visits' => $venue->visits()->count(),
-                'milestones_claimed' => DB::table('reward_redemptions')
-                    ->join('rewards', 'reward_redemptions.reward_id', '=', 'rewards.id')
+                'milestones_claimed' => DB::table('reward_unlocks')
+                    ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
                     ->where('rewards.venue_id', $venue->id)
+                    ->whereNotNull('reward_unlocks.claimed_at')
                     ->count(),
                 'milestones_unlocked' => DB::table('reward_unlocks')
                     ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')

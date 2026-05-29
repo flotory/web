@@ -8,7 +8,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
@@ -24,7 +26,7 @@ const formOpen = ref(false)
 const menuVenueId = ref<number | null>(null)
 const deleteVenueTarget = ref<Venue | null>(null)
 const search = ref('')
-const typeFilter = ref<'all' | 'cafe' | 'restaurant' | 'bar'>('all')
+const typeFilter = ref<'all' | 'cafe' | 'restaurant' | 'bar' | 'bakery'>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
 
 const name = ref('')
@@ -50,7 +52,7 @@ const filteredVenues = computed(() => {
   }
 
   if (typeFilter.value !== 'all') {
-    items = items.filter((venue) => inferVenueType(venue) === typeFilter.value)
+    items = items.filter((venue) => normalizeVenueCategory(venue.category) === typeFilter.value)
   }
 
   if (sortBy.value === 'name') {
@@ -64,15 +66,8 @@ const filteredVenues = computed(() => {
   return items
 })
 
-function inferVenueType(venue: Venue): 'cafe' | 'restaurant' | 'bar' {
-  const text = `${venue.name} ${venue.slug}`.toLowerCase()
-  if (text.includes('bar') || text.includes('cocktail') || text.includes('pub')) return 'bar'
-  if (text.includes('restaurant') || text.includes('grill') || text.includes('kitchen')) return 'restaurant'
-  return 'cafe'
-}
-
 function venueTypeLabel(venue: Venue): string {
-  const type = inferVenueType(venue)
+  const type = normalizeVenueCategory(venue.category)
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
@@ -198,6 +193,7 @@ onMounted(loadVenues)
           <option value="cafe">Cafe</option>
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
+          <option value="bakery">Bakery</option>
         </select>
         <select v-model="sortBy" class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-slate-400 focus:bg-white">
           <option value="activity">Sort by activity</option>
@@ -262,14 +258,14 @@ onMounted(loadVenues)
       <AppCard
         v-for="venue in filteredVenues"
         :key="venue.id"
-        wrapper-class="group relative overflow-hidden border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+        wrapper-class="group relative overflow-hidden border-slate-200/80 p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
       >
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.08),transparent_45%)]" />
-        <div class="relative flex items-start justify-between gap-4">
+        <img :src="venueCoverUrl(venue)" alt="" class="h-24 w-full object-cover">
+        <div class="relative p-5">
+        <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-100 text-xl font-black text-slate-400 ring-1 ring-slate-200">
-              <img v-if="venue.logo" :src="venue.logo" alt="" class="size-full object-cover">
-              <span v-else>{{ venue.name.slice(0, 1) }}</span>
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white text-xl font-black shadow-sm ring-2 ring-white -mt-10">
+              <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-full object-cover">
             </div>
             <div>
               <div class="flex flex-wrap items-center gap-2">
@@ -320,6 +316,7 @@ onMounted(loadVenues)
             <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/customers')">Customers</AppButton>
             <AppButton variant="ghost" size="sm" @click="openVenue(venue, '/analytics')">Analytics</AppButton>
           </div>
+        </div>
         </div>
       </AppCard>
 

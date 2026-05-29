@@ -9,6 +9,8 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
+import { rewardImageUrl } from '@/lib/rewardMedia'
+import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import { useRealtimeStore } from '@/stores/realtime'
 import type { Customer, Reward, RewardJourney, StampAddedPayload, Visit } from '@/types'
@@ -157,17 +159,24 @@ watch(
 <template>
   <AppShell>
     <div class="mx-auto max-w-md">
-      <div class="flex items-center gap-4">
-        <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white text-xl font-black text-slate-400 shadow-sm ring-1 ring-slate-200">
-          <img v-if="card?.venue?.logo" :src="card.venue.logo" alt="" class="size-full object-cover">
-          <span v-else>{{ card?.venue?.name?.slice(0, 1) ?? 'L' }}</span>
-        </div>
-        <div>
-          <AppBadge tone="amber">Customer loyalty card</AppBadge>
-          <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">{{ card?.venue?.name ?? 'Your loyalty card' }}</h1>
+      <div v-if="card?.venue" class="relative -mx-1 overflow-hidden rounded-3xl ring-1 ring-slate-200">
+        <img :src="venueCoverUrl(card.venue)" alt="" class="h-36 w-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-transparent" />
+        <div class="relative flex items-end gap-4 p-4">
+          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg ring-2 ring-white">
+            <img :src="venueLogoUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
+          </div>
+          <div class="pb-1 text-white">
+            <AppBadge tone="amber">Customer loyalty card</AppBadge>
+            <h1 class="mt-2 text-3xl font-black tracking-tight">{{ card.venue.name }}</h1>
+          </div>
         </div>
       </div>
-      <p class="mt-2 text-slate-500">Show this QR to staff after ordering.</p>
+      <div v-else>
+        <AppBadge tone="amber">Customer loyalty card</AppBadge>
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Your loyalty card</h1>
+      </div>
+      <p class="mt-3 text-slate-500">Show this QR to staff after ordering.</p>
 
       <AppCard v-if="successMessage" wrapper-class="mt-6 border-emerald-200 bg-emerald-50">
         <p class="text-sm font-black text-emerald-700">{{ successMessage }}</p>
@@ -196,9 +205,29 @@ watch(
         <div class="mt-8 rounded-[1.5rem] bg-white p-5">
           <ProgressStamps :stamps="card.stamps" :required="requiredStamps" :highlighted-stamp="highlightedStamp" />
         </div>
-        <p v-if="displayReward" class="mt-5 text-sm font-bold text-blue-100">
-          Reward: {{ displayReward.title }}
-        </p>
+        <div v-if="displayReward" class="mt-5 overflow-hidden rounded-2xl ring-1 ring-white/15">
+          <img :src="rewardImageUrl(displayReward)" :alt="displayReward.title" class="h-28 w-full object-cover">
+          <p class="bg-white/10 px-4 py-3 text-sm font-bold text-blue-100">
+            Next reward: {{ displayReward.title }}
+          </p>
+        </div>
+        <div v-if="journey?.milestones?.length" class="mt-4 space-y-2">
+          <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your journey</p>
+          <div
+            v-for="milestone in journey.milestones.slice(0, 4)"
+            :key="milestone.id"
+            class="flex items-center gap-3 rounded-xl bg-white/10 p-2 ring-1 ring-white/10"
+          >
+            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="size-12 shrink-0 rounded-lg object-cover">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-bold text-white">{{ milestone.title }}</p>
+              <p class="text-xs text-white/60">{{ milestone.required_stamps }} visits</p>
+            </div>
+            <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
+              {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
+            </AppBadge>
+          </div>
+        </div>
         <AppButton
           v-if="availableRewards.length"
           class="mt-5 w-full"

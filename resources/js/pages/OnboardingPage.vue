@@ -9,6 +9,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api, ApiError } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
@@ -84,13 +85,32 @@ async function createVenueAndContinue() {
   }
 }
 
-function saveCategoryAndContinue() {
+async function saveCategoryAndContinue() {
   if (!category.value) {
     error.value = 'Choose one category to continue.'
     return
   }
 
-  setStep(3)
+  if (!venue.value) {
+    error.value = 'Create your venue first.'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}`, {
+      method: 'PUT',
+      body: { name: venue.value.name, category: category.value },
+    })
+    venue.value = response.venue
+    setStep(3)
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not save category.'
+  } finally {
+    loading.value = false
+  }
 }
 
 function openLogoPicker() {
@@ -228,7 +248,9 @@ async function openDashboard() {
           </div>
           <div class="flex gap-2">
             <AppButton variant="ghost" class="w-full" @click="setStep(1)">Back</AppButton>
-            <AppButton class="w-full" @click="saveCategoryAndContinue">Continue</AppButton>
+            <AppButton class="w-full" :disabled="loading" @click="saveCategoryAndContinue">
+              {{ loading ? 'Saving...' : 'Continue' }}
+            </AppButton>
           </div>
         </div>
 
@@ -236,9 +258,8 @@ async function openDashboard() {
           <h2 class="text-2xl font-black text-slate-950">Upload venue image or logo</h2>
           <p class="text-sm text-slate-500">Optional for MVP. Adds trust to your customer landing page.</p>
           <div class="grid place-items-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5">
-            <div class="grid size-24 place-items-center overflow-hidden rounded-2xl bg-white text-3xl font-black text-slate-400 ring-1 ring-slate-200">
-              <img v-if="venue?.logo" :src="venue.logo" alt="" class="size-full object-cover">
-              <span v-else>{{ venue?.name?.slice(0, 1) ?? 'V' }}</span>
+            <div class="grid size-24 place-items-center overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+              <img :src="venueLogoUrl(venue)" :alt="venue?.name ?? 'Venue'" class="size-full object-cover">
             </div>
             <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
             <AppButton class="mt-4" variant="secondary" :disabled="logoUploading" @click="openLogoPicker">

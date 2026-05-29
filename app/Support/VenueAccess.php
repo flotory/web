@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
@@ -11,7 +10,7 @@ class VenueAccess
 {
     public static function isAdmin(User $user): bool
     {
-        return $user->role === UserRole::Admin;
+        return $user->is_admin;
     }
 
     public static function membership(User $user, Venue $venue): ?VenueUser
@@ -52,4 +51,3 @@ class VenueAccess
         abort_unless(self::canAccess($user, $venue, $roles), 403);
     }
 }
-

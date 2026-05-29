@@ -167,7 +167,6 @@ class RewardController extends Controller
 
         return [
             'image' => $path,
-            ...($this->hasImageThumbColumn() ? ['image_thumb' => $path] : []),
         ];
     }
 

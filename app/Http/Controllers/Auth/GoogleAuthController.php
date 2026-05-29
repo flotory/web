@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -47,7 +46,7 @@ class GoogleAuthController extends Controller
                 'name' => $googleUser->getName() ?: 'Guest',
                 'email' => $googleUser->getEmail(),
                 'password' => Hash::make(Str::password(32)),
-                'role' => UserRole::Customer,
+                'is_admin' => false,
                 'google_id' => $googleUser->getId(),
                 'google_avatar' => $googleUser->getAvatar(),
             ]);

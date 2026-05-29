@@ -10,6 +10,7 @@
 !/bootstrap/cache/.gitignore
 /public/uploads/**/*
 !/public/uploads/venue-logos/.gitkeep
+!/public/uploads/venue-covers/.gitkeep
 /.env
 /.env.backup
 /deploy/config.sh

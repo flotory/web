@@ -37,7 +37,7 @@ services:
     command: >
       sh -c "
         [ -f .env ] || cp .env.example .env;
-        mkdir -p public/uploads/venue-logos public/uploads/reward-milestones;
+        mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones;
         chmod -R 775 public/uploads 2>/dev/null || true;
         composer install;
         php artisan key:generate --force;

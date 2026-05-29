@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 
 import { api, ApiError } from '@/lib/api'
+import { rewardImageUrl } from '@/lib/rewardMedia'
+import { venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import type { Customer, Reward, RewardJourney, Venue, Visit } from '@/types'
 
@@ -106,12 +108,20 @@ async function redeemReward() {
               </div>
 
               <div v-else class="min-h-[29rem]">
-                <div class="flex items-start justify-between gap-4">
-                  <div>
-                    <p class="text-sm font-bold text-white/65">{{ currentCustomer.user?.name ?? auth.user?.name ?? 'Customer' }}</p>
-                    <h3 class="mt-3 text-4xl font-black leading-tight">{{ reward.title }}</h3>
+                <div class="overflow-hidden rounded-2xl ring-1 ring-white/15">
+                  <img :src="rewardImageUrl(reward)" :alt="reward.title" class="h-40 w-full object-cover">
+                </div>
+                <div class="mt-5 flex items-start justify-between gap-4">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <div v-if="restaurant" class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/15 ring-1 ring-white/20">
+                      <img :src="venueLogoUrl(restaurant)" :alt="restaurant.name" class="size-full object-cover">
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-bold text-white/65">{{ currentCustomer.user?.name ?? auth.user?.name ?? 'Customer' }}</p>
+                      <h3 class="mt-2 text-3xl font-black leading-tight">{{ reward.title }}</h3>
+                    </div>
                   </div>
-                  <div class="grid size-14 place-items-center rounded-2xl bg-white/15 text-xl font-black ring-1 ring-white/20">
+                  <div class="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl font-black ring-1 ring-white/20">
                     {{ reward.required_stamps }}
                   </div>
                 </div>

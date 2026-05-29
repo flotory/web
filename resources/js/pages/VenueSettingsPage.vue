@@ -13,7 +13,9 @@ import {
   QR_MESSAGE_PRESETS,
   type QrMessagePresetId,
 } from '@/lib/onboarding'
-import type { Venue } from '@/types'
+import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { venueCoverUrl, venueHasCustomCover, venueHasCustomLogo, venueLogoUrl } from '@/lib/venueMedia'
+import type { Venue, VenueCategory } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,14 +24,24 @@ const venue = ref<Venue | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const logoUploading = ref(false)
+const coverUploading = ref(false)
 const error = ref('')
 const logoInput = ref<HTMLInputElement | null>(null)
+const coverInput = ref<HTMLInputElement | null>(null)
 const qrPreviewRef = ref<HTMLElement | null>(null)
 const name = ref('')
 const slug = ref('')
 const address = ref('')
 const phone = ref('')
 const website = ref('')
+const category = ref<VenueCategory>('cafe')
+
+const categoryOptions: Array<{ id: VenueCategory; label: string }> = [
+  { id: 'cafe', label: 'Cafe' },
+  { id: 'restaurant', label: 'Restaurant' },
+  { id: 'bar', label: 'Bar' },
+  { id: 'bakery', label: 'Bakery' },
+]
 
 const venueId = computed(() => Number(route.params.id))
 
@@ -46,6 +58,7 @@ function hydrateForm(item: Venue) {
   address.value = item.address ?? ''
   phone.value = item.phone ?? ''
   website.value = item.website ?? ''
+  category.value = normalizeVenueCategory(item.category)
 }
 
 async function loadVenue() {
@@ -77,6 +90,7 @@ async function saveVenue() {
         address: address.value || undefined,
         phone: phone.value || undefined,
         website: website.value || undefined,
+        category: category.value,
       },
     })
 
@@ -146,6 +160,67 @@ async function deleteLogo() {
     error.value = exception instanceof ApiError ? exception.message : 'Could not delete logo.'
   } finally {
     logoUploading.value = false
+  }
+}
+
+function openCoverPicker() {
+  coverInput.value?.click()
+}
+
+async function uploadCover(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+
+  if (!file || !venue.value) return
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    error.value = 'Use a JPG, PNG, WebP, or GIF image.'
+    return
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be 5 MB or smaller.'
+    return
+  }
+
+  coverUploading.value = true
+  error.value = ''
+
+  try {
+    const body = new FormData()
+    body.append('cover', file)
+
+    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}/cover`, {
+      method: 'POST',
+      body,
+    })
+
+    hydrateForm(response.venue)
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not upload cover image.'
+  } finally {
+    coverUploading.value = false
+  }
+}
+
+async function deleteCover() {
+  if (!venue.value) return
+
+  coverUploading.value = true
+  error.value = ''
+
+  try {
+    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}/cover`, {
+      method: 'DELETE',
+    })
+
+    hydrateForm(response.venue)
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not delete cover image.'
+  } finally {
+    coverUploading.value = false
   }
 }
 
@@ -319,28 +394,46 @@ onMounted(loadVenue)
       </AppCard>
 
       <div class="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
-        <AppCard>
-          <div class="grid place-items-center text-center">
-            <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-slate-100 text-5xl font-black text-slate-400 ring-1 ring-slate-200">
-              <img v-if="venue.logo" :src="venue.logo" alt="" class="size-full object-cover">
-              <span v-else>{{ venue.name.slice(0, 1) }}</span>
+        <div class="space-y-5">
+          <AppCard wrapper-class="overflow-hidden p-0">
+            <img :src="venueCoverUrl(venue)" alt="" class="h-36 w-full object-cover">
+            <div class="p-5 text-center">
+              <h2 class="text-xl font-black text-slate-950">Cover image</h2>
+              <p class="mt-2 text-sm font-semibold text-slate-500">Shown on your dashboard, landing page, and customer card.</p>
+              <input ref="coverInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadCover">
+              <div class="mt-4 flex flex-wrap justify-center gap-2">
+                <AppButton variant="secondary" :disabled="coverUploading" @click="openCoverPicker">
+                  {{ coverUploading ? 'Uploading...' : (venueHasCustomCover(venue) ? 'Replace cover' : 'Upload cover') }}
+                </AppButton>
+                <AppButton v-if="venueHasCustomCover(venue)" variant="ghost" :disabled="coverUploading" @click="deleteCover">
+                  Remove cover
+                </AppButton>
+              </div>
             </div>
+          </AppCard>
 
-            <h2 class="mt-5 text-2xl font-black text-slate-950">Venue logo</h2>
-            <p class="mt-2 text-sm font-semibold text-slate-500">Upload a square PNG, JPG, or WebP image.</p>
+          <AppCard>
+            <div class="grid place-items-center text-center">
+              <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-slate-100 ring-1 ring-slate-200">
+                <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-full object-cover">
+              </div>
 
-            <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
+              <h2 class="mt-5 text-2xl font-black text-slate-950">Venue logo</h2>
+              <p class="mt-2 text-sm font-semibold text-slate-500">Upload a square PNG, JPG, or WebP image.</p>
 
-            <div class="mt-5 flex flex-wrap justify-center gap-2">
-              <AppButton variant="secondary" :disabled="logoUploading" @click="openLogoPicker">
-                {{ logoUploading ? 'Uploading...' : (venue.logo ? 'Replace logo' : 'Upload logo') }}
-              </AppButton>
-              <AppButton v-if="venue.logo" variant="ghost" :disabled="logoUploading" @click="deleteLogo">
-                Delete logo
-              </AppButton>
+              <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
+
+              <div class="mt-5 flex flex-wrap justify-center gap-2">
+                <AppButton variant="secondary" :disabled="logoUploading" @click="openLogoPicker">
+                  {{ logoUploading ? 'Uploading...' : (venueHasCustomLogo(venue) ? 'Replace logo' : 'Upload logo') }}
+                </AppButton>
+                <AppButton v-if="venueHasCustomLogo(venue)" variant="ghost" :disabled="logoUploading" @click="deleteLogo">
+                  Delete logo
+                </AppButton>
+              </div>
             </div>
-          </div>
-        </AppCard>
+          </AppCard>
+        </div>
 
         <AppCard>
           <form class="grid gap-4" @submit.prevent="saveVenue">
@@ -352,6 +445,12 @@ onMounted(loadVenue)
             <div>
               <label class="text-sm font-bold text-slate-600" for="edit-venue-slug">Slug</label>
               <input id="edit-venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-600" for="edit-venue-category">Category</label>
+              <select id="edit-venue-category" v-model="category" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+                <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
+              </select>
             </div>
             <div>
               <label class="text-sm font-bold text-slate-600" for="edit-venue-website">Website optional</label>

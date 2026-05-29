@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
 use App\Models\Customer;
+use App\Models\CustomerRewardCycle;
 use App\Models\Reward;
-use App\Models\RewardRedemption;
+use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
@@ -22,20 +22,20 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Demo Owner',
                 'password' => 'password',
-                'role' => UserRole::Customer,
+                'is_admin' => false,
             ],
         );
 
         $venues = collect([
-            ['name' => 'Demo Cafe', 'slug' => 'demo-cafe'],
-            ['name' => 'Harbor Coffee', 'slug' => 'harbor-coffee'],
-            ['name' => 'North Star Burgers', 'slug' => 'north-star-burgers'],
-            ['name' => 'Olive Street Kitchen', 'slug' => 'olive-street-kitchen'],
+            ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe'],
+            ['name' => 'Harbor Coffee', 'slug' => 'harbor-coffee', 'category' => 'cafe'],
+            ['name' => 'North Star Burgers', 'slug' => 'north-star-burgers', 'category' => 'restaurant'],
+            ['name' => 'Olive Street Kitchen', 'slug' => 'olive-street-kitchen', 'category' => 'restaurant'],
         ])->map(fn (array $data) => Venue::updateOrCreate(
             ['slug' => $data['slug']],
             [
-                'owner_user_id' => $owner->id,
                 'name' => $data['name'],
+                'category' => $data['category'],
             ],
         ));
 
@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Demo Staff',
                 'password' => 'password',
-                'role' => UserRole::Customer,
+                'is_admin' => false,
                 'active_venue_id' => $venue->id,
             ],
         );
@@ -122,14 +122,17 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => $profile['name'],
                 'password' => 'password',
-                'role' => UserRole::Customer,
+                'is_admin' => false,
                 'active_venue_id' => null,
             ],
         ));
 
         Visit::query()->whereIn('venue_id', $venues->pluck('id'))->delete();
-        RewardRedemption::query()
+        RewardUnlock::query()
             ->whereHas('reward', fn ($query) => $query->whereIn('venue_id', $venues->pluck('id')))
+            ->delete();
+        CustomerRewardCycle::query()
+            ->whereHas('customer', fn ($query) => $query->whereIn('venue_id', $venues->pluck('id')))
             ->delete();
 
         $venues->each(function (Venue $venue, int $venueIndex) use ($customerUsers, $owner): void {
@@ -156,6 +159,16 @@ class DatabaseSeeder extends Seeder
                     ],
                 );
 
+                CustomerRewardCycle::updateOrCreate(
+                    [
+                        'customer_id' => $customer->id,
+                        'cycle_number' => 1,
+                    ],
+                    [
+                        'completed_at' => null,
+                    ],
+                );
+
                 $visitCount = min($stamps + 1, 9);
 
                 foreach (range(1, $visitCount) as $visitIndex) {
@@ -168,19 +181,30 @@ class DatabaseSeeder extends Seeder
                             ->setTime(10 + ($visitIndex % 8), 15),
                     ]);
                 }
+
+                $venue->rewards()
+                    ->where('active', true)
+                    ->where('required_stamps', '<=', $stamps)
+                    ->each(function (Reward $reward) use ($customer, $owner, $venueIndex): void {
+                        $unlock = RewardUnlock::updateOrCreate(
+                            [
+                                'customer_id' => $customer->id,
+                                'reward_id' => $reward->id,
+                                'cycle_number' => 1,
+                            ],
+                            [
+                                'unlocked_at' => now()->subDays(3),
+                            ],
+                        );
+
+                        if ($reward->required_stamps === 5 && $customer->stamps >= 5) {
+                            $unlock->forceFill([
+                                'claimed_at' => now()->subDays(2 + $venueIndex),
+                                'claimed_by' => $owner->id,
+                            ])->save();
+                        }
+                    });
             });
-
-            $reward = $venue->rewards()->where('required_stamps', 5)->first();
-            $redeemedCustomer = $venue->customers()->orderByDesc('stamps')->first();
-
-            if ($reward && $redeemedCustomer) {
-                RewardRedemption::create([
-                    'customer_id' => $redeemedCustomer->id,
-                    'reward_id' => $reward->id,
-                    'redeemed_by' => $owner->id,
-                    'redeemed_at' => now()->subDays(2 + $venueIndex),
-                ]);
-            }
         });
     }
 }

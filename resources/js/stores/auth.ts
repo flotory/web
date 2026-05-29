@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { api } from '@/lib/api'
-import type { User, UserRole } from '@/types'
+import type { User } from '@/types'
 
 interface AuthResponse {
   user: User
@@ -31,11 +31,10 @@ export const useAuthStore = defineStore('auth', {
       email: string
       password: string
       password_confirmation: string
-      role?: Extract<UserRole, 'customer'>
     }) {
       const response = await api<AuthResponse>('/auth/register', {
         method: 'POST',
-        body: { ...payload, device_name: 'browser', role: 'customer' },
+        body: { ...payload, device_name: 'browser' },
       })
 
       this.setSession(response.user, response.token)

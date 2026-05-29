@@ -14,6 +14,8 @@ import {
   QR_MESSAGE_PRESETS,
   type QrMessagePresetId,
 } from '@/lib/onboarding'
+import { rewardImageUrl } from '@/lib/rewardMedia'
+import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
 
@@ -95,11 +97,11 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur">
-          <div class="flex items-center gap-4">
-            <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10 text-xl font-black">
-              <img v-if="landing.venue.logo" :src="landing.venue.logo" alt="" class="size-full object-cover">
-              <span v-else>{{ landing.venue.name.slice(0, 1) }}</span>
+        <div class="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur">
+          <img :src="venueCoverUrl(landing.venue)" alt="" class="h-40 w-full object-cover">
+          <div class="flex items-center gap-4 p-5">
+            <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
+              <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
             </div>
             <div>
               <h1 class="text-3xl font-black tracking-tight">{{ landing.venue.name }}</h1>
@@ -112,11 +114,14 @@ onMounted(async () => {
           <article
             v-for="milestone in milestones"
             :key="milestone.id"
-            class="rounded-2xl border border-white/10 bg-white/5 p-4"
+            class="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
           >
-            <p class="text-xs font-bold uppercase tracking-wide text-emerald-300">{{ milestone.required_stamps }} visits</p>
-            <p class="mt-1 text-lg font-black">{{ milestone.title }}</p>
-            <p v-if="milestone.description" class="mt-1 text-sm text-white/65">{{ milestone.description }}</p>
+            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="h-28 w-full object-cover">
+            <div class="p-4">
+              <p class="text-xs font-bold uppercase tracking-wide text-emerald-300">{{ milestone.required_stamps }} visits</p>
+              <p class="mt-1 text-lg font-black">{{ milestone.title }}</p>
+              <p v-if="milestone.description" class="mt-1 text-sm text-white/65">{{ milestone.description }}</p>
+            </div>
           </article>
           <p v-if="!milestones.length" class="rounded-2xl border border-dashed border-white/20 p-4 text-sm text-white/60">
             Milestones are being prepared. Join now and your first reward unlocks soon.

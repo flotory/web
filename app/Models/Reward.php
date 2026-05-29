@@ -37,11 +37,6 @@ class Reward extends Model
         return $this->belongsTo(Venue::class);
     }
 
-    public function redemptions(): HasMany
-    {
-        return $this->hasMany(RewardRedemption::class);
-    }
-
     public function unlocks(): HasMany
     {
         return $this->hasMany(RewardUnlock::class);

@@ -31,11 +31,11 @@ export function hasOwnerMembership(venues: Venue[]): boolean {
 
 /** Where to send the user right after login (owners → dashboard, staff → scanner, guests → card). */
 export function resolveAuthenticatedHomePath(
-  authRole: string | undefined,
+  isAdmin: boolean | undefined,
   activeVenues: Venue[],
   effectiveVenueId: number | null,
 ): string {
-  if (authRole === 'admin') {
+  if (isAdmin) {
     return '/dashboard'
   }
 
@@ -59,11 +59,11 @@ export function resolveAuthenticatedHomePath(
 /** Honors an explicit redirect unless it would send a venue owner/staff to the customer card by mistake. */
 export function resolvePostLoginDestination(
   redirect: string | null | undefined,
-  authRole: string | undefined,
+  isAdmin: boolean | undefined,
   activeVenues: Venue[],
   effectiveVenueId: number | null,
 ): string {
-  const home = resolveAuthenticatedHomePath(authRole, activeVenues, effectiveVenueId)
+  const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
 
   if (!redirect) {
     return home

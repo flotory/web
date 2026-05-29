@@ -12,6 +12,8 @@ import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
+import { rewardImageUrl } from '@/lib/rewardMedia'
+import { venueLogoUrl } from '@/lib/venueMedia'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -141,18 +143,21 @@ onMounted(() => {
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
         <div class="mt-3 flex items-center gap-3">
           <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
-            <img v-if="landing.venue.logo" :src="landing.venue.logo" alt="" class="size-full object-cover">
-            <span v-else class="text-sm font-black">{{ landing.venue.name.slice(0, 1) }}</span>
+            <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
           </div>
           <div>
             <p class="text-lg font-bold leading-tight">{{ landing.venue.name }}</p>
             <p class="text-xs text-white/70">Start collecting rewards</p>
           </div>
         </div>
-        <p class="mt-3 text-sm text-white/85">
-          {{ landing.milestones[0]?.title ?? 'Free perks unlock as you visit more.' }}
-          <span v-if="landing.milestones[0]" class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
-        </p>
+        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+          <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
+          <p class="text-sm text-white/85">
+            {{ landing.milestones[0].title }}
+            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
+          </p>
+        </div>
+        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you visit more.</p>
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">

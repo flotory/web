@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -14,10 +14,12 @@ class Venue extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'owner_user_id',
         'name',
         'slug',
+        'category',
         'logo',
+        'logo_thumb',
+        'cover_image',
         'address',
         'phone',
         'website',
@@ -32,14 +34,14 @@ class Venue extends Model
         return $this->trashed();
     }
 
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'owner_user_id');
-    }
-
     public function memberships(): HasMany
     {
         return $this->hasMany(VenueUser::class);
+    }
+
+    public function owners(): HasMany
+    {
+        return $this->memberships()->where('role', 'owner');
     }
 
     public function customers(): HasMany
@@ -56,5 +58,11 @@ class Venue extends Model
     {
         return $this->hasMany(Visit::class);
     }
-}
 
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'venue_users')
+            ->withPivot(['role'])
+            ->withTimestamps();
+    }
+}

@@ -6,7 +6,7 @@ This app is a Laravel/Vue monolith for hospitality loyalty. A user can belong to
 
 ```text
 app/
-  Enums/                  UserRole (admin, customer)
+  (no global user role enum — use users.is_admin + venue_users.role)
   Events/                 Broadcast events (StampAdded)
   Http/Controllers/Api/   REST API controllers
   Http/Controllers/Auth/  Google OAuth (Socialite)
@@ -43,27 +43,29 @@ routes/
 | Model | Purpose |
 |-------|---------|
 | `User` | Login identity. Global role: `admin` or `customer`. Optional `google_id`, `google_avatar`. |
-| `Venue` | Hospitality workspace (cafe, bar, restaurant). `owner_user_id`, soft deletes, profile fields. |
+| `Venue` | Hospitality workspace (cafe, bar, restaurant). Soft deletes, category, branding fields. |
 | `VenueUser` | Membership pivot: `venue_id`, `user_id`, `role` (`owner`, `staff`). |
 | `Customer` | One user’s loyalty card at one venue: `qr_token`, `stamps`. |
 | `Reward` | Venue milestone definitions (`required_stamps`, optional description/image, `active`). |
-| `RewardUnlock` | Per-customer milestone unlock state for each cycle (including claim status). |
+| `RewardUnlock` | Per-cycle milestone unlock and claim (`claimed_at`, `claimed_by`). |
 | `CustomerRewardCycle` | Tracks cycle number and completion per customer. |
 | `Visit` | Stamp/visit history; `created_by` = staff user who added stars. |
-| `RewardRedemption` | Redemption record; `redeemed_by` = user who redeemed. |
 
 Important: QR tokens and stamp balances are **per venue membership** (`customers` row), not global per user.
 
 ## Role Model
 
 ```text
-Global (users.role)
-  admin     → platform-wide access
-  customer  → default for everyone (including venue owners and staff)
+Platform (users.is_admin)
+  true      → platform-wide access
+  false     → default for everyone
 
 Venue-scoped (venue_users.role)
   owner     → dashboard, rewards, analytics, settings, team, venues, scanner
   staff     → scanner, customers (read), staff redemption
+
+Loyalty (customers)
+  one row per user per venue — stamps, QR token, reward_unlocks
 ```
 
 Authorization uses `App\Support\VenueAccess`:
@@ -101,7 +103,7 @@ Redirect paths are sanitized in `resources/js/lib/redirect.ts` (internal paths o
 
 Owners manage venues from `/my-venues`.
 
-- Creating a venue sets `owner_user_id` and creates `venue_users` with role `owner`.
+- Creating a venue creates `venue_users` with role `owner`.
 - First-time owners without membership are routed to `/onboarding` (5-step wizard).
 - Delete: soft delete on `venues` (removed from UI immediately in workspace store).
 - Settings: `/my-venues/:id/settings` (logo, QR download PNG, invite link).
@@ -171,7 +173,7 @@ Auth: `POST /api/broadcasting/auth` with Sanctum bearer token.
 ### `app/Services/LoyaltyStampService.php`
 
 - `addStamp(Customer, User $staff, int $stamps)` — lock row, increment stamps, visit, broadcast
-- `redeemReward(Customer, Reward, User $redeemer)` — validate venue match, redemption row
+- `redeemReward(Customer, Reward, User $redeemer)` — validate unlock, set `claimed_at` on `reward_unlocks`
 - `nextRewardFor` / `availableRewardsFor`
 
 ### `app/Http/Controllers/Api/VenueController.php`
@@ -297,8 +299,8 @@ The `app` container broadcasts to Reverb via `host.docker.internal:8080` when Do
 
 ## Implementation Notes
 
-- Global `users.role` does not grant scanner or admin UI access; use `venue_users`.
-- `owner_user_id` on `venues` is the creating owner record; permissions use `venue_users.role = owner`.
+- `users.is_admin` is platform-only; scanner and venue UI use `venue_users`.
+- Claims are stored on `reward_unlocks` (`claimed_at`, `claimed_by`), not a separate redemptions table.
 - Logo files: `/uploads/venue-logos/`.
 - Staff invite creates new users with password `password` (MVP; replace with email invites later).
 - `FRONTEND_URL` must point at the SPA origin used after OAuth (production: `https://flotory.com`; local Docker: `http://localhost:8000`).

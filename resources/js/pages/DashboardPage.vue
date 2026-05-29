@@ -10,6 +10,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { rewardImageUrl } from '@/lib/rewardMedia'
+import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
+import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue } from '@/types'
 
@@ -161,39 +164,6 @@ const setupChecklist = computed(() => {
   }
 })
 
-function rewardKindFromTitle(title: string): 'free_item' | 'discount' | 'special_reward' {
-  const normalized = title.toLowerCase()
-  if (normalized.includes('%') || normalized.includes('off') || normalized.includes('discount')) {
-    return 'discount'
-  }
-  if (normalized.includes('vip') || normalized.includes('gift') || normalized.includes('special')) {
-    return 'special_reward'
-  }
-  return 'free_item'
-}
-
-function rewardFallbackStyle(title: string): string {
-  const kind = rewardKindFromTitle(title)
-  if (kind === 'discount') {
-    return 'bg-gradient-to-br from-indigo-600 to-blue-500'
-  }
-  if (kind === 'special_reward') {
-    return 'bg-gradient-to-br from-amber-500 to-rose-500'
-  }
-  return 'bg-gradient-to-br from-emerald-500 to-cyan-500'
-}
-
-function rewardIcon(title: string): string {
-  const normalized = title.toLowerCase()
-  if (normalized.includes('coffee')) return '☕'
-  if (normalized.includes('dessert')) return '🍰'
-  if (normalized.includes('cocktail')) return '🍸'
-  if (normalized.includes('burger')) return '🍔'
-  if (normalized.includes('%') || normalized.includes('off')) return '🏷'
-  if (normalized.includes('vip')) return '✨'
-  return '★'
-}
-
 function downloadQrPng() {
   const canvas = document.querySelector<HTMLCanvasElement>('#dashboard-qr canvas')
   if (!canvas) {
@@ -264,9 +234,8 @@ onMounted(() => {
   <AppShell>
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex items-center gap-3">
-        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white text-xl font-black text-slate-400 shadow-sm ring-1 ring-slate-200">
-          <img v-if="selectedVenue?.logo" :src="selectedVenue.logo" alt="" class="size-full object-cover">
-          <span v-else>{{ title.slice(0, 1) }}</span>
+        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+          <img :src="venueLogoUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
         <div>
         <AppBadge tone="green">Loyalty active</AppBadge>
@@ -299,9 +268,13 @@ onMounted(() => {
     </div>
 
     <div class="mt-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-      <AppCard wrapper-class="hero-shell overflow-hidden border-slate-700/40 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white shadow-2xl shadow-slate-900/40">
-        <div class="hero-ambient pointer-events-none absolute inset-0 opacity-80" />
-        <div class="relative grid gap-4 p-2">
+      <AppCard wrapper-class="hero-shell overflow-hidden border-slate-700/40 p-0 text-white shadow-2xl shadow-slate-900/40">
+        <div class="relative h-36 overflow-hidden">
+          <img :src="venueCoverUrl(selectedVenue)" alt="" class="h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/20" />
+        </div>
+        <div class="hero-ambient pointer-events-none absolute inset-0 opacity-50" />
+        <div class="relative grid gap-4 p-2 -mt-8">
           <div class="rounded-3xl bg-white/[0.03] p-4 ring-1 ring-white/10 backdrop-blur">
             <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-100">
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-1 ring-1 ring-emerald-300/30"><span class="live-dot" /> QR active</span>
@@ -365,12 +338,11 @@ onMounted(() => {
             :to="`/rewards?reward_id=${reward.id}${selectedVenue ? `&venue_id=${selectedVenue.id}` : ''}`"
             class="group overflow-hidden rounded-2xl border border-slate-200 bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-lg"
           >
-            <div v-if="reward.image" class="h-28 overflow-hidden">
-              <img :src="reward.image" alt="" class="h-full w-full object-cover transition group-hover:scale-[1.03]">
-            </div>
-            <div v-else class="h-28 px-4 py-3 text-white" :class="rewardFallbackStyle(reward.title)">
-              <p class="text-2xl">{{ rewardIcon(reward.title) }}</p>
-              <p class="mt-1 text-xs font-bold uppercase tracking-wide opacity-90">{{ rewardKindFromTitle(reward.title).replace('_', ' ') }}</p>
+            <div class="relative h-28 overflow-hidden">
+              <img :src="rewardImageUrl(reward)" :alt="reward.title" class="h-full w-full object-cover transition group-hover:scale-[1.03]">
+              <span class="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
+                {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
+              </span>
             </div>
             <div class="space-y-2 p-4">
               <div class="flex items-center justify-between gap-2">

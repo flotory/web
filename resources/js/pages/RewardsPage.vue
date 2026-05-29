@@ -8,12 +8,8 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
-import {
-  rewardCategoryFromTitle,
-  rewardCategoryLabel,
-  rewardFallbackStyle,
-  rewardIcon,
-} from '@/lib/rewardVisuals'
+import { rewardImageUrl, rewardHasCustomImage } from '@/lib/rewardMedia'
+import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
 import { useAuthStore } from '@/stores/auth'
 import { useRealtimeStore } from '@/stores/realtime'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -106,7 +102,7 @@ const deleteRewardTarget = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 let successTimer: number | undefined
 
-const canManageRewards = computed(() => auth.user?.role === 'admin' || workspace.hasMembership)
+const canManageRewards = computed(() => auth.user?.is_admin || workspace.hasMembership)
 const needsVenuePick = computed(
   () => canManageRewards.value && workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
 )
@@ -115,7 +111,7 @@ const customerStamps = computed(() => customer.value?.stamps ?? journey.value?.c
 const nextMilestone = computed(() => journey.value?.next_milestone ?? null)
 const nextDistance = computed(() => (nextMilestone.value ? Math.max(nextMilestone.value.required_stamps - customerStamps.value, 0) : 0))
 const canEditRewards = computed(() => {
-  if (auth.user?.role === 'admin') {
+  if (auth.user?.is_admin) {
     return true
   }
   const role = venue.value?.membership_role
@@ -764,20 +760,16 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <p class="text-xs font-bold uppercase tracking-wide text-slate-400">2. Reward visual</p>
             <p class="mt-1 text-sm text-slate-500">Guests see this on their loyalty card. JPG or PNG, max 5 MB.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
-              <div
-                class="reward-media-frame reward-media-frame--editor rounded-2xl border border-slate-200 shadow-inner"
-                :class="(imagePreviewUrl || (editingReward?.image && !removeImage && !imageFile)) ? 'bg-slate-100' : rewardFallbackStyle(title || 'reward')"
-              >
+              <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
                 <img
-                  v-if="imagePreviewUrl || (editingReward?.image && !removeImage && !imageFile)"
-                  :src="imagePreviewUrl ?? editingReward?.image ?? ''"
+                  :src="imagePreviewUrl ?? rewardImageUrl({
+                    title: title || 'reward',
+                    image: removeImage ? null : (editingReward?.image ?? null),
+                    image_thumb: removeImage ? null : (editingReward?.image_thumb ?? null),
+                  })"
                   alt=""
                   class="reward-media-img"
                 >
-                <div v-else class="reward-media-fallback">
-                  <p class="text-3xl">{{ rewardIcon(title || 'reward') }}</p>
-                  <p class="mt-2 text-[10px] font-bold uppercase tracking-wide text-white/80">Auto illustration</p>
-                </div>
               </div>
               <div class="flex flex-col gap-3">
                 <p class="text-sm font-semibold text-slate-700">
@@ -860,18 +852,9 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
               :class="{ 'milestone-card--paused': !reward.active }"
             >
               <div class="relative">
-                <div
-                  class="reward-media-frame"
-                  :class="reward.image ? 'bg-slate-100' : rewardFallbackStyle(reward.title)"
-                >
-                  <img v-if="reward.image" :src="reward.image" alt="" class="reward-media-img milestone-card-img">
-                  <div v-else class="reward-media-fallback">
-                    <div class="milestone-shimmer pointer-events-none absolute inset-0 opacity-30" />
-                    <p class="relative text-4xl">{{ rewardIcon(reward.title) }}</p>
-                    <p class="relative mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                      {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
-                    </p>
-                  </div>
+                <div class="reward-media-frame bg-slate-100">
+                  <img :src="rewardImageUrl(reward)" :alt="reward.title" class="reward-media-img milestone-card-img">
+                  <div v-if="!rewardHasCustomImage(reward)" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
                 </div>
                 <div class="absolute left-3 top-3 flex flex-wrap gap-2">
                   <span class="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
@@ -1031,14 +1014,12 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           class="customer-milestone cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           @click="openCustomerReward(rewards.find((item) => item.id === milestone.id))"
         >
-          <div class="reward-media-frame" :class="milestone.image ? 'bg-slate-100' : rewardFallbackStyle(milestone.title)">
-            <img v-if="milestone.image" :src="milestone.image" alt="" class="reward-media-img">
-            <div v-else class="reward-media-fallback items-end px-5 py-4">
-              <div>
-                <p class="text-3xl">{{ rewardIcon(milestone.title) }}</p>
-                <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/80">{{ milestone.required_stamps }} visits</p>
-              </div>
-            </div>
+          <div class="reward-media-frame bg-slate-100">
+            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="reward-media-img">
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
+            <p class="absolute bottom-4 left-4 text-xs font-bold uppercase tracking-wide text-white/90">
+              {{ milestone.required_stamps }} visits
+            </p>
           </div>
           <div class="p-5">
             <div class="flex items-start justify-between gap-3">
@@ -1127,9 +1108,8 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                 class="rounded-2xl border border-white/10 bg-white/5 p-3"
               >
                 <div class="flex items-center gap-3">
-                  <span class="reward-media-frame reward-media-frame--thumb rounded-xl" :class="reward.image ? 'bg-slate-800' : rewardFallbackStyle(reward.title)">
-                    <img v-if="reward.image" :src="reward.image" alt="" class="reward-media-img">
-                    <span v-else class="reward-media-fallback text-lg">{{ rewardIcon(reward.title) }}</span>
+                  <span class="reward-media-frame reward-media-frame--thumb overflow-hidden rounded-xl bg-slate-800">
+                    <img :src="rewardImageUrl(reward)" :alt="reward.title" class="reward-media-img">
                   </span>
                   <div class="min-w-0 flex-1">
                     <p class="truncate font-bold text-white">{{ reward.title }}</p>

@@ -16,7 +16,7 @@ export const useRealtimeStore = defineStore('realtime', {
     async startCustomerListeners(router: Router) {
       const auth = useAuthStore()
 
-      if (!auth.token || auth.user?.role !== 'customer') {
+      if (!auth.token || auth.user?.is_admin) {
         this.stop()
         return
       }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Venue;
@@ -70,7 +69,7 @@ class VenueTeamController extends Controller
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make($temporaryPassword),
-                'role' => UserRole::Customer,
+                'is_admin' => false,
                 'active_venue_id' => $venue->id,
             ]);
         }

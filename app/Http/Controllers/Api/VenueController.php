@@ -85,14 +85,17 @@ class VenueController extends Controller
             ->orderBy('required_stamps')
             ->orderBy('sort_order')
             ->limit(3)
-            ->get(['id', 'title', 'description', 'image', 'required_stamps']);
+            ->get(['id', 'title', 'description', 'image', 'image_thumb', 'required_stamps']);
 
         return response()->json([
             'venue' => [
                 'id' => $venue->id,
                 'name' => $venue->name,
                 'slug' => $venue->slug,
+                'category' => $venue->category,
                 'logo' => $venue->logo,
+                'logo_thumb' => $venue->logo_thumb,
+                'cover_image' => $venue->cover_image,
                 'address' => $venue->address,
             ],
             'milestones' => $milestones,
@@ -133,12 +136,14 @@ class VenueController extends Controller
         $user = $request->user();
 
         $venue = Venue::create([
-            'owner_user_id' => $user->id,
             'name' => $request->string('name')->toString(),
             'slug' => $request->filled('slug')
                 ? $request->string('slug')->toString()
                 : Str::slug($request->string('name')->toString()).'-'.Str::lower(Str::random(5)),
+            'category' => $request->string('category')->toString() ?: 'cafe',
             'logo' => null,
+            'logo_thumb' => null,
+            'cover_image' => null,
             'address' => $request->string('address')->toString() ?: null,
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
@@ -213,6 +218,49 @@ class VenueController extends Controller
 
         $venue->forceFill([
             'logo' => null,
+            'logo_thumb' => null,
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function uploadCover(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
+
+        $request->validate([
+            'cover' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+        ]);
+
+        $this->deleteLocalCover($venue);
+
+        $file = $request->file('cover');
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $filename = Str::slug($venue->slug).'-cover-'.Str::lower(Str::random(12)).'.'.$extension;
+        $directory = public_path('uploads/venue-covers');
+
+        File::ensureDirectoryExists($directory);
+        $file->move($directory, $filename);
+
+        $venue->forceFill([
+            'cover_image' => "/uploads/venue-covers/{$filename}",
+        ])->save();
+
+        return response()->json([
+            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+        ]);
+    }
+
+    public function destroyCover(Request $request, Venue $venue): JsonResponse
+    {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner']);
+
+        $this->deleteLocalCover($venue);
+
+        $venue->forceFill([
+            'cover_image' => null,
         ])->save();
 
         return response()->json([
@@ -256,11 +304,22 @@ class VenueController extends Controller
 
     private function deleteLocalLogo(Venue $venue): void
     {
-        if (! $venue->logo || ! str_starts_with($venue->logo, '/uploads/venue-logos/')) {
+        foreach ([$venue->logo, $venue->logo_thumb] as $path) {
+            if (! $path || ! str_starts_with($path, '/uploads/venue-logos/')) {
+                continue;
+            }
+
+            File::delete(public_path(ltrim($path, '/')));
+        }
+    }
+
+    private function deleteLocalCover(Venue $venue): void
+    {
+        if (! $venue->cover_image || ! str_starts_with($venue->cover_image, '/uploads/venue-covers/')) {
             return;
         }
 
-        File::delete(public_path(ltrim($venue->logo, '/')));
+        File::delete(public_path(ltrim($venue->cover_image, '/')));
     }
 }
 

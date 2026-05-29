@@ -6,7 +6,6 @@ use App\Events\StampAdded;
 use App\Models\CustomerRewardCycle;
 use App\Models\Customer;
 use App\Models\Reward;
-use App\Models\RewardRedemption;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use Carbon\CarbonInterval;
@@ -34,7 +33,6 @@ class LoyaltyStampService
                 $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $maxMilestone);
                 $cycle->forceFill([
                     'completed_at' => now(),
-                    'max_milestone_stamps' => $maxMilestone,
                 ])->save();
 
                 $customer->forceFill(['stamps' => 0])->save();
@@ -82,7 +80,7 @@ class LoyaltyStampService
         return $result;
     }
 
-    public function redeemReward(Customer $customer, Reward $reward, User $redeemer): RewardRedemption
+    public function redeemReward(Customer $customer, Reward $reward, User $redeemer): RewardUnlock
     {
         if ($reward->venue_id !== $customer->venue_id || ! $reward->active) {
             throw ValidationException::withMessages([
@@ -90,7 +88,7 @@ class LoyaltyStampService
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $reward, $redeemer): RewardRedemption {
+        return DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $cycle = $this->activeCycle($customer);
             $unlock = RewardUnlock::query()
@@ -117,12 +115,7 @@ class LoyaltyStampService
                 'claimed_by' => $redeemer->id,
             ])->save();
 
-            return RewardRedemption::create([
-                'customer_id' => $customer->id,
-                'reward_id' => $reward->id,
-                'redeemed_by' => $redeemer->id,
-                'redeemed_at' => now(),
-            ]);
+            return $unlock->fresh(['reward']);
         });
     }
 
@@ -177,6 +170,7 @@ class LoyaltyStampService
                     'title' => $reward->title,
                     'description' => $reward->description,
                     'image' => $reward->image,
+                    'image_thumb' => $reward->image_thumb,
                     'required_stamps' => $reward->required_stamps,
                     'active' => $reward->active,
                     'unlocked' => (bool) $unlock,
@@ -220,7 +214,6 @@ class LoyaltyStampService
         return CustomerRewardCycle::query()->create([
             'customer_id' => $customer->id,
             'cycle_number' => $cycleNumber,
-            'max_milestone_stamps' => 0,
         ]);
     }
 

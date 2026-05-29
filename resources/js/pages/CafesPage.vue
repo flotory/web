@@ -8,15 +8,19 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api } from '@/lib/api'
+import { hasTeamMembership } from '@/lib/venueRoles'
+import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
 
 const auth = useAuthStore()
+const workspace = useWorkspaceStore()
 const cafes = ref<Venue[]>([])
 const loading = ref(true)
 const joiningId = ref<number | null>(null)
 const error = ref('')
-const isCustomer = computed(() => auth.user?.role === 'customer')
+const isCustomer = computed(() => !auth.user?.is_admin && !hasTeamMembership(workspace.activeVenues))
 
 async function loadCafes() {
   loading.value = true
@@ -66,12 +70,13 @@ onMounted(loadCafes)
     </AppCard>
 
     <div class="grid gap-4 md:grid-cols-2">
-      <AppCard v-for="cafe in cafes" :key="cafe.id">
+      <AppCard v-for="cafe in cafes" :key="cafe.id" wrapper-class="overflow-hidden p-0">
+        <img :src="venueCoverUrl(cafe)" alt="" class="h-28 w-full object-cover">
+        <div class="p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-4">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-3xl bg-slate-100 text-lg font-black text-slate-400 ring-1 ring-slate-200">
-              <img v-if="cafe.logo" :src="cafe.logo" alt="" class="size-full object-cover">
-              <span v-else>{{ cafe.name.slice(0, 1) }}</span>
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white text-lg font-black shadow-sm ring-2 ring-white -mt-10">
+              <img :src="venueLogoUrl(cafe)" :alt="cafe.name" class="size-full object-cover">
             </div>
             <div>
               <h2 class="text-2xl font-black text-slate-950">{{ cafe.name }}</h2>
@@ -97,6 +102,7 @@ onMounted(loadCafes)
           <AppButton v-else class="w-full" :disabled="joiningId === cafe.id" @click="joinCafe(cafe)">
             {{ joiningId === cafe.id ? 'Joining...' : 'Join cafe' }}
           </AppButton>
+        </div>
         </div>
       </AppCard>
     </div>

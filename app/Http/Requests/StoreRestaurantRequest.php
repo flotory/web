@@ -22,6 +22,7 @@ class StoreRestaurantRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
             'website' => ['nullable', 'url', 'max:2048'],
+            'category' => ['nullable', 'string', 'in:cafe,restaurant,bar,bakery'],
         ];
     }
 }

@@ -212,17 +212,17 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 
 ## Roles
 
-### Global (`users.role`)
+### Platform (`users.is_admin`)
 
-- **admin** — platform administrator (not seeded by default)
-- **customer** — default for all sign-ups (owners and staff use this globally too)
+- **true** — platform administrator (not seeded by default)
+- **false** — default for all sign-ups (owners, staff, and loyalty guests)
 
 ### Per venue (`venue_users.role`)
 
 - **owner** — full venue control, delete venue (soft delete), manage team
 - **staff** — scanner, customers list, staff redemption
 
-Permissions are checked via venue membership (`VenueAccess`), not the global `users.role` field. Scanner routes require an active `venue_users` row for the target venue.
+Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be owner, staff, and customer at different venues. Scanner routes require an active `venue_users` row for the target venue.
 
 ## MVP Scope
 
