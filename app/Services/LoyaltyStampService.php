@@ -119,6 +119,23 @@ class LoyaltyStampService
         });
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function redeemApiPayload(Customer $customer, RewardUnlock $unlock): array
+    {
+        $customer = $customer->fresh()->load('venue', 'user');
+
+        return [
+            'unlock' => $unlock,
+            'customer' => $customer,
+            'next_reward' => $this->nextRewardFor($customer),
+            'available_rewards' => $this->availableRewardsFor($customer),
+            'journey' => $this->journeyFor($customer),
+            'recent_visits' => $customer->visits()->latest()->limit(10)->get(),
+        ];
+    }
+
     public function nextRewardFor(Customer $customer): ?Reward
     {
         return $this->milestonesForVenue($customer)

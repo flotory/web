@@ -9,7 +9,6 @@ use App\Models\Reward;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Support\VenueAccess;
@@ -67,9 +66,7 @@ class RewardController extends Controller
         if ($removeImage) {
             $this->deleteRewardImage($reward);
             $payload['image'] = null;
-            if ($this->hasImageThumbColumn()) {
-                $payload['image_thumb'] = null;
-            }
+            $payload['image_thumb'] = null;
         }
 
         if ($request->hasFile('image')) {
@@ -196,16 +193,5 @@ class RewardController extends Controller
                 'required_stamps' => ['A milestone already exists for this visits threshold.'],
             ]);
         }
-    }
-
-    private function hasImageThumbColumn(): bool
-    {
-        static $checked = null;
-
-        if ($checked === null) {
-            $checked = Schema::hasColumn('rewards', 'image_thumb');
-        }
-
-        return $checked;
     }
 }
