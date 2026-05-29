@@ -27,7 +27,13 @@ const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
 
 const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
-const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
+const postAuthPath = computed(() => {
+  if (authIntent.value === 'owner') {
+    return '/onboarding/create-venue'
+  }
+
+  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card')
+})
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 
@@ -120,46 +126,6 @@ onMounted(() => {
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 
-      <div v-if="authIntent === 'owner' && !landing" class="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
-        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>
-        <div class="mt-3 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-center">
-            <p class="text-xl">▦</p>
-            <p class="mt-1 text-xs text-white/80">QR stand</p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-center">
-            <p class="text-xl">★</p>
-            <p class="mt-1 text-xs text-white/80">Rewards</p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-center">
-            <p class="text-xl">↻</p>
-            <p class="mt-1 text-xs text-white/80">Repeat visits</p>
-          </div>
-        </div>
-        <p class="mt-3 text-sm text-white/85">QR-based loyalty for cafes, bars, and restaurants. Launch in minutes. No app required.</p>
-      </div>
-
-      <div v-if="landing" class="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
-        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
-        <div class="mt-3 flex items-center gap-3">
-          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
-            <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
-          </div>
-          <div>
-            <p class="text-lg font-bold leading-tight">{{ landing.venue.name }}</p>
-            <p class="text-xs text-white/70">Start collecting rewards</p>
-          </div>
-        </div>
-        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
-          <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
-          <p class="text-sm text-white/85">
-            {{ landing.milestones[0].title }}
-            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
-          </p>
-        </div>
-        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you visit more.</p>
-      </div>
-
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
       <AppBadge tone="green">{{ venueSlug ? 'Join rewards in seconds' : authIntent === 'owner' ? 'Launch Flotory' : 'Join Flotory' }}</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
@@ -222,22 +188,49 @@ onMounted(() => {
       </p>
       </AppCard>
 
-      <div class="mt-4 grid gap-2 rounded-3xl border border-white/15 bg-white/5 p-3 backdrop-blur">
-        <p class="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">How it works</p>
-        <div class="grid gap-2 sm:grid-cols-3">
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
-            <p class="text-sm font-bold text-white">Scan QR</p>
-            <p class="mt-1 text-xs text-white/70">Guests scan table QR and join instantly.</p>
+      <div v-if="landing" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
+        <div class="mt-3 flex items-center gap-3">
+          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
+            <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
           </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
-            <p class="text-sm font-bold text-white">Collect visits</p>
-            <p class="mt-1 text-xs text-white/70">Staff stamps visits in seconds.</p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
-            <p class="text-sm font-bold text-white">Unlock rewards</p>
-            <p class="mt-1 text-xs text-white/70">Guests return to claim milestone rewards.</p>
+          <div>
+            <p class="text-lg font-bold leading-tight">{{ landing.venue.name }}</p>
+            <p class="text-xs text-white/70">Start collecting rewards</p>
           </div>
         </div>
+        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+          <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
+          <p class="text-sm text-white/85">
+            {{ landing.milestones[0].title }}
+            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} visits</span>
+          </p>
+        </div>
+        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you visit more.</p>
+      </div>
+
+      <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>
+        <p class="mt-2 text-sm leading-relaxed text-white/85">
+          QR-based loyalty for cafes, bars, and restaurants. Set up in minutes — guests use their phone, no app download.
+        </p>
+        <ol class="mt-4 grid gap-2 sm:grid-cols-3">
+          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">1</p>
+            <p class="mt-1 text-sm font-bold text-white">Guests scan your QR</p>
+            <p class="mt-1 text-xs text-white/70">They join instantly from the table.</p>
+          </li>
+          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">2</p>
+            <p class="mt-1 text-sm font-bold text-white">Staff stamp visits</p>
+            <p class="mt-1 text-xs text-white/70">Each visit adds progress in seconds.</p>
+          </li>
+          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">3</p>
+            <p class="mt-1 text-sm font-bold text-white">Rewards bring them back</p>
+            <p class="mt-1 text-xs text-white/70">Milestones unlock perks guests actually claim.</p>
+          </li>
+        </ol>
       </div>
     </section>
   </main>

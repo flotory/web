@@ -10,6 +10,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { rewardPresetsForCategory } from '@/lib/defaultImages'
 import { rewardImageUrl } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
@@ -140,6 +141,15 @@ const heroCopy = computed(() => {
 })
 
 const previewRewards = computed(() => rewards.value.slice(0, 3))
+
+function rewardPreviewImage(reward: Reward): string {
+  const preset = rewardPresetsForCategory(selectedVenue.value?.category).find((item) => item.title === reward.title)
+  if (preset) {
+    return preset.image
+  }
+
+  return rewardImageUrl(reward)
+}
 const canOpenActions = computed(() => Boolean(selectedVenue.value && landingUrl.value))
 const primaryActionText = computed(() => (hasCustomers.value ? 'Keep scanner ready' : 'Invite your first guest'))
 
@@ -268,14 +278,14 @@ onMounted(() => {
     </div>
 
     <div class="mt-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-      <AppCard wrapper-class="hero-shell overflow-hidden border-slate-700/40 p-0 text-white shadow-2xl shadow-slate-900/40">
+      <AppCard wrapper-class="hero-shell overflow-hidden !border-slate-700/60 !bg-slate-950 p-0 text-white shadow-2xl shadow-slate-900/40">
         <div class="relative h-36 overflow-hidden">
           <img :src="venueCoverUrl(selectedVenue)" alt="" class="h-full w-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/20" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-900/30" />
         </div>
         <div class="hero-ambient pointer-events-none absolute inset-0 opacity-50" />
-        <div class="relative grid gap-4 p-2 -mt-8">
-          <div class="rounded-3xl bg-white/[0.03] p-4 ring-1 ring-white/10 backdrop-blur">
+        <div class="relative grid gap-4 bg-slate-950 p-4 pt-2 -mt-10">
+          <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
             <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-100">
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-1 ring-1 ring-emerald-300/30"><span class="live-dot" /> QR active</span>
               <span class="inline-flex items-center gap-1 rounded-full bg-blue-400/15 px-2.5 py-1 ring-1 ring-blue-300/30"><span class="live-dot" /> Rewards live</span>
@@ -286,7 +296,7 @@ onMounted(() => {
           </div>
 
           <div class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div class="rounded-3xl bg-white/[0.03] p-4 ring-1 ring-white/10 backdrop-blur">
+            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
               <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Primary actions</p>
               <div class="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
                 <AppButton size="lg" class="hero-btn-primary w-full" :disabled="!canOpenActions" @click="downloadQrPng">
@@ -309,17 +319,17 @@ onMounted(() => {
               <p class="mt-3 text-xs font-medium text-white/65">Operational status: waiting for first guests.</p>
             </div>
 
-            <div class="rounded-3xl bg-gradient-to-b from-white/10 to-white/[0.03] p-4 ring-1 ring-white/10">
+            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
               <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Venue QR asset</p>
-              <div class="mt-3 rounded-[1.4rem] bg-white/90 p-3 shadow-xl shadow-black/30">
+              <div class="mt-3 rounded-[1.4rem] bg-white p-3 shadow-xl shadow-black/30">
                 <div id="dashboard-qr" class="qr-pulse mx-auto rounded-2xl bg-white p-2 ring-1 ring-slate-200">
                   <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="145" level="M" render-as="canvas" :margin="2" />
                 </div>
                 <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
               </div>
-              <div class="mt-3 rounded-2xl bg-white/10 px-3 py-2 text-xs text-white/75 ring-1 ring-white/10">
-                Hospitality mode: QR printed and guests can start collecting instantly.
-              </div>
+              <p class="mt-3 text-xs leading-relaxed text-slate-300">
+                Print and place on tables. Guests scan to join and collect visits instantly.
+              </p>
             </div>
           </div>
         </div>
@@ -339,7 +349,7 @@ onMounted(() => {
             class="group overflow-hidden rounded-2xl border border-slate-200 bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-lg"
           >
             <div class="relative h-28 overflow-hidden">
-              <img :src="rewardImageUrl(reward)" :alt="reward.title" class="h-full w-full object-cover transition group-hover:scale-[1.03]">
+              <img :src="rewardPreviewImage(reward)" :alt="reward.title" class="h-full w-full object-cover transition group-hover:scale-[1.03]">
               <span class="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
                 {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
               </span>

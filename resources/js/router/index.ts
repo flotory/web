@@ -35,8 +35,8 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/v/:slug', name: 'venue-landing', component: VenueLandingPage, meta: { guest: true } },
-    { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
+    { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -85,18 +85,17 @@ router.beforeEach(async (to) => {
       ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
       : await workspaceHomePath()
 
-    if (needsWorkspaceContext && !teamMember && !auth.user?.is_admin) {
+    const allowWithoutMembership = to.meta.allowWithoutMembership === true
+
+    if (needsWorkspaceContext && !teamMember && !auth.user?.is_admin && !allowWithoutMembership) {
       return { path: home }
     }
 
-    if (to.meta.ownerOnly && !auth.user?.is_admin && !ownerMember) {
+    if (to.meta.ownerOnly && !auth.user?.is_admin && !ownerMember && !allowWithoutMembership) {
       return { path: home }
     }
 
-    const ownerOnboarding =
-      to.name === 'onboarding' || to.name === 'onboarding-create-venue' || to.name === 'my-venues'
-
-    if (ownerOnboarding && !auth.user?.is_admin && !ownerMember && to.query.intent !== 'owner') {
+    if (to.name === 'my-venues' && !auth.user?.is_admin && !ownerMember && to.query.intent !== 'owner') {
       return { path: home }
     }
   }

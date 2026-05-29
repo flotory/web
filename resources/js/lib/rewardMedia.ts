@@ -4,13 +4,26 @@ import type { MilestoneProgress, Reward } from '@/types'
 
 export type RewardMediaFields = Pick<Reward, 'image' | 'image_thumb' | 'title'>
 
+function pickMediaPath(...paths: Array<string | null | undefined>): string | null {
+  for (const path of paths) {
+    if (typeof path === 'string' && path.trim() !== '') {
+      return path
+    }
+  }
+
+  return null
+}
+
 export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
   if (!reward) {
     return defaultRewardImage('free_item')
   }
-  return reward.image_thumb ?? reward.image ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
+
+  const uploaded = pickMediaPath(reward.image_thumb, reward.image)
+
+  return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
 }
 
 export function rewardHasCustomImage(reward: RewardMediaFields | null | undefined): boolean {
-  return Boolean(reward?.image_thumb ?? reward?.image)
+  return Boolean(pickMediaPath(reward?.image_thumb, reward?.image))
 }

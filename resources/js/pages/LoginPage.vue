@@ -30,7 +30,13 @@ const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
 
 const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
-const postAuthPath = computed(() => sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card'))
+const postAuthPath = computed(() => {
+  if (authIntent.value === 'owner') {
+    return '/onboarding/create-venue'
+  }
+
+  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card')
+})
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 

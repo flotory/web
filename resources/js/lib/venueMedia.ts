@@ -1,28 +1,54 @@
-import { defaultVenueCoverImage, defaultVenueLogoImage, normalizeVenueCategory } from '@/lib/defaultImages'
+import {
+  defaultVenueCoverImage,
+  defaultVenueLogoImage,
+  normalizeVenueCategory,
+  type VenueCategory,
+} from '@/lib/defaultImages'
 import type { Venue } from '@/types'
 
 export type VenueMediaFields = Pick<Venue, 'logo' | 'logo_thumb' | 'cover_image' | 'category' | 'name'>
 
-export function venueLogoUrl(venue: VenueMediaFields | null | undefined): string {
-  const category = normalizeVenueCategory(venue?.category)
-  if (!venue) {
-    return defaultVenueLogoImage(category)
+function pickMediaPath(...paths: Array<string | null | undefined>): string | null {
+  for (const path of paths) {
+    if (typeof path === 'string' && path.trim() !== '') {
+      return path
+    }
   }
-  return venue.logo_thumb ?? venue.logo ?? defaultVenueLogoImage(category)
+
+  return null
 }
 
-export function venueCoverUrl(venue: VenueMediaFields | null | undefined): string {
-  const category = normalizeVenueCategory(venue?.category)
-  if (!venue) {
-    return defaultVenueCoverImage(category)
-  }
-  return venue.cover_image ?? defaultVenueCoverImage(category)
+export function resolveVenueCategory(
+  venue: VenueMediaFields | null | undefined,
+  categoryOverride?: VenueCategory | null,
+): VenueCategory {
+  return normalizeVenueCategory(categoryOverride ?? venue?.category)
+}
+
+export function venueLogoUrl(
+  venue: VenueMediaFields | null | undefined,
+  categoryOverride?: VenueCategory | null,
+): string {
+  const category = resolveVenueCategory(venue, categoryOverride)
+  const uploaded = pickMediaPath(venue?.logo_thumb, venue?.logo)
+
+  return uploaded ?? defaultVenueLogoImage(category)
+}
+
+export function venueCoverUrl(
+  venue: VenueMediaFields | null | undefined,
+  categoryOverride?: VenueCategory | null,
+): string {
+  const category = resolveVenueCategory(venue, categoryOverride)
+  const uploaded = pickMediaPath(venue?.cover_image)
+
+  return uploaded ?? defaultVenueCoverImage(category)
 }
 
 export function venueHasCustomLogo(venue: VenueMediaFields | null | undefined): boolean {
-  return Boolean(venue?.logo_thumb ?? venue?.logo)
+  return Boolean(pickMediaPath(venue?.logo_thumb, venue?.logo))
 }
 
 export function venueHasCustomCover(venue: VenueMediaFields | null | undefined): boolean {
-  return Boolean(venue?.cover_image)
+  return Boolean(pickMediaPath(venue?.cover_image))
 }

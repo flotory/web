@@ -59,11 +59,13 @@ class GoogleAuthController extends Controller
 
         $token = $user->createToken('google-oauth-web')->plainTextToken;
 
+        $ownerIntent = $this->sanitizeIntent($intent['intent'] ?? null);
+
         return redirect($this->buildFrontendPath('/login', [
             'oauth_token' => $token,
-            'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null),
+            'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null, $ownerIntent),
             'venue_slug' => $this->sanitizeVenueSlug($intent['venue_slug'] ?? null),
-            'intent' => $this->sanitizeIntent($intent['intent'] ?? null),
+            'intent' => $ownerIntent,
         ]));
     }
 
@@ -76,10 +78,10 @@ class GoogleAuthController extends Controller
         return $queryString === '' ? "{$base}{$path}" : "{$base}{$path}?{$queryString}";
     }
 
-    private function sanitizeRedirect(mixed $path): string
+    private function sanitizeRedirect(mixed $path, ?string $intent = null): string
     {
         if (! is_string($path) || $path === '') {
-            return '/card';
+            return $intent === 'owner' ? '/onboarding/create-venue' : '/card';
         }
 
         if (! Str::startsWith($path, '/')) {
