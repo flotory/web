@@ -153,6 +153,32 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('journey.current_stamps', 3);
     }
 
+    public function test_customer_can_list_pending_rewards_in_wallet(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, [
+            'title' => 'Free Latte',
+            'required_stamps' => 5,
+        ]);
+        $this->createRewardCycle($customer, ['cycle_number' => 2, 'completed_at' => now()]);
+        $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/rewards/wallet')
+            ->assertOk()
+            ->assertJsonPath('pending_count', 1)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.reward.id', $reward->id)
+            ->assertJsonPath('items.0.customer.id', $customer->id);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonPath('pending_rewards_count', 1);
+    }
+
     public function test_customer_cannot_view_another_users_rewards(): void
     {
         $owner = $this->createUser();

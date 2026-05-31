@@ -99,11 +99,11 @@ class LoyaltyStampService
 
         return DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
-            $cycle = $this->activeCycle($customer);
             $unlock = RewardUnlock::query()
                 ->where('customer_id', $customer->id)
                 ->where('reward_id', $reward->id)
-                ->where('cycle_number', $cycle->cycle_number)
+                ->whereNull('claimed_at')
+                ->orderBy('cycle_number')
                 ->lockForUpdate()
                 ->first();
 
@@ -155,13 +155,12 @@ class LoyaltyStampService
 
     public function availableRewardsFor(Customer $customer): Collection
     {
-        $cycle = $this->activeCycle($customer);
-
         $rewardIds = RewardUnlock::query()
             ->where('customer_id', $customer->id)
-            ->where('cycle_number', $cycle->cycle_number)
             ->whereNull('claimed_at')
-            ->pluck('reward_id');
+            ->pluck('reward_id')
+            ->unique()
+            ->values();
 
         if ($rewardIds->isEmpty()) {
             return new Collection();
@@ -171,6 +170,14 @@ class LoyaltyStampService
             ->whereIn('id', $rewardIds)
             ->orderBy('required_stamps')
             ->get();
+    }
+
+    public function pendingRewardCountFor(Customer $customer): int
+    {
+        return RewardUnlock::query()
+            ->where('customer_id', $customer->id)
+            ->whereNull('claimed_at')
+            ->count();
     }
 
     public function journeyFor(Customer $customer): array

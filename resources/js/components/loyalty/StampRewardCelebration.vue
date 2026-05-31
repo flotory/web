@@ -2,6 +2,7 @@
 defineProps<{
   visible: boolean
   title?: string
+  subtitle?: string
 }>()
 </script>
 
@@ -15,7 +16,8 @@ defineProps<{
       <div class="celebrate-card relative rounded-[2rem] bg-white px-8 py-7 text-center shadow-2xl ring-1 ring-amber-200">
         <div class="mx-auto grid size-20 place-items-center rounded-full bg-amber-100 text-4xl">🎁</div>
         <p class="mt-4 text-xl font-black text-slate-950">Reward unlocked!</p>
-        <p v-if="title" class="mt-1 text-sm font-semibold text-slate-500">{{ title }}</p>
+        <p v-if="title" class="mt-1 text-sm font-semibold text-slate-700">{{ title }}</p>
+        <p v-if="subtitle" class="mt-2 text-sm font-medium text-slate-500">{{ subtitle }}</p>
         <div class="celebrate-sparkles" aria-hidden="true">
           <span v-for="index in 6" :key="index" class="celebrate-sparkle">★</span>
         </div>

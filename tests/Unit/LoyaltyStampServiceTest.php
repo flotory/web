@@ -28,6 +28,22 @@ class LoyaltyStampServiceTest extends TestCase
         $this->assertTrue($available->first()->is($reward));
     }
 
+    public function test_available_rewards_includes_unclaimed_unlocks_from_previous_cycles(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer, ['cycle_number' => 2, 'completed_at' => now()]);
+        $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
+
+        $available = app(LoyaltyStampService::class)->availableRewardsFor($customer);
+
+        $this->assertCount(1, $available);
+        $this->assertTrue($available->first()->is($reward));
+        $this->assertSame(1, app(LoyaltyStampService::class)->pendingRewardCountFor($customer));
+    }
+
     public function test_admin_can_access_any_venue_without_membership(): void
     {
         $admin = $this->createUser(['is_admin' => true]);

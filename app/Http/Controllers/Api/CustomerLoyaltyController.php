@@ -32,6 +32,32 @@ class CustomerLoyaltyController extends Controller
             'available_rewards' => $activeCard ? $loyalty->availableRewardsFor($activeCard) : [],
             'journey' => $activeCard ? $loyalty->journeyFor($activeCard) : null,
             'recent_visits' => $activeCard ? $activeCard->visits()->latest()->limit(10)->get() : [],
+            'pending_rewards_count' => $cards->sum(
+                fn (Customer $card): int => $loyalty->pendingRewardCountFor($card),
+            ),
+        ]);
+    }
+
+    public function wallet(Request $request, LoyaltyStampService $loyalty): JsonResponse
+    {
+        $cards = Customer::query()
+            ->where('user_id', $request->user()->id)
+            ->with('venue')
+            ->orderBy('venue_id')
+            ->get();
+
+        $items = $cards->flatMap(function (Customer $card) use ($loyalty): array {
+            return $loyalty->availableRewardsFor($card)
+                ->map(fn (Reward $reward): array => [
+                    'customer' => $card,
+                    'reward' => $reward,
+                ])
+                ->all();
+        })->values();
+
+        return response()->json([
+            'items' => $items,
+            'pending_count' => $items->count(),
         ]);
     }
 

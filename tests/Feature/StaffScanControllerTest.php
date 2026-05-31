@@ -44,7 +44,9 @@ class StaffScanControllerTest extends TestCase
             ->assertJsonPath('customer.id', $customer->id)
             ->assertJsonPath('customer.stamps', 0)
             ->assertJsonPath('cycle_completed', true)
-            ->assertJsonPath('next_reward.id', $reward->id);
+            ->assertJsonPath('next_reward.id', $reward->id)
+            ->assertJsonCount(1, 'available_rewards')
+            ->assertJsonPath('available_rewards.0.id', $reward->id);
 
         $this->assertDatabaseHas('visits', [
             'customer_id' => $customer->id,

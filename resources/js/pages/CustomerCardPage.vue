@@ -12,6 +12,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
+import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useRealtimeStore } from '@/stores/realtime'
 import type { Customer, Reward, RewardJourney, StampAddedPayload, Visit } from '@/types'
 
@@ -25,6 +26,7 @@ interface RedemptionResponse {
 
 const route = useRoute()
 const realtime = useRealtimeStore()
+const customerRewards = useCustomerRewardsStore()
 const loading = ref(true)
 const error = ref('')
 const card = ref<Customer | null>(null)
@@ -36,7 +38,9 @@ const selectedReward = ref<Reward | null>(null)
 const animatingSlots = ref<number[]>([])
 const celebratingReward = ref(false)
 const celebrationTitle = ref('')
+const celebrationSubtitle = ref('')
 const showCelebration = ref(false)
+const displayStamps = ref<number | null>(null)
 let refreshTimer: number | undefined
 let animationTimer: number | undefined
 let celebrationTimer: number | undefined
@@ -59,6 +63,7 @@ const previewMilestones = computed(() =>
     required_stamps: milestone.required_stamps,
   })),
 )
+const previewStamps = computed(() => displayStamps.value ?? card.value?.stamps ?? 0)
 const selectedVenueId = computed(() => {
   const venueId = route.query.venue_id
   return typeof venueId === 'string' ? venueId : null
@@ -100,7 +105,12 @@ async function loadCard(silent = false) {
 
 function slotsForStampIncrease(previousStamps: number, addedStamps: number, cycleCompleted: boolean, maxStamps: number): number[] {
   if (cycleCompleted) {
-    return Array.from({ length: Math.min(addedStamps, maxStamps) }, (_, index) => index + 1)
+    const slots: number[] = []
+    for (let position = previousStamps + 1; position <= maxStamps; position += 1) {
+      slots.push(position)
+    }
+
+    return slots.length ? slots : [maxStamps]
   }
 
   const slots: number[] = []
@@ -125,12 +135,13 @@ function triggerStampAnimation(previousStamps: number, addedStamps: number, cycl
 
 function triggerRewardCelebration(rewardTitle: string) {
   celebrationTitle.value = rewardTitle
+  celebrationSubtitle.value = 'Saved to your Rewards tab — redeem when you are ready.'
   showCelebration.value = true
   celebratingReward.value = true
   window.clearTimeout(celebrationTimer)
   celebrationTimer = window.setTimeout(() => {
     showCelebration.value = false
-  }, 1100)
+  }, 2200)
 }
 
 function applyStampUpdate(payload: StampAddedPayload) {
@@ -140,6 +151,11 @@ function applyStampUpdate(payload: StampAddedPayload) {
 
   const previousAvailableIds = new Set(availableRewards.value.map((reward) => reward.id))
   const previousStamps = card.value.stamps
+  const maxStamps = Math.max(...(journey.value?.milestones.map((m) => m.required_stamps) ?? [10]), 10)
+
+  if (payload.cycle_completed) {
+    displayStamps.value = maxStamps
+  }
 
   card.value = payload.customer
   nextReward.value = payload.next_reward
@@ -158,8 +174,21 @@ function applyStampUpdate(payload: StampAddedPayload) {
 
   const unlockedReward = payload.available_rewards.find((reward) => !previousAvailableIds.has(reward.id))
   if (unlockedReward) {
-    triggerRewardCelebration(unlockedReward.title)
+    if (payload.cycle_completed) {
+      window.setTimeout(() => {
+        displayStamps.value = payload.customer.stamps
+        triggerRewardCelebration(unlockedReward.title)
+      }, 900)
+    } else {
+      triggerRewardCelebration(unlockedReward.title)
+    }
+  } else if (payload.cycle_completed) {
+    window.setTimeout(() => {
+      displayStamps.value = payload.customer.stamps
+    }, 900)
   }
+
+  customerRewards.refresh().catch(() => undefined)
 }
 
 function applyRealtimeStamp(payload: StampAddedPayload) {
@@ -189,6 +218,7 @@ function applyRedemption(response: RedemptionResponse) {
   availableRewards.value = response.available_rewards
   journey.value = response.journey
   recentVisits.value = response.recent_visits
+  customerRewards.refresh().catch(() => undefined)
 }
 
 onMounted(() => {
@@ -275,7 +305,7 @@ watch(
           <div class="mt-5">
             <VenueLandingPreview
               :milestones="previewMilestones"
-              :stamps="card.stamps"
+              :stamps="previewStamps"
               :animating-slots="animatingSlots"
               :celebrating-reward="celebratingReward"
             />
@@ -316,7 +346,11 @@ watch(
       </template>
     </div>
 
-    <StampRewardCelebration :visible="showCelebration" :title="celebrationTitle" />
+    <StampRewardCelebration
+      :visible="showCelebration"
+      :title="celebrationTitle"
+      :subtitle="celebrationSubtitle"
+    />
 
     <CustomerRewardWallet
       v-if="selectedReward && card"

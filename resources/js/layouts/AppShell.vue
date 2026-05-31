@@ -6,12 +6,14 @@ import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
 import { staffScannerPath } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
+import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useWorkspaceStore } from '@/stores/workspace'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
+const customerRewards = useCustomerRewardsStore()
 
 const isWorkspace = computed(() => {
   if (route.meta.workspace === false) {
@@ -45,6 +47,7 @@ const nav = computed(() => {
   if (!isWorkspace.value) {
     return [
       { label: 'Card', to: '/card', icon: '◍' },
+      { label: 'Rewards', to: '/customer/rewards', icon: '★', badge: customerRewards.pendingCount },
       { label: 'Venues', to: '/venues', icon: '⌂' },
       { label: 'Settings', to: '/customer/settings', icon: '⚙' },
     ]
@@ -80,8 +83,12 @@ watch(
   (authenticated) => {
     if (authenticated) {
       workspace.bootstrap().catch(() => undefined)
+      if (!auth.user?.is_admin) {
+        customerRewards.refresh().catch(() => undefined)
+      }
     } else {
       workspace.$reset()
+      customerRewards.clear()
     }
   },
   { immediate: true },
@@ -163,11 +170,17 @@ async function logout() {
           :key="item.to"
           :to="item.to"
           :class="[
-            'min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
+            'relative min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
             isNavActive(item) ? 'bg-white text-slate-950' : 'text-white/65',
           ]"
         >
           {{ item.label }}
+          <span
+            v-if="'badge' in item && item.badge"
+            class="absolute right-2 top-2 grid min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-slate-950"
+          >
+            {{ item.badge }}
+          </span>
         </RouterLink>
       </nav>
     </div>

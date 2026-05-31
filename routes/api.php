@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue:slug}/join', [CustomerLoyaltyController::class, 'join']);
 
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);
+    Route::get('/customer/rewards/wallet', [CustomerLoyaltyController::class, 'wallet']);
     Route::get('/customers/{customer}/card', [CustomerLoyaltyController::class, 'card']);
     Route::get('/customers/{customer}/rewards', [CustomerLoyaltyController::class, 'rewards']);
     Route::post('/customers/{customer}/rewards/{reward}/redeem', [CustomerLoyaltyController::class, 'redeem']);

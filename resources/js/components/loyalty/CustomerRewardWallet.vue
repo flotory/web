@@ -23,6 +23,7 @@ const props = defineProps<{
   customer: Customer
   restaurant?: Venue | null
   reward: Reward
+  unlocked?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -32,7 +33,7 @@ const emit = defineEmits<{
 
 const auth = useAuthStore()
 const state = ref<'locked' | 'available' | 'redeeming' | 'redeemed'>(
-  props.customer.stamps >= props.reward.required_stamps ? 'available' : 'locked',
+  props.unlocked || props.customer.stamps >= props.reward.required_stamps ? 'available' : 'locked',
 )
 const error = ref('')
 const redeemedCustomer = ref<Customer | null>(null)
@@ -40,6 +41,8 @@ const redeemedCustomer = ref<Customer | null>(null)
 const currentCustomer = computed(() => redeemedCustomer.value ?? props.customer)
 const effectiveState = computed(() => {
   if (state.value === 'redeeming' || state.value === 'redeemed') return state.value
+
+  if (props.unlocked) return 'available'
 
   return currentCustomer.value.stamps >= props.reward.required_stamps ? 'available' : 'locked'
 })

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AnalyticsPage from '@/pages/AnalyticsPage.vue'
 import CustomerCardPage from '@/pages/CustomerCardPage.vue'
+import CustomerRewardsPage from '@/pages/CustomerRewardsPage.vue'
 import CustomerSettingsPage from '@/pages/CustomerSettingsPage.vue'
 import CustomerVenuesPage from '@/pages/CustomerVenuesPage.vue'
 import VenueLandingPage from '@/pages/VenueLandingPage.vue'
@@ -56,6 +57,7 @@ const router = createRouter({
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/card', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false, flush: true } },
+    { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/venues', name: 'customer-venues', component: CustomerVenuesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/customer/settings', name: 'customer-settings', component: CustomerSettingsPage, meta: { requiresAuth: true, workspace: false } },
   ],
