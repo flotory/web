@@ -9,6 +9,7 @@ use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use App\Models\Visit;
 use Illuminate\Support\Str;
 
 trait BuildsLoyaltyData
@@ -82,6 +83,15 @@ trait BuildsLoyaltyData
             'unlocked_at' => now(),
             'claimed_at' => null,
             'claimed_by' => null,
+        ], $attributes));
+    }
+
+    protected function createVisit(Customer $customer, User $staff, array $attributes = []): Visit
+    {
+        return Visit::query()->create(array_merge([
+            'customer_id' => $customer->id,
+            'venue_id' => $customer->venue_id,
+            'created_by' => $staff->id,
         ], $attributes));
     }
 }

@@ -143,6 +143,13 @@ class VenueDashboardController extends Controller
         return response()->json($this->dashboardForVenue($venue));
     }
 
+    private function monthBucketExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', created_at)"
+            : 'DATE_FORMAT(created_at, "%Y-%m")';
+    }
+
     /**
      * @return array<int, int>
      */
@@ -198,7 +205,7 @@ class VenueDashboardController extends Controller
                 ->limit(5)
                 ->get(['id', 'venue_id', 'user_id', 'stamps']),
             'monthly_activity' => $venue->visits()
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as visits')
+                ->selectRaw($this->monthBucketExpression().' as month, COUNT(*) as visits')
                 ->groupBy('month')
                 ->orderBy('month')
                 ->limit(12)

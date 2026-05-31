@@ -142,4 +142,75 @@ class StaffInvitationEdgeCaseTest extends TestCase
             ->assertNotFound()
             ->assertJsonPath('valid', false);
     }
+
+    public function test_show_reports_authenticated_email_match(): void
+    {
+        $owner = $this->createUser();
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'auth-show-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        Sanctum::actingAs($staff);
+
+        $this->getJson("/api/invites/{$invitation->token}")
+            ->assertOk()
+            ->assertJsonPath('authenticated', true)
+            ->assertJsonPath('email_matches', true)
+            ->assertJsonPath('account_exists', true);
+    }
+
+    public function test_resend_endpoint_rejects_cancelled_invitation(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'cancelled-resend-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Cancelled,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson("/api/venues/{$venue->id}/team/invitations/{$invitation->id}/resend")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('invitation');
+    }
+
+    public function test_owner_cannot_accept_staff_invitation_for_their_venue(): void
+    {
+        $owner = $this->createUser(['email' => 'owner@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'owner@example.com',
+            'role' => 'staff',
+            'token' => 'owner-accept-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson("/api/invites/{$invitation->token}/accept")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+    }
 }

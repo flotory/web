@@ -137,4 +137,41 @@ class StaffScanControllerTest extends TestCase
             'created_by' => $staff->id,
         ]);
     }
+
+    public function test_lookup_rejects_qr_token_from_another_venue(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venueA = $this->createVenue(['name' => 'Venue A']);
+        $venueB = $this->createVenue(['name' => 'Venue B']);
+        $this->attachMember($venueA, $staff, 'staff');
+        $customer = $this->createCustomer($venueB, $customerUser);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venueA->id}/scanner/lookup", [
+            'qr_token' => $customer->qr_token,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('qr_token');
+    }
+
+    public function test_add_stamp_rejects_qr_token_from_another_venue(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venueA = $this->createVenue(['name' => 'Venue A']);
+        $venueB = $this->createVenue(['name' => 'Venue B']);
+        $this->attachMember($venueA, $staff, 'staff');
+        $customer = $this->createCustomer($venueB, $customerUser);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venueA->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 1,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('qr_token');
+    }
 }

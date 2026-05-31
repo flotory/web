@@ -112,4 +112,88 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('reward');
     }
+
+    public function test_customer_can_list_all_cards_and_filter_by_venue(): void
+    {
+        $user = $this->createUser();
+        $venueA = $this->createVenue(['name' => 'Alpha']);
+        $venueB = $this->createVenue(['name' => 'Beta']);
+        $customerA = $this->createCustomer($venueA, $user, ['stamps' => 2]);
+        $this->createCustomer($venueB, $user, ['stamps' => 1]);
+        $this->createReward($venueA, ['required_stamps' => 5]);
+        $this->createRewardCycle($customerA);
+        $this->createVisit($customerA, $user);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonCount(2, 'cards')
+            ->assertJsonPath('active_card.venue_id', $venueA->id)
+            ->assertJsonStructure(['journey', 'recent_visits', 'available_rewards']);
+
+        $this->getJson("/api/customer/cards?venue_id={$venueB->id}")
+            ->assertOk()
+            ->assertJsonPath('active_card.venue_id', $venueB->id);
+    }
+
+    public function test_customer_can_view_rewards_journey(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 3]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/customers/{$customer->id}/rewards")
+            ->assertOk()
+            ->assertJsonPath('rewards.0.id', $reward->id)
+            ->assertJsonPath('journey.current_stamps', 3);
+    }
+
+    public function test_customer_cannot_view_another_users_rewards(): void
+    {
+        $owner = $this->createUser();
+        $intruder = $this->createUser(['email' => 'intruder@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $owner);
+
+        Sanctum::actingAs($intruder);
+
+        $this->getJson("/api/customers/{$customer->id}/rewards")
+            ->assertForbidden();
+    }
+
+    public function test_customer_cannot_redeem_unavailable_reward(): void
+    {
+        $user = $this->createUser();
+        $otherVenue = $this->createVenue(['name' => 'Other']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user);
+        $foreignReward = $this->createReward($otherVenue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/customers/{$customer->id}/rewards/{$foreignReward->id}/redeem")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('reward');
+    }
+
+    public function test_customer_cannot_redeem_locked_reward(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 1]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('reward');
+    }
 }

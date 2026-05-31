@@ -233,4 +233,35 @@ class VenueTeamControllerTest extends TestCase
         $this->assertDatabaseCount('venue_staff_invitations', 1);
         Mail::assertSent(StaffInvitationMail::class, 1);
     }
+
+    public function test_owner_can_update_staff_role(): void
+    {
+        $owner = $this->createUser();
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $this->attachMember($venue, $staff, 'staff');
+
+        Sanctum::actingAs($owner);
+
+        $this->patchJson("/api/venues/{$venue->id}/team/{$staff->id}", [
+            'role' => 'staff',
+        ])
+            ->assertOk()
+            ->assertJsonPath('member.role', 'staff')
+            ->assertJsonPath('member.user.email', 'staff@example.com');
+    }
+
+    public function test_owner_cannot_change_their_own_role(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->patchJson("/api/venues/{$venue->id}/team/{$owner->id}", [
+            'role' => 'staff',
+        ])->assertStatus(422);
+    }
 }

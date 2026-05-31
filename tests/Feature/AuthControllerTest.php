@@ -61,4 +61,40 @@ class AuthControllerTest extends TestCase
 
         $this->assertDatabaseCount('personal_access_tokens', 1);
     }
+
+    public function test_login_rejects_invalid_credentials(): void
+    {
+        User::query()->create([
+            'name' => 'Grace Hopper',
+            'email' => 'grace@example.com',
+            'password' => 'password',
+            'is_admin' => false,
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'grace@example.com',
+            'password' => 'wrong-password',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+    }
+
+    public function test_reset_password_rejects_invalid_token(): void
+    {
+        User::query()->create([
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
+            'password' => 'old-password',
+            'is_admin' => false,
+        ]);
+
+        $this->postJson('/api/auth/reset-password', [
+            'email' => 'ada@example.com',
+            'token' => 'invalid-token',
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+    }
 }
