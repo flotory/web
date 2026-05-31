@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
-import { rewardImageUrl } from '@/lib/rewardMedia'
+import { rewardThumbUrl } from '@/lib/rewardMedia'
 import type { VenueLandingPayload } from '@/lib/onboarding'
 
 const props = defineProps<{
@@ -132,7 +132,7 @@ watch(upcomingMilestones, async () => {
 
       <div v-if="primaryMilestone" class="mt-5 flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
         <img
-          :src="rewardImageUrl(primaryMilestone)"
+          :src="rewardThumbUrl(primaryMilestone)"
           :alt="primaryMilestone.title"
           class="size-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200/80"
         >
@@ -159,7 +159,7 @@ watch(upcomingMilestones, async () => {
         >
           <div class="flex items-center gap-3">
             <img
-              :src="rewardImageUrl(milestone)"
+              :src="rewardThumbUrl(milestone)"
               :alt="milestone.title"
               class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200/80"
             >

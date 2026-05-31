@@ -241,11 +241,15 @@ Full list: `routes/api.php`.
 
 ## File Uploads
 
-| Asset | Path |
-|-------|------|
-| Venue logo | `/uploads/venue-logos/` |
-| Venue cover | `/uploads/venue-covers/` |
-| Reward image | `/uploads/reward-milestones/` |
+| Asset | Path | Thumbnail |
+|-------|------|-----------|
+| Venue logo | `/uploads/venue-logos/` | `{name}-thumb.jpg` (256px max) → `logo_thumb` |
+| Venue cover | `/uploads/venue-covers/` | `{name}-thumb.jpg` (640px max) → `cover_image_thumb` |
+| Reward image | `/uploads/reward-milestones/` | `{name}-thumb.jpg` (320px max) → `image_thumb` |
+
+Upload handlers use `ImageThumbnailService` (PHP GD) to store full-size originals plus JPEG thumbnails. List/card UI loads thumbs via `rewardThumbUrl`, `venueLogoThumbUrl`, and `venueCoverThumbUrl`; detail/hero views use full URLs with thumb fallback.
+
+Backfill existing uploads: `php artisan media:generate-thumbs` (runs on deploy).
 
 Uploaded files are gitignored; directories created at deploy/boot.
 

@@ -30,6 +30,9 @@ rm -f public/hot
 echo "==> Starting production containers..."
 docker compose -f docker-compose.prod.yml up -d --build
 
+echo "==> Generating missing media thumbnails..."
+docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate-thumbs || true
+
 echo "==> Refreshing Laravel caches..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear
 docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache

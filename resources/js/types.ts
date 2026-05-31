@@ -9,6 +9,7 @@ export interface Venue {
   logo?: string | null
   logo_thumb?: string | null
   cover_image?: string | null
+  cover_image_thumb?: string | null
   address?: string | null
   phone?: string | null
   website?: string | null

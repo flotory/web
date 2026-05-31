@@ -53,7 +53,8 @@ class RewardControllerTest extends TestCase
 
         $response
             ->assertCreated()
-            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/reward-milestones/'));
+            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/reward-milestones/'))
+            ->assertJsonPath('reward.image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
     }
 
     public function test_owner_can_update_reward_and_replace_image(): void

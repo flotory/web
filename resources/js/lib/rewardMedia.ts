@@ -14,7 +14,7 @@ function pickMediaPath(...paths: Array<string | null | undefined>): string | nul
   return null
 }
 
-export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
+export function rewardThumbUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
   if (!reward) {
     return defaultRewardImage('free_item')
   }
@@ -24,6 +24,16 @@ export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | n
   return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
 }
 
+export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
+  if (!reward) {
+    return defaultRewardImage('free_item')
+  }
+
+  const uploaded = pickMediaPath(reward.image, reward.image_thumb)
+
+  return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
+}
+
 export function rewardHasCustomImage(reward: RewardMediaFields | null | undefined): boolean {
-  return Boolean(pickMediaPath(reward?.image_thumb, reward?.image))
+  return Boolean(pickMediaPath(reward?.image, reward?.image_thumb))
 }

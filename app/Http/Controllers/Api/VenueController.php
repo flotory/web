@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRestaurantRequest;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use App\Services\ImageThumbnailService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Support\Str;
 
 class VenueController extends Controller
 {
+    public function __construct(private ImageThumbnailService $images) {}
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -203,10 +205,16 @@ class VenueController extends Controller
         $directory = public_path('uploads/venue-logos');
 
         File::ensureDirectoryExists($directory);
-        $file->move($directory, $filename);
+        $stored = $this->images->storeWithThumbnail(
+            $file,
+            $directory,
+            $filename,
+            ImageThumbnailService::THUMB_MAX_LOGO,
+        );
 
         $venue->forceFill([
-            'logo' => "/uploads/venue-logos/{$filename}",
+            'logo' => $stored['path'],
+            'logo_thumb' => $stored['thumb_path'],
         ])->save();
 
         return response()->json([
@@ -246,10 +254,16 @@ class VenueController extends Controller
         $directory = public_path('uploads/venue-covers');
 
         File::ensureDirectoryExists($directory);
-        $file->move($directory, $filename);
+        $stored = $this->images->storeWithThumbnail(
+            $file,
+            $directory,
+            $filename,
+            ImageThumbnailService::THUMB_MAX_COVER,
+        );
 
         $venue->forceFill([
-            'cover_image' => "/uploads/venue-covers/{$filename}",
+            'cover_image' => $stored['path'],
+            'cover_image_thumb' => $stored['thumb_path'],
         ])->save();
 
         return response()->json([
@@ -265,6 +279,7 @@ class VenueController extends Controller
 
         $venue->forceFill([
             'cover_image' => null,
+            'cover_image_thumb' => null,
         ])->save();
 
         return response()->json([
@@ -315,15 +330,25 @@ class VenueController extends Controller
 
             File::delete(public_path(ltrim($path, '/')));
         }
+
+        if ($venue->logo) {
+            $this->images->deleteThumbnailFor($venue->logo);
+        }
     }
 
     private function deleteLocalCover(Venue $venue): void
     {
-        if (! $venue->cover_image || ! str_starts_with($venue->cover_image, '/uploads/venue-covers/')) {
-            return;
+        foreach ([$venue->cover_image, $venue->cover_image_thumb] as $path) {
+            if (! $path || ! str_starts_with($path, '/uploads/venue-covers/')) {
+                continue;
+            }
+
+            File::delete(public_path(ltrim($path, '/')));
         }
 
-        File::delete(public_path(ltrim($venue->cover_image, '/')));
+        if ($venue->cover_image) {
+            $this->images->deleteThumbnailFor($venue->cover_image);
+        }
     }
 }
 

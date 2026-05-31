@@ -278,10 +278,12 @@ class VenueControllerTest extends TestCase
 
         $logoResponse
             ->assertOk()
-            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/venue-logos/'));
+            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/venue-logos/'))
+            ->assertJsonPath('venue.logo_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
 
         $logoPath = public_path(ltrim($logoResponse->json('venue.logo'), '/'));
         $this->assertFileExists($logoPath);
+        $this->assertFileExists(public_path(ltrim($logoResponse->json('venue.logo_thumb'), '/')));
 
         $coverResponse = $this->post("/api/venues/{$venue->id}/cover", [
             'cover' => UploadedFile::fake()->image('cover.jpg'),
@@ -289,7 +291,8 @@ class VenueControllerTest extends TestCase
 
         $coverResponse
             ->assertOk()
-            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/venue-covers/'));
+            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/venue-covers/'))
+            ->assertJsonPath('venue.cover_image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
 
         $this->deleteJson("/api/venues/{$venue->id}/logo")
             ->assertOk()

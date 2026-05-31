@@ -20,6 +20,7 @@ class Venue extends Model
         'logo',
         'logo_thumb',
         'cover_image',
+        'cover_image_thumb',
         'address',
         'phone',
         'website',

@@ -9,7 +9,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
-import { rewardImageUrl, rewardHasCustomImage } from '@/lib/rewardMedia'
+import { rewardImageUrl, rewardHasCustomImage, rewardThumbUrl } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -768,7 +768,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             >
               <div class="relative">
                 <div class="reward-media-frame bg-slate-100">
-                  <img :src="rewardImageUrl(reward)" :alt="reward.title" class="reward-media-img milestone-card-img">
+                  <img :src="rewardThumbUrl(reward)" :alt="reward.title" class="reward-media-img milestone-card-img">
                   <div v-if="!rewardHasCustomImage(reward)" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
                 </div>
                 <div class="absolute left-3 top-3 flex flex-wrap gap-2">

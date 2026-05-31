@@ -15,8 +15,8 @@ import { resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { VenueLandingPayload } from '@/lib/onboarding'
-import { rewardImageUrl } from '@/lib/rewardMedia'
-import { venueLogoUrl } from '@/lib/venueMedia'
+import { rewardThumbUrl } from '@/lib/rewardMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
@@ -142,7 +142,7 @@ onMounted(() => {
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
         <div class="mt-3 flex items-center gap-3">
           <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
-            <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
+            <img :src="venueLogoThumbUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
           </div>
           <div>
             <p class="text-lg font-bold leading-tight">{{ landing.venue.name }}</p>
@@ -150,7 +150,7 @@ onMounted(() => {
           </div>
         </div>
         <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
-          <img :src="rewardImageUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
+          <img :src="rewardThumbUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}
             <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} stamps</span>

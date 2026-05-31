@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRewardRequest;
 use App\Models\Venue;
 use App\Models\Reward;
+use App\Services\ImageThumbnailService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use App\Support\VenueAccess;
 
 class RewardController extends Controller
 {
+    public function __construct(private ImageThumbnailService $images) {}
     public function index(Request $request, Venue $venue): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
@@ -151,7 +153,12 @@ class RewardController extends Controller
         $filename = Str::slug($seed).'-'.Str::lower(Str::random(12)).'.'.$extension;
 
         try {
-            $file->move($directory, $filename);
+            $stored = $this->images->storeWithThumbnail(
+                $file,
+                $directory,
+                $filename,
+                ImageThumbnailService::THUMB_MAX_REWARD,
+            );
         } catch (\Throwable $exception) {
             report($exception);
 
@@ -160,10 +167,9 @@ class RewardController extends Controller
             ]);
         }
 
-        $path = "/uploads/reward-milestones/{$filename}";
-
         return [
-            'image' => $path,
+            'image' => $stored['path'],
+            'image_thumb' => $stored['thumb_path'],
         ];
     }
 
@@ -175,6 +181,10 @@ class RewardController extends Controller
             }
 
             File::delete(public_path(ltrim($path, '/')));
+        }
+
+        if ($reward->image) {
+            $this->images->deleteThumbnailFor($reward->image);
         }
     }
 

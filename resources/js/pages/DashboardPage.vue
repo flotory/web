@@ -12,9 +12,9 @@ import { api } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
 import { rewardPresetsForCategory } from '@/lib/defaultImages'
-import { rewardImageUrl } from '@/lib/rewardMedia'
+import { rewardThumbUrl } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
-import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
+import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue } from '@/types'
 
@@ -148,7 +148,7 @@ function rewardPreviewImage(reward: Reward): string {
     return preset.image
   }
 
-  return rewardImageUrl(reward)
+  return rewardThumbUrl(reward)
 }
 const canOpenActions = computed(() => Boolean(selectedVenue.value && landingUrl.value))
 const primaryActionText = computed(() => (hasCustomers.value ? 'Keep scanner ready' : 'Invite your first guest'))
@@ -244,7 +244,7 @@ onMounted(() => {
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex items-center gap-3">
         <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-          <img :src="venueLogoUrl(selectedVenue)" :alt="title" class="size-full object-cover">
+          <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
         <div>
         <AppBadge tone="green">Loyalty active</AppBadge>

@@ -9,7 +9,7 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { joinVenueBySlug } from '@/lib/onboarding'
-import { venueLogoUrl } from '@/lib/venueMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import type { Customer, Venue } from '@/types'
 
 const router = useRouter()
@@ -132,7 +132,7 @@ onMounted(loadVenues)
           <div class="flex items-center gap-3">
             <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200/80">
               <img
-                :src="venueLogoUrl(venue)"
+                :src="venueLogoThumbUrl(venue)"
                 :alt="venue.name"
                 class="size-full rounded-[14px] object-cover"
               >

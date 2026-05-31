@@ -10,7 +10,7 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
-import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
+import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useRealtimeStore } from '@/stores/realtime'
@@ -387,7 +387,7 @@ watch(
         <section class="relative z-10 flex flex-col px-4">
           <div v-if="card.venue" class="-mt-8 flex items-center gap-3 px-1">
             <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md ring-1 ring-slate-200/80">
-              <img :src="venueLogoUrl(card.venue)" :alt="card.venue.name" class="size-full rounded-[14px] object-cover">
+              <img :src="venueLogoThumbUrl(card.venue)" :alt="card.venue.name" class="size-full rounded-[14px] object-cover">
             </div>
             <h1 class="text-xl font-black tracking-tight text-slate-950">{{ card.venue.name }}</h1>
           </div>

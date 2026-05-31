@@ -13,7 +13,7 @@ import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
-import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
+import { venueCoverThumbUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
@@ -273,12 +273,12 @@ onMounted(loadVenues)
         :key="venue.id"
         wrapper-class="group relative overflow-hidden border-slate-200/80 p-0 shadow-sm transition hover:shadow-xl"
       >
-        <img :src="venueCoverUrl(venue)" alt="" class="h-24 w-full object-cover">
+        <img :src="venueCoverThumbUrl(venue)" alt="" class="h-24 w-full object-cover">
         <div class="relative p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
             <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white text-xl font-black shadow-sm ring-2 ring-white -mt-10">
-              <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-full object-cover">
+              <img :src="venueLogoThumbUrl(venue)" :alt="venue.name" class="size-full object-cover">
             </div>
             <div>
               <div class="flex flex-wrap items-center gap-2">

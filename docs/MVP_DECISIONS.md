@@ -76,7 +76,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Decision | Detail |
 |----------|--------|
 | Soft delete venues | `venues.deleted_at`; removed from active UI immediately. |
-| Local file uploads | Logos, covers, reward images under `public/uploads/` — not S3 in MVP. |
+| Local file uploads | Logos, covers, reward images under `public/uploads/` — not S3 in MVP. Uploads generate JPEG thumbnails (`*-thumb.jpg`); list/card views load thumbs, detail views load full images. |
 | Monolith | Single repo, Laravel + Vue, VPS deploy — no microservices. |
 | Reverb optional | Realtime stamp updates enhance UX but app functions without WebSockets. |
 | Visit timestamps | `visits` has `created_at` only (no `updated_at`). |

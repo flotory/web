@@ -7,8 +7,8 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { rewardImageUrl } from '@/lib/rewardMedia'
-import { venueLogoUrl } from '@/lib/venueMedia'
+import { rewardImageUrl, rewardThumbUrl } from '@/lib/rewardMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useCustomerRewardsStore, type CustomerRewardWalletItem } from '@/stores/customerRewards'
 import type { Customer, Reward } from '@/types'
 
@@ -99,7 +99,7 @@ onMounted(loadRewards)
             @click="openReward(item)"
           >
             <img
-              :src="rewardImageUrl(item.reward)"
+              :src="rewardThumbUrl(item.reward)"
               :alt="item.reward.title"
               class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200/80"
             >
@@ -111,7 +111,7 @@ onMounted(loadRewards)
               <div class="mt-1.5 flex items-center gap-2">
                 <img
                   v-if="item.customer.venue"
-                  :src="venueLogoUrl(item.customer.venue)"
+                  :src="venueLogoThumbUrl(item.customer.venue)"
                   :alt="item.customer.venue.name"
                   class="size-5 rounded-md object-cover ring-1 ring-slate-200/80"
                 >

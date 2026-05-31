@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 import { api, ApiError } from '@/lib/api'
 import { rewardImageUrl } from '@/lib/rewardMedia'
-import { venueLogoUrl } from '@/lib/venueMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import type { Customer, Reward, RewardJourney, Venue, Visit } from '@/types'
 
 import ProgressStamps from './ProgressStamps.vue'
@@ -100,7 +100,7 @@ async function redeemReward() {
             Close
           </button>
           <div v-if="venue" class="flex min-w-0 items-center gap-2">
-            <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-7 rounded-lg object-cover ring-1 ring-slate-200/80">
+            <img :src="venueLogoThumbUrl(venue)" :alt="venue.name" class="size-7 rounded-lg object-cover ring-1 ring-slate-200/80">
             <p class="truncate text-sm font-bold text-slate-700">{{ venue.name }}</p>
           </div>
         </header>
