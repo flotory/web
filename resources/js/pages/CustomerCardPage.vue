@@ -491,6 +491,7 @@ watch(
       :customer="card"
       :restaurant="card.venue"
       :reward="selectedReward"
+      unlocked
       @close="closeRewardWallet"
       @redeemed="handleRewardRedeemed"
       @finished="handleRewardFinished"

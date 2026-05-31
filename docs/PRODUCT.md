@@ -83,13 +83,6 @@ What ships today:
 
 ## Future Vision (Not MVP)
 
-Layered on the same monolith when demand appears:
-
-- Billing per venue
-- Push notifications and email campaigns
-- POS / payment integrations
-- Customer segmentation and marketing automation
-- PWA polish beyond current metadata
-- Co-owner or role expansion beyond owner/staff
+The phased product roadmap lives in [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) — from loyalty foundation through retention, CRM, campaigns, and long-term platform vision.
 
 See [MVP_DECISIONS.md](./MVP_DECISIONS.md) for constraints that remain until explicitly revised.

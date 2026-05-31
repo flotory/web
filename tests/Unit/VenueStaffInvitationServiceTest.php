@@ -130,6 +130,36 @@ class VenueStaffInvitationServiceTest extends TestCase
         $service->findUsableByToken($invitation->token);
     }
 
+    public function test_find_usable_by_token_rejects_deleted_venue(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'deleted-venue-find-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        $venue->delete();
+
+        $service = app(VenueStaffInvitationService::class);
+
+        try {
+            $service->findUsableByToken($invitation->token);
+            $this->fail('Expected validation exception for deleted venue invitation.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'This venue is no longer accepting team invitations.',
+                $exception->errors()['token'][0],
+            );
+        }
+    }
+
     public function test_find_usable_by_token_reports_pending_but_invalid_state(): void
     {
         $owner = $this->createUser();

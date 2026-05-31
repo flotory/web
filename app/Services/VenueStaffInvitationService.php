@@ -137,6 +137,7 @@ class VenueStaffInvitationService
         }
 
         $this->syncExpiry($invitation);
+        $this->assertVenueAcceptingInvitations($invitation);
 
         if (! $invitation->isUsable()) {
             $message = match ($invitation->status) {
@@ -157,6 +158,7 @@ class VenueStaffInvitationService
     public function accept(VenueStaffInvitation $invitation, User $user): VenueUser
     {
         $this->syncExpiry($invitation);
+        $this->assertVenueAcceptingInvitations($invitation);
 
         if (! $invitation->isUsable()) {
             throw ValidationException::withMessages([
@@ -183,6 +185,8 @@ class VenueStaffInvitationService
                     'token' => 'This invitation is no longer valid.',
                 ]);
             }
+
+            $this->assertVenueAcceptingInvitations($locked);
 
             $existingMembership = VenueUser::query()
                 ->where('venue_id', $locked->venue_id)
@@ -282,5 +286,16 @@ class VenueStaffInvitationService
     private function assertManageable(VenueStaffInvitation $invitation): void
     {
         $this->syncExpiry($invitation);
+    }
+
+    private function assertVenueAcceptingInvitations(VenueStaffInvitation $invitation): void
+    {
+        $venue = $invitation->venue ?? Venue::query()->withTrashed()->find($invitation->venue_id);
+
+        if (! $venue || $venue->trashed()) {
+            throw ValidationException::withMessages([
+                'token' => 'This venue is no longer accepting team invitations.',
+            ]);
+        }
     }
 }

@@ -80,6 +80,53 @@ class LoyaltyStampServiceTest extends TestCase
         app(LoyaltyStampService::class)->addStamp($customer->fresh(), $staff, 1);
     }
 
+    public function test_add_stamp_rejects_immediate_rescan_after_successful_stamp(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 0]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+        $service = app(LoyaltyStampService::class);
+
+        $service->addStamp($customer->fresh(), $staff, 1);
+
+        try {
+            $service->addStamp($customer->fresh(), $staff, 1);
+            $this->fail('Expected duplicate scan rejection.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('qr_token', $exception->errors());
+        }
+
+        $this->assertSame(1, $customer->fresh()->stamps);
+        $this->assertSame(1, $customer->visits()->count());
+    }
+
+    public function test_concurrent_scan_attempts_only_create_one_visit(): void
+    {
+        $staff = $this->createUser();
+        $staffTwo = $this->createUser(['email' => 'staff2@example.com']);
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 0]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+        $service = app(LoyaltyStampService::class);
+
+        $service->addStamp($customer->fresh(), $staff, 1);
+
+        try {
+            $service->addStamp($customer->fresh(), $staffTwo, 1);
+            $this->fail('Expected duplicate scan rejection for overlapping scan attempt.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('qr_token', $exception->errors());
+        }
+
+        $this->assertSame(1, $customer->fresh()->stamps);
+        $this->assertSame(1, $customer->visits()->count());
+    }
+
     public function test_add_stamp_treats_zero_stamps_as_one(): void
     {
         $staff = $this->createUser();

@@ -213,4 +213,52 @@ class StaffInvitationEdgeCaseTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('email');
     }
+
+    public function test_accept_rejects_invitation_for_deleted_venue(): void
+    {
+        $owner = $this->createUser();
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'deleted-venue-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        $venue->delete();
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/invites/{$invitation->token}/accept")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('token');
+    }
+
+    public function test_show_marks_deleted_venue_invitation_as_invalid(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'deleted-show-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        $venue->delete();
+
+        $this->getJson("/api/invites/{$invitation->token}")
+            ->assertOk()
+            ->assertJsonPath('valid', false)
+            ->assertJsonPath('message', 'This venue is no longer accepting team invitations.');
+    }
 }

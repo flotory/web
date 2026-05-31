@@ -120,6 +120,32 @@ class RewardControllerTest extends TestCase
         $this->assertDatabaseMissing('rewards', ['id' => $reward->id]);
     }
 
+    public function test_purge_rejects_reward_with_unclaimed_customer_unlocks(): void
+    {
+        $owner = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $reward = $this->createReward($venue, ['title' => 'Free Tea', 'required_stamps' => 5]);
+        $customer = $this->createCustomer($venue, $customerUser);
+        $this->createRewardUnlock($customer, $reward);
+
+        $reward->update(['active' => false]);
+
+        Sanctum::actingAs($owner);
+
+        $this->deleteJson("/api/venues/{$venue->id}/rewards/{$reward->id}/purge")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('reward');
+
+        $this->assertDatabaseHas('rewards', ['id' => $reward->id]);
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'claimed_at' => null,
+        ]);
+    }
+
     public function test_purge_rejects_active_reward(): void
     {
         $owner = $this->createUser();

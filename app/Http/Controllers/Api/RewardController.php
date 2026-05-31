@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRewardRequest;
-use App\Models\Venue;
 use App\Models\Reward;
+use App\Models\RewardUnlock;
+use App\Models\Venue;
 use App\Services\ImageThumbnailService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\JsonResponse;
@@ -120,6 +121,17 @@ class RewardController extends Controller
         if ($reward->active) {
             throw ValidationException::withMessages([
                 'reward' => ['Archive this milestone before deleting it permanently.'],
+            ]);
+        }
+
+        $pendingUnlockCount = RewardUnlock::query()
+            ->where('reward_id', $reward->id)
+            ->whereNull('claimed_at')
+            ->count();
+
+        if ($pendingUnlockCount > 0) {
+            throw ValidationException::withMessages([
+                'reward' => ["This milestone still has {$pendingUnlockCount} unclaimed customer reward(s). Customers must redeem them before permanent deletion."],
             ]);
         }
 

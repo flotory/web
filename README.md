@@ -312,6 +312,10 @@ These files are the source of truth for product, architecture, and MVP decisions
 
 - [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) — MVP stage, goals, terminology
 - [docs/PRODUCT.md](docs/PRODUCT.md) — product overview, journeys, scope
+- [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) — phased SaaS roadmap
+- [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) — product invariants and business expectations
+- [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — accepted risks and resolved issues
+- [docs/PILOT_CAFE.md](docs/PILOT_CAFE.md) — first pilot venue playbook
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API summary
 - [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions not to undo
 

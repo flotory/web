@@ -19,10 +19,9 @@ class LoyaltyStampService
 {
     public function addStamp(Customer $customer, User $staff, int $stamps = 1): array
     {
-        $this->guardAgainstDuplicateScan($customer);
-
         $result = DB::transaction(function () use ($customer, $staff, $stamps): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+            $this->guardAgainstDuplicateScan($customer);
             $rewards = $this->milestonesForVenue($customer);
             $cycle = $this->activeCycle($customer);
             $previousStamps = $customer->stamps;

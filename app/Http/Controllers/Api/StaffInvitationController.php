@@ -30,10 +30,15 @@ class StaffInvitationController extends Controller
 
         $invitations->syncExpiry($invitation);
 
-        $valid = $invitation->isUsable();
+        $venue = $invitation->venue()->withTrashed()->first();
+        $venueClosed = ! $venue || $venue->trashed();
+
+        $valid = $invitation->isUsable() && ! $venueClosed;
         $message = null;
 
-        if (! $valid) {
+        if ($venueClosed) {
+            $message = 'This venue is no longer accepting team invitations.';
+        } elseif (! $valid) {
             $message = match ($invitation->status) {
                 VenueStaffInvitationStatus::Accepted => 'This invitation has already been accepted.',
                 VenueStaffInvitationStatus::Cancelled => 'This invitation was cancelled.',
@@ -48,7 +53,7 @@ class StaffInvitationController extends Controller
             ->exists();
 
         return response()->json([
-            'invitation' => $this->invitationPayload($invitation),
+            'invitation' => $this->invitationPayload($invitation, $venue),
             'valid' => $valid,
             'message' => $message,
             'account_exists' => $accountExists,
@@ -95,18 +100,20 @@ class StaffInvitationController extends Controller
         ]);
     }
 
-    private function invitationPayload(VenueStaffInvitation $invitation): array
+    private function invitationPayload(VenueStaffInvitation $invitation, ?\App\Models\Venue $venue = null): array
     {
+        $venue ??= $invitation->venue()->withTrashed()->first();
+
         return [
             'email' => $invitation->email,
             'role' => $invitation->role,
             'status' => $invitation->status->value,
             'expires_at' => $invitation->expires_at,
-            'venue' => [
-                'id' => $invitation->venue->id,
-                'name' => $invitation->venue->name,
-                'slug' => $invitation->venue->slug,
-            ],
+            'venue' => $venue ? [
+                'id' => $venue->id,
+                'name' => $venue->name,
+                'slug' => $venue->slug,
+            ] : null,
             'inviter' => [
                 'name' => $invitation->inviter?->name,
             ],
