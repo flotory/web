@@ -183,7 +183,7 @@ OAuth preserves onboarding intent:
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. 5-step wizard: venue name → category → logo → rewards presets → QR.
-4. Lands on `/dashboard?onboarding=completed` with the setup assistant visible.
+4. Lands on `/dashboard?onboarding=completed` with a success toast and the setup assistant visible.
 
 Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
 

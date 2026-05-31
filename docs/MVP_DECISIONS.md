@@ -66,7 +66,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Inline validation | Form field errors shown inline from API validation messages. |
 | Dangerous actions | Confirmation modal before delete venue, archive/delete reward, remove team member. |
 | Cross-page feedback | Use `vue-sonner` toast for global success/error (toaster in `App.vue`). |
-| Owner onboarding | 5 steps; completion redirects to `/dashboard?onboarding=completed` (no separate completion screen). |
+| Owner onboarding | 5 steps; completion redirects to `/dashboard?onboarding=completed` with a success toast, then query param is cleared. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
 | Customer primary surface | Loyalty card and claim flow on `/card` only. Customer nav shows **Card** — not `/rewards`. The `/rewards` route is owner workspace (milestone CRUD). |

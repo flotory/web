@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -13,17 +12,8 @@ import { api, ApiError } from '@/lib/api'
 import { rewardImageUrl, rewardHasCustomImage } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
 import { useAuthStore } from '@/stores/auth'
-import { useRealtimeStore } from '@/stores/realtime'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { Customer, Reward, RewardJourney, StampAddedPayload, Venue, Visit } from '@/types'
-
-interface RedemptionResponse {
-  customer: Customer
-  next_reward: Reward | null
-  available_rewards: Reward[]
-  journey: RewardJourney
-  recent_visits: Visit[]
-}
+import type { Reward, Venue } from '@/types'
 
 interface RewardTemplate {
   id: string
@@ -76,10 +66,8 @@ const bestPractices = [
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-const realtime = useRealtimeStore()
 const workspace = useWorkspaceStore()
 const rewards = ref<Reward[]>([])
-const customer = ref<Customer | null>(null)
 const venue = ref<Venue | null>(null)
 const loading = ref(true)
 const saving = ref(false)
@@ -97,8 +85,6 @@ const imagePreviewUrl = ref<string | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
 const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
-const journey = ref<RewardJourney | null>(null)
-const selectedReward = ref<Reward | null>(null)
 const editingReward = ref<Reward | null>(null)
 const menuRewardId = ref<number | null>(null)
 const previewOpen = ref(false)
@@ -106,14 +92,9 @@ const deleteRewardTarget = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 let successTimer: number | undefined
 
-const canManageRewards = computed(() => auth.user?.is_admin || workspace.hasMembership)
 const needsVenuePick = computed(
-  () => canManageRewards.value && workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
+  () => workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
 )
-const milestones = computed(() => journey.value?.milestones ?? [])
-const customerStamps = computed(() => customer.value?.stamps ?? journey.value?.current_stamps ?? 0)
-const nextMilestone = computed(() => journey.value?.next_milestone ?? null)
-const nextDistance = computed(() => (nextMilestone.value ? Math.max(nextMilestone.value.required_stamps - customerStamps.value, 0) : 0))
 const canEditRewards = computed(() => {
   if (auth.user?.is_admin) {
     return true
@@ -261,36 +242,13 @@ async function loadRewards(silent = false) {
   try {
     await workspace.bootstrap()
 
-    if (canManageRewards.value) {
-      const forcedVenueId = typeof route.query.venue_id === 'string' ? Number(route.query.venue_id) : null
-      if (forcedVenueId && workspace.activeVenues.some((item) => item.id === forcedVenueId)) {
-        workspace.setFilter(forcedVenueId)
-      }
-      const venueId = workspace.effectiveVenueId
-      venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
-      rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
-      journey.value = venueId && rewards.value.length
-        ? {
-            current_cycle: 1,
-            current_stamps: 0,
-            next_milestone: rewards.value[0] ?? null,
-            milestones: rewards.value.map((reward) => ({
-              ...reward,
-              unlocked: false,
-              claimed: false,
-            })),
-          }
-        : null
-    } else {
-      const cards = await api<{ active_card: Customer | null; journey: RewardJourney | null }>('/customer/cards')
-      customer.value = cards.active_card
-      venue.value = cards.active_card?.venue ?? null
-      const rewardResponse = cards.active_card
-        ? await api<{ rewards: Reward[]; journey: RewardJourney }>(`/customers/${cards.active_card.id}/rewards`)
-        : null
-      rewards.value = rewardResponse?.rewards ?? []
-      journey.value = rewardResponse?.journey ?? cards.journey
+    const forcedVenueId = typeof route.query.venue_id === 'string' ? Number(route.query.venue_id) : null
+    if (forcedVenueId && workspace.activeVenues.some((item) => item.id === forcedVenueId)) {
+      workspace.setFilter(forcedVenueId)
     }
+    const venueId = workspace.effectiveVenueId
+    venue.value = venueId ? (workspace.activeVenues.find((item) => item.id === venueId) ?? null) : null
+    rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
 
     applyRouteEditingIntent()
   } catch {
@@ -510,41 +468,6 @@ async function deleteReward(reward: Reward) {
   }
 }
 
-function openCustomerReward(reward: Reward | undefined) {
-  if (canManageRewards.value || !reward) return
-
-  const milestone = milestones.value.find((item) => item.id === reward.id)
-  if (!milestone?.unlocked || milestone.claimed) return
-
-  selectedReward.value = reward
-}
-
-function closeCustomerReward() {
-  selectedReward.value = null
-}
-
-function applyRedemption(response: RedemptionResponse) {
-  customer.value = response.customer
-  journey.value = response.journey
-}
-
-function applyRealtimeStamp(payload: StampAddedPayload) {
-  if (!customer.value || payload.customer.id !== customer.value.id) {
-    return
-  }
-
-  customer.value = payload.customer
-  if (journey.value) {
-    journey.value = {
-      ...journey.value,
-      current_cycle: payload.current_cycle,
-      current_stamps: payload.customer.stamps,
-      milestones: payload.milestones,
-      next_milestone: payload.next_reward,
-    }
-  }
-}
-
 function refreshIfVisible() {
   if (document.visibilityState === 'visible' && !formOpen.value) {
     loadRewards(true)
@@ -593,15 +516,6 @@ onUnmounted(() => {
   }
 })
 
-watch(
-  () => realtime.latestStamp,
-  (payload) => {
-    if (payload) {
-      applyRealtimeStamp(payload)
-    }
-  },
-)
-
 watch(() => workspace.filterVenueId, () => loadRewards())
 watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 </script>
@@ -616,9 +530,8 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       @change="onImageChange"
     >
 
-    <!-- Owner / staff milestone builder -->
-    <template v-if="canManageRewards">
-      <section class="journey-hero relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
+    <!-- Owner milestone builder -->
+    <section class="journey-hero relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
         <div class="journey-hero-glow pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cyan-400/20 blur-3xl" />
         <div class="journey-hero-glow pointer-events-none absolute -bottom-20 left-8 size-48 rounded-full bg-indigo-500/20 blur-3xl" />
         <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -976,87 +889,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           <p class="relative mt-4 text-xs font-semibold text-cyan-200/80">Track repeat stamps • Busiest hours • Reward performance</p>
         </AppCard>
       </div>
-    </template>
-
-    <!-- Customer journey view -->
-    <template v-else>
-      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <AppBadge tone="blue">Your progress</AppBadge>
-          <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Your rewards</h1>
-          <p class="mt-2 text-slate-500">Collect stamps to unlock rewards. Your progress never goes backwards.</p>
-        </div>
-      </div>
-
-      <AppCard v-if="journey" wrapper-class="mb-4 bg-slate-950 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-white/60">Current cycle</p>
-            <p class="mt-2 text-3xl font-black">{{ journey.current_cycle }}</p>
-          </div>
-          <div class="text-right">
-            <p class="text-xs font-bold uppercase tracking-wide text-white/60">Stamps collected</p>
-            <p class="mt-2 text-2xl font-black">{{ customerStamps }}</p>
-            <template v-if="nextMilestone">
-              <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/60">Your next reward</p>
-              <p class="text-sm font-semibold text-white/70">
-                <span v-if="nextDistance === 0">Ready to claim</span>
-                <span v-else>{{ nextDistance }} more {{ nextDistance === 1 ? 'stamp' : 'stamps' }} to unlock</span>
-              </p>
-              <p class="text-sm font-black text-white">{{ nextMilestone.title }}</p>
-            </template>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard v-if="loading" wrapper-class="mb-4">
-        <p class="text-sm font-bold text-slate-500">Loading milestones...</p>
-      </AppCard>
-      <AppCard v-else-if="error" wrapper-class="mb-4">
-        <p class="text-sm font-bold text-red-600">{{ error }}</p>
-      </AppCard>
-
-      <div class="grid gap-4 md:grid-cols-2">
-        <article
-          v-for="milestone in milestones"
-          :key="milestone.id"
-          class="customer-milestone cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-          @click="openCustomerReward(rewards.find((item) => item.id === milestone.id))"
-        >
-          <div class="reward-media-frame bg-slate-100">
-            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="reward-media-img">
-            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
-            <p class="absolute bottom-4 left-4 text-xs font-bold uppercase tracking-wide text-white/90">
-              {{ milestone.required_stamps }} stamps → {{ milestone.title }}
-            </p>
-          </div>
-          <div class="p-5">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-2xl font-black text-slate-950">{{ milestone.title }}</h2>
-                <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} stamps to unlock</p>
-              </div>
-              <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
-                {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
-              </AppBadge>
-            </div>
-            <p v-if="milestone.description" class="mt-2 text-sm text-slate-500">{{ milestone.description }}</p>
-            <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400"
-                :style="{ width: `${Math.min((customerStamps / milestone.required_stamps) * 100, 100)}%` }"
-              />
-            </div>
-            <p class="mt-3 text-sm font-bold text-slate-500">
-              {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim this reward' : 'Keep collecting stamps to unlock' }}
-            </p>
-          </div>
-        </article>
-        <AppCard v-if="!loading && !milestones.length">
-          <p class="text-sm font-semibold text-slate-500">No milestones yet at this venue.</p>
-        </AppCard>
-      </div>
-    </template>
 
     <!-- Menu backdrop -->
     <button
@@ -1146,15 +978,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </div>
       </div>
     </div>
-
-    <CustomerRewardWallet
-      v-if="selectedReward && customer"
-      :customer="customer"
-      :restaurant="venue"
-      :reward="selectedReward"
-      @close="closeCustomerReward"
-      @redeemed="applyRedemption"
-    />
   </AppShell>
 </template>
 

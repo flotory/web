@@ -10,6 +10,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { toast } from '@/lib/toast'
 import { rewardPresetsForCategory } from '@/lib/defaultImages'
 import { rewardImageUrl } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
@@ -232,6 +233,7 @@ onMounted(loadDashboard)
 
 onMounted(() => {
   if (route.query.onboarding === 'completed') {
+    toast.success('Your venue is live! Share your QR to start collecting stamps.')
     void router.replace({ query: { ...route.query, onboarding: undefined } })
   }
 })
