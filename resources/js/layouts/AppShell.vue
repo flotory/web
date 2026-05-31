@@ -177,7 +177,7 @@ async function logout() {
           {{ item.label }}
           <span
             v-if="'badge' in item && item.badge"
-            class="absolute right-2 top-2 grid min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-slate-950"
+            class="absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-amber-400 px-1 py-px text-[10px] font-black leading-none text-slate-950 ring-2 ring-slate-950"
           >
             {{ item.badge }}
           </span>

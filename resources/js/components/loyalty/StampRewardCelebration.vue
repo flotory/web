@@ -10,7 +10,7 @@ defineProps<{
   <Transition name="celebrate">
     <div
       v-if="visible"
-      class="pointer-events-none fixed inset-0 z-30 flex items-center justify-center bg-slate-950/25 px-6 backdrop-blur-[2px]"
+      class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-slate-950/25 px-6 backdrop-blur-[2px]"
       aria-live="polite"
     >
       <div class="celebrate-card relative rounded-[2rem] bg-white px-8 py-7 text-center shadow-2xl ring-1 ring-amber-200">

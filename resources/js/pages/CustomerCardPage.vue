@@ -74,6 +74,10 @@ async function fetchCard(): Promise<CardResponse> {
 }
 
 async function loadCard(silent = false) {
+  const priorStamps = card.value?.stamps
+  const priorAvailableIds = new Set(availableRewards.value.map((reward) => reward.id))
+  const priorCardId = card.value?.id
+
   if (!silent) {
     loading.value = true
     error.value = ''
@@ -81,6 +85,40 @@ async function loadCard(silent = false) {
 
   try {
     const response = await fetchCard()
+
+    if (
+      silent &&
+      priorCardId &&
+      response.active_card?.id === priorCardId &&
+      priorStamps !== undefined &&
+      response.journey &&
+      response.active_card.venue
+    ) {
+      const stampsChanged = response.active_card.stamps !== priorStamps
+      const newRewards = response.available_rewards.filter((reward) => !priorAvailableIds.has(reward.id))
+
+      if (stampsChanged || newRewards.length > 0) {
+        const maxStamps = Math.max(...(response.journey.milestones.map((m) => m.required_stamps) ?? [10]), 10)
+        const cycleCompleted = response.active_card.stamps < priorStamps
+
+        applyStampUpdate({
+          customer: response.active_card,
+          venue: response.active_card.venue,
+          previous_stamps: priorStamps,
+          added_stamps: cycleCompleted ? maxStamps - priorStamps : response.active_card.stamps - priorStamps,
+          stamps: response.active_card.stamps,
+          next_reward: response.next_reward,
+          available_rewards: response.available_rewards,
+          milestones: response.journey.milestones,
+          current_cycle: response.journey.current_cycle,
+          cycle_completed: cycleCompleted,
+          message: '',
+          occurred_at: new Date().toISOString(),
+        })
+        return
+      }
+    }
+
     card.value = response.active_card
     nextReward.value = response.next_reward
     availableRewards.value = response.available_rewards
@@ -103,6 +141,53 @@ async function loadCard(silent = false) {
   }
 }
 
+function rewardEarnedThisScan(
+  payload: StampAddedPayload,
+  previousAvailableIds: Set<number>,
+  maxStamps: number,
+): Reward | null {
+  const newlyListed = payload.available_rewards.find((reward) => !previousAvailableIds.has(reward.id))
+  if (newlyListed) {
+    return newlyListed
+  }
+
+  const effectiveStamps = payload.cycle_completed
+    ? maxStamps
+    : payload.previous_stamps + payload.added_stamps
+
+  const crossed = payload.available_rewards
+    .filter(
+      (reward) =>
+        reward.required_stamps > payload.previous_stamps &&
+        reward.required_stamps <= effectiveStamps,
+    )
+    .sort((a, b) => b.required_stamps - a.required_stamps)
+
+  if (crossed.length > 0) {
+    return crossed[0] ?? null
+  }
+
+  if (payload.cycle_completed && payload.available_rewards.length > 0) {
+    return payload.available_rewards
+      .slice()
+      .sort((a, b) => b.required_stamps - a.required_stamps)[0] ?? null
+  }
+
+  return null
+}
+
+function stampUpdateSignature(payload: StampAddedPayload): string {
+  return [
+    payload.customer.id,
+    payload.previous_stamps,
+    payload.stamps,
+    payload.added_stamps,
+    payload.cycle_completed,
+  ].join(':')
+}
+
+let lastAnimatedStampSignature = ''
+
 function slotsForStampIncrease(previousStamps: number, addedStamps: number, cycleCompleted: boolean, maxStamps: number): number[] {
   if (cycleCompleted) {
     const slots: number[] = []
@@ -123,17 +208,23 @@ function slotsForStampIncrease(previousStamps: number, addedStamps: number, cycl
   return slots
 }
 
-function triggerStampAnimation(previousStamps: number, addedStamps: number, cycleCompleted: boolean) {
-  const maxStamps = Math.max(...(journey.value?.milestones.map((m) => m.required_stamps) ?? [10]), 10)
-  animatingSlots.value = slotsForStampIncrease(previousStamps, addedStamps, cycleCompleted, maxStamps)
+function triggerStampAnimation(payload: StampAddedPayload, maxStamps: number) {
+  animatingSlots.value = slotsForStampIncrease(
+    payload.previous_stamps,
+    payload.added_stamps,
+    payload.cycle_completed,
+    maxStamps,
+  )
   window.clearTimeout(animationTimer)
   animationTimer = window.setTimeout(() => {
     animatingSlots.value = []
-    celebratingReward.value = false
   }, 1400)
 }
 
-function triggerRewardCelebration(rewardTitle: string) {
+function triggerRewardCelebration(
+  rewardTitle: string,
+  options?: { cycleCompleted?: boolean; resetStampsTo?: number },
+) {
   celebrationTitle.value = rewardTitle
   celebrationSubtitle.value = 'Saved to your Rewards tab — redeem when you are ready.'
   showCelebration.value = true
@@ -141,7 +232,11 @@ function triggerRewardCelebration(rewardTitle: string) {
   window.clearTimeout(celebrationTimer)
   celebrationTimer = window.setTimeout(() => {
     showCelebration.value = false
-  }, 2200)
+    celebratingReward.value = false
+    if (options?.cycleCompleted && options.resetStampsTo !== undefined) {
+      displayStamps.value = options.resetStampsTo
+    }
+  }, 2400)
 }
 
 function applyStampUpdate(payload: StampAddedPayload) {
@@ -149,12 +244,19 @@ function applyStampUpdate(payload: StampAddedPayload) {
     return
   }
 
+  const signature = stampUpdateSignature(payload)
+  if (signature === lastAnimatedStampSignature) {
+    return
+  }
+  lastAnimatedStampSignature = signature
+
   const previousAvailableIds = new Set(availableRewards.value.map((reward) => reward.id))
-  const previousStamps = card.value.stamps
   const maxStamps = Math.max(...(journey.value?.milestones.map((m) => m.required_stamps) ?? [10]), 10)
 
   if (payload.cycle_completed) {
     displayStamps.value = maxStamps
+  } else {
+    displayStamps.value = null
   }
 
   card.value = payload.customer
@@ -170,14 +272,16 @@ function applyStampUpdate(payload: StampAddedPayload) {
     }
   }
 
-  triggerStampAnimation(previousStamps, payload.added_stamps, payload.cycle_completed)
+  triggerStampAnimation(payload, maxStamps)
 
-  const unlockedReward = payload.available_rewards.find((reward) => !previousAvailableIds.has(reward.id))
+  const unlockedReward = rewardEarnedThisScan(payload, previousAvailableIds, maxStamps)
   if (unlockedReward) {
     if (payload.cycle_completed) {
       window.setTimeout(() => {
-        displayStamps.value = payload.customer.stamps
-        triggerRewardCelebration(unlockedReward.title)
+        triggerRewardCelebration(unlockedReward.title, {
+          cycleCompleted: true,
+          resetStampsTo: payload.customer.stamps,
+        })
       }, 900)
     } else {
       triggerRewardCelebration(unlockedReward.title)
@@ -346,11 +450,13 @@ watch(
       </template>
     </div>
 
-    <StampRewardCelebration
-      :visible="showCelebration"
-      :title="celebrationTitle"
-      :subtitle="celebrationSubtitle"
-    />
+    <Teleport to="body">
+      <StampRewardCelebration
+        :visible="showCelebration"
+        :title="celebrationTitle"
+        :subtitle="celebrationSubtitle"
+      />
+    </Teleport>
 
     <CustomerRewardWallet
       v-if="selectedReward && card"
