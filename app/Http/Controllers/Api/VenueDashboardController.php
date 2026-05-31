@@ -172,8 +172,7 @@ class VenueDashboardController extends Controller
     private function dashboardForVenue(Venue $venue): array
     {
         $activeProgressors = $venue->customers()
-            ->withCount('visits')
-            ->having('visits_count', '>=', 2)
+            ->has('visits', '>=', 2)
             ->count();
 
         return [
