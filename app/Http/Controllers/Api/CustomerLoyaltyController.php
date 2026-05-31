@@ -47,17 +47,20 @@ class CustomerLoyaltyController extends Controller
             ->get();
 
         $items = $cards->flatMap(function (Customer $card) use ($loyalty): array {
-            return $loyalty->availableRewardsFor($card)
-                ->map(fn (Reward $reward): array => [
+            return $loyalty->pendingUnlocksFor($card)
+                ->map(fn ($unlock): array => [
+                    'unlock_id' => $unlock->id,
                     'customer' => $card,
-                    'reward' => $reward,
+                    'reward' => $unlock->reward,
                 ])
                 ->all();
         })->values();
 
         return response()->json([
             'items' => $items,
-            'pending_count' => $items->count(),
+            'pending_count' => $cards->sum(
+                fn (Customer $card): int => $loyalty->pendingRewardCountFor($card),
+            ),
         ]);
     }
 

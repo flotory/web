@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 import type { Customer, Reward } from '@/types'
 
 export interface CustomerRewardWalletItem {
+  unlock_id: number
   customer: Customer
   reward: Reward
 }

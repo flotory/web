@@ -90,7 +90,7 @@ onMounted(loadRewards)
       <ul v-else class="mt-6 space-y-3">
         <li
           v-for="item in rewardsStore.items"
-          :key="`${item.customer.id}-${item.reward.id}`"
+          :key="item.unlock_id"
           class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
         >
           <button

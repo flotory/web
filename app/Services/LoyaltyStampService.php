@@ -180,6 +180,20 @@ class LoyaltyStampService
             ->count();
     }
 
+    /**
+     * @return Collection<int, RewardUnlock>
+     */
+    public function pendingUnlocksFor(Customer $customer): Collection
+    {
+        return RewardUnlock::query()
+            ->where('customer_id', $customer->id)
+            ->whereNull('claimed_at')
+            ->with('reward')
+            ->orderBy('cycle_number')
+            ->orderBy('unlocked_at')
+            ->get();
+    }
+
     public function journeyFor(Customer $customer): array
     {
         $customer = $customer->fresh();

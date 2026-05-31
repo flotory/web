@@ -171,12 +171,36 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('pending_count', 1)
             ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.unlock_id', fn ($value) => is_int($value))
             ->assertJsonPath('items.0.reward.id', $reward->id)
             ->assertJsonPath('items.0.customer.id', $customer->id);
 
         $this->getJson('/api/customer/cards')
             ->assertOk()
             ->assertJsonPath('pending_rewards_count', 1);
+    }
+
+    public function test_wallet_lists_each_unclaimed_unlock_even_for_the_same_reward(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, [
+            'title' => 'Free Latte',
+            'required_stamps' => 5,
+        ]);
+        $this->createRewardCycle($customer, ['cycle_number' => 3, 'completed_at' => now()]);
+        $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
+        $this->createRewardUnlock($customer, $reward, ['cycle_number' => 2]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/rewards/wallet')
+            ->assertOk()
+            ->assertJsonPath('pending_count', 2)
+            ->assertJsonCount(2, 'items')
+            ->assertJsonPath('items.0.reward.id', $reward->id)
+            ->assertJsonPath('items.1.reward.id', $reward->id);
     }
 
     public function test_customer_cannot_view_another_users_rewards(): void
