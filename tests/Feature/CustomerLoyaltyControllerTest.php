@@ -216,6 +216,35 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_customer_can_redeem_two_pending_unlocks_for_same_reward_in_sequence(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, [
+            'title' => 'Free Latte',
+            'required_stamps' => 5,
+        ]);
+        $this->createRewardCycle($customer, ['cycle_number' => 3, 'completed_at' => now()]);
+        $firstUnlock = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
+        $secondUnlock = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 2]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
+            ->assertCreated()
+            ->assertJsonPath('unlock.id', $firstUnlock->id);
+
+        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
+            ->assertCreated()
+            ->assertJsonPath('unlock.id', $secondUnlock->id);
+
+        $this->getJson('/api/customer/rewards/wallet')
+            ->assertOk()
+            ->assertJsonPath('pending_count', 0)
+            ->assertJsonCount(0, 'items');
+    }
+
     public function test_customer_cannot_redeem_unavailable_reward(): void
     {
         $user = $this->createUser();

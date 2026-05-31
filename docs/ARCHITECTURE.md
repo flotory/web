@@ -121,10 +121,11 @@ Example: scanner requires `['owner', 'staff']`; team management requires `['owne
 
 **`redeemReward(Customer, Reward, User $redeemer)`**
 
-- Requires active `RewardUnlock` for current cycle, not yet claimed.
+- Finds the **oldest unclaimed** `RewardUnlock` for that `reward_id` (FIFO by `cycle_number`), including unlocks from prior cycles.
 - Sets `claimed_at` and `claimed_by`. Does **not** reduce stamps.
+- Wallet UI lists one row per unlock (`unlock_id`), but the API redeems by `reward_id` and always claims the oldest pending unlock first.
 
-**Helpers:** `nextRewardFor`, `availableRewardsFor`, `journeyFor`.
+**Helpers:** `nextRewardFor`, `availableRewardsFor` (unique reward types with pending unlocks), `pendingUnlocksFor`, `pendingRewardCountFor`, `journeyFor`.
 
 ## Authentication
 
@@ -162,9 +163,13 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 1. `/scanner?venue_id=` → `POST /api/venues/{venue}/scanner/stamps` with `qr_token`, `stamps`
 2. QR must belong to customer enrolled at **that** venue
 
-### Customer claim
+### Customer redeem
 
-1. `/card` → `POST /api/customers/{customer}/rewards/{reward}/redeem`
+1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one item per unclaimed unlock)
+2. Slide to redeem → `POST /api/customers/{customer}/rewards/{reward}/redeem` (claims oldest pending unlock for that reward)
+3. Success modal → return to `/customer/rewards` (card page redirects there after redeem)
+
+Shortcut: `/card` can open the same redeem wallet for the first available reward type.
 
 ### Staff claim
 
@@ -190,13 +195,13 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings |
 | Staff workspace | staff-only membership | Scanner, Customers, Account |
-| Customer | No team membership (or `workspace: false` routes) | Card, Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
+| Customer | No team membership (or `workspace: false` routes) | Card, **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
 
 Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
 
-Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay. The customer chooses when to redeem via **Redeem unlocked reward** on the card.
+Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards** (primary) or a shortcut on the card: slide-to-use → success modal → return to Rewards tab.
 
 ### Key pages
 
@@ -211,7 +216,8 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/customers` | CRM list | Owner, staff |
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
-| `/card` | Loyalty card + claim | Customer |
+| `/card` | Loyalty card + redeem shortcut | Customer |
+| `/customer/rewards` | Rewards wallet (pending unlocks) | Customer |
 | `/venues` | Browse/search all venues, join or open card | Customer |
 | `/customer/settings` | Account details + logout | Customer |
 | `/invite/:token` | Accept staff invite | Invitee |
@@ -230,11 +236,11 @@ Workspace store auto-selects the first active venue when none is chosen (MVP sin
 
 - Auth: `/auth/me`, `/logout`, `/password`
 - `POST /api/broadcasting/auth`
-- Venues: CRUD, select, logo/cover upload, join, customers, dashboard
+- Venues: CRUD, select, logo/cover upload, join, **discover**, customers, dashboard
 - Rewards: nested CRUD + archive/reactivate/purge
 - Scanner: lookup, stamps
 - Team: list, invite, resend/cancel invitation, update/remove member
-- Customer: cards, card detail, rewards, redeem
+- Customer: cards, card detail, rewards journey, **rewards wallet** (`GET /api/customer/rewards/wallet`), redeem
 - Staff redeem: venue-scoped claim endpoint
 
 Full list: `routes/api.php`.

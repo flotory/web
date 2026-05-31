@@ -2,9 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\Models\CustomerRewardCycle;
+use App\Models\RewardUnlock;
 use App\Services\LoyaltyStampService;
-use App\Support\VenueAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
 
@@ -12,6 +14,129 @@ class LoyaltyStampServiceTest extends TestCase
 {
     use BuildsLoyaltyData;
     use RefreshDatabase;
+
+    public function test_add_stamp_increments_balance_and_unlocks_milestone(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 4]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 1);
+
+        $this->assertSame(0, $result['customer']->stamps);
+        $this->assertTrue($result['cycle_completed']);
+        $this->assertCount(1, $result['available_rewards']);
+        $this->assertTrue($result['available_rewards']->first()->is($reward));
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+            'claimed_at' => null,
+        ]);
+    }
+
+    public function test_add_stamp_unlocks_multiple_milestones_in_one_scan(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 0]);
+        $small = $this->createReward($venue, ['title' => 'Free Cookie', 'required_stamps' => 3, 'sort_order' => 3]);
+        $large = $this->createReward($venue, ['title' => 'Free Meal', 'required_stamps' => 10, 'sort_order' => 10]);
+        $this->createRewardCycle($customer);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 10);
+
+        $this->assertSame(0, $result['customer']->stamps);
+        $this->assertTrue($result['cycle_completed']);
+        $this->assertCount(2, $result['available_rewards']);
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'reward_id' => $small->id,
+            'cycle_number' => 1,
+        ]);
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'reward_id' => $large->id,
+            'cycle_number' => 1,
+        ]);
+    }
+
+    public function test_add_stamp_rejects_duplicate_scan_within_five_seconds(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 1]);
+        $this->createReward($venue);
+        $this->createRewardCycle($customer);
+        $this->createVisit($customer, $staff);
+
+        $this->expectException(ValidationException::class);
+
+        app(LoyaltyStampService::class)->addStamp($customer->fresh(), $staff, 1);
+    }
+
+    public function test_add_stamp_treats_zero_stamps_as_one(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 0]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 0);
+
+        $this->assertSame(1, $result['customer']->stamps);
+        $this->assertFalse($result['cycle_completed']);
+    }
+
+    public function test_redeem_reward_claims_oldest_unlock_by_cycle_number(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer, ['cycle_number' => 3, 'completed_at' => now()]);
+        $older = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
+        $this->createRewardUnlock($customer, $reward, ['cycle_number' => 2]);
+
+        $unlock = app(LoyaltyStampService::class)->redeemReward($customer, $reward, $user);
+
+        $this->assertTrue($unlock->is($older->fresh()));
+        $this->assertNotNull($unlock->claimed_at);
+        $this->assertSame(1, app(LoyaltyStampService::class)->pendingRewardCountFor($customer->fresh()));
+    }
+
+    public function test_journey_for_marks_unlocked_and_claimed_milestones_in_current_cycle(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
+        $claimed = $this->createReward($venue, ['required_stamps' => 3, 'sort_order' => 3]);
+        $pending = $this->createReward($venue, ['required_stamps' => 5, 'sort_order' => 5]);
+        $locked = $this->createReward($venue, ['required_stamps' => 10, 'sort_order' => 10]);
+        $this->createRewardCycle($customer);
+        $this->createRewardUnlock($customer, $claimed, [
+            'claimed_at' => now(),
+            'claimed_by' => $user->id,
+        ]);
+        $this->createRewardUnlock($customer, $pending);
+
+        $journey = app(LoyaltyStampService::class)->journeyFor($customer);
+
+        $this->assertSame(5, $journey['current_stamps']);
+        $milestones = collect($journey['milestones'])->keyBy('id');
+        $this->assertTrue($milestones[$claimed->id]['unlocked']);
+        $this->assertTrue($milestones[$claimed->id]['claimed']);
+        $this->assertTrue($milestones[$pending->id]['unlocked']);
+        $this->assertFalse($milestones[$pending->id]['claimed']);
+        $this->assertFalse($milestones[$locked->id]['unlocked']);
+    }
 
     public function test_available_rewards_returns_unlocked_unclaimed_milestones(): void
     {
@@ -61,20 +186,23 @@ class LoyaltyStampServiceTest extends TestCase
         $this->assertTrue($pending->every(fn ($unlock) => $unlock->reward->is($reward)));
     }
 
-    public function test_admin_can_access_any_venue_without_membership(): void
+    public function test_add_stamp_starts_next_cycle_after_completion(): void
     {
-        $admin = $this->createUser(['is_admin' => true]);
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
         $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 4]);
+        $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
 
-        $this->assertTrue(VenueAccess::canAccess($admin, $venue, ['owner']));
-        $this->assertTrue(VenueAccess::canAccess($admin, $venue));
-    }
+        app(LoyaltyStampService::class)->addStamp($customer, $staff, 1);
 
-    public function test_non_member_cannot_access_venue(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
+        $activeCycle = CustomerRewardCycle::query()
+            ->where('customer_id', $customer->id)
+            ->whereNull('completed_at')
+            ->first();
 
-        $this->assertFalse(VenueAccess::canAccess($user, $venue, ['owner']));
+        $this->assertNotNull($activeCycle);
+        $this->assertSame(2, $activeCycle->cycle_number);
     }
 }

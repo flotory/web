@@ -54,7 +54,7 @@ class StampAdded implements ShouldBroadcastNow
             'milestones' => $this->milestones,
             'current_cycle' => $this->currentCycle,
             'cycle_completed' => $this->cycleCompleted,
-            'message' => "{$this->addedStamps} ".str('star')->plural($this->addedStamps)." added at {$this->customer->venue->name}.",
+            'message' => "{$this->addedStamps} ".str('stamp')->plural($this->addedStamps)." added at {$this->customer->venue->name}.",
             'occurred_at' => now()->toISOString(),
         ];
     }

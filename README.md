@@ -235,14 +235,15 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 
 1. Log in as `owner@example.com` or `staff@example.com`
 2. Open **Scanner** (header) or **My Venues → Open scanner**
-3. Scan or search for `customer@example.com` and add stars
+3. Scan or search for `customer@example.com` and add stamps
 4. Download QR from dashboard hero or venue settings
 
 **Customer**
 
 1. Log in as `customer@example.com`
 2. Open **Card** or scan the venue QR → `/v/your-venue-slug`
-3. Claim an unlocked milestone reward from the journey
+3. Earned rewards appear on **Rewards** (`/customer/rewards`); slide to use at the counter
+4. After redeem, a success modal plays, then you return to the Rewards tab
 
 **Team (staff invitation)**
 
@@ -277,15 +278,16 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Customer registration/login (email + Google) with intent-based redirects
 - Owner 5-step onboarding wizard and dashboard success state
 - Customer loyalty card per venue with QR token
-- Customer bottom nav: Card, Venues, Settings (account + logout)
+- Customer bottom nav: Card, **Rewards**, Venues, Settings (account + logout)
 - Stamp and reward-unlock animations on the customer card (no persistent banner)
+- Customer rewards wallet (`/customer/rewards`) with tab badge for pending unlocks
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
 - Single-venue-focused dashboard (auto-selects first venue)
 - Venue settings, logo upload, QR download PNG, soft delete
 - Team invite/remove (`/team`)
-- Staff scanner: add stars only (1–5 or custom); venue-scoped authorization
+- Staff scanner: add stamps only (1–5 or custom); venue-scoped authorization
 - Customer search fallback when QR scan fails
-- Customer milestone claim from `/card`
+- Customer milestone redeem from **Rewards** wallet (or card shortcut); slide-to-use with staff
 - Staff milestone claim (venue-scoped API)
 - Realtime stamp updates on customer devices (Reverb)
 - Dashboard stats and guided empty states per active venue
@@ -299,7 +301,7 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - If the QR belongs to another venue, the API rejects the request.
 - Milestones unlock at thresholds and can be claimed once per cycle.
 - Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
-- Customers claim unlocked milestones from `/card`. Staff can also claim via the venue API when needed.
+- Customers redeem unlocked milestones from **Rewards** (`/customer/rewards`) or a shortcut on `/card`. Redeem claims the oldest pending unlock for that milestone (FIFO by cycle). Staff can also redeem via the venue API when needed.
 - Open scanner for a specific venue: `/scanner?venue_id=<id>`.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.

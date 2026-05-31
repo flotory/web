@@ -96,6 +96,32 @@ class StaffScanControllerTest extends TestCase
             ->assertJsonValidationErrors('qr_token');
     }
 
+    public function test_owner_can_add_a_stamp(): void
+    {
+        $owner = $this->createUser(['email' => 'owner@example.com']);
+        $customerUser = $this->createUser(['email' => 'customer@example.com']);
+        $venue = $this->createVenue(['name' => 'Owner Cafe']);
+
+        $this->attachMember($venue, $owner, 'owner');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 1]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 2,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('customer.stamps', 3)
+            ->assertJsonPath('added_stamps', 2);
+
+        $this->assertDatabaseHas('visits', [
+            'customer_id' => $customer->id,
+            'created_by' => $owner->id,
+        ]);
+    }
+
     public function test_staff_can_lookup_customer_by_qr(): void
     {
         $staff = $this->createUser();

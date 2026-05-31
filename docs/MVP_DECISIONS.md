@@ -34,6 +34,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Cycle completion | When stamps reach the **maximum** active milestone threshold, cycle completes, stamps reset to 0, new `CustomerRewardCycle` starts. |
 | Milestone uniqueness | One active milestone per `required_stamps` value per venue (`reward_type = milestone`). |
 | Duplicate scan guard | Same customer cannot be stamped again within **5 seconds**. |
+| Redeem FIFO | `POST .../rewards/{reward}/redeem` claims the **oldest unclaimed** unlock for that reward (`orderBy cycle_number`). Wallet lists one row per unlock; API does not take `unlock_id` in MVP. |
 | QR venue scoping | Scanner rejects QR tokens for customers not enrolled at the active venue. |
 | Archive before purge | Rewards must be archived (`active = false`) before permanent delete. |
 
