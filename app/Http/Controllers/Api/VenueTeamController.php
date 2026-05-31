@@ -22,7 +22,7 @@ class VenueTeamController extends Controller
         $members = VenueUser::query()
             ->where('venue_id', $venue->id)
             ->with('user:id,name,email')
-            ->orderByRaw("FIELD(role, 'owner', 'staff')")
+            ->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'staff' THEN 1 ELSE 2 END")
             ->get();
 
         $invitations = VenueStaffInvitation::query()
