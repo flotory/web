@@ -183,9 +183,18 @@ OAuth preserves onboarding intent:
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. 5-step wizard: venue name → category → logo → rewards presets → QR.
-4. Lands on `/dashboard?onboarding=completed` with a success toast.
+4. Lands on `/dashboard?onboarding=completed` with the setup assistant visible.
 
 Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
+
+### Staff (email invitation)
+
+1. Owner opens **Team** and invites staff by email.
+2. Staff receives an invitation email with a link to `/invite/{token}`.
+3. New staff create an account on the invite page; existing users sign in and accept.
+4. After acceptance, staff can use **Scanner** and **Customers** for that venue.
+
+No temporary passwords or shared credentials — each staff member sets their own password during registration or uses their existing login.
 
 ## Phone Testing
 
@@ -235,10 +244,13 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 2. Open **Card** or scan the venue QR → `/v/your-venue-slug`
 3. Claim an unlocked milestone reward from the journey
 
-**Team**
+**Team (staff invitation)**
 
 1. Log in as `owner@example.com`
-2. Open **Team** → invite a new email (new users are created with password `password`)
+2. Open **Team** → invite staff by email
+3. Invitee opens the link in the email (`/invite/{token}`)
+4. New users create an account; existing users sign in and accept the invitation
+5. Accepted staff can open **Scanner** and **Customers** for that venue
 
 **QR onboarding (guest)**
 
@@ -271,7 +283,7 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Team invite/remove (`/team`)
 - Staff scanner: add stars only (1–5 or custom); venue-scoped authorization
 - Customer search fallback when QR scan fails
-- Customer milestone claim from card/rewards
+- Customer milestone claim from `/card`
 - Staff milestone claim (venue-scoped API)
 - Realtime stamp updates on customer devices (Reverb)
 - Dashboard stats and guided empty states per active venue
@@ -285,11 +297,20 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - If the QR belongs to another venue, the API rejects the request.
 - Milestones unlock at thresholds and can be claimed once per cycle.
 - Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
-- Customers claim from `/card` or `/rewards`. Staff can also claim via the venue API when needed.
+- Customers claim unlocked milestones from `/card`. Staff can also claim via the venue API when needed.
 - Open scanner for a specific venue: `/scanner?venue_id=<id>`.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.
 
+## Documentation
+
+These files are the source of truth for product, architecture, and MVP decisions (for developers and AI tools):
+
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) — MVP stage, goals, terminology
+- [docs/PRODUCT.md](docs/PRODUCT.md) — product overview, journeys, scope
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API summary
+- [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions not to undo
+
 ## Roadmap
 
-Future: PWA polish, push notifications, email invites for team, billing per venue, POS integrations, segmentation, and marketing tools — layered on the monolith when there is product demand.
+Future: PWA polish, push notifications, billing per venue, POS integrations, segmentation, and marketing tools — layered on the monolith when there is product demand.

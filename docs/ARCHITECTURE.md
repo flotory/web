@@ -1,306 +1,271 @@
 # Architecture
 
-This app is a Laravel/Vue monolith for hospitality loyalty. A user can belong to multiple venues with different roles, each venue membership has its own QR token and progression balance, staff add stars in venue context, and customers or staff claim unlocked milestones with audit trails via `redeemed_by` and `created_by`.
+Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold venue team memberships (`venue_users`), loyalty cards (`customers`), or both. Business rules live in services; the SPA renders API state.
 
-## High-Level Structure
+See [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISIONS.md) for locked decisions.
+
+## Stack
+
+| Layer | Technology |
+|-------|------------|
+| API | Laravel 12, PHP 8.3+, MySQL |
+| Auth | Laravel Sanctum (bearer tokens) |
+| OAuth | Laravel Socialite (Google) via web routes |
+| Realtime | Laravel Reverb + Echo (optional; stamp events) |
+| Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |
+| Uploads | Local filesystem under `public/uploads/` |
+| Deploy | Docker on VPS; Nginx → Laravel |
+
+## Repository Layout
 
 ```text
 app/
-  (no global user role enum — use users.is_admin + venue_users.role)
-  Events/                 Broadcast events (StampAdded)
-  Http/Controllers/Api/   REST API controllers
-  Http/Controllers/Auth/  Google OAuth (Socialite)
-  Http/Requests/          Request validation
-  Models/                 Venue, VenueUser, Customer, Reward, RewardUnlock, CustomerRewardCycle, Visit, User
-  Services/               LoyaltyStampService (progression engine)
-  Support/                VenueAccess (membership authorization)
-
-config/
-  broadcasting.php        Reverb broadcaster config
-  reverb.php              Reverb WebSocket server config
-  services.php            Google OAuth client config
-
-database/
-  migrations/             venues, venue_users, customers, rewards, progression tables, visits, google fields
-  seeders/                Demo venues, memberships, customers, milestones
+  Events/                    StampAdded broadcast event
+  Http/Controllers/Api/      REST API
+  Http/Controllers/Auth/       Google OAuth
+  Http/Requests/               Form validation
+  Models/                    Eloquent domain models
+  Services/                  LoyaltyStampService, VenueStaffInvitationService
+  Support/                   VenueAccess authorization
 
 resources/js/
-  components/             UI and loyalty components (SwipeToRedeem, VenueFilter, etc.)
-  layouts/                AppShell (workspace vs customer nav)
-  lib/                    API, Echo/Reverb, onboarding helpers, redirect sanitization
-  pages/                  Route-level Vue pages
-  router/                 Vue Router (workspace meta flag)
-  stores/                 auth, workspace, realtime
+  components/                UI + loyalty (SwipeToRedeem, VenueFilter, …)
+  composables/               useAsyncAction, useVenueTeam
+  layouts/                   AppShell (owner vs staff vs customer nav)
+  lib/                       api, onboarding, redirect, toast, realtime
+  pages/                     Route-level Vue pages
+  router/                    Guards (auth, ownerOnly, workspace)
+  stores/                    auth, workspace, realtime
 
 routes/
-  api.php                 API routes (/venues/...)
-  web.php                 Google OAuth + SPA fallback
-  channels.php            Private broadcast channels
+  api.php                    JSON API
+  web.php                    Google OAuth + SPA fallback
+  channels.php               Private customer broadcast channels
 ```
+
+## Backend Layers
+
+```text
+Request → Route → Controller → (VenueAccess) → Service → Model/DB → JSON
+                      ↓
+                 FormRequest validation
+```
+
+**Rules:**
+
+| Layer | Responsibility |
+|-------|----------------|
+| Routes | HTTP mapping, middleware (`auth:sanctum`) |
+| Controllers | Authorize, validate, delegate, respond — no loyalty math |
+| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle |
+| Models | Relationships, casts, accessors — no multi-step workflows |
+| Vue | Fetch, display, forms — **no business logic** |
 
 ## Domain Model
 
-| Model | Purpose |
-|-------|---------|
-| `User` | Login identity. Global role: `admin` or `customer`. Optional `google_id`, `google_avatar`. |
-| `Venue` | Hospitality workspace (cafe, bar, restaurant). Soft deletes, category, branding fields. |
-| `VenueUser` | Membership pivot: `venue_id`, `user_id`, `role` (`owner`, `staff`). |
-| `Customer` | One user’s loyalty card at one venue: `qr_token`, `stamps`. |
-| `Reward` | Venue milestone definitions (`required_stamps`, optional description/image, `active`). |
-| `RewardUnlock` | Per-cycle milestone unlock and claim (`claimed_at`, `claimed_by`). |
-| `CustomerRewardCycle` | Tracks cycle number and completion per customer. |
-| `Visit` | Stamp/visit history; `created_by` = staff user who added stars. |
-
-Important: QR tokens and stamp balances are **per venue membership** (`customers` row), not global per user.
-
-## Role Model
-
 ```text
-Platform (users.is_admin)
-  true      → platform-wide access
-  false     → default for everyone
-
-Venue-scoped (venue_users.role)
-  owner     → dashboard, rewards, analytics, settings, team, venues, scanner
-  staff     → scanner, customers (read), staff redemption
-
-Loyalty (customers)
-  one row per user per venue — stamps, QR token, reward_unlocks
+User ──┬──< VenueUser >── Venue ──< Reward
+       │                      │
+       └──< Customer ─────────┘
+                │
+                ├──< Visit
+                ├──< CustomerRewardCycle
+                └──< RewardUnlock >── Reward
 ```
 
-Authorization uses `App\Support\VenueAccess`:
+| Model | Table | Purpose |
+|-------|-------|---------|
+| `User` | `users` | Login identity. `is_admin` for platform admin only. `active_venue_id` for workspace selection. Optional `google_id`, `google_avatar`. |
+| `Venue` | `venues` | Workspace. Slug, category, branding, soft deletes. **No** `owner_user_id`. |
+| `VenueUser` | `venue_users` | Team membership pivot: `role` = `owner` \| `staff`. |
+| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `qr_token`, `stamps`. |
+| `Reward` | `rewards` | Milestone definition: `required_stamps`, optional image, `active`, `reward_type` (= `milestone`). |
+| `Visit` | `visits` | Audit row when staff award stamps via `addStamp`. `created_by` = staff user. |
+| `CustomerRewardCycle` | `customer_reward_cycles` | Cycle counter; `completed_at` when top milestone reached. |
+| `RewardUnlock` | `reward_unlocks` | Unlock + claim in one row (`unlocked_at`, `claimed_at`, `claimed_by`). **No** separate redemptions table. |
+| `VenueStaffInvitation` | `venue_staff_invitations` | Pending staff invites (email, token, 7-day expiry). |
 
-- Platform admin bypasses membership checks.
-- Otherwise require a `venue_users` row for the target venue.
-- Optional role list: e.g. `['owner']` for team management.
-- Scanner and venue dashboard APIs call `requireAccess` before processing.
+QR tokens and stamp balances are **per customer row**, not per user globally or per venue membership.
 
-Workspace selection auto-selects the first active venue when none is chosen (MVP single-venue UX). The venue filter no longer exposes an “all venues” aggregate view on dashboard/customers.
+## Ownership and Authorization
+
+**Platform:** `users.is_admin === true` bypasses venue membership checks.
+
+**Venue team:** `venue_users.role`
+
+| Role | Access |
+|------|--------|
+| `owner` | Dashboard, analytics, rewards, settings, team, venues, scanner, customers |
+| `staff` | Scanner, customers (read), staff redemption, account |
+
+**Loyalty:** `customers` row = participation at that venue (any signed-in user can join).
+
+`App\Support\VenueAccess`:
+
+- `membership($user, $venue)` → `VenueUser|null`
+- `canAccess($user, $venue, $roles = [])` → bool
+- `requireAccess($user, $venue, $roles = [])` → abort 403
+
+Example: scanner requires `['owner', 'staff']`; team management requires `['owner']`.
+
+## Loyalty Engine (`LoyaltyStampService`)
+
+**`addStamp(Customer, User $staff, int $stamps)`**
+
+1. Reject duplicate scan within 5 seconds (same customer).
+2. Lock customer row; increment stamps (1–100).
+3. Unlock milestones at or below current stamp count for active cycle.
+4. If stamps ≥ max active milestone threshold: complete cycle, reset stamps to 0, start next cycle.
+5. Create one `Visit` row (`created_by` = staff).
+6. Broadcast `StampAdded` on `private-customer.{customerId}`.
+
+**`redeemReward(Customer, Reward, User $redeemer)`**
+
+- Requires active `RewardUnlock` for current cycle, not yet claimed.
+- Sets `claimed_at` and `claimed_by`. Does **not** reduce stamps.
+
+**Helpers:** `nextRewardFor`, `availableRewardsFor`, `journeyFor`.
 
 ## Authentication
 
 ### Email / password
 
 - `POST /api/auth/register`, `POST /api/auth/login`
-- Sanctum bearer token returned to the SPA
+- `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
+- `PUT /api/auth/password` (authenticated)
+- Sanctum bearer token returned to SPA
 
 ### Google OAuth
 
-Web routes (session-backed redirect flow):
+Web routes (session-backed):
 
-- `GET /auth/google/redirect` — stores `venue_slug`, `redirect`, `intent` in session, redirects to Google
-- `GET /auth/google/callback` — creates/updates user, issues Sanctum token, redirects to `FRONTEND_URL/login?oauth_token=...`
+- `GET /auth/google/redirect` — stores `venue_slug`, `redirect`, `intent` in session
+- `GET /auth/google/callback` — upserts user, issues token, redirects to `FRONTEND_URL/login?oauth_token=...`
 
-Frontend (`resources/js/lib/onboarding.ts`):
-
-- `buildGoogleAuthUrlWithIntent(venueSlug, nextPath, intent)` builds the redirect URL
-- `intent=owner` → post-auth owner onboarding (`/onboarding/create-venue`)
-- `venue_slug` present → customer flow, auto-join after login
-
-Redirect paths are sanitized in `resources/js/lib/redirect.ts` (internal paths only).
-
-## Multi-Venue Workspaces
-
-Owners manage venues from `/my-venues`.
-
-- Creating a venue creates `venue_users` with role `owner`.
-- First-time owners without membership are routed to `/onboarding` (5-step wizard).
-- Delete: soft delete on `venues` (removed from UI immediately in workspace store).
-- Settings: `/my-venues/:id/settings` (logo, QR download PNG, invite link).
-- Team: `/team` lists and invites members for the filtered venue.
+Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal paths only).
 
 ## Main Flows
 
-### Guest Venue Landing (QR)
+### Guest QR landing
 
-1. Guest opens `/v/{slug}` (no auth required).
-2. `GET /api/public/venues/{slug}/landing` returns venue name, logo, reward previews.
-3. **Join** → `/register` or `/login` with `venue_slug` and safe `redirect`.
-4. After auth, `joinVenueFromIntent()` calls `POST /api/venues/{slug}/join`.
-5. Customer lands on `/card` for that venue.
+1. `GET /v/{slug}` → `GET /api/public/venues/{slug}/landing`
+2. Join → register/login with `venue_slug`
+3. `POST /api/venues/{slug}/join` → `/card?venue_id=…`
 
-### Owner Onboarding
+### Owner onboarding
 
-1. Homepage CTA → `/register?intent=owner` (or Google with `intent=owner`).
-2. After auth → `/onboarding/create-venue` (5 steps: name, category, logo, rewards, QR).
-3. On completion → `/dashboard?onboarding=completed` (toast, no extra completion screen).
+1. Register with owner intent → `/onboarding/create-venue` (5 steps)
+2. Complete → `/dashboard?onboarding=completed`
 
-### Customer Joins a Venue (in-app)
+### Staff stamp scan
 
-1. Customer opens `/cafes` or arrives from QR landing.
-2. `POST /api/venues/{venue:slug}/join`
-3. Backend creates `Customer` for `user_id` + `venue_id`.
-4. Customer opens `/card?venue_id=<id>` for that card’s QR.
+1. `/scanner?venue_id=` → `POST /api/venues/{venue}/scanner/stamps` with `qr_token`, `stamps`
+2. QR must belong to customer enrolled at **that** venue
 
-### Staff Adds Stars
+### Customer claim
 
-1. Open `/scanner` (active venue) or `/scanner?venue_id=<id>`.
-2. Choose star amount (1–5 preset or custom 1–100).
-3. Scan QR or use customer search fallback.
-4. `POST /api/venues/{venue}/scanner/stamps` with `qr_token` and `stamps`.
-5. `VenueAccess::requireAccess($user, $venue, ['owner', 'staff'])`.
-6. `LoyaltyStampService::addStamp()` updates stamps, creates `Visit` with `created_by`, broadcasts `StampAdded`.
+1. `/card` → `POST /api/customers/{customer}/rewards/{reward}/redeem`
 
-Duplicate scan guard: same card cannot be stamped again within **5 seconds**.
-
-### Customer Claims Milestone
-
-1. `/card` or `/rewards` → wallet overlay → swipe to redeem.
-2. `POST /api/customers/{customer}/rewards/{reward}/redeem`
-3. Validates card ownership, requires unlocked milestone in current cycle.
-
-### Staff Claims Milestone
+### Staff claim
 
 1. `POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem`
-2. Requires venue membership (`owner`, `staff`).
 
-### Realtime
+### Staff invitation
 
-1. Customer subscribes to `private-customer.{customerId}`.
-2. Event `stamp.added` payload includes `venue`, progression, milestones.
-3. UI updates card; optional redirect to `/card?venue_id=...`.
+1. Owner: `POST /api/venues/{venue}/team/invite`
+2. Email link → `/invite/{token}`
+3. New user: `POST /api/invites/{token}/register`; existing: sign in + `POST /api/invites/{token}/accept`
 
-Auth: `POST /api/broadcasting/auth` with Sanctum bearer token.
+### Realtime (optional)
 
-## Key Backend Files
-
-### `app/Support/VenueAccess.php`
-
-- `membership($user, $venue)` → `VenueUser|null`
-- `canAccess($user, $venue, $roles = [])` → bool
-- `requireAccess($user, $venue, $roles = [])` → abort 403
-
-### `app/Services/LoyaltyStampService.php`
-
-- `addStamp(Customer, User $staff, int $stamps)` — lock row, increment stamps, visit, broadcast
-- `redeemReward(Customer, Reward, User $redeemer)` — validate unlock, set `claimed_at` on `reward_unlocks`
-- `nextRewardFor` / `availableRewardsFor`
-
-### `app/Http/Controllers/Api/VenueController.php`
-
-- `index` — venues the user is a member of (or all for admin)
-- `discover` — all venues for customer browse/join
-- `publicLanding` — public venue + rewards preview for `/v/:slug`
-- `current` — `active_venue_id` venue
-- `select` — set active workspace
-- `store` / `update` / `destroy` (soft delete)
-- `uploadLogo` / `destroyLogo`
-- `customers` — CRM list for venue
-
-### `app/Http/Controllers/Auth/GoogleAuthController.php`
-
-- `redirect` — session intent (`venue_slug`, `redirect`, `intent`)
-- `callback` — user upsert, token, redirect to frontend login with `oauth_token`
-
-### `app/Http/Controllers/Api/StaffScanController.php`
-
-- `lookup` / `addStamp` — venue-scoped QR validation
+- Channel: `customer.{customerId}` (authorized via `customers.user_id`)
+- Event: `.stamp.added`
+- Auth: `POST /api/broadcasting/auth`
 
 ## Frontend Structure
 
-### Workspace vs customer UI
+### Navigation modes (`AppShell`)
 
-Router `workspace` mode enables owner/staff sidebar: Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings.
+| Mode | Who | Primary routes |
+|------|-----|----------------|
+| Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings |
+| Staff workspace | staff-only membership | Scanner, Customers, Account |
+| Customer | No team membership (or `/card` meta) | Card |
 
-Customers see: Card, Cafes, Rewards.
+Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
 
-Guests see: Landing (`/`), Venue landing (`/v/:slug`), Login, Register.
+Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
 
 ### Key pages
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| Venue landing | `/v/:slug` | Guest QR preview + join CTA |
-| Register / Login | `/register`, `/login` | Unified auth; venue context + owner intent |
-| Owner onboarding | `/onboarding/create-venue` | 5-step venue setup wizard |
-| Dashboard | `/dashboard` | Single-venue hero, QR, rewards preview, setup assistant |
-| My Venues | `/my-venues` | Multi-location command center |
-| Venue settings | `/my-venues/:id/settings` | Edit venue, logo, QR download |
-| Team | `/team` | Invite/remove staff for active venue |
-| Scanner | `/scanner?venue_id=` | Staff star flow (membership required) |
-| Customer card | `/card?venue_id=` | QR + redeem |
-| Cafes | `/cafes` | Discover/join venues |
+| Route | Page | Role |
+|-------|------|------|
+| `/v/:slug` | Venue landing | Guest |
+| `/onboarding/create-venue` | Onboarding wizard | New owner |
+| `/dashboard` | Dashboard + setup assistant | Owner |
+| `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
+| `/rewards` | Milestone management (+ owner preview) | Owner |
+| `/scanner` | QR scanner | Owner, staff |
+| `/customers` | CRM list | Owner, staff |
+| `/analytics` | Retention stats | Owner |
+| `/team` | Invitations & members | Owner |
+| `/card` | Loyalty card + claim | Customer |
+| `/invite/:token` | Accept staff invite | Invitee |
 
-### Stores
-
-- `auth.ts` — token, user identity, `loginWithToken` for OAuth handoff
-- `workspace.ts` — venues, auto-select first venue, filter context
-- `realtime.ts` — Echo subscriptions, `venue_id` in redirects
+Workspace store auto-selects the first active venue when none is chosen (MVP single-venue focus).
 
 ## API Route Summary
 
-Public:
+**Public**
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+- `POST /api/auth/register`, `/login`, `/forgot-password`, `/reset-password`
 - `GET /api/public/venues/{slug}/landing`
+- `GET /api/invites/{token}`, `POST /api/invites/{token}/register`
 
-Web (non-API):
+**Authenticated**
 
-- `GET /auth/google/redirect`
-- `GET /auth/google/callback`
-
-Authenticated:
-
-- `GET /api/auth/me`
-- `POST /api/auth/logout`
+- Auth: `/auth/me`, `/logout`, `/password`
 - `POST /api/broadcasting/auth`
+- Venues: CRUD, select, logo/cover upload, join, customers, dashboard
+- Rewards: nested CRUD + archive/reactivate/purge
+- Scanner: lookup, stamps
+- Team: list, invite, resend/cancel invitation, update/remove member
+- Customer: cards, card detail, rewards, redeem
+- Staff redeem: venue-scoped claim endpoint
 
-Venues:
+Full list: `routes/api.php`.
 
-- `GET /api/venues` — member venues
-- `GET /api/venues/discover` — customer discovery
-- `GET /api/venues/current`
-- `POST /api/venues`
-- `GET|PUT|DELETE /api/venues/{venue}`
-- `POST /api/venues/{venue}/select`
-- `POST|DELETE /api/venues/{venue}/logo`
-- `GET /api/venues/{venue}/customers`
-- `GET /api/venues/{venue}/dashboard`
-- `GET /api/dashboard?venue_id=`
-- `GET|POST|PUT|DELETE /api/venues/{venue}/rewards`
-- `POST /api/venues/{venue}/scanner/lookup`
-- `POST /api/venues/{venue}/scanner/stamps`
-- `POST /api/venues/{venue:slug}/join`
-- `POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem`
+## File Uploads
 
-Team:
+| Asset | Path |
+|-------|------|
+| Venue logo | `/uploads/venue-logos/` |
+| Venue cover | `/uploads/venue-covers/` |
+| Reward image | `/uploads/reward-milestones/` |
 
-- `GET /api/venues/{venue}/team`
-- `POST /api/venues/{venue}/team/invite`
-- `PATCH /api/venues/{venue}/team/{user}`
-- `DELETE /api/venues/{venue}/team/{user}`
+Uploaded files are gitignored; directories created at deploy/boot.
 
-Customer:
-
-- `GET /api/customer/cards?venue_id=`
-- `GET /api/customers/{customer}/card`
-- `GET /api/customers/{customer}/rewards`
-- `POST /api/customers/{customer}/rewards/{reward}/redeem`
-
-## Docker Services
+## Docker Services (local)
 
 | Service | Port | Role |
 |---------|------|------|
 | app | 8000 | Laravel HTTP |
-| vite | 5173 | Vue dev server (HMR) |
+| vite | 5173 | Vue HMR |
 | reverb | 8080 | WebSockets |
-| mysql | (internal) | Database |
+| mysql | internal | Database |
 
-The `app` container broadcasts to Reverb via `host.docker.internal:8080` when Docker DNS for the `reverb` service name is unreliable.
+## UI Patterns (frontend)
+
+- **Settings / save actions:** `AsyncActionButton` — idle → `Saving…` → `Saved ✓`
+- **Validation:** inline field errors from API (`ApiError`)
+- **Destructive actions:** confirmation modal (delete venue, delete/archive reward)
+- **Cross-page feedback:** `vue-sonner` toaster wired in `App.vue` (infrastructure present; use for global success/error)
 
 ## Seeded Demo Data
 
-- 4 venues: Demo Cafe, Harbor Coffee, North Star Burgers, Olive Street Kitchen
-- Owner membership on all four
-- Staff membership on Demo Cafe only
-- `customer@example.com` has 100 stamps at Demo Cafe for reward testing
-- Demo Cafe slug: `demo-cafe` → guest landing at `/v/demo-cafe`
+- Venues: Demo Cafe (`demo-cafe`), Harbor Coffee, North Star Burgers, Olive Street Kitchen
+- `owner@example.com` — owner on all four
+- `staff@example.com` — staff at Demo Cafe only
+- `customer@example.com` — 100 stamps at Demo Cafe for reward testing
 
-## Implementation Notes
-
-- `users.is_admin` is platform-only; scanner and venue UI use `venue_users`.
-- Claims are stored on `reward_unlocks` (`claimed_at`, `claimed_by`), not a separate redemptions table.
-- Logo files: `/uploads/venue-logos/`.
-- Staff invite creates new users with password `password` (MVP; replace with email invites later).
-- `FRONTEND_URL` must point at the SPA origin used after OAuth (production: `https://flotory.com`; local Docker: `http://localhost:8000`).
+Demo password: `password` (local seed only).

@@ -43,10 +43,7 @@ const homePath = computed(() => {
 
 const nav = computed(() => {
   if (!isWorkspace.value) {
-    return [
-      { label: 'Card', to: '/card', icon: '◍' },
-      { label: 'Rewards', to: '/rewards', icon: '★' },
-    ]
+    return [{ label: 'Card', to: '/card', icon: '◍' }]
   }
 
   if (workspace.usesStaffNav) {

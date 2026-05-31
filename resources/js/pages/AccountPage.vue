@@ -98,7 +98,7 @@ function goBack() {
               placeholder="Your password right now"
             >
             <p v-if="isStaff" class="mt-2 text-xs font-semibold text-slate-500">
-              First time here? Use the one-time password from your manager. Already changed it before? Use the password you chose last time.
+              Enter the password you use to sign in — the one you chose when you created your account or accepted your staff invitation.
             </p>
           </div>
           <div>
