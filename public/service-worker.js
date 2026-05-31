@@ -1,9 +1,8 @@
-const CACHE_NAME = 'flotory-v4'
+const CACHE_NAME = 'flotory-v5'
 const APP_SHELL = [
   '/dashboard',
   '/card',
   '/login',
-  '/cafes',
   '/manifest.webmanifest',
   '/favicon.png',
   '/icons/icon-180.png',

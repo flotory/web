@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import AnalyticsPage from '@/pages/AnalyticsPage.vue'
-import CafesPage from '@/pages/CafesPage.vue'
 import CustomerCardPage from '@/pages/CustomerCardPage.vue'
 import VenueLandingPage from '@/pages/VenueLandingPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
@@ -43,7 +42,7 @@ const router = createRouter({
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/cafes', name: 'cafes', component: CafesPage, meta: { requiresAuth: true, workspace: false } },
+    { path: '/cafes', redirect: '/card' },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },

@@ -6,6 +6,7 @@ import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
+import { api } from '@/lib/api'
 import {
   buildAuthRedirectWithVenue,
   buildRegisterRedirectWithVenue,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/onboarding'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
+import type { Customer } from '@/types'
 import type { VenueLandingPayload } from '@/lib/onboarding'
 
 const route = useRoute()
@@ -25,9 +27,27 @@ const loading = ref(true)
 const joinAction = useAsyncAction()
 const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
+const memberCard = ref<Customer | null>(null)
 
 const milestones = computed(() => landing.value?.milestones ?? [])
 const joinNextPath = computed(() => `/card?venue_id=${landing.value?.venue.id ?? ''}`)
+const isMember = computed(() => Boolean(memberCard.value))
+const previewStamps = computed(() => memberCard.value?.stamps ?? 0)
+
+async function loadMembership() {
+  memberCard.value = null
+
+  if (!auth.isAuthenticated || !landing.value) {
+    return
+  }
+
+  try {
+    const response = await api<{ cards: Customer[] }>('/customer/cards')
+    memberCard.value = response.cards.find((card) => card.venue_id === landing.value?.venue.id) ?? null
+  } catch {
+    memberCard.value = null
+  }
+}
 
 async function loadLanding() {
   loading.value = true
@@ -35,6 +55,7 @@ async function loadLanding() {
 
   try {
     landing.value = await fetchVenueLanding(slug.value)
+    await loadMembership()
   } catch {
     error.value = 'This venue link is unavailable right now.'
   } finally {
@@ -42,8 +63,13 @@ async function loadLanding() {
   }
 }
 
-async function handleJoin() {
+async function handlePrimaryAction() {
   if (!landing.value) return
+
+  if (isMember.value) {
+    await router.push(joinNextPath.value)
+    return
+  }
 
   if (!auth.isAuthenticated) {
     await router.push(buildRegisterRedirectWithVenue(slug.value, joinNextPath.value))
@@ -67,12 +93,7 @@ async function handleJoin() {
   }
 }
 
-onMounted(async () => {
-  await loadLanding()
-  if (auth.isAuthenticated) {
-    await handleJoin()
-  }
-})
+onMounted(loadLanding)
 </script>
 
 <template>
@@ -114,11 +135,13 @@ onMounted(async () => {
             >
           </div>
           <h1 class="mt-4 text-2xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
-          <p class="mt-1 text-sm font-medium text-slate-500">Collect stamps. Unlock rewards.</p>
+          <p class="mt-1 text-sm font-medium text-slate-500">
+            {{ isMember ? 'Your loyalty card at this venue' : 'Collect stamps. Unlock rewards.' }}
+          </p>
         </div>
 
         <div class="mt-5 flex-1">
-          <VenueLandingPreview :milestones="milestones" />
+          <VenueLandingPreview :milestones="milestones" :stamps="previewStamps" />
 
           <p v-if="!milestones.length" class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500">
             Rewards are being set up. Join now and your first stamp is on the way.
@@ -130,13 +153,13 @@ onMounted(async () => {
             class="w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
             block
             size="lg"
-            idle-label="Join & collect rewards"
+            :idle-label="isMember ? 'Open my card' : 'Join & collect rewards'"
             loading-label="Joining…"
             success-label="Joined ✓"
             :loading="joinAction.loading"
             :success="joinAction.success"
             :error="joinAction.error"
-            @click="handleJoin"
+            @click="handlePrimaryAction"
           />
 
           <p v-if="!auth.isAuthenticated" class="text-center text-sm text-slate-500">

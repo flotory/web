@@ -228,7 +228,7 @@ async function openDashboard() {
 async function leaveForCustomerExperience() {
   clearOnboardingDraft()
   clearOwnerOnboardingIntent()
-  await router.push('/cafes')
+  await router.push('/card')
 }
 
 async function logout() {

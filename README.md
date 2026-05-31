@@ -232,7 +232,7 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 **Customer**
 
 1. Log in as `customer@example.com`
-2. Open **Card** or visit `/v/demo-cafe` as a guest, then join
+2. Open **Card** or scan the venue QR → `/v/your-venue-slug`
 3. Claim an unlocked milestone reward from the journey
 
 **Team**
@@ -242,7 +242,7 @@ Additional seeded customers (same password): `maya@example.com`, `alex@example.c
 
 **QR onboarding (guest)**
 
-1. Open `http://localhost:8000/v/demo-cafe` (no login required to preview)
+1. Open the venue public link from QR: `/v/your-venue-slug`
 2. Register as a new customer and confirm auto-join to Demo Cafe
 
 ## Roles
@@ -261,7 +261,7 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 
 ## MVP Scope
 
-- Guest venue landing page (`/v/:slug`) with public reward preview
+- Guest venue landing page (`/v/:slug`) — **main entry after QR scan**
 - Customer registration/login (email + Google) with intent-based redirects
 - Owner 5-step onboarding wizard and dashboard success state
 - Customer loyalty card per venue with QR token

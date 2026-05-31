@@ -53,7 +53,7 @@ git commit -m "Your change"
 - https://flotory.com loads the SPA
 - Owner login: `owner@example.com` / `password`
 - Google sign-in (if `GOOGLE_CLIENT_SECRET` is set on the server)
-- Guest venue landing: `https://flotory.com/v/demo-cafe`
+- Guest venue landing: `https://flotory.com/v/{venue-slug}` (QR entry point)
 
 If migrations were added locally, they run automatically via `deploy.sh` on the server.
 

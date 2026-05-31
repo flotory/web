@@ -45,7 +45,6 @@ const nav = computed(() => {
   if (!isWorkspace.value) {
     return [
       { label: 'Card', to: '/card', icon: '◍' },
-      { label: 'Cafes', to: '/cafes', icon: '⌂' },
       { label: 'Rewards', to: '/rewards', icon: '★' },
     ]
   }
