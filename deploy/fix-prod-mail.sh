@@ -18,9 +18,9 @@ ssh "${SSH_TARGET}" bash -s <<'REMOTE'
 set -euo pipefail
 cd /var/www/web
 
-perl -pi -e 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=team@flotory.com/' .env
-perl -pi -e 's/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME="Flotory"/' .env
-perl -pi -e 's/^MAIL_MAILER=.*/MAIL_MAILER=resend/' .env
+sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS="team@flotory.com"/' .env
+sed -i 's/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME="Flotory"/' .env
+sed -i 's/^MAIL_MAILER=.*/MAIL_MAILER=resend/' .env
 
 echo "Mail env (key redacted):"
 grep -E '^(MAIL_MAILER|MAIL_FROM)=' .env
