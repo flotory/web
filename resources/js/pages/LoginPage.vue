@@ -199,7 +199,15 @@ onMounted(() => {
         </div>
         <div>
           <label class="text-sm font-bold text-slate-600" for="password">Password</label>
-          <input id="password" v-model="password" type="password" autocomplete="current-password" :class="authFieldClass" :placeholder="isStaffInvite ? 'Temporary password from your manager' : undefined">
+          <input id="password" v-model="password" type="password" autocomplete="current-password" :class="authFieldClass">
+          <p class="mt-2 text-right">
+            <RouterLink
+              :to="{ name: 'forgot-password', query: email ? { email } : {} }"
+              class="text-xs font-bold text-slate-600 hover:text-slate-950"
+            >
+              Forgot password?
+            </RouterLink>
+          </p>
         </div>
         <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
         <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
@@ -221,8 +229,7 @@ onMounted(() => {
         </RouterLink>
       </p>
       <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-slate-500">
-        Forgot your password?
-        <span class="block mt-1 text-slate-600">Ask your manager to tap <strong>Reset password</strong> on Team — they will share a new one-time password.</span>
+        No account yet? Your manager can resend the invitation from the Team page.
       </p>
       </AppCard>
     </section>

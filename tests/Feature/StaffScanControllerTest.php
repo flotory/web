@@ -1,0 +1,92 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\CustomerRewardCycle;
+use App\Models\RewardUnlock;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\BuildsLoyaltyData;
+use Tests\TestCase;
+
+class StaffScanControllerTest extends TestCase
+{
+    use BuildsLoyaltyData;
+    use RefreshDatabase;
+
+    public function test_staff_can_add_a_stamp_and_unlock_a_reward(): void
+    {
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $customerUser = $this->createUser(['email' => 'customer@example.com']);
+        $venue = $this->createVenue(['name' => 'Demo Cafe']);
+
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 4]);
+        $reward = $this->createReward($venue, [
+            'title' => 'Free Flat White',
+            'required_stamps' => 5,
+            'sort_order' => 5,
+        ]);
+
+        Sanctum::actingAs($staff);
+
+        $response = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 1,
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('customer.id', $customer->id)
+            ->assertJsonPath('customer.stamps', 0)
+            ->assertJsonPath('cycle_completed', true)
+            ->assertJsonPath('next_reward.id', $reward->id);
+
+        $this->assertDatabaseHas('visits', [
+            'customer_id' => $customer->id,
+            'venue_id' => $venue->id,
+            'created_by' => $staff->id,
+        ]);
+
+        $cycle = CustomerRewardCycle::query()
+            ->where('customer_id', $customer->id)
+            ->orderByDesc('cycle_number')
+            ->firstOrFail();
+
+        $this->assertSame(2, $cycle->cycle_number);
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+        ]);
+    }
+
+    public function test_duplicate_scan_is_rejected_with_a_validation_error(): void
+    {
+        $staff = $this->createUser(['email' => 'scanner@example.com']);
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 1]);
+        $this->createReward($venue);
+
+        Sanctum::actingAs($staff);
+
+        $firstResponse = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 1,
+        ]);
+
+        $firstResponse->assertCreated();
+
+        $secondResponse = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 1,
+        ]);
+
+        $secondResponse
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('qr_token');
+    }
+}

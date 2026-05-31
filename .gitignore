@@ -17,6 +17,7 @@
 /.env.local
 /deploy/config.sh
 /.phpunit.result.cache
+/.phpunit.cache
 /coverage
 npm-debug.log*
 yarn-debug.log*

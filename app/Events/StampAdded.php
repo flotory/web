@@ -10,6 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection as SupportCollection;
 
 class StampAdded implements ShouldBroadcastNow
 {
@@ -23,7 +24,7 @@ class StampAdded implements ShouldBroadcastNow
         public int $addedStamps,
         public ?Reward $nextReward,
         public Collection $availableRewards,
-        public Collection $milestones,
+        public SupportCollection $milestones,
         public int $currentCycle,
         public bool $cycleCompleted,
     ) {

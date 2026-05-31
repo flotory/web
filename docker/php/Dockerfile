@@ -11,6 +11,8 @@ RUN apt-get update \
         libjpeg-dev \
         libwebp-dev \
         default-mysql-client \
+    && pecl install pcov \
+    && docker-php-ext-enable pcov \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pcntl pdo_mysql zip gd \
     && rm -rf /var/lib/apt/lists/*

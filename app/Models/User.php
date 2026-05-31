@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Mail\PasswordResetMail;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
+    use CanResetPassword;
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
@@ -70,5 +75,16 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->is_admin;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $base = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+        $url = $base.'/reset-password?'.http_build_query([
+            'token' => $token,
+            'email' => $this->email,
+        ]);
+
+        Mail::to($this)->send(new PasswordResetMail($url, $this));
     }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -146,7 +146,10 @@ function goBack() {
         </form>
 
         <p v-if="isStaff" class="mt-5 rounded-2xl bg-slate-50 p-3 text-xs font-semibold leading-relaxed text-slate-600 ring-1 ring-slate-200">
-          Forgot your password? Ask your venue owner to send a new staff invitation from the Team page.
+          Forgot your password?
+          <RouterLink to="/forgot-password" class="font-bold text-slate-950 underline">
+            Request a reset link by email
+          </RouterLink>
         </p>
       </AppCard>
     </div>
