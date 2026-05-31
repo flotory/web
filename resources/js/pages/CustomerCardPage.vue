@@ -123,16 +123,13 @@ function triggerStampAnimation(previousStamps: number, addedStamps: number, cycl
   }, 1400)
 }
 
-function triggerRewardCelebration(rewardTitle: string, openWallet = true) {
+function triggerRewardCelebration(rewardTitle: string) {
   celebrationTitle.value = rewardTitle
   showCelebration.value = true
   celebratingReward.value = true
   window.clearTimeout(celebrationTimer)
   celebrationTimer = window.setTimeout(() => {
     showCelebration.value = false
-    if (openWallet && availableRewards.value.length) {
-      selectedReward.value = availableRewards.value[0]
-    }
   }, 1100)
 }
 

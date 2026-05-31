@@ -196,7 +196,7 @@ Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
 
-Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and open the claim wallet.
+Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay. The customer chooses when to redeem via **Redeem unlocked reward** on the card.
 
 ### Key pages
 
