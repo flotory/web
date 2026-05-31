@@ -36,6 +36,7 @@ const customerSearch = ref('')
 const selectedCustomer = ref<CustomerWithVisits | null>(null)
 const message = ref('')
 const loading = ref(false)
+const submitting = ref(false)
 const customerLoading = ref(false)
 const selectedPresetStamps = ref(1)
 const customStamps = ref(1)
@@ -71,6 +72,13 @@ const statusLabel = computed(() => {
   if (status.value === 'error') return message.value || 'Scan failed. Try again.'
   return 'Point camera at customer loyalty QR'
 })
+
+const isBusy = computed(() =>
+  submitting.value ||
+  loading.value ||
+  status.value === 'processing' ||
+  status.value === 'success',
+)
 const scannerVenueId = computed(() => {
   const venueId = route.query.venue_id
 
@@ -84,9 +92,10 @@ function applyScanResponse(response: ScanResponse) {
 
 function handleDetect(codes: Array<{ rawValue: string }>) {
   const value = codes[0]?.rawValue
-  if (!value || loading.value || status.value !== 'idle') return
+  if (!value || isBusy.value || status.value !== 'idle') return
 
   selectedCustomer.value = null
+  customerSearch.value = ''
   token.value = value
   addStamp()
 }
@@ -132,6 +141,10 @@ function clearSelectedCustomer() {
 }
 
 async function addStamp() {
+  if (submitting.value) {
+    return
+  }
+
   const qrToken = selectedCustomer.value?.qr_token || token.value
 
   if (!qrToken || !venue.value) {
@@ -140,6 +153,7 @@ async function addStamp() {
     return
   }
 
+  submitting.value = true
   loading.value = true
   scanning.value = false
   status.value = 'processing'
@@ -155,6 +169,9 @@ async function addStamp() {
     })
 
     applyScanResponse(response)
+    selectedCustomer.value = null
+    customerSearch.value = ''
+    token.value = ''
     status.value = 'success'
     const addedStamps = response.added_stamps ?? selectedStampAmount.value
     const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
@@ -168,6 +185,7 @@ async function addStamp() {
     scheduleReset(2600)
   } finally {
     loading.value = false
+    submitting.value = false
   }
 }
 
@@ -181,9 +199,12 @@ function resetScanner() {
   token.value = ''
   customer.value = null
   selectedCustomer.value = null
+  customerSearch.value = ''
   message.value = ''
   status.value = 'idle'
   scanning.value = true
+  submitting.value = false
+  loading.value = false
 }
 
 onMounted(loadRestaurant)
@@ -242,9 +263,11 @@ watch(scannerVenueId, () => {
                 v-for="amount in [1, 2, 3, 4, 5]"
                 :key="amount"
                 type="button"
+                :disabled="isBusy"
                 :class="[
                   'h-11 rounded-2xl text-sm font-black transition',
                   !useCustomStamps && selectedPresetStamps === amount ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  isBusy ? 'cursor-not-allowed opacity-50' : '',
                 ]"
                 @click="selectPresetAmount(amount)"
               >
@@ -258,7 +281,8 @@ watch(scannerVenueId, () => {
               min="1"
               max="100"
               type="number"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none transition focus:border-slate-400 focus:bg-white"
+              :disabled="isBusy"
+              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none transition focus:border-slate-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Custom stamps"
               @focus="useCustomStamps = true"
             >
@@ -275,7 +299,8 @@ watch(scannerVenueId, () => {
 
             <input
               v-model="customerSearch"
-              class="mt-3 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium outline-none transition focus:border-slate-400"
+              :disabled="isBusy"
+              class="mt-3 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Search by name or email"
             >
 
@@ -294,7 +319,8 @@ watch(scannerVenueId, () => {
                 v-for="item in filteredCustomers"
                 :key="item.id"
                 type="button"
-                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-3 text-left ring-1 ring-slate-200 transition hover:bg-slate-100"
+                :disabled="isBusy"
+                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-3 text-left ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                 @click="selectCustomerForFallback(item)"
               >
                 <span>
@@ -309,8 +335,8 @@ watch(scannerVenueId, () => {
             </div>
           </div>
 
-          <AppButton class="w-full" size="lg" :disabled="loading || !selectedCustomer" @click="addStamp">
-            {{ loading ? 'Adding stamps...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'}` }}
+          <AppButton class="w-full" size="lg" :disabled="isBusy || !selectedCustomer" @click="addStamp">
+            {{ isBusy ? 'Adding stamps...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'}` }}
           </AppButton>
           <AppButton v-if="status === 'error'" class="w-full" variant="secondary" @click="resetScanner">
             Scan another customer
