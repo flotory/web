@@ -69,7 +69,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Owner onboarding | 5 steps; completion redirects to `/dashboard?onboarding=completed` with a success toast, then query param is cleared. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | Loyalty card and claim flow on `/card`. Customer bottom nav: **Card**, **Venues** (`/venues`), **Settings** (`/customer/settings` with account details and logout). No top header on customer routes — tab bar only. Stamp updates use slot animations, not persistent banners. Unlocked rewards stay on the card until the customer taps **Redeem unlocked reward**. The `/rewards` route is owner workspace (milestone CRUD). |
+| Customer primary surface | Loyalty card and claim flow on `/card`. Customer bottom nav: **Card**, **Venues** (`/venues` — browse/search all venues, join or open card), **Settings** (`/customer/settings` with account details and logout). No top header on customer routes — tab bar only. Stamp updates use slot animations, not persistent banners. Unlocked rewards stay on the card until the customer taps **Redeem unlocked reward**. The `/rewards` route is owner workspace (milestone CRUD). |
 
 ## Data and Infrastructure
 

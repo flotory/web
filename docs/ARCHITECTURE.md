@@ -212,7 +212,7 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
 | `/card` | Loyalty card + claim | Customer |
-| `/venues` | Joined venue list | Customer |
+| `/venues` | Browse/search all venues, join or open card | Customer |
 | `/customer/settings` | Account details + logout | Customer |
 | `/invite/:token` | Accept staff invite | Invitee |
 

@@ -111,12 +111,15 @@ class VenueControllerTest extends TestCase
     {
         $user = $this->createUser();
         $venue = $this->createVenue(['name' => 'Discover Cafe']);
+        $deletedVenue = $this->createVenue(['name' => 'Closed Cafe']);
+        $deletedVenue->delete();
         $this->createCustomer($venue, $user);
 
         Sanctum::actingAs($user);
 
         $this->getJson('/api/venues/discover')
             ->assertOk()
+            ->assertJsonCount(1, 'venues')
             ->assertJsonPath('venues.0.name', 'Discover Cafe')
             ->assertJsonPath('venues.0.joined_count', 1);
     }

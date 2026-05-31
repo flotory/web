@@ -57,6 +57,7 @@ class VenueController extends Controller
 
         return response()->json([
             'venues' => Venue::query()
+                ->whereNull('deleted_at')
                 ->withCount([
                     'customers',
                     'visits',
