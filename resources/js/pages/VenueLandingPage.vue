@@ -115,7 +115,7 @@ onMounted(loadLanding)
 
     <template v-else-if="landing">
       <header class="relative w-full">
-        <div class="relative h-36 w-full overflow-hidden sm:h-40">
+        <div class="relative h-20 w-full overflow-hidden sm:h-24">
           <img
             :src="venueCoverUrl(landing.venue)"
             alt=""
@@ -125,19 +125,21 @@ onMounted(loadLanding)
         </div>
       </header>
 
-      <section class="relative mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-md flex-col px-5 pb-8">
-        <div class="relative z-10 -mt-12 flex flex-col items-center text-center">
-          <div class="grid size-24 place-items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/80">
+      <section class="relative mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-md flex-col px-5 pb-8">
+        <div class="relative z-10 -mt-8 flex items-center gap-3">
+          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md ring-1 ring-slate-200/80">
             <img
               :src="venueLogoUrl(landing.venue)"
               :alt="landing.venue.name"
-              class="size-full rounded-full object-cover"
+              class="size-full rounded-[14px] object-cover"
             >
           </div>
-          <h1 class="mt-4 text-2xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
-          <p class="mt-1 text-sm font-medium text-slate-500">
-            {{ isMember ? 'Your loyalty card at this venue' : 'Earn stamps and unlock rewards.' }}
-          </p>
+          <div class="min-w-0 text-left">
+            <h1 class="truncate text-xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
+            <p class="mt-0.5 text-sm font-medium text-slate-500">
+              {{ isMember ? 'Your loyalty card at this venue' : 'Earn stamps and unlock rewards.' }}
+            </p>
+          </div>
         </div>
 
         <div class="mt-5 flex-1">
