@@ -285,4 +285,102 @@ class ImageThumbnailServiceTest extends TestCase
         $this->assertSame('/uploads/reward-milestones/animated-reward-thumb.jpg', $stored['thumb_path']);
         $this->assertFileExists(public_path('uploads/reward-milestones/animated-reward-thumb.jpg'));
     }
+
+    public function test_create_thumbnail_returns_null_when_gd_is_unavailable(): void
+    {
+        $service = new class extends ImageThumbnailService
+        {
+            protected function gdIsAvailable(): bool
+            {
+                return false;
+            }
+        };
+
+        $directory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($directory);
+        $path = "{$directory}/noop.jpg";
+        File::put($path, 'ignored');
+
+        $thumb = $this->invokeCreateThumbnail($service, $path, ImageThumbnailService::THUMB_MAX_REWARD);
+
+        $this->assertNull($thumb);
+    }
+
+    public function test_create_thumbnail_returns_null_for_corrupt_source_file(): void
+    {
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is required for thumbnail generation.');
+        }
+
+        $directory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($directory);
+        $path = "{$directory}/corrupt.jpg";
+        File::put($path, 'not-an-image');
+
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), $path, 320));
+    }
+
+    public function test_create_thumbnail_returns_null_for_unsupported_image_type(): void
+    {
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is required for thumbnail generation.');
+        }
+
+        $directory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($directory);
+        $path = "{$directory}/bitmap.bmp";
+        File::put($path, base64_decode('Qk06AAAAAAAAAD4AAAAoAAAAAQAAAAEAAAABAAEAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAP/A'));
+
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), $path, 320));
+    }
+
+    public function test_create_thumbnail_returns_null_when_jpeg_write_fails(): void
+    {
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is required for thumbnail generation.');
+        }
+
+        $directory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($directory);
+
+        $service = app(ImageThumbnailService::class);
+        $stored = $service->storeWithThumbnail(
+            UploadedFile::fake()->image('source.jpg', 40, 40),
+            $directory,
+            'source.jpg',
+        );
+
+        File::delete(public_path(ltrim($stored['thumb_path'] ?? '', '/')));
+        File::makeDirectory("{$directory}/source-thumb.jpg", 0755, true);
+
+        $this->assertNull($this->invokeCreateThumbnail($service, public_path('uploads/reward-milestones/source.jpg'), 320));
+    }
+
+    public function test_generate_media_thumbnails_command_skips_reward_when_thumb_generation_fails(): void
+    {
+        $venue = $this->createVenue(['slug' => 'bad-image-cafe']);
+        $rewardDirectory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($rewardDirectory);
+        $imagePath = '/uploads/reward-milestones/broken-reward.jpg';
+        File::put(public_path(ltrim($imagePath, '/')), 'broken');
+
+        $this->createReward($venue, [
+            'image' => $imagePath,
+            'image_thumb' => null,
+        ]);
+
+        $this->artisan(GenerateMediaThumbnails::class)
+            ->expectsOutputToContain('Generated 0 thumbnail(s).')
+            ->assertSuccessful();
+
+        $this->assertNull(Reward::query()->first()?->image_thumb);
+    }
+
+    private function invokeCreateThumbnail(ImageThumbnailService $service, string $sourcePath, int $maxSize): ?string
+    {
+        $method = new \ReflectionMethod(ImageThumbnailService::class, 'createThumbnail');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, $sourcePath, $maxSize);
+    }
 }

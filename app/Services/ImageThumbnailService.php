@@ -76,7 +76,7 @@ class ImageThumbnailService
 
     private function createThumbnail(string $sourcePath, int $maxSize): ?string
     {
-        if (! extension_loaded('gd')) {
+        if (! $this->gdIsAvailable()) {
             return null;
         }
 
@@ -110,7 +110,7 @@ class ImageThumbnailService
 
         File::ensureDirectoryExists(dirname($thumbAbsolute));
 
-        if (! imagejpeg($target, $thumbAbsolute, 82)) {
+        if (! @imagejpeg($target, $thumbAbsolute, 82)) {
             imagedestroy($target);
 
             return null;
@@ -137,5 +137,10 @@ class ImageThumbnailService
         $relativeDirectory = Str::after($absoluteDirectory, public_path());
 
         return rtrim($relativeDirectory, '/')."/{$filename}";
+    }
+
+    protected function gdIsAvailable(): bool
+    {
+        return extension_loaded('gd');
     }
 }

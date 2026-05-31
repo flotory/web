@@ -129,4 +129,82 @@ class VenueStaffInvitationServiceTest extends TestCase
 
         $service->findUsableByToken($invitation->token);
     }
+
+    public function test_find_usable_by_token_reports_pending_but_invalid_state(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'pending-invalid-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $service = new class extends VenueStaffInvitationService
+        {
+            public function syncExpiry(VenueStaffInvitation $invitation): void
+            {
+                // Keep stale pending rows as-is for defensive message coverage.
+            }
+        };
+
+        try {
+            $service->findUsableByToken($invitation->token);
+            $this->fail('Expected validation exception for invalid pending invitation.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'This invitation is no longer valid.',
+                $exception->errors()['token'][0],
+            );
+        }
+    }
+
+    public function test_accept_rejects_invitation_that_becomes_invalid_after_lock(): void
+    {
+        $owner = $this->createUser();
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $venue = $this->createVenue();
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'race-accept-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $retrieved = 0;
+        VenueStaffInvitation::retrieved(function (VenueStaffInvitation $model) use ($invitation, &$retrieved): void {
+            if ($model->id !== $invitation->id) {
+                return;
+            }
+
+            $retrieved++;
+
+            if ($retrieved === 1) {
+                $model->forceFill([
+                    'status' => VenueStaffInvitationStatus::Cancelled,
+                ]);
+            }
+        });
+
+        $service = app(VenueStaffInvitationService::class);
+
+        try {
+            $service->accept($invitation, $staff);
+            $this->fail('Expected validation exception after invitation lock.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'This invitation is no longer valid.',
+                $exception->errors()['token'][0],
+            );
+        }
+    }
 }

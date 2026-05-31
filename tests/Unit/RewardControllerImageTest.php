@@ -76,6 +76,22 @@ class RewardControllerImageTest extends TestCase
         $this->invokeStoreRewardImage($file, $venue, null);
     }
 
+    public function test_store_reward_image_rejects_non_writable_directory(): void
+    {
+        $venue = $this->createVenue(['slug' => 'readonly-upload']);
+        $directory = public_path('uploads/reward-milestones');
+        File::ensureDirectoryExists($directory);
+        $file = UploadedFile::fake()->image('reward.jpg', 100, 100);
+
+        File::shouldReceive('ensureDirectoryExists')->andReturnNull();
+        File::shouldReceive('isWritable')->andReturnFalse();
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Upload folder is not writable');
+
+        $this->invokeStoreRewardImage($file, $venue, null);
+    }
+
     private function invokeStoreRewardImage(UploadedFile $file, $venue, ?Reward $reward): array
     {
         $method = new ReflectionMethod(RewardController::class, 'storeRewardImage');

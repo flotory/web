@@ -134,7 +134,7 @@ class RewardController extends Controller
         $directory = public_path('uploads/reward-milestones');
         File::ensureDirectoryExists($directory);
 
-        if (! is_writable($directory)) {
+        if (! File::isWritable($directory)) {
             throw ValidationException::withMessages([
                 'image' => ['Upload folder is not writable on the server. Please contact support.'],
             ]);

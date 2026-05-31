@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\VenueStaffInvitationStatus;
 use App\Mail\StaffInvitationMail;
 use App\Models\VenueStaffInvitation;
+use App\Services\VenueStaffInvitationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
@@ -182,5 +183,34 @@ class StaffInvitationControllerTest extends TestCase
             'venue_id' => $venue->id,
             'user_id' => $wrongUser->id,
         ]);
+    }
+
+    public function test_invitation_show_reports_pending_but_invalid_state(): void
+    {
+        $owner = $this->createUser(['name' => 'Venue Owner']);
+        $venue = $this->createVenue(['name' => 'Demo Cafe', 'slug' => 'demo-cafe']);
+
+        $invitation = VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'staff@example.com',
+            'role' => 'staff',
+            'token' => 'stale-pending-token',
+            'invited_by' => $owner->id,
+            'status' => VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $this->swap(VenueStaffInvitationService::class, new class extends VenueStaffInvitationService
+        {
+            public function syncExpiry(VenueStaffInvitation $invitation): void
+            {
+                // Keep stale pending rows as-is for defensive message coverage.
+            }
+        });
+
+        $this->getJson("/api/invites/{$invitation->token}")
+            ->assertOk()
+            ->assertJsonPath('valid', false)
+            ->assertJsonPath('message', 'This invitation is no longer valid.');
     }
 }

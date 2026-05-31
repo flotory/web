@@ -113,12 +113,6 @@ class LoyaltyStampService
                 ]);
             }
 
-            if ($unlock->claimed_at) {
-                throw ValidationException::withMessages([
-                    'reward' => 'This milestone reward was already claimed this cycle.',
-                ]);
-            }
-
             $unlock->forceFill([
                 'claimed_at' => now(),
                 'claimed_by' => $redeemer->id,

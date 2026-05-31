@@ -38,7 +38,7 @@ class StaffInvitationController extends Controller
                 VenueStaffInvitationStatus::Accepted => 'This invitation has already been accepted.',
                 VenueStaffInvitationStatus::Cancelled => 'This invitation was cancelled.',
                 VenueStaffInvitationStatus::Expired => 'This invitation has expired. Ask the venue owner to resend it.',
-                default => 'This invitation is no longer valid.',
+                VenueStaffInvitationStatus::Pending => 'This invitation is no longer valid.',
             };
         }
 
