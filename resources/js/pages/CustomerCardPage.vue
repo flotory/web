@@ -224,19 +224,13 @@ watch(
 <template>
   <AppShell>
     <div class="relative mx-auto w-full max-w-md">
-      <div
-        class="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-40"
-        aria-hidden="true"
-        style="background-image: radial-gradient(circle at 1px 1px, rgb(203 213 225 / 0.45) 1px, transparent 0); background-size: 18px 18px;"
-      />
-
-      <div v-if="loading" class="relative z-10 py-8">
+      <div v-if="loading" class="px-4 py-8">
         <AppCard>
           <p class="text-center text-sm font-semibold text-slate-500">Loading your card...</p>
         </AppCard>
       </div>
 
-      <div v-else-if="error" class="relative z-10 py-8">
+      <div v-else-if="error" class="px-4 py-8">
         <AppCard>
           <p class="text-center text-sm font-semibold text-red-600">{{ error }}</p>
           <AppButton class="mt-4 w-full" @click="loadCard">Try again</AppButton>
@@ -244,14 +238,14 @@ watch(
       </div>
 
       <template v-else-if="card">
-        <header v-if="card.venue" class="relative z-10 -mx-4 sm:mx-0">
-          <div class="relative h-20 w-full overflow-hidden sm:h-24 sm:rounded-2xl">
+        <header v-if="card.venue" class="relative z-10">
+          <div class="relative h-24 w-full overflow-hidden sm:h-28">
             <img :src="venueCoverUrl(card.venue)" alt="" class="size-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-b from-slate-950/15 via-slate-950/5 to-slate-100" />
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/5 to-slate-100" />
           </div>
         </header>
 
-        <section class="relative z-10 flex flex-col">
+        <section class="relative z-10 flex flex-col px-4">
           <div v-if="card.venue" class="-mt-8 flex items-center gap-3 px-1">
             <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md ring-1 ring-slate-200/80">
               <img :src="venueLogoUrl(card.venue)" :alt="card.venue.name" class="size-full rounded-[14px] object-cover">

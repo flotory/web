@@ -55,7 +55,7 @@ const router = createRouter({
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/card', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false } },
+    { path: '/card', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/venues', name: 'customer-venues', component: CustomerVenuesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/customer/settings', name: 'customer-settings', component: CustomerSettingsPage, meta: { requiresAuth: true, workspace: false } },
   ],

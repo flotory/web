@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flotory-v5'
+const CACHE_NAME = 'flotory-v6'
 const APP_SHELL = [
   '/dashboard',
   '/card',
@@ -9,6 +9,20 @@ const APP_SHELL = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ]
+
+function isCacheableRequest(request) {
+  if (request.method !== 'GET') {
+    return false
+  }
+
+  const url = new URL(request.url)
+
+  if (url.pathname.startsWith('/api')) {
+    return false
+  }
+
+  return url.origin === self.location.origin && (url.protocol === 'http:' || url.protocol === 'https:')
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)))
@@ -27,17 +41,20 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request
 
-  if (request.method !== 'GET' || new URL(request.url).pathname.startsWith('/api')) {
+  if (!isCacheableRequest(request)) {
     return
   }
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const copy = response.clone()
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy))
+        if (response.ok) {
+          const copy = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined)
+        }
+
         return response
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match('/'))),
+      .catch(() => caches.match(request).then((cached) => cached ?? caches.match('/card'))),
   )
 })

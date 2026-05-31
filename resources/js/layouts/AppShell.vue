@@ -73,6 +73,8 @@ const nav = computed(() => {
 const isNavActive = (item: { to: string; routeName?: string }) =>
   route.path === item.to || (item.routeName ? route.name === item.routeName : false)
 
+const isFlushPage = computed(() => route.meta.flush === true)
+
 watch(
   () => auth.isAuthenticated,
   (authenticated) => {
@@ -137,7 +139,16 @@ async function logout() {
         </div>
       </header>
 
-      <main :class="['mx-auto max-w-6xl px-4 py-6 md:py-10', isWorkspace ? 'pb-36 md:pb-10' : 'pb-28']">
+      <main
+        :class="[
+          'mx-auto max-w-6xl',
+          isFlushPage
+            ? 'px-0 pt-0 pb-28'
+            : isWorkspace
+              ? 'px-4 py-6 pb-36 md:py-10 md:pb-10'
+              : 'px-4 py-4 pb-28',
+        ]"
+      >
         <slot />
       </main>
 
