@@ -4,8 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\CustomerRewardCycle;
 use App\Models\RewardUnlock;
+use Illuminate\Contracts\Broadcasting\Broadcaster;
+use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
+use RuntimeException;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
 
@@ -154,6 +158,39 @@ class StaffScanControllerTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('qr_token');
+    }
+
+    public function test_add_stamp_succeeds_when_realtime_broadcast_fails(): void
+    {
+        config(['broadcasting.default' => 'reverb']);
+
+        $broadcaster = Mockery::mock(Broadcaster::class);
+        $broadcaster->shouldReceive('broadcast')->andThrow(new RuntimeException('Reverb unavailable'));
+
+        $factory = Mockery::mock(BroadcastFactory::class);
+        $factory->shouldReceive('connection')->andReturn($broadcaster);
+        $this->app->instance(BroadcastFactory::class, $factory);
+
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 1]);
+        $this->createReward($venue);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 1,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('customer.stamps', 2);
+
+        $this->assertDatabaseHas('visits', [
+            'customer_id' => $customer->id,
+            'created_by' => $staff->id,
+        ]);
     }
 
     public function test_add_stamp_rejects_qr_token_from_another_venue(): void

@@ -20,8 +20,9 @@ export function getEcho(token: string) {
   echo?.disconnect()
   activeToken = token
 
-  const scheme = import.meta.env.VITE_REVERB_SCHEME || 'http'
-  const port = Number(import.meta.env.VITE_REVERB_PORT || 8080)
+  const scheme = import.meta.env.VITE_REVERB_SCHEME || window.location.protocol.replace(':', '')
+  const defaultPort = scheme === 'https' ? 443 : 80
+  const port = Number(import.meta.env.VITE_REVERB_PORT || defaultPort)
   const configuredHost = import.meta.env.VITE_REVERB_HOST
   const wsHost =
     configuredHost && !['127.0.0.1', 'localhost'].includes(configuredHost)

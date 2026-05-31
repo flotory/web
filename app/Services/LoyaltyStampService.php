@@ -11,7 +11,9 @@ use App\Models\User;
 use Carbon\CarbonInterval;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class LoyaltyStampService
 {
@@ -66,16 +68,23 @@ class LoyaltyStampService
             ];
         });
 
-        StampAdded::dispatch(
-            $result['customer'],
-            $result['previous_stamps'],
-            $result['added_stamps'],
-            $result['next_reward'],
-            $result['available_rewards'],
-            $result['milestones'],
-            $result['current_cycle'],
-            $result['cycle_completed'],
-        );
+        try {
+            StampAdded::dispatch(
+                $result['customer'],
+                $result['previous_stamps'],
+                $result['added_stamps'],
+                $result['next_reward'],
+                $result['available_rewards'],
+                $result['milestones'],
+                $result['current_cycle'],
+                $result['cycle_completed'],
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Stamp added but realtime broadcast failed.', [
+                'customer_id' => $result['customer']->id,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
 
         return $result;
     }

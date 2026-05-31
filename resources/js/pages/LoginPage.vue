@@ -117,6 +117,10 @@ onMounted(() => {
     email.value = route.query.email
   }
 
+  if (route.query.error === 'google_auth_failed') {
+    error.value = 'Google sign-in could not be completed. Try again, or use email and password below.'
+  }
+
   if (venueSlug.value) {
     fetchVenueLanding(venueSlug.value)
       .then((payload) => {

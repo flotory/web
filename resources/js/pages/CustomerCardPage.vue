@@ -4,12 +4,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
-import ProgressStamps from '@/components/loyalty/ProgressStamps.vue'
+import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
-import { rewardImageUrl } from '@/lib/rewardMedia'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import { useRealtimeStore } from '@/stores/realtime'
@@ -33,7 +32,6 @@ const availableRewards = ref<Reward[]>([])
 const journey = ref<RewardJourney | null>(null)
 const recentVisits = ref<Visit[]>([])
 const successMessage = ref('')
-const highlightedStamp = ref<number | null>(null)
 const selectedReward = ref<Reward | null>(null)
 let refreshTimer: number | undefined
 
@@ -45,9 +43,16 @@ interface CardResponse {
   recent_visits: Visit[]
 }
 
-const displayReward = computed(() => availableRewards.value[0] ?? nextReward.value)
-const requiredStamps = computed(() => displayReward.value?.required_stamps ?? 5)
-const remainingStamps = computed(() => Math.max(requiredStamps.value - (card.value?.stamps ?? 0), 0))
+const previewMilestones = computed(() =>
+  (journey.value?.milestones ?? []).map((milestone) => ({
+    id: milestone.id,
+    title: milestone.title,
+    description: milestone.description ?? null,
+    image: milestone.image ?? null,
+    image_thumb: milestone.image_thumb ?? null,
+    required_stamps: milestone.required_stamps,
+  })),
+)
 const selectedVenueId = computed(() => {
   const venueId = route.query.venue_id
   return typeof venueId === 'string' ? venueId : null
@@ -98,12 +103,7 @@ function applyRealtimeStamp(payload: StampAddedPayload) {
       next_milestone: payload.next_reward,
     }
   }
-  highlightedStamp.value = payload.stamps
   successMessage.value = payload.message
-
-  window.setTimeout(() => {
-    highlightedStamp.value = null
-  }, 1800)
 }
 
 function refreshIfVisible() {
@@ -158,97 +158,133 @@ watch(
 
 <template>
   <AppShell>
-    <div class="mx-auto max-w-md">
-      <div v-if="card?.venue" class="relative -mx-1 overflow-hidden rounded-3xl ring-1 ring-slate-200">
-        <img :src="venueCoverUrl(card.venue)" alt="" class="h-36 w-full object-cover">
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-transparent" />
-        <div class="relative flex items-end gap-4 p-4">
-          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg ring-2 ring-white">
-            <img :src="venueLogoUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
-          </div>
-          <div class="pb-1 text-white">
-            <AppBadge tone="amber">Customer loyalty card</AppBadge>
-            <h1 class="mt-2 text-3xl font-black tracking-tight">{{ card.venue.name }}</h1>
-          </div>
-        </div>
+    <div class="relative mx-auto w-full max-w-md">
+      <div
+        class="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-40"
+        aria-hidden="true"
+        style="background-image: radial-gradient(circle at 1px 1px, rgb(203 213 225 / 0.45) 1px, transparent 0); background-size: 18px 18px;"
+      />
+
+      <div v-if="loading" class="relative z-10 py-8">
+        <AppCard>
+          <p class="text-center text-sm font-semibold text-slate-500">Loading your card...</p>
+        </AppCard>
       </div>
-      <div v-else>
-        <AppBadge tone="amber">Customer loyalty card</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Your loyalty card</h1>
+
+      <div v-else-if="error" class="relative z-10 py-8">
+        <AppCard>
+          <p class="text-center text-sm font-semibold text-red-600">{{ error }}</p>
+          <AppButton class="mt-4 w-full" @click="loadCard">Try again</AppButton>
+        </AppCard>
       </div>
-      <p class="mt-3 text-slate-500">Show this QR to staff after ordering.</p>
-
-      <AppCard v-if="successMessage" wrapper-class="mt-6 border-emerald-200 bg-emerald-50">
-        <p class="text-sm font-black text-emerald-700">{{ successMessage }}</p>
-      </AppCard>
-
-      <AppCard v-if="loading" wrapper-class="mt-6">
-        <p class="text-sm font-bold text-slate-500">Loading your card...</p>
-      </AppCard>
-
-      <AppCard v-else-if="error" wrapper-class="mt-6">
-        <p class="text-sm font-bold text-red-600">{{ error }}</p>
-        <AppButton class="mt-4" @click="loadCard">Retry</AppButton>
-      </AppCard>
 
       <template v-else-if="card">
-      <AppCard wrapper-class="mt-6 bg-gradient-to-br from-slate-950 to-blue-950 p-6 text-white">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-sm font-bold text-blue-100">Current progress</p>
-            <p class="mt-1 text-4xl font-black">{{ card.stamps }} / {{ requiredStamps }}</p>
+        <header v-if="card.venue" class="relative z-10 -mx-4 sm:mx-0">
+          <div class="relative h-36 w-full overflow-hidden sm:h-40 sm:rounded-3xl">
+            <img :src="venueCoverUrl(card.venue)" alt="" class="size-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-950/15 via-slate-950/5 to-slate-100" />
           </div>
-          <AppBadge tone="blue">
-            {{ remainingStamps === 0 ? 'Unlocked' : `${remainingStamps} more to unlock` }}
-          </AppBadge>
-        </div>
-        <div class="mt-8 rounded-[1.5rem] bg-white p-5">
-          <ProgressStamps :stamps="card.stamps" :required="requiredStamps" :highlighted-stamp="highlightedStamp" />
-        </div>
-        <div v-if="displayReward" class="mt-5 overflow-hidden rounded-2xl ring-1 ring-white/15">
-          <img :src="rewardImageUrl(displayReward)" :alt="displayReward.title" class="h-28 w-full object-cover">
-          <div class="bg-white/10 px-4 py-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your next reward</p>
-            <p class="mt-1 text-sm font-bold text-blue-100">
-              <span v-if="remainingStamps === 0">Ready to claim</span>
-              <span v-else>{{ remainingStamps }} more {{ remainingStamps === 1 ? 'stamp' : 'stamps' }} to unlock</span>
-            </p>
-            <p class="mt-1 text-base font-black text-white">{{ displayReward.title }}</p>
-          </div>
-        </div>
-        <div v-if="journey?.milestones?.length" class="mt-4 space-y-2">
-          <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your rewards</p>
-          <div
-            v-for="milestone in journey.milestones.slice(0, 4)"
-            :key="milestone.id"
-            class="flex items-center gap-3 rounded-xl bg-white/10 p-2 ring-1 ring-white/10"
-          >
-            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="size-12 shrink-0 rounded-lg object-cover">
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-bold text-white">{{ milestone.required_stamps }} stamps → {{ milestone.title }}</p>
+        </header>
+
+        <section class="relative z-10 flex flex-col">
+          <div v-if="card.venue" class="-mt-12 flex flex-col items-center text-center">
+            <div class="grid size-24 place-items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/80">
+              <img :src="venueLogoUrl(card.venue)" :alt="card.venue.name" class="size-full rounded-full object-cover">
             </div>
-            <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
-              {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
-            </AppBadge>
+            <AppBadge tone="amber" class="mt-4">Your loyalty card</AppBadge>
+            <h1 class="mt-2 text-2xl font-black tracking-tight text-slate-950">{{ card.venue.name }}</h1>
+            <p class="mt-1 text-sm font-medium text-slate-500">Earn stamps and unlock rewards.</p>
           </div>
-        </div>
-        <AppButton
-          v-if="availableRewards.length"
-          class="mt-5 w-full"
-          variant="secondary"
-          @click="openRewardWallet"
-        >
-          Redeem unlocked reward
-        </AppButton>
-      </AppCard>
 
-      <AppCard wrapper-class="mt-4 text-center">
-        <div class="mx-auto inline-flex rounded-[2rem] bg-white p-4 ring-1 ring-slate-200">
-          <QrcodeVue :value="card.qr_token" :size="220" level="M" />
-        </div>
-        <p class="mt-4 text-sm font-medium text-slate-500">Personal loyalty QR</p>
-      </AppCard>
+          <div v-else class="text-center">
+            <AppBadge tone="amber">Your loyalty card</AppBadge>
+            <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-950">Your loyalty card</h1>
+            <p class="mt-1 text-sm font-medium text-slate-500">Earn stamps and unlock rewards.</p>
+          </div>
 
+          <p
+            v-if="successMessage"
+            class="mt-5 rounded-2xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100"
+          >
+            {{ successMessage }}
+          </p>
+
+          <AppCard
+            wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
+            :padded="false"
+          >
+            <h2 class="text-xl font-black text-slate-950 sm:text-2xl">Show this to staff</h2>
+            <p class="mt-1 text-sm text-slate-500">
+              After you order, staff scan this QR to add a stamp to your card.
+            </p>
+
+            <div class="mt-5 grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
+              <div class="mx-auto rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                <QrcodeVue
+                  :value="card.qr_token"
+                  :size="200"
+                  level="M"
+                  render-as="canvas"
+                  :margin="2"
+                />
+              </div>
+              <div class="text-center sm:text-left">
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">How it works</p>
+                <ol class="mt-3 space-y-2 text-sm text-slate-600">
+                  <li class="flex gap-2">
+                    <span class="font-bold text-slate-900">1.</span>
+                    <span>Place your order at the counter or table.</span>
+                  </li>
+                  <li class="flex gap-2">
+                    <span class="font-bold text-slate-900">2.</span>
+                    <span>Show this screen to staff — they scan the QR.</span>
+                  </li>
+                  <li class="flex gap-2">
+                    <span class="font-bold text-slate-900">3.</span>
+                    <span>Your stamp count updates right here.</span>
+                  </li>
+                </ol>
+                <p class="mt-3 text-xs font-semibold text-slate-400">Keep brightness up for easy scanning.</p>
+              </div>
+            </div>
+          </AppCard>
+
+          <div class="mt-5">
+            <VenueLandingPreview :milestones="previewMilestones" :stamps="card.stamps" />
+
+            <p
+              v-if="!previewMilestones.length"
+              class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500"
+            >
+              Rewards are being set up. Your next stamp is on the way.
+            </p>
+          </div>
+
+          <div v-if="journey?.milestones?.length" class="mt-4 space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Reward status</p>
+            <div
+              v-for="milestone in journey.milestones.slice(0, 4)"
+              :key="milestone.id"
+              class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm"
+            >
+              <p class="min-w-0 truncate text-sm font-bold text-slate-800">
+                {{ milestone.required_stamps }} stamps → {{ milestone.title }}
+              </p>
+              <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
+                {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
+              </AppBadge>
+            </div>
+          </div>
+
+          <AppButton
+            v-if="availableRewards.length"
+            class="mt-6 w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
+            size="lg"
+            @click="openRewardWallet"
+          >
+            Redeem unlocked reward
+          </AppButton>
+        </section>
       </template>
     </div>
 
