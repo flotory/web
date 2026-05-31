@@ -91,7 +91,7 @@ watch(upcomingMilestones, async () => {
     <article class="rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)]">
       <div class="flex items-start gap-4">
         <div class="shrink-0">
-          <p class="text-4xl font-black leading-none tracking-tight text-slate-950" :class="animatingSlots?.length && 'animate-stamp-count'">
+          <p class="text-4xl font-black leading-none tracking-tight text-slate-950" :class="animatingSlots?.length ? 'animate-stamp-count' : undefined">
             {{ stampCount }}<span class="text-2xl text-slate-400">/{{ maxStamps }}</span>
           </p>
           <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">stamps</p>
