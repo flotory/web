@@ -76,7 +76,40 @@ ssh root@YOUR_IP 'cd /var/www/web && ./deploy/pull-and-deploy.sh'
 
 ## Local Setup
 
+Portable defaults use **`localhost` only** — same on every Mac/PC. Do not put your Wi‑Fi IP in `.env` unless you are doing optional phone testing (Google sign-in will not work on a LAN IP).
+
+### New machine (or second computer)
+
+```bash
+git clone git@github.com:flotory/web.git
+cd web
+cp .env.secrets.example .env.secrets   # once — paste GOOGLE_CLIENT_SECRET from your password manager
+./scripts/setup-local.sh
+docker compose up --build
+```
+
+Open **http://localhost:8000** on that computer.
+
+| File | Committed? | Purpose |
+|------|------------|---------|
+| `.env.example` | Yes | Shared template (`localhost`, same on all machines) |
+| `.env.secrets` | No | `GOOGLE_CLIENT_SECRET` — copy manually to each computer |
+| `.env` | No | Generated locally by `setup-local.sh` |
+
+**Sync code:** `git pull` / `git push` on `main`  
+**Never commit:** `.env`, `.env.secrets`
+
+Each machine can have its own `APP_KEY` (Docker generates one on first boot). Local databases are separate per machine.
+
 ### Docker (recommended)
+
+```bash
+cp .env.secrets.example .env.secrets   # add secret, then:
+./scripts/setup-local.sh
+docker compose up --build
+```
+
+Or manually:
 
 ```bash
 cp .env.example .env
@@ -155,6 +188,8 @@ OAuth preserves onboarding intent:
 Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
 
 ## Phone Testing
+
+Google sign-in **does not work** on a LAN IP (`192.168.x.x`). Use **email/password** on your phone, or stay on `localhost` on your laptop.
 
 Build assets first, then open the Laravel app from your phone using your Mac's local network IP.
 

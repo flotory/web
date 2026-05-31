@@ -84,7 +84,7 @@ class VenueController extends Controller
             ->where('reward_type', 'milestone')
             ->orderBy('required_stamps')
             ->orderBy('sort_order')
-            ->limit(3)
+            ->limit(6)
             ->get(['id', 'title', 'description', 'image', 'image_thumb', 'required_stamps']);
 
         return response()->json([

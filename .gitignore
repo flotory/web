@@ -13,6 +13,8 @@
 !/public/uploads/venue-covers/.gitkeep
 /.env
 /.env.backup
+/.env.secrets
+/.env.local
 /deploy/config.sh
 /.phpunit.result.cache
 /coverage

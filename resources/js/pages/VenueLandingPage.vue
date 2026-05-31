@@ -2,19 +2,16 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import {
   buildAuthRedirectWithVenue,
   buildRegisterRedirectWithVenue,
-  buildVenueLandingUrl,
   completeVenueOnboarding,
   fetchVenueLanding,
 } from '@/lib/onboarding'
-import { rewardImageUrl } from '@/lib/rewardMedia'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -49,7 +46,7 @@ async function handleJoin() {
   if (!landing.value) return
 
   if (!auth.isAuthenticated) {
-    await router.push(buildAuthRedirectWithVenue(slug.value, joinNextPath.value))
+    await router.push(buildRegisterRedirectWithVenue(slug.value, joinNextPath.value))
     return
   }
 
@@ -79,60 +76,58 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white">
-    <section class="mx-auto flex min-h-screen w-full max-w-lg flex-col px-5 py-8">
-      <div v-if="loading" class="flex flex-1 flex-col justify-center">
-        <p class="text-center text-sm font-semibold text-white/70">Loading venue experience...</p>
-      </div>
+  <main class="min-h-screen bg-[#f7f8fb] text-slate-900">
+    <div
+      class="pointer-events-none fixed inset-0 opacity-40"
+      aria-hidden="true"
+      style="background-image: radial-gradient(circle at 1px 1px, rgb(203 213 225 / 0.45) 1px, transparent 0); background-size: 18px 18px;"
+    />
 
-      <div v-else-if="error" class="flex flex-1 flex-col justify-center gap-4 text-center">
-        <p class="text-sm font-semibold text-red-200">{{ error }}</p>
-        <AppButton variant="secondary" @click="loadLanding">Try again</AppButton>
-      </div>
+    <div v-if="loading" class="flex min-h-screen flex-col justify-center px-5">
+      <p class="text-center text-sm font-semibold text-slate-500">Loading rewards...</p>
+    </div>
 
-      <template v-else-if="landing">
-        <div class="flex items-center justify-between gap-3">
-          <FlotoryLogo inverted size="sm" :show-wordmark="false" />
-          <div class="text-right">
-            <p class="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">Flotory rewards</p>
-            <p class="text-xs font-semibold text-white/60">{{ landing.venue.name }}</p>
-          </div>
-        </div>
+    <div v-else-if="error" class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-5 text-center">
+      <p class="text-sm font-semibold text-red-600">{{ error }}</p>
+      <AppButton variant="secondary" @click="loadLanding">Try again</AppButton>
+    </div>
 
-        <div class="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur">
-          <img :src="venueCoverUrl(landing.venue)" alt="" class="h-40 w-full object-cover">
-          <div class="flex items-center gap-4 p-5">
-            <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
-              <img :src="venueLogoUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
-            </div>
-            <div>
-              <h1 class="text-3xl font-black tracking-tight">{{ landing.venue.name }}</h1>
-              <p class="mt-2 text-sm text-white/70">Join & collect rewards</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-3">
-          <article
-            v-for="milestone in milestones"
-            :key="milestone.id"
-            class="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+    <template v-else-if="landing">
+      <header class="relative w-full">
+        <div class="relative h-48 w-full overflow-hidden sm:h-52">
+          <img
+            :src="venueCoverUrl(landing.venue)"
+            alt=""
+            class="size-full object-cover"
           >
-            <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="h-28 w-full object-cover">
-            <div class="p-4">
-              <p class="text-xs font-bold uppercase tracking-wide text-emerald-300">{{ milestone.required_stamps }} stamps</p>
-              <p class="mt-1 text-lg font-black">{{ milestone.title }}</p>
-              <p v-if="milestone.description" class="mt-1 text-sm text-white/65">{{ milestone.description }}</p>
-            </div>
-          </article>
-          <p v-if="!milestones.length" class="rounded-2xl border border-dashed border-white/20 p-4 text-sm text-white/60">
-            Milestones are being prepared. Join now and your first reward unlocks soon.
+          <div class="absolute inset-0 bg-gradient-to-b from-slate-950/15 via-slate-950/5 to-[#f7f8fb]" />
+        </div>
+      </header>
+
+      <section class="relative mx-auto flex min-h-[calc(100vh-12rem)] w-full max-w-md flex-col px-5 pb-8">
+        <div class="relative z-10 -mt-14 flex flex-col items-center text-center">
+          <div class="grid size-24 place-items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/80">
+            <img
+              :src="venueLogoUrl(landing.venue)"
+              :alt="landing.venue.name"
+              class="size-full rounded-full object-cover"
+            >
+          </div>
+          <h1 class="mt-4 text-2xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
+          <p class="mt-1 text-sm font-medium text-slate-500">Collect stamps. Unlock rewards.</p>
+        </div>
+
+        <div class="mt-5 flex-1">
+          <VenueLandingPreview :milestones="milestones" />
+
+          <p v-if="!milestones.length" class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500">
+            Rewards are being set up. Join now and your first stamp is on the way.
           </p>
         </div>
 
-        <div class="mt-8 space-y-3">
+        <div class="sticky bottom-0 mt-6 space-y-3 bg-gradient-to-t from-[#f7f8fb] via-[#f7f8fb] to-transparent pb-2 pt-4">
           <AsyncActionButton
-            class="w-full"
+            class="w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
             block
             size="lg"
             idle-label="Join & collect rewards"
@@ -143,19 +138,19 @@ onMounted(async () => {
             :error="joinAction.error"
             @click="handleJoin"
           />
-          <AppButton
-            variant="ghost"
-            class="w-full border border-white/20 text-white hover:bg-white/10"
-            @click="router.push(buildRegisterRedirectWithVenue(slug, joinNextPath))"
-          >
-            Create account
-          </AppButton>
-        </div>
 
-        <p class="mt-4 text-center text-xs text-white/50">
-          {{ buildVenueLandingUrl(slug) }}
-        </p>
-      </template>
-    </section>
+          <p v-if="!auth.isAuthenticated" class="text-center text-sm text-slate-500">
+            Already a member?
+            <button
+              type="button"
+              class="font-bold text-slate-950 underline-offset-2 hover:underline"
+              @click="router.push(buildAuthRedirectWithVenue(slug, joinNextPath))"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
+      </section>
+    </template>
   </main>
 </template>
