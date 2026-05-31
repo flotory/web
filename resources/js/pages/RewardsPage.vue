@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Gift, Store } from '@lucide/vue'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -6,9 +7,11 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { rewardImageUrl, rewardHasCustomImage, rewardThumbUrl } from '@/lib/rewardMedia'
 import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
 import { useAuthStore } from '@/stores/auth'
@@ -251,9 +254,9 @@ async function loadRewards(silent = false) {
     rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
 
     applyRouteEditingIntent()
-  } catch {
+  } catch (exception) {
     if (!silent) {
-      error.value = 'Could not load rewards.'
+      error.value = apiErrorMessage(exception, 'Could not load rewards.')
     }
   } finally {
     if (!silent) {
@@ -561,12 +564,25 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       </section>
 
       <AppCard v-if="canEditRewards && needsVenuePick" wrapper-class="mt-4">
-        <p class="text-sm font-bold text-slate-500">Select a specific venue in the sidebar filter to manage milestones.</p>
+        <EmptyState
+          compact
+          :icon="Store"
+          title="Select a venue"
+          description="Pick a specific venue in the sidebar filter to manage milestones."
+        />
       </AppCard>
 
       <AppCard v-else-if="loading" wrapper-class="mt-4">
-        <p class="text-sm font-bold text-slate-500">Loading your rewards journey...</p>
+        <EmptyState compact title="Loading your rewards journey…" />
       </AppCard>
+
+      <ErrorState
+        v-else-if="error && !formOpen"
+        class="mt-4"
+        :message="error"
+        :show-retry="!sortedOwnerRewards.length"
+        @retry="loadRewards"
+      />
 
       <AppCard v-else-if="error" wrapper-class="mt-4 border-red-200 bg-red-50">
         <p class="text-sm font-bold text-red-600">{{ error }}</p>
@@ -723,7 +739,9 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         v-if="!loading && !sortedOwnerRewards.length && !needsVenuePick && canEditRewards"
         class="mt-6 overflow-hidden rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-8 text-center shadow-inner"
       >
-        <p class="text-4xl">🎁</p>
+        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200/80">
+          <Gift class="size-7" :stroke-width="1.75" aria-hidden="true" />
+        </div>
         <h2 class="mt-4 text-3xl font-black text-slate-950">Create your first reward</h2>
         <p class="mx-auto mt-2 max-w-lg text-sm text-slate-600">
           Customers return more often when rewards feel achievable. Start with a 5-stamp win — guests love seeing progress move.

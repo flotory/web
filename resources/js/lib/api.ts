@@ -15,6 +15,10 @@ export class ApiError extends Error {
   }
 }
 
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback
+}
+
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const auth = useAuthStore()
   const headers = new Headers(options.headers)

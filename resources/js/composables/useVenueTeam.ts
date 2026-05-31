@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 
-import { api, ApiError } from '@/lib/api'
+import { api, apiErrorMessage } from '@/lib/api'
 import type { StaffInvitation, TeamMember } from '@/lib/team'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
@@ -52,7 +52,7 @@ export function useVenueTeam() {
       pendingInvitations.value = response.pending_invitations
       invitationHistory.value = response.invitation_history
     } catch (exception) {
-      error.value = exception instanceof ApiError ? exception.message : 'Could not load team.'
+      error.value = apiErrorMessage(exception, 'Could not load team.')
     } finally {
       loading.value = false
     }

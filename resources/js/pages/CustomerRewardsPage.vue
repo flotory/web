@@ -1,12 +1,15 @@
 <script setup lang="ts">
+import { Gift } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
+import { apiErrorMessage } from '@/lib/api'
 import { rewardImageUrl, rewardThumbUrl } from '@/lib/rewardMedia'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useCustomerRewardsStore, type CustomerRewardWalletItem } from '@/stores/customerRewards'
@@ -30,8 +33,8 @@ async function loadRewards() {
 
   try {
     await rewardsStore.refresh()
-  } catch {
-    error.value = 'Could not load your rewards. Please try again.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load your rewards. Please try again.')
   } finally {
     loading.value = false
   }
@@ -68,31 +71,27 @@ onMounted(loadRewards)
       </p>
 
       <div v-if="loading" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-slate-500">Loading rewards...</p>
-        </AppCard>
+        <EmptyState compact title="Loading rewards…" />
       </div>
 
-      <div v-else-if="error" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-red-600">{{ error }}</p>
-          <AppButton class="mt-4 w-full" @click="loadRewards">Try again</AppButton>
-        </AppCard>
-      </div>
+      <ErrorState
+        v-else-if="error"
+        class="mt-6"
+        :message="error"
+        @retry="loadRewards"
+      />
 
-      <div v-else-if="!rewardsStore.items.length" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm text-slate-500">
-            No rewards yet. Collect stamps on your card to unlock milestones.
-          </p>
-          <RouterLink
-            to="/card"
-            class="mt-4 flex w-full items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white"
-          >
-            Open loyalty card
-          </RouterLink>
-        </AppCard>
-      </div>
+      <EmptyState
+        v-else-if="!rewardsStore.items.length"
+        class="mt-6"
+        :icon="Gift"
+        title="No rewards yet"
+        description="Collect stamps on your card to unlock milestones. Unlocked rewards appear here until you redeem them."
+      >
+        <RouterLink to="/card">
+          <AppButton>Open loyalty card</AppButton>
+        </RouterLink>
+      </EmptyState>
 
       <ul v-else class="mt-6 space-y-3">
         <li

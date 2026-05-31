@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { CreditCard } from '@lucide/vue'
 import QrcodeVue from 'qrcode.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
@@ -9,7 +10,9 @@ import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import { api } from '@/lib/api'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import { api, apiErrorMessage } from '@/lib/api'
 import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
@@ -131,9 +134,9 @@ async function loadCard(silent = false) {
       applyStampUpdate(pendingStamp)
       realtime.clearLatestStamp()
     }
-  } catch {
+  } catch (exception) {
     if (!silent) {
-      error.value = 'Could not load your loyalty card. Please try again.'
+      error.value = apiErrorMessage(exception, 'Could not load your loyalty card. Please try again.')
     }
   } finally {
     if (!silent) {
@@ -374,19 +377,26 @@ watch(
   <AppShell>
     <div class="relative mx-auto w-full max-w-md">
       <div v-if="loading" class="px-4 py-8">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-slate-500">Loading your card...</p>
-        </AppCard>
+        <EmptyState compact title="Loading your card…" />
       </div>
 
       <div v-else-if="error" class="px-4 py-8">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-red-600">{{ error }}</p>
-          <AppButton class="mt-4 w-full" @click="loadCard">Try again</AppButton>
-        </AppCard>
+        <ErrorState :message="error" @retry="loadCard()" />
       </div>
 
-      <template v-else-if="card">
+      <div v-else-if="!card" class="px-4 py-8">
+        <EmptyState
+          :icon="CreditCard"
+          title="No loyalty card yet"
+          description="Join a venue to start collecting stamps and unlocking rewards."
+        >
+          <RouterLink to="/customer/venues">
+            <AppButton>Browse venues</AppButton>
+          </RouterLink>
+        </EmptyState>
+      </div>
+
+      <template v-else>
         <header v-if="card.venue" class="relative z-10">
           <div class="relative h-24 w-full overflow-hidden sm:h-28">
             <img :src="venueCoverUrl(card.venue)" alt="" class="size-full object-cover">

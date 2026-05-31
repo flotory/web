@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Gift } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -8,7 +9,9 @@ import StatCard from '@/components/loyalty/StatCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import { api } from '@/lib/api'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import { api, apiErrorMessage } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
 import { rewardPresetsForCategory } from '@/lib/defaultImages'
@@ -220,8 +223,8 @@ async function loadDashboard() {
     const query = venueId ? `?venue_id=${venueId}` : ''
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
     rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
-  } catch {
-    error.value = 'Could not load dashboard data.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load dashboard data.')
   } finally {
     loading.value = false
   }
@@ -263,11 +266,16 @@ onMounted(() => {
     </div>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-slate-500">Loading dashboard...</p>
+      <EmptyState compact title="Loading dashboard…" />
     </AppCard>
-    <AppCard v-else-if="error" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-red-600">{{ error }}</p>
-    </AppCard>
+    <ErrorState
+      v-else-if="error"
+      class="mb-4"
+      :message="error"
+      @retry="loadDashboard"
+    />
+
+    <template v-else>
     <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
@@ -364,9 +372,17 @@ onMounted(() => {
           </RouterLink>
         </div>
         <div v-else class="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p class="font-semibold text-slate-700">No rewards yet</p>
-          <p class="mt-1 text-sm text-slate-500">Add your first reward to start motivating repeat stamps.</p>
-          <RouterLink to="/rewards" class="mt-3 inline-flex"><AppButton size="sm">Create first reward</AppButton></RouterLink>
+          <EmptyState
+            bare
+            compact
+            :icon="Gift"
+            title="No rewards yet"
+            description="Add your first milestone to start motivating repeat stamps."
+          >
+            <RouterLink to="/rewards">
+              <AppButton size="sm">Create first reward</AppButton>
+            </RouterLink>
+          </EmptyState>
         </div>
       </AppCard>
     </div>
@@ -493,6 +509,7 @@ onMounted(() => {
         <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">3) Reward unlock drives return</div>
       </div>
     </AppCard>
+    </template>
   </AppShell>
 </template>
 

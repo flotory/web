@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import { Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppCard from '@/components/ui/AppCard.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { joinVenueBySlug } from '@/lib/onboarding'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import type { Customer, Venue } from '@/types'
@@ -57,8 +59,8 @@ async function loadVenues() {
     cardsByVenueId.value = Object.fromEntries(
       cardsResponse.cards.map((card) => [card.venue_id, card]),
     )
-  } catch {
-    error.value = 'Could not load venues. Please try again.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load venues. Please try again.')
   } finally {
     loading.value = false
   }
@@ -103,25 +105,23 @@ onMounted(loadVenues)
       </label>
 
       <div v-if="loading" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-slate-500">Loading venues...</p>
-        </AppCard>
+        <EmptyState compact title="Loading venues…" />
       </div>
 
-      <div v-else-if="error" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm font-semibold text-red-600">{{ error }}</p>
-          <AppButton class="mt-4 w-full" @click="loadVenues">Try again</AppButton>
-        </AppCard>
-      </div>
+      <ErrorState
+        v-else-if="error"
+        class="mt-6"
+        :message="error"
+        @retry="loadVenues"
+      />
 
-      <div v-else-if="!filteredVenues.length" class="mt-6">
-        <AppCard>
-          <p class="text-center text-sm text-slate-500">
-            {{ search.trim() ? 'No venues match your search.' : 'No venues are available yet.' }}
-          </p>
-        </AppCard>
-      </div>
+      <EmptyState
+        v-else-if="!filteredVenues.length"
+        class="mt-6"
+        :icon="search.trim() ? Search : Store"
+        :title="search.trim() ? 'No matching venues' : 'No venues yet'"
+        :description="search.trim() ? 'Try a different name or address.' : 'Check back soon — new venues will appear here when they launch.'"
+      />
 
       <ul v-else class="mt-6 space-y-3">
         <li

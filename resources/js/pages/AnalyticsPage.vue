@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { BarChart3 } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 
 import StatCard from '@/components/loyalty/StatCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api } from '@/lib/api'
+import { api, apiErrorMessage } from '@/lib/api'
 import { useWorkspaceStore } from '@/stores/workspace'
 
 interface DashboardResponse {
@@ -50,8 +53,8 @@ async function load() {
     await workspace.bootstrap()
     const query = workspace.filterVenueId ? `?venue_id=${workspace.filterVenueId}` : ''
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
-  } catch {
-    error.value = 'Could not load analytics.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load analytics.')
   } finally {
     loading.value = false
   }
@@ -71,11 +74,14 @@ onMounted(load)
     </div>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-slate-500">Loading analytics...</p>
+      <EmptyState compact title="Loading analytics…" />
     </AppCard>
-    <AppCard v-else-if="error" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-red-600">{{ error }}</p>
-    </AppCard>
+    <ErrorState
+      v-else-if="error"
+      class="mb-4"
+      :message="error"
+      @retry="load"
+    />
 
     <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
@@ -94,7 +100,15 @@ onMounted(load)
           </div>
           <span class="w-10 text-right text-sm font-bold text-slate-500">{{ activity.visits }}</span>
         </div>
-        <p v-if="!dashboard?.monthly_activity?.length" class="text-sm font-semibold text-slate-500">No stamps yet.</p>
+        <EmptyState
+          v-if="!dashboard?.monthly_activity?.length"
+          bare
+          compact
+          bordered
+          :icon="BarChart3"
+          title="No stamp activity yet"
+          description="Monthly visit counts will appear after your first guest scans."
+        />
       </div>
     </AppCard>
   </AppShell>

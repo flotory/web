@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { Users } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api } from '@/lib/api'
+import { api, apiErrorMessage } from '@/lib/api'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer } from '@/types'
 
@@ -30,8 +33,8 @@ async function loadCustomers() {
     customers.value = (
       await api<{ customers: Array<Customer & { visits_count?: number }> }>(`/venues/${venueId}/customers`)
     ).customers
-  } catch {
-    error.value = 'Could not load customers.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load customers.')
   } finally {
     loading.value = false
   }
@@ -52,9 +55,20 @@ onMounted(loadCustomers)
 
     <AppCard wrapper-class="overflow-hidden p-0">
       <div class="divide-y divide-slate-100">
-        <p v-if="loading" class="p-5 text-sm font-bold text-slate-500">Loading customers...</p>
-        <p v-else-if="error" class="p-5 text-sm font-bold text-red-600">{{ error }}</p>
-        <p v-else-if="!customers.length" class="p-5 text-sm font-bold text-slate-500">No customers yet.</p>
+        <div v-if="loading" class="p-5">
+          <EmptyState bare compact title="Loading customers…" />
+        </div>
+        <div v-else-if="error" class="p-5">
+          <ErrorState bare :message="error" @retry="loadCustomers" />
+        </div>
+        <div v-else-if="!customers.length" class="p-5">
+          <EmptyState
+            bare
+            :icon="Users"
+            title="No customers yet"
+            description="Guests appear here after their first stamp scan. Share your venue QR to get started."
+          />
+        </div>
         <div v-for="customer in customers" :key="customer.id" class="flex items-center justify-between gap-4 p-5">
           <div>
             <p class="font-black text-slate-950">{{ customer.user?.name ?? 'Customer' }}</p>

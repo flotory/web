@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { History, Mail, Store, Users } from '@lucide/vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
@@ -6,6 +7,8 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { useVenueTeam } from '@/composables/useVenueTeam'
@@ -149,17 +152,21 @@ onMounted(loadTeam)
     </div>
 
     <AppCard v-if="loading">
-      <p class="text-sm font-bold text-slate-500">Loading team...</p>
+      <EmptyState compact title="Loading team…" />
     </AppCard>
 
-    <AppCard v-else-if="error && !members.length && !pendingInvitations.length">
-      <p class="text-sm font-bold text-red-600">{{ error }}</p>
-      <AppButton class="mt-4" variant="secondary" @click="loadTeam">Retry</AppButton>
-    </AppCard>
+    <ErrorState
+      v-else-if="error && !members.length && !pendingInvitations.length"
+      :message="error"
+      @retry="loadTeam"
+    />
 
-    <AppCard v-else-if="needsVenuePick">
-      <p class="text-sm font-bold text-slate-500">Select a specific venue in the filter above to manage its team.</p>
-    </AppCard>
+    <EmptyState
+      v-else-if="needsVenuePick"
+      :icon="Store"
+      title="Select a venue"
+      description="Pick a specific venue in the sidebar filter to manage its team."
+    />
 
     <template v-else>
       <p v-if="statusNote" class="mb-4 rounded-2xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100">
@@ -232,9 +239,15 @@ onMounted(loadTeam)
                 </div>
               </div>
 
-              <p v-if="!staffMembers.length && !owners.length" class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500 ring-1 ring-slate-200">
-                No team members yet.
-              </p>
+              <EmptyState
+                v-if="!staffMembers.length && !owners.length"
+                bare
+                compact
+                bordered
+                :icon="Users"
+                title="No team members yet"
+                description="Invite staff below — they'll get scanner and customer tools."
+              />
             </div>
           </AppCard>
 
@@ -275,9 +288,15 @@ onMounted(loadTeam)
                 </div>
               </div>
 
-              <p v-if="!pendingInvitations.length" class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500 ring-1 ring-slate-200">
-                No pending invitations.
-              </p>
+              <EmptyState
+                v-if="!pendingInvitations.length"
+                bare
+                compact
+                bordered
+                :icon="Mail"
+                title="No pending invitations"
+                description="Invitations you send will appear here until accepted."
+              />
             </div>
           </AppCard>
 
@@ -316,9 +335,15 @@ onMounted(loadTeam)
                 />
               </div>
 
-              <p v-if="!invitationHistory.length" class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500 ring-1 ring-slate-200">
-                Past invitations will appear here.
-              </p>
+              <EmptyState
+                v-if="!invitationHistory.length"
+                bare
+                compact
+                bordered
+                :icon="History"
+                title="No invitation history"
+                description="Past invitations will appear here once you start inviting staff."
+              />
             </div>
           </AppCard>
         </div>

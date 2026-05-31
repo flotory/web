@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -7,10 +8,12 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverThumbUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
@@ -98,8 +101,8 @@ async function loadVenues() {
 
   try {
     await workspace.bootstrap(true)
-  } catch {
-    error.value = 'Could not load your venues.'
+  } catch (exception) {
+    error.value = apiErrorMessage(exception, 'Could not load your venues.')
   } finally {
     loading.value = false
   }
@@ -261,13 +264,34 @@ onMounted(loadVenues)
     </AppCard>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-slate-500">Loading venues...</p>
+      <EmptyState compact title="Loading venues…" />
     </AppCard>
-    <AppCard v-else-if="error && !activeVenues.length" wrapper-class="mb-4">
-      <p class="text-sm font-bold text-red-600">{{ error }}</p>
-    </AppCard>
+    <ErrorState
+      v-else-if="error && !activeVenues.length"
+      class="mb-4"
+      :message="error"
+      @retry="loadVenues"
+    />
 
-    <div class="grid gap-5 lg:grid-cols-2">
+    <EmptyState
+      v-else-if="!loading && !filteredVenues.length && activeVenues.length"
+      class="mb-5"
+      :icon="Search"
+      title="No venues match this filter"
+      description="Try clearing your search or changing the type filter."
+    />
+
+    <EmptyState
+      v-else-if="!loading && !activeVenues.length && !error"
+      class="mb-5"
+      :icon="Store"
+      title="Create your first venue"
+      description="Set up a loyalty program and start collecting stamps from guests."
+    >
+      <AppButton @click="openCreateForm">Create venue</AppButton>
+    </EmptyState>
+
+    <div v-if="!loading && filteredVenues.length" class="grid gap-5 lg:grid-cols-2">
       <AppCard
         v-for="venue in filteredVenues"
         :key="venue.id"
@@ -324,10 +348,6 @@ onMounted(loadVenues)
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>
         </div>
-      </AppCard>
-
-      <AppCard v-if="!loading && !filteredVenues.length">
-        <p class="text-sm font-semibold text-slate-500">No venues match this filter yet.</p>
       </AppCard>
     </div>
 

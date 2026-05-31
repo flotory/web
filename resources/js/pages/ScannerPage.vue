@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Search, Users } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { QrcodeStream } from 'vue-qrcode-reader'
 import { useRoute, useRouter } from 'vue-router'
@@ -7,8 +8,9 @@ import SuccessCheck from '@/components/loyalty/SuccessCheck.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue, Visit } from '@/types'
 
@@ -38,6 +40,7 @@ const message = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const customerLoading = ref(false)
+const customerLoadError = ref('')
 const selectedPresetStamps = ref(1)
 const customStamps = ref(1)
 const useCustomStamps = ref(false)
@@ -123,9 +126,12 @@ async function loadCustomers() {
   if (!venue.value) return
 
   customerLoading.value = true
+  customerLoadError.value = ''
 
   try {
     customers.value = (await api<{ customers: CustomerWithVisits[] }>(`/venues/${venue.value.id}/customers`)).customers
+  } catch (exception) {
+    customerLoadError.value = apiErrorMessage(exception, 'Could not load customers.')
   } finally {
     customerLoading.value = false
   }
@@ -315,6 +321,10 @@ watch(scannerVenueId, () => {
             </div>
 
             <div v-else class="mt-3 space-y-2">
+              <p v-if="customerLoadError" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700 ring-1 ring-red-100">
+                {{ customerLoadError }}
+                <button type="button" class="ml-2 font-black underline" @click="loadCustomers">Retry</button>
+              </p>
               <button
                 v-for="item in filteredCustomers"
                 :key="item.id"
@@ -329,9 +339,15 @@ watch(scannerVenueId, () => {
                 </span>
                 <span class="text-sm font-black text-slate-500">{{ item.stamps }} stamps</span>
               </button>
-              <p v-if="!customerLoading && !filteredCustomers.length" class="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-                No matching customers.
-              </p>
+              <EmptyState
+                v-if="!customerLoading && !customerLoadError && !filteredCustomers.length"
+                bare
+                compact
+                bordered
+                :icon="customerSearch.trim() ? Search : Users"
+                :title="customerSearch.trim() ? 'No matching customers' : 'No customers yet'"
+                :description="customerSearch.trim() ? 'Try a different name or email.' : 'Customers appear here after their first stamp scan.'"
+              />
             </div>
           </div>
 
