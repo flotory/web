@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('logo')->nullable();
             $table->string('logo_thumb')->nullable();
             $table->string('cover_image')->nullable();
+            $table->string('cover_image_thumb')->nullable();
             $table->string('address')->nullable();
             $table->string('phone', 40)->nullable();
             $table->string('website')->nullable();

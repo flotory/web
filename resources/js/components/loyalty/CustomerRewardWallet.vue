@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 
 import { api, ApiError } from '@/lib/api'
 import { rewardImageUrl } from '@/lib/rewardMedia'
@@ -7,7 +7,7 @@ import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import type { Customer, Reward, RewardJourney, Venue, Visit } from '@/types'
 
 import ProgressStamps from './ProgressStamps.vue'
-import SuccessCheck from './SuccessCheck.vue'
+import RewardRedeemedCelebration from './RewardRedeemedCelebration.vue'
 import SwipeToRedeem from './SwipeToRedeem.vue'
 
 interface RedemptionResponse {
@@ -28,17 +28,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   redeemed: [response: RedemptionResponse]
+  finished: []
 }>()
 
 const state = ref<'locked' | 'available' | 'redeeming' | 'redeemed'>(
   props.unlocked || props.customer.stamps >= props.reward.required_stamps ? 'available' : 'locked',
 )
 const error = ref('')
-const redeemedCustomer = ref<Customer | null>(null)
+const showRedeemCelebration = ref(false)
+const celebrationSubtitle = ref('')
+let finishTimer: number | undefined
 
 const venue = computed(() => props.restaurant ?? props.customer.venue ?? null)
-const currentCustomer = computed(() => redeemedCustomer.value ?? props.customer)
-const isReadyToRedeem = computed(() => props.unlocked || currentCustomer.value.stamps >= props.reward.required_stamps)
+const isReadyToRedeem = computed(() => props.unlocked || props.customer.stamps >= props.reward.required_stamps)
 
 const effectiveState = computed(() => {
   if (state.value === 'redeeming' || state.value === 'redeemed') return state.value
@@ -55,8 +57,13 @@ const rewardSummary = computed(() => {
 })
 
 const stampsRemaining = computed(() =>
-  Math.max(props.reward.required_stamps - currentCustomer.value.stamps, 0),
+  Math.max(props.reward.required_stamps - props.customer.stamps, 0),
 )
+
+function finishRedemptionFlow() {
+  showRedeemCelebration.value = false
+  emit('finished')
+}
 
 async function redeemReward() {
   if (effectiveState.value !== 'available') return
@@ -69,14 +76,22 @@ async function redeemReward() {
       method: 'POST',
     })
 
-    redeemedCustomer.value = response.customer
     state.value = 'redeemed'
+    celebrationSubtitle.value = `Your stamp card stays at ${response.customer.stamps}. Taking you back to rewards...`
+    showRedeemCelebration.value = true
     emit('redeemed', response)
+
+    window.clearTimeout(finishTimer)
+    finishTimer = window.setTimeout(finishRedemptionFlow, 2600)
   } catch (exception) {
     state.value = 'available'
     error.value = exception instanceof ApiError ? exception.message : 'Could not redeem reward.'
   }
 }
+
+onUnmounted(() => {
+  window.clearTimeout(finishTimer)
+})
 </script>
 
 <template>
@@ -94,7 +109,7 @@ async function redeemReward() {
           <button
             type="button"
             class="rounded-full px-3 py-1.5 text-sm font-bold text-slate-500 transition hover:bg-white hover:text-slate-950"
-            :disabled="state === 'redeeming'"
+            :disabled="state === 'redeeming' || showRedeemCelebration"
             @click="emit('close')"
           >
             Close
@@ -105,27 +120,7 @@ async function redeemReward() {
           </div>
         </header>
 
-        <div v-if="state === 'redeemed'" class="flex flex-1 flex-col px-4 pt-8">
-          <div class="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200/80">
-            <SuccessCheck />
-            <h2 class="mt-6 text-3xl font-black text-slate-950">All set!</h2>
-            <p class="mt-2 text-lg font-bold text-slate-800">{{ reward.title }}</p>
-            <p class="mt-3 text-sm leading-6 text-slate-500">
-              Staff marked this reward as used. Your stamp card stays at
-              <span class="font-bold text-slate-700">{{ currentCustomer.stamps }}</span>
-              — keep collecting for the next one.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="mt-6 w-full rounded-2xl bg-slate-950 px-4 py-4 text-sm font-bold text-white"
-            @click="emit('close')"
-          >
-            Back to rewards
-          </button>
-        </div>
-
-        <div v-else class="flex flex-1 flex-col px-4 pt-5">
+        <div class="flex flex-1 flex-col px-4 pt-5">
           <article class="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/80">
             <img
               :src="rewardImageUrl(reward)"
@@ -168,7 +163,7 @@ async function redeemReward() {
           >
             <h2 class="text-sm font-black uppercase tracking-wide text-slate-400">Progress</h2>
             <div class="mt-4">
-              <ProgressStamps :stamps="currentCustomer.stamps" :required="reward.required_stamps" />
+              <ProgressStamps :stamps="customer.stamps" :required="reward.required_stamps" />
             </div>
             <p class="mt-4 text-sm font-semibold text-slate-600">
               Collect {{ stampsRemaining }} more {{ stampsRemaining === 1 ? 'stamp' : 'stamps' }} on your card to unlock this reward.
@@ -185,7 +180,7 @@ async function redeemReward() {
             </p>
             <SwipeToRedeem
               :state="effectiveState"
-              :disabled="state === 'redeeming'"
+              :disabled="state === 'redeeming' || showRedeemCelebration"
               theme="light"
               locked-label="Reward locked"
               available-label="Slide to use reward"
@@ -196,6 +191,14 @@ async function redeemReward() {
           </div>
         </div>
       </div>
+
+      <Teleport to="body">
+        <RewardRedeemedCelebration
+          :visible="showRedeemCelebration"
+          :title="reward.title"
+          :subtitle="celebrationSubtitle"
+        />
+      </Teleport>
     </div>
   </Transition>
 </template>

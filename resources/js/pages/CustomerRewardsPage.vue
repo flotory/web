@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -19,6 +19,7 @@ interface RedemptionResponse {
 }
 
 const rewardsStore = useCustomerRewardsStore()
+const router = useRouter()
 const loading = ref(true)
 const error = ref('')
 const selectedItem = ref<CustomerRewardWalletItem | null>(null)
@@ -45,8 +46,14 @@ function closeReward() {
 }
 
 async function handleRedeemed() {
-  selectedItem.value = null
   await rewardsStore.refresh()
+}
+
+function handleFinished() {
+  selectedItem.value = null
+  if (router.currentRoute.value.path !== '/customer/rewards') {
+    router.push('/customer/rewards')
+  }
 }
 
 onMounted(loadRewards)
@@ -132,6 +139,7 @@ onMounted(loadRewards)
       unlocked
       @close="closeReward"
       @redeemed="handleRedeemed"
+      @finished="handleFinished"
     />
   </AppShell>
 </template>

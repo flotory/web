@@ -268,6 +268,7 @@ Uploaded files are gitignored; directories created at deploy/boot.
 - **Validation:** inline field errors from API (`ApiError`)
 - **Destructive actions:** confirmation modal (delete venue, delete/archive reward)
 - **Cross-page feedback:** `vue-sonner` toaster wired in `App.vue` (infrastructure present; use for global success/error)
+- **Customer reward redeem:** slide-to-redeem in `CustomerRewardWallet`, then `RewardRedeemedCelebration` modal, then `@finished` closes the wallet and returns to `/customer/rewards` (card page redirects there after redeem)
 
 ## Seeded Demo Data
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QrcodeVue from 'qrcode.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
@@ -25,6 +25,7 @@ interface RedemptionResponse {
 }
 
 const route = useRoute()
+const router = useRouter()
 const realtime = useRealtimeStore()
 const customerRewards = useCustomerRewardsStore()
 const loading = ref(true)
@@ -333,6 +334,15 @@ function applyRedemption(response: RedemptionResponse) {
   customerRewards.refresh().catch(() => undefined)
 }
 
+async function handleRewardRedeemed(response: RedemptionResponse) {
+  applyRedemption(response)
+}
+
+function handleRewardFinished() {
+  selectedReward.value = null
+  router.push('/customer/rewards')
+}
+
 onMounted(() => {
   loadCard()
   window.addEventListener('focus', refreshIfVisible)
@@ -472,7 +482,8 @@ watch(
       :restaurant="card.venue"
       :reward="selectedReward"
       @close="closeRewardWallet"
-      @redeemed="applyRedemption"
+      @redeemed="handleRewardRedeemed"
+      @finished="handleRewardFinished"
     />
   </AppShell>
 </template>
