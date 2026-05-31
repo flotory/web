@@ -115,7 +115,7 @@ onMounted(loadLanding)
 
     <template v-else-if="landing">
       <header class="relative w-full">
-        <div class="relative h-48 w-full overflow-hidden sm:h-52">
+        <div class="relative h-36 w-full overflow-hidden sm:h-40">
           <img
             :src="venueCoverUrl(landing.venue)"
             alt=""
@@ -125,8 +125,8 @@ onMounted(loadLanding)
         </div>
       </header>
 
-      <section class="relative mx-auto flex min-h-[calc(100vh-12rem)] w-full max-w-md flex-col px-5 pb-8">
-        <div class="relative z-10 -mt-14 flex flex-col items-center text-center">
+      <section class="relative mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-md flex-col px-5 pb-8">
+        <div class="relative z-10 -mt-12 flex flex-col items-center text-center">
           <div class="grid size-24 place-items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/80">
             <img
               :src="venueLogoUrl(landing.venue)"
