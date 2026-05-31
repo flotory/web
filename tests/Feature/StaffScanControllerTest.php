@@ -89,4 +89,52 @@ class StaffScanControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('qr_token');
     }
+
+    public function test_staff_can_lookup_customer_by_qr(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue(['name' => 'Lookup Cafe']);
+
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 2]);
+        $this->createReward($venue, ['required_stamps' => 5]);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/lookup", [
+            'qr_token' => $customer->qr_token,
+        ])
+            ->assertOk()
+            ->assertJsonPath('customer.id', $customer->id)
+            ->assertJsonPath('customer.stamps', 2)
+            ->assertJsonPath('next_reward.required_stamps', 5);
+    }
+
+    public function test_staff_can_add_multiple_stamps_in_one_scan(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser();
+        $venue = $this->createVenue();
+
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 2]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $customer->qr_token,
+            'stamps' => 3,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('added_stamps', 3)
+            ->assertJsonPath('customer.stamps', 5)
+            ->assertJsonPath('cycle_completed', false);
+
+        $this->assertDatabaseHas('visits', [
+            'customer_id' => $customer->id,
+            'created_by' => $staff->id,
+        ]);
+    }
 }
