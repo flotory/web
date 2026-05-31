@@ -236,6 +236,12 @@ function triggerRewardCelebration(
     if (options?.cycleCompleted && options.resetStampsTo !== undefined) {
       displayStamps.value = options.resetStampsTo
     }
+
+    customerRewards.refresh()
+      .catch(() => undefined)
+      .finally(() => {
+        customerRewards.pulseBadge()
+      })
   }, 2400)
 }
 
@@ -292,7 +298,9 @@ function applyStampUpdate(payload: StampAddedPayload) {
     }, 900)
   }
 
-  customerRewards.refresh().catch(() => undefined)
+  if (!unlockedReward) {
+    customerRewards.refresh().catch(() => undefined)
+  }
 }
 
 function applyRealtimeStamp(payload: StampAddedPayload) {

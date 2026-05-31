@@ -14,6 +14,7 @@ export const useCustomerRewardsStore = defineStore('customerRewards', {
     pendingCount: 0,
     items: [] as CustomerRewardWalletItem[],
     loaded: false,
+    badgePulseToken: 0,
   }),
   actions: {
     async refresh() {
@@ -25,10 +26,14 @@ export const useCustomerRewardsStore = defineStore('customerRewards', {
       this.pendingCount = response.pending_count
       this.loaded = true
     },
+    pulseBadge() {
+      this.badgePulseToken += 1
+    },
     clear() {
       this.pendingCount = 0
       this.items = []
       this.loaded = false
+      this.badgePulseToken = 0
     },
   },
 })

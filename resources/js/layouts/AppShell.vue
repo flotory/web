@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
@@ -14,6 +14,8 @@ const router = useRouter()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const customerRewards = useCustomerRewardsStore()
+const rewardBadgePulsing = ref(false)
+let rewardBadgePulseTimer: number | undefined
 
 const isWorkspace = computed(() => {
   if (route.meta.workspace === false) {
@@ -77,6 +79,24 @@ const isNavActive = (item: { to: string; routeName?: string }) =>
   route.path === item.to || (item.routeName ? route.name === item.routeName : false)
 
 const isFlushPage = computed(() => route.meta.flush === true)
+
+watch(
+  () => customerRewards.badgePulseToken,
+  (token) => {
+    if (token === 0) {
+      return
+    }
+
+    rewardBadgePulsing.value = false
+    window.requestAnimationFrame(() => {
+      rewardBadgePulsing.value = true
+    })
+    window.clearTimeout(rewardBadgePulseTimer)
+    rewardBadgePulseTimer = window.setTimeout(() => {
+      rewardBadgePulsing.value = false
+    }, 1500)
+  },
+)
 
 watch(
   () => auth.isAuthenticated,
@@ -177,7 +197,10 @@ async function logout() {
           {{ item.label }}
           <span
             v-if="'badge' in item && item.badge"
-            class="absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-amber-400 px-1 py-px text-[10px] font-black leading-none text-slate-950 ring-2 ring-slate-950"
+            :class="[
+              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-amber-400 px-1 py-px text-[10px] font-black leading-none text-slate-950 ring-2 ring-slate-950',
+              item.to === '/customer/rewards' && rewardBadgePulsing ? 'reward-badge-pop' : '',
+            ]"
           >
             {{ item.badge }}
           </span>
@@ -186,3 +209,44 @@ async function logout() {
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes reward-badge-pop {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+
+  12% {
+    transform: scale(1.45) translateY(-7px);
+  }
+
+  24% {
+    transform: scale(1) translateY(0);
+  }
+
+  36% {
+    transform: scale(1.35) translateY(-5px);
+  }
+
+  48% {
+    transform: scale(1) translateY(0);
+  }
+
+  60% {
+    transform: scale(1.25) translateY(-4px);
+  }
+
+  72% {
+    transform: scale(1) translateY(0);
+  }
+
+  84% {
+    transform: scale(1.15) translateY(-2px);
+  }
+}
+
+.reward-badge-pop {
+  animation: reward-badge-pop 1.4s ease-out;
+}
+</style>
