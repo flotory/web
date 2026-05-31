@@ -190,11 +190,13 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings |
 | Staff workspace | staff-only membership | Scanner, Customers, Account |
-| Customer | No team membership (or `/card` meta) | Card |
+| Customer | No team membership (or `workspace: false` routes) | Card, Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
 
 Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
+
+Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and open the claim wallet.
 
 ### Key pages
 
@@ -210,6 +212,8 @@ Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scann
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
 | `/card` | Loyalty card + claim | Customer |
+| `/venues` | Joined venue list | Customer |
+| `/customer/settings` | Account details + logout | Customer |
 | `/invite/:token` | Accept staff invite | Invitee |
 
 Workspace store auto-selects the first active venue when none is chosen (MVP single-venue focus).

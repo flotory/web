@@ -43,7 +43,11 @@ const homePath = computed(() => {
 
 const nav = computed(() => {
   if (!isWorkspace.value) {
-    return [{ label: 'Card', to: '/card', icon: '◍' }]
+    return [
+      { label: 'Card', to: '/card', icon: '◍' },
+      { label: 'Venues', to: '/venues', icon: '⌂' },
+      { label: 'Settings', to: '/customer/settings', icon: '⚙' },
+    ]
   }
 
   if (workspace.usesStaffNav) {
@@ -65,6 +69,9 @@ const nav = computed(() => {
     { label: 'Settings', to: '/settings', icon: '⚙' },
   ]
 })
+
+const isNavActive = (item: { to: string; routeName?: string }) =>
+  route.path === item.to || (item.routeName ? route.name === item.routeName : false)
 
 watch(
   () => auth.isAuthenticated,
@@ -101,12 +108,12 @@ async function logout() {
           :to="item.to"
           :class="[
             'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition',
-            route.path === item.to || (item.routeName && route.name === item.routeName)
+            isNavActive(item)
               ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/20'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 hover:shadow-sm',
           ]"
         >
-          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="(route.path === item.to || (item.routeName && route.name === item.routeName)) && 'bg-white/20 text-white'">{{ item.icon }}</span>
+          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="isNavActive(item) && 'bg-white/20 text-white'">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
@@ -116,53 +123,42 @@ async function logout() {
     </aside>
 
     <div>
-    <header class="sticky top-0 z-20 border-b border-white/60 bg-slate-100/85 backdrop-blur-xl" :class="isWorkspace && 'md:hidden'">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <RouterLink :to="homePath">
-          <FlotoryLogo />
-        </RouterLink>
-        <button class="rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm ring-1 ring-slate-200 md:hidden" @click="logout">
-          Logout
-        </button>
-        <nav class="hidden gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-200 md:flex">
-          <RouterLink
-            v-for="item in nav"
-            :key="item.to"
-            :to="item.to"
-            :class="[
-              'rounded-full px-4 py-2 text-sm font-semibold transition',
-              route.path === item.to || (item.routeName && route.name === item.routeName) ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-950',
-            ]"
-          >
-            {{ item.label }}
+      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-white/60 bg-slate-100/85 backdrop-blur-xl md:hidden">
+        <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <RouterLink :to="homePath">
+            <FlotoryLogo />
           </RouterLink>
-          <button class="rounded-full px-4 py-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950" @click="logout">
+          <button class="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-slate-600 shadow-sm ring-1 ring-slate-200" @click="logout">
             Logout
           </button>
-        </nav>
-      </div>
-      <div v-if="isWorkspace && workspace.activeVenues.length > 1" class="mx-auto max-w-6xl px-4 pb-3 md:hidden">
-        <VenueFilter />
-      </div>
-    </header>
+        </div>
+        <div v-if="workspace.activeVenues.length > 1" class="mx-auto max-w-6xl px-4 pb-3">
+          <VenueFilter />
+        </div>
+      </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-6 pb-36 md:py-10 md:pb-10">
-      <slot />
-    </main>
+      <main :class="['mx-auto max-w-6xl px-4 py-6 md:py-10', isWorkspace ? 'pb-36 md:pb-10' : 'pb-28']">
+        <slot />
+      </main>
 
-    <nav class="fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] bg-slate-950 p-2 text-white shadow-2xl md:hidden">
-      <RouterLink
-        v-for="item in nav"
-        :key="item.to"
-        :to="item.to"
+      <nav
         :class="[
-          'min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
-          route.path === item.to || (item.routeName && route.name === item.routeName) ? 'bg-white text-slate-950' : 'text-white/65',
+          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] bg-slate-950 p-2 text-white shadow-2xl',
+          isWorkspace ? 'md:hidden' : 'max-w-md mx-auto',
         ]"
       >
-        {{ item.label }}
-      </RouterLink>
-    </nav>
+        <RouterLink
+          v-for="item in nav"
+          :key="item.to"
+          :to="item.to"
+          :class="[
+            'min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
+            isNavActive(item) ? 'bg-white text-slate-950' : 'text-white/65',
+          ]"
+        >
+          {{ item.label }}
+        </RouterLink>
+      </nav>
     </div>
   </div>
 </template>

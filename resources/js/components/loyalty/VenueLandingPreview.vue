@@ -7,6 +7,8 @@ import type { VenueLandingPayload } from '@/lib/onboarding'
 const props = defineProps<{
   milestones: VenueLandingPayload['milestones']
   stamps?: number
+  animatingSlots?: number[]
+  celebratingReward?: boolean
 }>()
 
 const scrollEl = ref<HTMLElement | null>(null)
@@ -89,7 +91,7 @@ watch(upcomingMilestones, async () => {
     <article class="rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)]">
       <div class="flex items-start gap-4">
         <div class="shrink-0">
-          <p class="text-4xl font-black leading-none tracking-tight text-slate-950">
+          <p class="text-4xl font-black leading-none tracking-tight text-slate-950" :class="animatingSlots?.length && 'animate-stamp-count'">
             {{ stampCount }}<span class="text-2xl text-slate-400">/{{ maxStamps }}</span>
           </p>
           <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">stamps</p>
@@ -106,6 +108,8 @@ watch(upcomingMilestones, async () => {
                 : slot.isReward
                   ? 'bg-rose-50 text-rose-500 ring-1 ring-rose-100'
                   : 'bg-slate-100 text-slate-300',
+              animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
+              celebratingReward && slot.isReward && slot.filled && 'animate-reward-glow',
             ]"
           >
             <span v-if="slot.filled" aria-hidden="true">★</span>
@@ -182,3 +186,55 @@ watch(upcomingMilestones, async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes stamp-pop {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.4;
+  }
+
+  55% {
+    transform: scale(1.18);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes stamp-count {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes reward-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgb(251 191 36 / 0);
+  }
+}
+
+.animate-stamp-pop {
+  animation: stamp-pop 0.65s ease-out;
+}
+
+.animate-stamp-count {
+  animation: stamp-count 0.65s ease-out;
+}
+
+.animate-reward-glow {
+  animation: reward-glow 1s ease-in-out 2;
+}
+</style>

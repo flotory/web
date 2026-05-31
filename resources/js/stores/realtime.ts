@@ -60,7 +60,11 @@ export const useRealtimeStore = defineStore('realtime', {
 
       this.subscribedCustomerIds = []
       this.startedForToken = null
+      this.latestStamp = null
       disconnectEcho()
+    },
+    clearLatestStamp() {
+      this.latestStamp = null
     },
   },
 })

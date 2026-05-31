@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
+import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
 import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -31,9 +32,14 @@ const nextReward = ref<Reward | null>(null)
 const availableRewards = ref<Reward[]>([])
 const journey = ref<RewardJourney | null>(null)
 const recentVisits = ref<Visit[]>([])
-const successMessage = ref('')
 const selectedReward = ref<Reward | null>(null)
+const animatingSlots = ref<number[]>([])
+const celebratingReward = ref(false)
+const celebrationTitle = ref('')
+const showCelebration = ref(false)
 let refreshTimer: number | undefined
+let animationTimer: number | undefined
+let celebrationTimer: number | undefined
 
 interface CardResponse {
   active_card: Customer | null
@@ -75,6 +81,12 @@ async function loadCard(silent = false) {
     availableRewards.value = response.available_rewards
     journey.value = response.journey
     recentVisits.value = response.recent_visits
+
+    const pendingStamp = realtime.latestStamp
+    if (pendingStamp && card.value && pendingStamp.customer.id === card.value.id) {
+      applyStampUpdate(pendingStamp)
+      realtime.clearLatestStamp()
+    }
   } catch {
     if (!silent) {
       error.value = 'Could not load your loyalty card. Please try again.'
@@ -86,10 +98,51 @@ async function loadCard(silent = false) {
   }
 }
 
-function applyRealtimeStamp(payload: StampAddedPayload) {
+function slotsForStampIncrease(previousStamps: number, addedStamps: number, cycleCompleted: boolean, maxStamps: number): number[] {
+  if (cycleCompleted) {
+    return Array.from({ length: Math.min(addedStamps, maxStamps) }, (_, index) => index + 1)
+  }
+
+  const slots: number[] = []
+  for (let position = previousStamps + 1; position <= previousStamps + addedStamps; position += 1) {
+    if (position <= maxStamps) {
+      slots.push(position)
+    }
+  }
+
+  return slots
+}
+
+function triggerStampAnimation(previousStamps: number, addedStamps: number, cycleCompleted: boolean) {
+  const maxStamps = Math.max(...(journey.value?.milestones.map((m) => m.required_stamps) ?? [10]), 10)
+  animatingSlots.value = slotsForStampIncrease(previousStamps, addedStamps, cycleCompleted, maxStamps)
+  window.clearTimeout(animationTimer)
+  animationTimer = window.setTimeout(() => {
+    animatingSlots.value = []
+    celebratingReward.value = false
+  }, 1400)
+}
+
+function triggerRewardCelebration(rewardTitle: string, openWallet = true) {
+  celebrationTitle.value = rewardTitle
+  showCelebration.value = true
+  celebratingReward.value = true
+  window.clearTimeout(celebrationTimer)
+  celebrationTimer = window.setTimeout(() => {
+    showCelebration.value = false
+    if (openWallet && availableRewards.value.length) {
+      selectedReward.value = availableRewards.value[0]
+    }
+  }, 1100)
+}
+
+function applyStampUpdate(payload: StampAddedPayload) {
   if (!card.value || payload.customer.id !== card.value.id) {
     return
   }
+
+  const previousAvailableIds = new Set(availableRewards.value.map((reward) => reward.id))
+  const previousStamps = card.value.stamps
 
   card.value = payload.customer
   nextReward.value = payload.next_reward
@@ -103,7 +156,18 @@ function applyRealtimeStamp(payload: StampAddedPayload) {
       next_milestone: payload.next_reward,
     }
   }
-  successMessage.value = payload.message
+
+  triggerStampAnimation(previousStamps, payload.added_stamps, payload.cycle_completed)
+
+  const unlockedReward = payload.available_rewards.find((reward) => !previousAvailableIds.has(reward.id))
+  if (unlockedReward) {
+    triggerRewardCelebration(unlockedReward.title)
+  }
+}
+
+function applyRealtimeStamp(payload: StampAddedPayload) {
+  applyStampUpdate(payload)
+  realtime.clearLatestStamp()
 }
 
 function refreshIfVisible() {
@@ -128,7 +192,6 @@ function applyRedemption(response: RedemptionResponse) {
   availableRewards.value = response.available_rewards
   journey.value = response.journey
   recentVisits.value = response.recent_visits
-  successMessage.value = `${selectedReward.value?.title ?? 'Reward'} claimed. Progress continues at ${response.customer.stamps} stamps.`
 }
 
 onMounted(() => {
@@ -142,6 +205,8 @@ onUnmounted(() => {
   window.removeEventListener('focus', refreshIfVisible)
   document.removeEventListener('visibilitychange', refreshIfVisible)
   window.clearInterval(refreshTimer)
+  window.clearTimeout(animationTimer)
+  window.clearTimeout(celebrationTimer)
 })
 
 watch(() => route.query.venue_id, () => loadCard())
@@ -149,7 +214,7 @@ watch(() => route.query.venue_id, () => loadCard())
 watch(
   () => realtime.latestStamp,
   (payload) => {
-    if (payload) {
+    if (payload && card.value && payload.customer.id === card.value.id) {
       applyRealtimeStamp(payload)
     }
   },
@@ -194,13 +259,6 @@ watch(
             <h1 class="text-xl font-black tracking-tight text-slate-950">{{ card.venue.name }}</h1>
           </div>
 
-          <p
-            v-if="successMessage"
-            class="mt-5 rounded-2xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100"
-          >
-            {{ successMessage }}
-          </p>
-
           <AppCard
             wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
             :padded="false"
@@ -224,7 +282,12 @@ watch(
           </AppCard>
 
           <div class="mt-5">
-            <VenueLandingPreview :milestones="previewMilestones" :stamps="card.stamps" />
+            <VenueLandingPreview
+              :milestones="previewMilestones"
+              :stamps="card.stamps"
+              :animating-slots="animatingSlots"
+              :celebrating-reward="celebratingReward"
+            />
 
             <p
               v-if="!previewMilestones.length"
@@ -261,6 +324,8 @@ watch(
         </section>
       </template>
     </div>
+
+    <StampRewardCelebration :visible="showCelebration" :title="celebrationTitle" />
 
     <CustomerRewardWallet
       v-if="selectedReward && card"

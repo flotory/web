@@ -277,6 +277,8 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Customer registration/login (email + Google) with intent-based redirects
 - Owner 5-step onboarding wizard and dashboard success state
 - Customer loyalty card per venue with QR token
+- Customer bottom nav: Card, Venues, Settings (account + logout)
+- Stamp and reward-unlock animations on the customer card (no persistent banner)
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
 - Single-venue-focused dashboard (auto-selects first venue)
 - Venue settings, logo upload, QR download PNG, soft delete

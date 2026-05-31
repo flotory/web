@@ -71,7 +71,8 @@ What ships today:
 - Milestone rewards CRUD with images (archive / reactivate / purge)
 - Team: email invitations, resend, cancel; staff role only
 - Staff scanner with QR camera + customer search fallback
-- Customer loyalty card per venue (`/card`) with journey and swipe-to-claim
+- Customer loyalty card per venue (`/card`) with journey, swipe-to-claim, and stamp/reward animations
+- Customer venues list (`/venues`) and settings (`/customer/settings`)
 - Staff-side milestone claim API
 - Optional realtime stamp updates via Reverb
 - Owner dashboard and analytics (visits, customers, milestone conversion)
