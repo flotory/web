@@ -63,7 +63,7 @@ onMounted(loadCustomers)
           </div>
           <div class="text-right">
             <AppBadge tone="amber">{{ customer.stamps }} stamps</AppBadge>
-            <p class="mt-2 text-xs font-semibold text-slate-400">{{ customer.visits_count ?? 0 }} stamps</p>
+            <p class="mt-2 text-xs font-semibold text-slate-400">{{ customer.visits_count ?? 0 }} visits</p>
           </div>
         </div>
       </div>

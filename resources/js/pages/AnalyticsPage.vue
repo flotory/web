@@ -36,8 +36,8 @@ const stats = computed(() => {
 
   return [
     { label: 'Progression rate', value: `${progressionRate}%`, hint: `${data.active_progressors} active progressors` },
-    { label: 'Avg stamps/customer', value: avgVisits, hint: 'across selected scope' },
-    { label: 'Monthly stamps', value: data.total_visits, hint: 'total recorded' },
+    { label: 'Avg visits/customer', value: avgVisits, hint: 'across selected scope' },
+    { label: 'Monthly visits', value: data.total_visits, hint: 'total recorded' },
     { label: 'Milestones claimed', value: data.milestones_claimed, hint: `${data.milestones_unlocked} unlocked` },
   ]
 })

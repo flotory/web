@@ -47,7 +47,7 @@ interface CardResponse {
 
 const displayReward = computed(() => availableRewards.value[0] ?? nextReward.value)
 const requiredStamps = computed(() => displayReward.value?.required_stamps ?? 5)
-const remainingVisits = computed(() => Math.max(requiredStamps.value - (card.value?.stamps ?? 0), 0))
+const remainingStamps = computed(() => Math.max(requiredStamps.value - (card.value?.stamps ?? 0), 0))
 const selectedVenueId = computed(() => {
   const venueId = route.query.venue_id
   return typeof venueId === 'string' ? venueId : null
@@ -199,7 +199,7 @@ watch(
             <p class="mt-1 text-4xl font-black">{{ card.stamps }} / {{ requiredStamps }}</p>
           </div>
           <AppBadge tone="blue">
-            {{ remainingVisits === 0 ? 'Unlocked' : `${remainingVisits} stamps left` }}
+            {{ remainingStamps === 0 ? 'Unlocked' : `${remainingStamps} more to unlock` }}
           </AppBadge>
         </div>
         <div class="mt-8 rounded-[1.5rem] bg-white p-5">
@@ -207,12 +207,17 @@ watch(
         </div>
         <div v-if="displayReward" class="mt-5 overflow-hidden rounded-2xl ring-1 ring-white/15">
           <img :src="rewardImageUrl(displayReward)" :alt="displayReward.title" class="h-28 w-full object-cover">
-          <p class="bg-white/10 px-4 py-3 text-sm font-bold text-blue-100">
-            Next reward: {{ displayReward.title }}
-          </p>
+          <div class="bg-white/10 px-4 py-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your next reward</p>
+            <p class="mt-1 text-sm font-bold text-blue-100">
+              <span v-if="remainingStamps === 0">Ready to claim</span>
+              <span v-else>{{ remainingStamps }} more {{ remainingStamps === 1 ? 'stamp' : 'stamps' }} to unlock</span>
+            </p>
+            <p class="mt-1 text-base font-black text-white">{{ displayReward.title }}</p>
+          </div>
         </div>
         <div v-if="journey?.milestones?.length" class="mt-4 space-y-2">
-          <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your journey</p>
+          <p class="text-xs font-bold uppercase tracking-wide text-blue-200/80">Your rewards</p>
           <div
             v-for="milestone in journey.milestones.slice(0, 4)"
             :key="milestone.id"
@@ -220,8 +225,7 @@ watch(
           >
             <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="size-12 shrink-0 rounded-lg object-cover">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-bold text-white">{{ milestone.title }}</p>
-              <p class="text-xs text-white/60">{{ milestone.required_stamps }} stamps</p>
+              <p class="truncate text-sm font-bold text-white">{{ milestone.required_stamps }} stamps → {{ milestone.title }}</p>
             </div>
             <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
               {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}

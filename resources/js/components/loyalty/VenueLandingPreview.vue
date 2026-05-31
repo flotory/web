@@ -133,9 +133,10 @@ watch(upcomingMilestones, async () => {
           class="size-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200/80"
         >
         <div class="min-w-0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Your next reward</p>
           <p class="text-sm text-slate-500">
-            <span v-if="stampsToPrimary === 0">Ready to claim:</span>
-            <span v-else>{{ stampsToPrimary }} more {{ stampsToPrimary === 1 ? 'stamp' : 'stamps' }} to:</span>
+            <span v-if="stampsToPrimary === 0">Ready to claim</span>
+            <span v-else>{{ stampsToPrimary }} more {{ stampsToPrimary === 1 ? 'stamp' : 'stamps' }} to unlock</span>
           </p>
           <p class="truncate text-base font-black text-slate-950">{{ primaryMilestone.title }}</p>
         </div>
@@ -159,10 +160,9 @@ watch(upcomingMilestones, async () => {
               class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200/80"
             >
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Next reward</p>
-              <p class="truncate text-lg font-black text-slate-950">{{ milestone.title }}</p>
-              <p class="mt-1 text-sm font-semibold text-slate-500">
-                Collect {{ milestone.required_stamps }} stamps to unlock
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Upcoming reward</p>
+              <p class="truncate text-lg font-black text-slate-950">
+                {{ milestone.required_stamps }} stamps → {{ milestone.title }}
               </p>
             </div>
           </div>

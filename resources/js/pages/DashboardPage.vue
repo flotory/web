@@ -73,7 +73,7 @@ const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
 
 const stats = computed(() => [
-  { label: 'Stamps today', value: dashboard.value?.stats.total_visits ?? 0 },
+  { label: 'Visits today', value: dashboard.value?.stats.total_visits ?? 0 },
   { label: 'Returning guests', value: dashboard.value?.stats.active_progressors ?? 0 },
   { label: 'Rewards unlocked', value: dashboard.value?.stats.milestones_unlocked ?? 0 },
   { label: 'Repeat rate', value: `${conversionOverview.value.rate}%` },
@@ -107,7 +107,7 @@ const activityItems = computed(() => {
   const unlocked = dashboard.value.stats.milestones_unlocked
   return [
     `${guests} guests joined loyalty`,
-    `${visits} stamps recorded`,
+    `${visits} visits recorded`,
     `${unlocked} rewards unlocked`,
     'Scanner and QR flow are active',
   ]
@@ -125,7 +125,7 @@ const activityFeed = computed(() => {
 
   return [
     { icon: '🟢', title: `${dashboard.value?.stats.total_customers ?? 0} guests joined loyalty`, time: 'today' },
-    { icon: '🟢', title: `${dashboard.value?.stats.total_visits ?? 0} stamps recorded`, time: 'today' },
+    { icon: '🟢', title: `${dashboard.value?.stats.total_visits ?? 0} visits recorded`, time: 'today' },
     { icon: '🟢', title: `${dashboard.value?.stats.milestones_unlocked ?? 0} rewards unlocked`, time: 'today' },
     { icon: '🟢', title: 'Scanner and QR flow active', time: 'live' },
   ]
@@ -448,7 +448,7 @@ onMounted(() => {
         >
           <p class="font-black text-slate-950">{{ summary.venue_name }}</p>
           <p class="mt-2 text-sm font-semibold text-slate-500">
-            {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} stamps
+            {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} visits
           </p>
         </div>
       </div>

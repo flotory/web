@@ -304,7 +304,7 @@ onMounted(loadVenues)
             <p class="mt-1 text-sm font-black text-slate-900">{{ venue.customers_count ?? 0 }}</p>
           </div>
           <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">↻ Stamps</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">↻ Visits</p>
             <p class="mt-1 text-sm font-black text-slate-900">{{ venue.visits_count ?? 0 }}</p>
           </div>
           <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">

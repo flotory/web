@@ -982,9 +982,9 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
     <template v-else>
       <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <AppBadge tone="blue">Progress journey</AppBadge>
-          <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Rewards Journey</h1>
-          <p class="mt-2 text-slate-500">Unlock milestones as you keep collecting stamps. Progress never goes backwards.</p>
+          <AppBadge tone="blue">Your progress</AppBadge>
+          <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Your rewards</h1>
+          <p class="mt-2 text-slate-500">Collect stamps to unlock rewards. Your progress never goes backwards.</p>
         </div>
       </div>
 
@@ -995,9 +995,16 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <p class="mt-2 text-3xl font-black">{{ journey.current_cycle }}</p>
           </div>
           <div class="text-right">
-            <p class="text-xs font-bold uppercase tracking-wide text-white/60">Progress</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-white/60">Stamps collected</p>
             <p class="mt-2 text-2xl font-black">{{ customerStamps }}</p>
-            <p v-if="nextMilestone" class="text-sm font-semibold text-white/70">{{ nextDistance }} to {{ nextMilestone.title }}</p>
+            <template v-if="nextMilestone">
+              <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/60">Your next reward</p>
+              <p class="text-sm font-semibold text-white/70">
+                <span v-if="nextDistance === 0">Ready to claim</span>
+                <span v-else>{{ nextDistance }} more {{ nextDistance === 1 ? 'stamp' : 'stamps' }} to unlock</span>
+              </p>
+              <p class="text-sm font-black text-white">{{ nextMilestone.title }}</p>
+            </template>
           </div>
         </div>
       </AppCard>
@@ -1020,14 +1027,14 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             <img :src="rewardImageUrl(milestone)" :alt="milestone.title" class="reward-media-img">
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
             <p class="absolute bottom-4 left-4 text-xs font-bold uppercase tracking-wide text-white/90">
-              {{ milestone.required_stamps }} stamps
+              {{ milestone.required_stamps }} stamps → {{ milestone.title }}
             </p>
           </div>
           <div class="p-5">
             <div class="flex items-start justify-between gap-3">
               <div>
                 <h2 class="text-2xl font-black text-slate-950">{{ milestone.title }}</h2>
-                <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} stamps milestone</p>
+                <p class="mt-1 text-sm font-semibold text-slate-500">{{ milestone.required_stamps }} stamps to unlock</p>
               </div>
               <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
                 {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
@@ -1041,7 +1048,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
               />
             </div>
             <p class="mt-3 text-sm font-bold text-slate-500">
-              {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim milestone reward' : 'Keep progressing to unlock' }}
+              {{ milestone.unlocked && !milestone.claimed ? 'Tap to claim this reward' : 'Keep collecting stamps to unlock' }}
             </p>
           </div>
         </article>

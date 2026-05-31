@@ -136,7 +136,7 @@ onMounted(loadLanding)
           </div>
           <h1 class="mt-4 text-2xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
           <p class="mt-1 text-sm font-medium text-slate-500">
-            {{ isMember ? 'Your loyalty card at this venue' : 'Collect stamps. Unlock rewards.' }}
+            {{ isMember ? 'Your loyalty card at this venue' : 'Earn stamps and unlock rewards.' }}
           </p>
         </div>
 

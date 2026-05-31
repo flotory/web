@@ -152,7 +152,7 @@ onMounted(() => {
             <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} stamps</span>
           </p>
         </div>
-        <p v-else class="mt-3 text-sm text-white/85">Start collecting rewards on your next stamp.</p>
+        <p v-else class="mt-3 text-sm text-white/85">Collect stamps to unlock rewards at this venue.</p>
       </div>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
