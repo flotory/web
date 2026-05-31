@@ -5,6 +5,7 @@ const props = withDefaults(
   defineProps<{
     disabled?: boolean
     state?: 'locked' | 'available' | 'redeeming' | 'redeemed'
+    theme?: 'dark' | 'light'
     lockedLabel?: string
     availableLabel?: string
     redeemingLabel?: string
@@ -13,6 +14,7 @@ const props = withDefaults(
   {
     disabled: false,
     state: 'available',
+    theme: 'dark',
     lockedLabel: 'Reward locked',
     availableLabel: 'Swipe to redeem',
     redeemingLabel: 'Redeeming...',
@@ -32,6 +34,7 @@ const dragX = ref(0)
 const maxDrag = computed(() => Math.max((track.value?.clientWidth ?? 0) - 60, 0))
 const progress = computed(() => (maxDrag.value ? dragX.value / maxDrag.value : 0))
 const isInteractive = computed(() => props.state === 'available' && !props.disabled)
+const isLight = computed(() => props.theme === 'light')
 
 const label = computed(() => {
   if (props.state === 'locked') return props.lockedLabel
@@ -73,14 +76,25 @@ function endDrag() {
 <template>
   <div
     ref="track"
-    class="relative h-16 overflow-hidden rounded-full bg-white/15 p-1.5 shadow-inner ring-1 ring-white/20"
-    :class="!isInteractive && 'opacity-80'"
+    :class="[
+      'relative h-16 overflow-hidden rounded-full p-1.5 shadow-inner',
+      isLight ? 'bg-slate-950 ring-1 ring-slate-950' : 'bg-white/15 ring-1 ring-white/20',
+      !isInteractive && 'opacity-80',
+    ]"
   >
     <div
-      class="absolute inset-y-1.5 left-1.5 rounded-full bg-white/20 transition-[width]"
+      :class="[
+        'absolute inset-y-1.5 left-1.5 rounded-full transition-[width]',
+        isLight ? 'bg-white/15' : 'bg-white/20',
+      ]"
       :style="{ width: `${Math.max(progress * 100, state === 'redeemed' ? 100 : 0)}%` }"
     />
-    <p class="absolute inset-0 grid place-items-center pr-3 text-sm font-black uppercase tracking-[0.18em] text-white/75">
+    <p
+      :class="[
+        'absolute inset-0 grid place-items-center pr-3 text-sm font-black uppercase tracking-[0.18em]',
+        isLight ? 'text-white/80' : 'text-white/75',
+      ]"
+    >
       {{ label }}
     </p>
     <button

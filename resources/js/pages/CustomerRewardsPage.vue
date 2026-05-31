@@ -55,9 +55,9 @@ onMounted(loadRewards)
 <template>
   <AppShell>
     <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-slate-950">Rewards</h1>
+      <h1 class="text-2xl font-black tracking-tight text-slate-950">Your rewards</h1>
       <p class="mt-1 text-sm text-slate-500">
-        Unlocked rewards stay here until you redeem them.
+        Tap a reward when you're at the venue. Slide to use it with staff.
       </p>
 
       <div v-if="loading" class="mt-6">
@@ -105,7 +105,10 @@ onMounted(loadRewards)
             >
             <div class="min-w-0 flex-1">
               <p class="truncate font-black text-slate-950">{{ item.reward.title }}</p>
-              <div class="mt-1 flex items-center gap-2">
+              <p v-if="item.reward.description" class="mt-1 line-clamp-2 text-sm text-slate-500">
+                {{ item.reward.description }}
+              </p>
+              <div class="mt-1.5 flex items-center gap-2">
                 <img
                   v-if="item.customer.venue"
                   :src="venueLogoUrl(item.customer.venue)"
@@ -115,7 +118,7 @@ onMounted(loadRewards)
                 <p class="truncate text-sm text-slate-500">{{ item.customer.venue?.name }}</p>
               </div>
             </div>
-            <AppBadge tone="green">Redeem</AppBadge>
+            <AppBadge tone="green">Use</AppBadge>
           </button>
         </li>
       </ul>
