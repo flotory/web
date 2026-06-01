@@ -1,3 +1,4 @@
+const REDEEM_PREFIX = 'flotory:redeem:'
 const REDEEM_PATH = '/r/'
 
 export type ParsedLoyaltyQr =
@@ -6,8 +7,9 @@ export type ParsedLoyaltyQr =
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export function buildRedeemQrValue(token: string, origin = window.location.origin): string {
-  return `${origin.replace(/\/$/, '')}${REDEEM_PATH}${token}`
+/** QR payload for reward claims — never a bare UUID (those are stamp cards). */
+export function buildRedeemQrValue(token: string): string {
+  return `${REDEEM_PREFIX}${token.toLowerCase()}`
 }
 
 export function parseLoyaltyQr(raw: string): ParsedLoyaltyQr | null {
@@ -17,31 +19,16 @@ export function parseLoyaltyQr(raw: string): ParsedLoyaltyQr | null {
     return null
   }
 
-  try {
-    if (value.includes('://')) {
-      const url = new URL(value)
-      const match = url.pathname.match(/^\/r\/([0-9a-f-]{36})$/i)
-
-      if (match?.[1]) {
-        return { type: 'redeem', token: match[1].toLowerCase() }
-      }
-    }
-  } catch {
-    // Not a URL — fall through.
-  }
-
-  const flotoryMatch = value.match(/^flotory:redeem:([0-9a-f-]{36})$/i)
+  const flotoryMatch = value.match(/flotory:redeem:([0-9a-f-]{36})/i)
 
   if (flotoryMatch?.[1]) {
     return { type: 'redeem', token: flotoryMatch[1].toLowerCase() }
   }
 
-  if (value.startsWith(REDEEM_PATH)) {
-    const token = value.slice(REDEEM_PATH.length)
+  const pathMatch = value.match(/\/r\/([0-9a-f-]{36})/i)
 
-    if (UUID_PATTERN.test(token)) {
-      return { type: 'redeem', token: token.toLowerCase() }
-    }
+  if (pathMatch?.[1]) {
+    return { type: 'redeem', token: pathMatch[1].toLowerCase() }
   }
 
   if (UUID_PATTERN.test(value)) {

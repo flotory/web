@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/venues/{venue}/rewards/{reward}/purge', [RewardController::class, 'purge']);
 
     Route::post('/venues/{venue}/scanner/lookup', [StaffScanController::class, 'lookup']);
+    Route::post('/venues/{venue}/scanner/scan', [StaffScanController::class, 'scan']);
     Route::post('/venues/{venue}/scanner/stamps', [StaffScanController::class, 'addStamp']);
     Route::post('/venues/{venue}/scanner/redeem', [StaffScanController::class, 'redeem']);
 

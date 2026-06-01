@@ -64,7 +64,7 @@ class RedemptionClaimService
             'expires_at' => $request->expires_at,
             'claimed_at' => $request->claimed_at,
             'status' => $this->sessionStatus($request),
-            'qr_value' => LoyaltyQr::redeemUrl($request->token, $origin),
+            'qr_value' => LoyaltyQr::redeemQrPayload($request->token),
             'unlock_id' => $unlock->id,
             'reward' => $reward,
             'customer' => $customer,

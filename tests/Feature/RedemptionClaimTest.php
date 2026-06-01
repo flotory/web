@@ -120,15 +120,55 @@ class RedemptionClaimTest extends TestCase
             ->assertJsonValidationErrors('redemption_token');
     }
 
-    public function test_redeem_url_format_matches_parser(): void
+    public function test_claim_session_qr_uses_flotory_payload(): void
     {
-        $token = '550e8400-e29b-41d4-a716-446655440000';
-        $url = LoyaltyQr::redeemUrl($token, 'https://flotory.com');
+        $customerUser = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser);
+        $reward = $this->createReward($venue);
+        $unlock = RewardUnlock::query()->create([
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+            'unlocked_at' => now(),
+        ]);
 
-        $parsed = LoyaltyQr::parse($url);
+        Sanctum::actingAs($customerUser);
 
-        $this->assertSame('redeem', $parsed['type']);
-        $this->assertSame($token, $parsed['token']);
+        $response = $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/claim-session")
+            ->assertCreated();
+
+        $this->assertStringStartsWith('flotory:redeem:', $response->json('qr_value'));
+    }
+
+    public function test_unified_scan_endpoint_redeems_flotory_qr(): void
+    {
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $staff, 'staff');
+
+        $customer = $this->createCustomer($venue, $customerUser);
+        $reward = $this->createReward($venue);
+        $unlock = RewardUnlock::query()->create([
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+            'unlocked_at' => now(),
+        ]);
+
+        Sanctum::actingAs($customerUser);
+
+        $qr = $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/claim-session")
+            ->assertCreated()
+            ->json('qr_value');
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/scan", ['scan' => $qr])
+            ->assertCreated()
+            ->assertJsonPath('scan_type', 'redeem')
+            ->assertJsonPath('reward.id', $reward->id);
     }
 
     public function test_customer_cannot_create_claim_session_for_claimed_unlock(): void

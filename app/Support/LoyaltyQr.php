@@ -8,11 +8,17 @@ final class LoyaltyQr
 {
     public const REDEEM_PATH_PREFIX = '/r/';
 
+    /** Compact payload for QR codes — avoids confusion with stamp-card UUIDs. */
+    public static function redeemQrPayload(string $token): string
+    {
+        return 'flotory:redeem:'.strtolower($token);
+    }
+
     public static function redeemUrl(string $token, ?string $origin = null): string
     {
         $base = rtrim($origin ?? (string) config('app.url'), '/');
 
-        return "{$base}".self::REDEEM_PATH_PREFIX."{$token}";
+        return "{$base}".self::REDEEM_PATH_PREFIX.strtolower($token);
     }
 
     /**
@@ -26,20 +32,12 @@ final class LoyaltyQr
             return null;
         }
 
-        if (preg_match('~^https?://[^/]+'.preg_quote(self::REDEEM_PATH_PREFIX, '~').'([0-9a-fA-F-]{36})$~', $value, $matches) === 1) {
+        if (preg_match('~flotory:redeem:([0-9a-fA-F-]{36})~', $value, $matches) === 1) {
             return ['type' => 'redeem', 'token' => strtolower($matches[1])];
         }
 
-        if (preg_match('~^flotory:redeem:([0-9a-fA-F-]{36})$~', $value, $matches) === 1) {
+        if (preg_match('~'.preg_quote(self::REDEEM_PATH_PREFIX, '~').'([0-9a-fA-F-]{36})~', $value, $matches) === 1) {
             return ['type' => 'redeem', 'token' => strtolower($matches[1])];
-        }
-
-        if (str_starts_with($value, self::REDEEM_PATH_PREFIX)) {
-            $token = substr($value, strlen(self::REDEEM_PATH_PREFIX));
-
-            if (Str::isUuid($token)) {
-                return ['type' => 'redeem', 'token' => strtolower($token)];
-            }
         }
 
         if (Str::isUuid($value)) {

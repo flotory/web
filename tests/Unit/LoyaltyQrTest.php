@@ -17,33 +17,31 @@ class LoyaltyQrTest extends TestCase
         );
     }
 
-    public function test_parses_redeem_url(): void
+    public function test_redeem_qr_payload_is_not_parsed_as_stamp(): void
+    {
+        $token = '550e8400-e29b-41d4-a716-446655440000';
+        $payload = LoyaltyQr::redeemQrPayload($token);
+
+        $this->assertSame(
+            ['type' => 'redeem', 'token' => $token],
+            LoyaltyQr::parse($payload),
+        );
+    }
+
+    public function test_parses_redeem_url_with_path_anywhere_in_string(): void
     {
         $token = '550e8400-e29b-41d4-a716-446655440000';
 
         $this->assertSame(
             ['type' => 'redeem', 'token' => $token],
-            LoyaltyQr::parse("https://flotory.com/r/{$token}"),
+            LoyaltyQr::parse("https://flotory.com/r/{$token}?x=1"),
         );
     }
 
-    public function test_parses_redeem_path(): void
+    public function test_builds_redeem_qr_payload(): void
     {
         $token = '550e8400-e29b-41d4-a716-446655440000';
 
-        $this->assertSame(
-            ['type' => 'redeem', 'token' => $token],
-            LoyaltyQr::parse("/r/{$token}"),
-        );
-    }
-
-    public function test_builds_redeem_url(): void
-    {
-        $token = '550e8400-e29b-41d4-a716-446655440000';
-
-        $this->assertSame(
-            "https://example.test/r/{$token}",
-            LoyaltyQr::redeemUrl($token, 'https://example.test'),
-        );
+        $this->assertSame("flotory:redeem:{$token}", LoyaltyQr::redeemQrPayload($token));
     }
 }

@@ -11,7 +11,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
-import { parseLoyaltyQr } from '@/lib/loyaltyQr'
 import { rewardThumbUrl } from '@/lib/rewardMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue, Visit } from '@/types'
@@ -137,27 +136,7 @@ function handleDetect(codes: Array<{ rawValue: string }>) {
   selectedCustomer.value = null
   customerSearch.value = ''
   rawScan.value = value
-  pendingClaimWarning.value = null
-  redeemedReward.value = null
-
-  const parsed = parseLoyaltyQr(value)
-
-  if (!parsed) {
-    status.value = 'error'
-    scanning.value = false
-    message.value = 'Unrecognized QR. Use the loyalty card for stamps or Rewards → Claim for redemption.'
-    scheduleReset(3200)
-
-    return
-  }
-
-  if (parsed.type === 'redeem') {
-    void redeemReward(parsed.token)
-
-    return
-  }
-
-  void addStamp(parsed.token)
+  void processScan(value)
 }
 
 function selectPresetAmount(amount: number) {
@@ -204,18 +183,8 @@ function clearSelectedCustomer() {
   selectedCustomer.value = null
 }
 
-async function addStamp(qrTokenOverride?: string) {
-  if (submitting.value) {
-    return
-  }
-
-  const qrToken = qrTokenOverride || selectedCustomer.value?.qr_token || rawScan.value
-
-  if (!qrToken || !venue.value) {
-    status.value = 'error'
-    scanning.value = false
-    message.value = 'Scan a QR or select a customer first.'
-
+async function processScan(scanValue: string) {
+  if (submitting.value || !venue.value) {
     return
   }
 
@@ -223,15 +192,15 @@ async function addStamp(qrTokenOverride?: string) {
   loading.value = true
   scanning.value = false
   status.value = 'processing'
-  lastScanKind.value = 'stamp'
   message.value = ''
   pendingClaimWarning.value = null
+  redeemedReward.value = null
 
   try {
-    const response = await api<StampScanResponse>(`/venues/${venue.value.id}/scanner/stamps`, {
+    const response = await api<ScanResponse>(`/venues/${venue.value.id}/scanner/scan`, {
       method: 'POST',
       body: {
-        qr_token: qrToken,
+        scan: scanValue,
         stamps: selectedStampAmount.value,
       },
     })
@@ -241,59 +210,45 @@ async function addStamp(qrTokenOverride?: string) {
     customerSearch.value = ''
     rawScan.value = ''
     status.value = 'success'
-    pendingClaimWarning.value = response.pending_claim_warning ?? null
 
-    const addedStamps = response.added_stamps ?? selectedStampAmount.value
-    const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
-    const customerName = response.customer.user?.name ?? 'Customer'
-    message.value = `${addedStamps} ${stampLabel} added for ${customerName}.`
-
-    const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
-    scheduleReset(delay)
+    if (response.scan_type === 'redeem') {
+      lastScanKind.value = 'redeem'
+      redeemedReward.value = response.reward
+      const customerName = response.customer.user?.name ?? 'Customer'
+      message.value = `Reward redeemed for ${customerName}: ${response.reward.title}.`
+      scheduleReset(2800)
+    } else {
+      lastScanKind.value = 'stamp'
+      pendingClaimWarning.value = response.pending_claim_warning ?? null
+      const addedStamps = response.added_stamps ?? selectedStampAmount.value
+      const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
+      const customerName = response.customer.user?.name ?? 'Customer'
+      message.value = `${addedStamps} ${stampLabel} added for ${customerName}.`
+      const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
+      scheduleReset(delay)
+    }
   } catch (exception) {
     status.value = 'error'
-    message.value = exception instanceof ApiError ? exception.message : 'Could not add stamp.'
-    scheduleReset(2600)
+    message.value = exception instanceof ApiError ? exception.message : 'Scan failed.'
+    scheduleReset(3200)
   } finally {
     loading.value = false
     submitting.value = false
   }
 }
 
-async function redeemReward(redemptionToken: string) {
-  if (submitting.value || !venue.value) {
+async function addStampFromFallback() {
+  const qrToken = selectedCustomer.value?.qr_token
+
+  if (!qrToken) {
+    status.value = 'error'
+    scanning.value = false
+    message.value = 'Select a customer first.'
+
     return
   }
 
-  submitting.value = true
-  loading.value = true
-  scanning.value = false
-  status.value = 'processing'
-  lastScanKind.value = 'redeem'
-  message.value = ''
-  pendingClaimWarning.value = null
-
-  try {
-    const response = await api<RedeemScanResponse>(`/venues/${venue.value.id}/scanner/redeem`, {
-      method: 'POST',
-      body: { redemption_token: redemptionToken },
-    })
-
-    applyCustomerResponse(response)
-    redeemedReward.value = response.reward
-    rawScan.value = ''
-    status.value = 'success'
-    const customerName = response.customer.user?.name ?? 'Customer'
-    message.value = `Reward redeemed for ${customerName}: ${response.reward.title}.`
-    scheduleReset(2800)
-  } catch (exception) {
-    status.value = 'error'
-    message.value = exception instanceof ApiError ? exception.message : 'Could not redeem reward.'
-    scheduleReset(3200)
-  } finally {
-    loading.value = false
-    submitting.value = false
-  }
+  await processScan(qrToken)
 }
 
 function scheduleReset(delay: number) {
@@ -501,7 +456,7 @@ watch(scannerVenueId, () => {
             </div>
           </div>
 
-          <AppButton class="w-full" size="lg" :disabled="isBusy || !selectedCustomer" @click="addStamp()">
+          <AppButton class="w-full" size="lg" :disabled="isBusy || !selectedCustomer" @click="addStampFromFallback">
             {{ isBusy ? 'Adding stamps...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'}` }}
           </AppButton>
           <AppButton v-if="status === 'error'" class="w-full" variant="secondary" @click="resetScanner">
