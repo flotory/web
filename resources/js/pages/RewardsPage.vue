@@ -899,14 +899,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       </section>
 
 
-    <button
-      v-if="gridMenuMilestoneId !== null"
-      type="button"
-      class="fixed inset-0 z-20 cursor-default bg-transparent"
-      aria-label="Close milestone menu"
-      @click="closeGridMenu"
-    />
-
     <!-- Delete confirmation -->
     <div
       v-if="deleteRewardTarget"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { MoreVertical } from '@lucide/vue'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { rewardThumbUrl } from '@/lib/rewardMedia'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -26,7 +26,16 @@ const emit = defineEmits<{
   menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
+const menuPosition = ref<{ top: number; left: number } | null>(null)
+
 const stampCount = computed(() => props.stamps ?? 0)
+
+const openMenuMilestone = computed(() => {
+  if (props.menuOpenMilestoneId === null) {
+    return null
+  }
+  return sortedMilestones.value.find((milestone) => milestone.id === props.menuOpenMilestoneId) ?? null
+})
 
 const sortedMilestones = computed(() =>
   [...props.milestones].sort((a, b) => a.required_stamps - b.required_stamps),
@@ -60,6 +69,15 @@ const slots = computed(() =>
   }),
 )
 
+watch(
+  () => props.menuOpenMilestoneId,
+  (id) => {
+    if (id === null) {
+      menuPosition.value = null
+    }
+  },
+)
+
 function slotRingClass(slot: { isReward: boolean; milestone: GridMilestone | null }): string {
   if (!props.editable || !slot.isReward || !slot.milestone) {
     return ''
@@ -74,7 +92,7 @@ function slotRingClass(slot: { isReward: boolean; milestone: GridMilestone | nul
 
 function slotBaseClass(slot: { filled: boolean; isReward: boolean }): string[] {
   if (slot.isReward) {
-    return ['relative overflow-hidden p-0 ring-1 ring-rose-100']
+    return ['relative overflow-visible p-0 ring-1 ring-rose-100']
   }
 
   if (slot.filled) {
@@ -88,7 +106,26 @@ function canManageMilestone(milestone: GridMilestone): boolean {
   return props.editable && milestone.id > 0 && !milestone.isDraft
 }
 
+function onMenuToggle(event: MouseEvent, milestone: GridMilestone) {
+  event.stopPropagation()
+  event.preventDefault()
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+
+  if (props.menuOpenMilestoneId === milestone.id) {
+    menuPosition.value = null
+  } else {
+    menuPosition.value = {
+      top: rect.bottom + 4,
+      left: Math.max(8, rect.right - 144),
+    }
+  }
+
+  emit('toggleMenu', milestone.id)
+}
+
 function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
+  menuPosition.value = null
   emit('menuAction', action, milestoneId)
 }
 </script>
@@ -103,31 +140,32 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
         <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">stamps</p>
       </div>
 
-      <div class="grid min-w-0 flex-1 grid-cols-5 gap-1.5 sm:gap-2">
+      <div class="grid min-w-0 flex-1 grid-cols-5 gap-1.5 overflow-visible sm:gap-2">
         <div
           v-for="slot in slots"
           :key="slot.position"
           :title="slot.milestone ? `${slot.milestone.required_stamps} stamps → ${slot.milestone.title}` : undefined"
           :class="[
-            'grid aspect-square min-h-0 rounded-xl text-sm font-bold transition',
+            'min-h-0 rounded-xl text-sm font-bold transition',
+            slot.isReward ? 'flex aspect-[4/3] sm:aspect-square' : 'grid aspect-square place-items-center',
             ...slotBaseClass(slot),
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
             celebratingReward && slot.isReward && slot.filled && 'animate-reward-glow',
             slotRingClass(slot),
-            !slot.isReward && 'place-items-center',
           ]"
         >
+          <!-- Milestone: row split 10% gift | 90% (photo + info horizontally) -->
           <div
             v-if="slot.isReward && slot.milestone"
-            class="flex h-full w-full min-w-0"
+            class="flex h-full w-full min-w-0 flex-row"
           >
             <div
-              class="flex w-[10%] min-w-[12px] shrink-0 items-center justify-center sm:min-w-[14px]"
+              class="flex w-[10%] min-w-[14px] shrink-0 flex-col items-center justify-center sm:min-w-[16px]"
               :class="slot.filled ? 'bg-amber-400 text-white' : 'bg-rose-50 text-rose-500'"
             >
               <svg
                 viewBox="0 0 24 24"
-                class="size-3 shrink-0 sm:size-3.5"
+                class="size-3 shrink-0 sm:size-4"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="1.8"
@@ -139,10 +177,10 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
             </div>
 
             <div
-              class="relative flex w-[90%] min-w-0 flex-col overflow-visible bg-white"
+              class="relative flex h-full w-[90%] min-w-0 flex-row items-stretch overflow-hidden bg-white"
               :class="slot.filled ? 'bg-amber-50/90' : ''"
             >
-              <div class="relative h-[52%] min-h-[1.25rem] w-full shrink-0 overflow-hidden bg-slate-100">
+              <div class="relative h-full w-[42%] shrink-0 bg-slate-100 sm:w-[40%]">
                 <img
                   :src="rewardThumbUrl(slot.milestone)"
                   :alt="slot.milestone.title"
@@ -150,79 +188,30 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
                 >
                 <span
                   v-if="slot.filled"
-                  class="absolute left-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-amber-400 text-[9px] text-white shadow-sm"
+                  class="absolute left-0.5 top-0.5 grid size-3.5 place-items-center rounded-full bg-amber-400 text-[8px] text-white shadow-sm sm:size-4 sm:text-[9px]"
                   aria-hidden="true"
                 >
                   ★
                 </span>
-
-                <button
-                  v-if="canManageMilestone(slot.milestone)"
-                  type="button"
-                  class="absolute right-0 top-0 z-10 grid size-5 place-items-center rounded-bl-md bg-white/95 text-slate-600 shadow-sm ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-900 sm:size-6"
-                  :aria-label="`Manage ${slot.milestone.title}`"
-                  :aria-expanded="menuOpenMilestoneId === slot.milestone.id"
-                  @click.stop="emit('toggleMenu', slot.milestone.id)"
-                >
-                  <MoreVertical class="size-3 sm:size-3.5" :stroke-width="2.5" />
-                </button>
               </div>
 
-              <div class="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-1 py-0.5">
-                <p class="line-clamp-2 pr-4 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
+              <div class="relative flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1 py-0.5 pr-5">
+                <p class="line-clamp-2 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
                   {{ slot.milestone.title }}
                 </p>
                 <p class="truncate text-[6px] font-semibold text-slate-500 sm:text-[7px]">
                   {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
                 </p>
-              </div>
 
-              <div
-                v-if="menuOpenMilestoneId === slot.milestone.id"
-                class="absolute right-0 top-full z-30 mt-0.5 w-36 rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-200"
-                @click.stop
-              >
                 <button
+                  v-if="canManageMilestone(slot.milestone)"
                   type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                  :disabled="menuSaving"
-                  @click="onMenuAction('edit', slot.milestone.id)"
+                  class="absolute right-0.5 top-0.5 z-10 grid size-5 place-items-center rounded-md bg-white/95 text-slate-600 shadow-sm ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-900"
+                  :aria-label="`Manage ${slot.milestone.title}`"
+                  :aria-expanded="menuOpenMilestoneId === slot.milestone.id"
+                  @click="onMenuToggle($event, slot.milestone)"
                 >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                  :disabled="menuSaving"
-                  @click="onMenuAction('duplicate', slot.milestone.id)"
-                >
-                  Duplicate
-                </button>
-                <button
-                  v-if="slot.milestone.active !== false"
-                  type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
-                  :disabled="menuSaving"
-                  @click="onMenuAction('archive', slot.milestone.id)"
-                >
-                  Archive
-                </button>
-                <button
-                  v-else
-                  type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                  :disabled="menuSaving"
-                  @click="onMenuAction('reactivate', slot.milestone.id)"
-                >
-                  Reactivate
-                </button>
-                <button
-                  type="button"
-                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50"
-                  :disabled="menuSaving"
-                  @click="onMenuAction('delete', slot.milestone.id)"
-                >
-                  Delete
+                  <MoreVertical class="size-3" :stroke-width="2.5" />
                 </button>
               </div>
             </div>
@@ -237,6 +226,66 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
     <p v-if="editable" class="mt-4 text-center text-xs text-slate-500">
       Use ⋯ on a reward to edit, duplicate, or archive.
     </p>
+
+    <Teleport to="body">
+      <button
+        v-if="menuOpenMilestoneId !== null && openMenuMilestone"
+        type="button"
+        class="fixed inset-0 z-[80] cursor-default bg-transparent"
+        aria-label="Close milestone menu"
+        @click="emit('toggleMenu', openMenuMilestone.id)"
+      />
+
+      <div
+        v-if="menuOpenMilestoneId !== null && openMenuMilestone && menuPosition"
+        class="fixed z-[90] w-36 rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-200"
+        :style="{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }"
+        @click.stop
+      >
+        <button
+          type="button"
+          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+          :disabled="menuSaving"
+          @click="onMenuAction('edit', openMenuMilestone.id)"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+          :disabled="menuSaving"
+          @click="onMenuAction('duplicate', openMenuMilestone.id)"
+        >
+          Duplicate
+        </button>
+        <button
+          v-if="openMenuMilestone.active !== false"
+          type="button"
+          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
+          :disabled="menuSaving"
+          @click="onMenuAction('archive', openMenuMilestone.id)"
+        >
+          Archive
+        </button>
+        <button
+          v-else
+          type="button"
+          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+          :disabled="menuSaving"
+          @click="onMenuAction('reactivate', openMenuMilestone.id)"
+        >
+          Reactivate
+        </button>
+        <button
+          type="button"
+          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50"
+          :disabled="menuSaving"
+          @click="onMenuAction('delete', openMenuMilestone.id)"
+        >
+          Delete
+        </button>
+      </div>
+    </Teleport>
   </article>
 </template>
 

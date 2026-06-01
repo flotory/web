@@ -39,7 +39,7 @@ check_url() {
 
 # HTTP→HTTPS redirect on production returns 301 for localhost checks.
 check_url "${APP_URL}/" "200" 12 2 "" "301"
-check_url "${APP_URL}/manifest.webmanifest" "200" 5 1
+check_url "${APP_URL}/manifest.webmanifest" "200" 5 1 "" "301"
 check_url "${APP_URL}/api/customer/cards" "401" 5 1 "application/json"
 
 echo "==> Smoke checks passed."
