@@ -40,12 +40,12 @@ export const useRealtimeStore = defineStore('realtime', {
           const currentVenueId = Number(router.currentRoute.value.query.venue_id)
           const routeName = router.currentRoute.value.name
           const shouldRedirect =
-            routeName !== 'customer-card' ||
-            (routeName === 'customer-card' && currentVenueId !== payload.venue.id)
+            routeName !== 'customer-wallet' ||
+            (routeName === 'customer-wallet' && currentVenueId !== payload.venue.id)
 
           if (shouldRedirect) {
             router.push({
-              name: 'customer-card',
+              name: 'customer-wallet',
               query: { venue_id: String(payload.venue.id) },
             })
           }

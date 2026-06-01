@@ -32,7 +32,7 @@ export function buildVenueLandingUrl(slug: string, origin = typeof window !== 'u
   return `${origin}${buildVenueLandingPath(slug)}`
 }
 
-export function buildAuthRedirectWithVenue(slug: string, nextPath = '/card'): string {
+export function buildAuthRedirectWithVenue(slug: string, nextPath = '/wallet'): string {
   const params = new URLSearchParams({
     venue_slug: slug,
     redirect: nextPath,
@@ -41,7 +41,7 @@ export function buildAuthRedirectWithVenue(slug: string, nextPath = '/card'): st
   return `/login?${params.toString()}`
 }
 
-export function buildRegisterRedirectWithVenue(slug: string, nextPath = '/card'): string {
+export function buildRegisterRedirectWithVenue(slug: string, nextPath = '/wallet'): string {
   const params = new URLSearchParams({
     venue_slug: slug,
     redirect: nextPath,
@@ -50,7 +50,7 @@ export function buildRegisterRedirectWithVenue(slug: string, nextPath = '/card')
   return `/register?${params.toString()}`
 }
 
-export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/card'): string {
+export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/wallet'): string {
   const params = new URLSearchParams({
     redirect: nextPath,
   })
@@ -64,7 +64,7 @@ export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/card')
 
 export function buildGoogleAuthUrlWithIntent(
   venueSlug: string | null,
-  nextPath = '/card',
+  nextPath = '/wallet',
   intent: 'owner' | null = null,
 ): string {
   const params = new URLSearchParams({

@@ -74,7 +74,7 @@ onMounted(loadRewards)
         title="No rewards yet"
         description="Collect stamps on your card to unlock milestones. Unlocked rewards appear here until you redeem them."
       >
-        <RouterLink to="/card">
+        <RouterLink to="/wallet">
           <AppButton>Open loyalty card</AppButton>
         </RouterLink>
       </EmptyState>

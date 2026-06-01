@@ -29,7 +29,11 @@ class CustomerLoyaltyController extends Controller
             : $cards->first();
 
         return response()->json([
-            'cards' => $cards,
+            'cards' => $cards->map(fn (Customer $card): array => [
+                ...$card->toArray(),
+                'venue' => $card->venue,
+                'summary' => $loyalty->cardListSummary($card),
+            ])->values(),
             'active_card' => $activeCard,
             'next_reward' => $activeCard ? $loyalty->nextRewardFor($activeCard) : null,
             'available_rewards' => $activeCard ? $loyalty->availableRewardsFor($activeCard) : [],

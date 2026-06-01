@@ -2,7 +2,7 @@
   "name": "Flotory",
   "short_name": "Flotory",
   "description": "Digital loyalty cards and QR rewards for cafes and restaurants.",
-  "start_url": "/card",
+  "start_url": "/wallet",
   "scope": "/",
   "display": "standalone",
   "background_color": "#050505",

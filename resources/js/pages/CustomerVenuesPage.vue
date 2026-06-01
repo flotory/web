@@ -77,7 +77,7 @@ async function joinVenue(venue: Venue) {
       [venue.id]: response.customer,
     }
     venue.joined_count = 1
-    await router.push({ name: 'customer-card', query: { venue_id: String(venue.id) } })
+    await router.push({ name: 'customer-wallet', query: { venue_id: String(venue.id) } })
   } catch (exception) {
     joinError.value = exception instanceof ApiError ? exception.message : 'Could not join this venue right now.'
   } finally {
@@ -149,7 +149,7 @@ onMounted(loadVenues)
           <div class="mt-4">
             <RouterLink
               v-if="isJoined(venue)"
-              :to="{ name: 'customer-card', query: { venue_id: String(venue.id) } }"
+              :to="{ name: 'customer-wallet', query: { venue_id: String(venue.id) } }"
               class="flex w-full items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
             >
               View loyalty card

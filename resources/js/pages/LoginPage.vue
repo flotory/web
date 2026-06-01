@@ -36,7 +36,7 @@ const postAuthPath = computed(() => {
     return '/onboarding/create-venue'
   }
 
-  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/card')
+  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/wallet')
 })
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
@@ -55,7 +55,7 @@ async function submit() {
 
     if (venueSlug.value) {
       const result = await completeVenueOnboarding(venueSlug.value)
-      await router.push(`/card?venue_id=${result.venueId}`)
+      await router.push(`/wallet?venue_id=${result.venueId}`)
       return
     }
 
@@ -90,7 +90,7 @@ onMounted(() => {
         await workspace.bootstrap(true)
         if (venueSlug.value) {
           const result = await completeVenueOnboarding(venueSlug.value)
-          await router.replace(`/card?venue_id=${result.venueId}`)
+          await router.replace(`/wallet?venue_id=${result.venueId}`)
           return
         }
 

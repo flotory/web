@@ -130,7 +130,16 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'cards')
             ->assertJsonPath('active_card.venue_id', $venueA->id)
-            ->assertJsonStructure(['journey', 'recent_visits', 'available_rewards']);
+            ->assertJsonPath('cards.0.summary.stamps', 2)
+            ->assertJsonPath('cards.0.summary.max_stamps', 5)
+            ->assertJsonStructure([
+                'journey',
+                'recent_visits',
+                'available_rewards',
+                'cards' => [
+                    ['summary' => ['stamps', 'max_stamps', 'pending_rewards_count', 'next_reward_title']],
+                ],
+            ]);
 
         $this->getJson("/api/customer/cards?venue_id={$venueB->id}")
             ->assertOk()

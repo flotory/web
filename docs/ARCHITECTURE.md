@@ -151,7 +151,7 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 
 1. `GET /v/{slug}` → `GET /api/public/venues/{slug}/landing`
 2. Join → register/login with `venue_slug`
-3. `POST /api/venues/{slug}/join` → `/card?venue_id=…`
+3. `POST /api/venues/{slug}/join` → `/wallet?venue_id=…`
 
 ### Owner onboarding
 
@@ -178,7 +178,7 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
 4. Staff scans claim QR on the same scanner → redeem flow above
 
-`/card` QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
+`/wallet` detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
 
 ### Staff claim (manual fallback)
 
@@ -229,7 +229,7 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/customers` | CRM list | Owner, staff |
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
-| `/card` | Loyalty card + redeem shortcut | Customer |
+| `/wallet` | Loyalty wallet (venue list + per-venue card detail) | Customer |
 | `/customer/rewards` | Rewards wallet (pending unlocks) | Customer |
 | `/venues` | Browse/search all venues, join or open card | Customer |
 | `/customer/settings` | Account details + logout | Customer |

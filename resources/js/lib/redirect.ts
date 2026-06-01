@@ -1,4 +1,4 @@
-const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
+const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/wallet', '/venues', '/customer/', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
 
 const OWNER_WORKSPACE_PREFIXES = [
   '/dashboard',
@@ -30,7 +30,7 @@ export function isSafeInternalRedirect(path: string): boolean {
   return INTERNAL_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`))
 }
 
-export function sanitizeRedirect(path: string | null | undefined, fallback = '/card'): string {
+export function sanitizeRedirect(path: string | null | undefined, fallback = '/wallet'): string {
   if (!path || !isSafeInternalRedirect(path)) {
     return fallback
   }

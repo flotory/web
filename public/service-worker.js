@@ -1,7 +1,7 @@
 const CACHE_NAME = 'flotory-v6'
 const APP_SHELL = [
   '/dashboard',
-  '/card',
+  '/wallet',
   '/login',
   '/manifest.webmanifest',
   '/favicon.png',
@@ -55,6 +55,6 @@ self.addEventListener('fetch', (event) => {
 
         return response
       })
-      .catch(() => caches.match(request).then((cached) => cached ?? caches.match('/card'))),
+      .catch(() => caches.match(request).then((cached) => cached ?? caches.match('/wallet'))),
   )
 })

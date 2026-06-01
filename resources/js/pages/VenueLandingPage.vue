@@ -30,7 +30,7 @@ const landing = ref<VenueLandingPayload | null>(null)
 const memberCard = ref<Customer | null>(null)
 
 const milestones = computed(() => landing.value?.milestones ?? [])
-const joinNextPath = computed(() => `/card?venue_id=${landing.value?.venue.id ?? ''}`)
+const joinNextPath = computed(() => `/wallet?venue_id=${landing.value?.venue.id ?? ''}`)
 const isMember = computed(() => Boolean(memberCard.value))
 const previewStamps = computed(() => memberCard.value?.stamps ?? 0)
 
@@ -82,7 +82,7 @@ async function handlePrimaryAction() {
 
       try {
         const result = await completeVenueOnboarding(slug.value)
-        await router.push(`/card?venue_id=${result.venueId}`)
+        await router.push(`/wallet?venue_id=${result.venueId}`)
       } catch {
         error.value = 'Could not join this venue right now. Please try again.'
         throw new Error('join-failed')

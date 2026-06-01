@@ -174,6 +174,36 @@ class LoyaltyStampService
     }
 
     /**
+     * @return array{
+     *     stamps: int,
+     *     max_stamps: int,
+     *     pending_rewards_count: int,
+     *     next_reward_title: string|null,
+     *     next_reward_stamps: int|null,
+     *     stamps_to_next: int|null
+     * }
+     */
+    public function cardListSummary(Customer $customer): array
+    {
+        $customer = $customer->fresh() ?? $customer;
+        $journey = $this->journeyFor($customer);
+        $milestones = collect($journey['milestones']);
+        $maxStamps = (int) ($milestones->max('required_stamps') ?? 0);
+        $maxStamps = $maxStamps > 0 ? $maxStamps : 10;
+        $next = $this->nextRewardFor($customer);
+        $stampsToNext = $next ? max($next->required_stamps - $customer->stamps, 0) : null;
+
+        return [
+            'stamps' => $customer->stamps,
+            'max_stamps' => $maxStamps,
+            'pending_rewards_count' => $this->pendingRewardCountFor($customer),
+            'next_reward_title' => $next?->title,
+            'next_reward_stamps' => $next?->required_stamps,
+            'stamps_to_next' => $stampsToNext,
+        ];
+    }
+
+    /**
      * @return Collection<int, RewardUnlock>
      */
     public function pendingUnlocksFor(Customer $customer): Collection

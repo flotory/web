@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { CreditCard } from '@lucide/vue'
+import { ChevronLeft, MapPin, Wallet } from '@lucide/vue'
 import QrcodeVue from 'qrcode.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
@@ -13,7 +13,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
-import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
+import { venueCoverUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useRealtimeStore } from '@/stores/realtime'
@@ -136,7 +136,7 @@ async function loadCard(silent = false) {
     }
   } catch (exception) {
     if (!silent) {
-      error.value = apiErrorMessage(exception, 'Could not load your loyalty card. Please try again.')
+      error.value = apiErrorMessage(exception, 'Could not load this card. Please try again.')
     }
   } finally {
     if (!silent) {
@@ -346,6 +346,10 @@ function handleRewardFinished() {
   router.push('/customer/rewards')
 }
 
+function backToWallet() {
+  router.push({ name: 'customer-wallet' })
+}
+
 onMounted(() => {
   loadCard()
   window.addEventListener('focus', refreshIfVisible)
@@ -377,7 +381,7 @@ watch(
   <AppShell>
     <div class="relative mx-auto w-full max-w-md">
       <div v-if="loading" class="px-4 py-8">
-        <EmptyState compact title="Loading your card…" />
+        <EmptyState compact title="Loading card…" />
       </div>
 
       <div v-else-if="error" class="px-4 py-8">
@@ -386,34 +390,43 @@ watch(
 
       <div v-else-if="!card" class="px-4 py-8">
         <EmptyState
-          :icon="CreditCard"
-          title="No loyalty card yet"
-          description="Join a venue to start collecting stamps and unlocking rewards."
+          :icon="Wallet"
+          title="Card not found"
+          description="This venue is not in your wallet yet."
         >
-          <RouterLink to="/customer/venues">
-            <AppButton>Browse venues</AppButton>
-          </RouterLink>
+          <AppButton @click="backToWallet">Back to wallet</AppButton>
         </EmptyState>
       </div>
 
       <template v-else>
         <header v-if="card.venue" class="relative z-10">
-          <div class="relative h-24 w-full overflow-hidden sm:h-28">
-            <img :src="venueCoverUrl(card.venue)" alt="" class="size-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/5 to-slate-100" />
+          <div class="relative h-44 w-full overflow-hidden sm:h-48">
+            <img :src="venueCoverUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-slate-950/10" />
+            <button
+              type="button"
+              class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25"
+              @click="backToWallet"
+            >
+              <ChevronLeft class="size-4" />
+              Wallet
+            </button>
+            <div class="absolute bottom-4 left-4 right-4">
+              <h1 class="text-2xl font-black tracking-tight text-white">{{ card.venue.name }}</h1>
+              <p
+                v-if="card.venue.address"
+                class="mt-1 flex items-start gap-1.5 text-sm text-white/90"
+              >
+                <MapPin class="mt-0.5 size-4 shrink-0" />
+                <span>{{ card.venue.address }}</span>
+              </p>
+            </div>
           </div>
         </header>
 
-        <section class="relative z-10 flex flex-col px-4">
-          <div v-if="card.venue" class="-mt-8 flex items-center gap-3 px-1">
-            <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md ring-1 ring-slate-200/80">
-              <img :src="venueLogoThumbUrl(card.venue)" :alt="card.venue.name" class="size-full rounded-[14px] object-cover">
-            </div>
-            <h1 class="text-xl font-black tracking-tight text-slate-950">{{ card.venue.name }}</h1>
-          </div>
-
+        <section class="relative z-10 -mt-4 flex flex-col px-4 pb-8">
           <AppCard
-            wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
+            wrapper-class="w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
             :padded="false"
           >
             <h2 class="text-center text-lg font-black text-slate-950">Add a stamp</h2>

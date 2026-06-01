@@ -176,7 +176,7 @@ OAuth preserves onboarding intent:
 
 1. Guest opens `/v/{venue-slug}` (public landing with rewards preview).
 2. Taps **Join** → register or Google sign-in.
-3. After auth, auto-joins the venue and opens `/card`.
+3. After auth, auto-joins the venue and opens `/wallet`.
 
 ### Owner (homepage)
 

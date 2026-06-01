@@ -56,7 +56,7 @@ export function resolveAuthenticatedHomePath(
     return '/dashboard'
   }
 
-  return '/card'
+  return '/wallet'
 }
 
 /** New owners without a venue yet should not be sent to the customer card. */
@@ -67,7 +67,7 @@ export function ownerBootstrapPath(
 ): string {
   const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
 
-  if (home === '/card' && hasOwnerOnboardingIntent()) {
+  if (home === '/wallet' && hasOwnerOnboardingIntent()) {
     return OWNER_ONBOARDING_PATH
   }
 
@@ -90,7 +90,7 @@ export function resolvePostLoginDestination(
 
   const safe = isSafeInternalRedirect(redirect) ? redirect : home
 
-  if (safe === '/card' && home !== '/card') {
+  if ((safe === '/card' || safe === '/wallet' || safe.startsWith('/card?') || safe.startsWith('/wallet?')) && home !== '/wallet') {
     return home
   }
 

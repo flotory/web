@@ -38,7 +38,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 1. **Discover** — Guest scans venue QR or opens `/v/{slug}` landing page.
 2. **Join** — Register or sign in (email or Google); auto-joins the venue.
 3. **Collect** — Staff scan the customer QR and award stamps (typically 1 per purchase; venue may award more).
-4. **Progress** — Customer sees stamp count and milestone journey on `/card`; pending earned rewards live on `/customer/rewards` (tab badge).
+4. **Progress** — Customer sees all venue cards on `/wallet` (stamp progress per venue); tap a card for QR and milestone journey; pending earned rewards live on `/customer/rewards` (tab badge).
 5. **Redeem** — Customer taps **Claim** in Rewards, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
 6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.
 
@@ -71,7 +71,7 @@ What ships today:
 - Milestone rewards CRUD with images (archive / reactivate / purge)
 - Team: email invitations, resend, cancel; staff role only
 - Staff scanner with QR camera + customer search fallback
-- Customer loyalty card per venue (`/card`) with journey, stamp/reward animations, and redeem shortcut
+- Customer loyalty wallet (`/wallet`) listing all joined venues; per-venue detail with journey, stamp/reward animations, and redeem shortcut
 - Customer rewards wallet (`/customer/rewards`) — Claim button, claim QR modal, staff scan to redeem
 - Scanner auto-detect: stamp card (green) vs claim QR (indigo success); pending-reward warning after stamp scans
 - Customer venues list (`/venues`) and settings (`/customer/settings`)

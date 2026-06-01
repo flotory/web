@@ -38,6 +38,16 @@ export interface Customer {
   stamps: number
   venue?: Venue
   user?: User
+  summary?: CustomerCardSummary
+}
+
+export interface CustomerCardSummary {
+  stamps: number
+  max_stamps: number
+  pending_rewards_count: number
+  next_reward_title: string | null
+  next_reward_stamps: number | null
+  stamps_to_next: number | null
 }
 
 export interface Reward {

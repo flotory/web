@@ -35,7 +35,7 @@ const isWorkspace = computed(() => {
 
 const homePath = computed(() => {
   if (!isWorkspace.value) {
-    return '/card'
+    return '/wallet'
   }
 
   if (workspace.usesStaffNav) {
@@ -48,7 +48,7 @@ const homePath = computed(() => {
 const nav = computed(() => {
   if (!isWorkspace.value) {
     return [
-      { label: 'Card', to: '/card', icon: '◍' },
+      { label: 'Wallet', to: '/wallet', icon: '◍' },
       { label: 'Rewards', to: '/customer/rewards', icon: '★', badge: customerRewards.pendingCount },
       { label: 'Venues', to: '/venues', icon: '⌂' },
       { label: 'Settings', to: '/customer/settings', icon: '⚙' },

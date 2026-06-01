@@ -72,7 +72,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Owner onboarding | 5 steps; completion redirects to `/dashboard?onboarding=completed` with a success toast, then query param is cleared. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | Stamp QR on `/card`; claim QR only in **Rewards → Claim** modal. Customer bottom nav: **Card**, **Rewards** (wallet + Claim), **Venues**, **Settings**. Staff scanner auto-detects QR type (green stamp / indigo redeem success). Unlocked rewards stay in wallet until staff scans claim QR. Owner milestone CRUD stays on `/rewards`. |
+| Customer primary surface | Stamp QR on `/wallet` (list all venues, tap for detail); claim QR only in **Rewards → Claim** modal. Customer bottom nav: **Wallet**, **Rewards** (wallet + Claim), **Venues**, **Settings**. Staff scanner auto-detects QR type (green stamp / indigo redeem success). Unlocked rewards stay in wallet until staff scans claim QR. Owner milestone CRUD stays on `/rewards`. |
 
 ## Data and Infrastructure
 
