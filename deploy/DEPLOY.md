@@ -112,6 +112,16 @@ If migrations were added locally, they run automatically via `deploy.sh` on the 
 - Domain: `https://flotory.com`
 - `www` redirect: `https://www.flotory.com` → `https://flotory.com`
 
+## HTTPS / Google sign-in
+
+`deploy/nginx-flotory.conf` must include **port 443** and Let's Encrypt certificate paths. A plain HTTP-only config breaks `https://flotory.com` and Google OAuth (callback URL is always HTTPS).
+
+After deploy, verify:
+
+```bash
+curl -sI https://flotory.com/auth/google/redirect | head -3   # expect HTTP/2 302
+```
+
 ## Docker naming
 
 Compose project name is **`flotory`** (`name:` in `docker-compose.prod.yml`). Containers are `flotory-app-1`, `flotory-mysql-1`, etc. The MySQL volume stays **`web_mysql_data`** so renaming from the old `web-*` project does not reset the database. Nginx site config is `deploy/nginx-flotory.conf` → `/etc/nginx/sites-available/flotory`.
