@@ -294,12 +294,12 @@ watch(scannerVenueId, () => {
         <p class="mt-2 text-slate-500">
           {{
             venue
-              ? `At ${venue.name}: stamp card QR adds stamps. Amber claim QR redeems a reward.`
+              ? `At ${venue.name}: stamp card adds stamps. Claim screen redeems rewards.`
               : 'Designed for a sub-3-second cashier flow.'
           }}
         </p>
-        <p class="mt-1 text-xs font-semibold text-amber-700">
-          For rewards, the customer must tap Claim in Rewards — not show their stamp card.
+        <p class="mt-1 text-xs font-medium text-slate-500">
+          For rewards, the customer must tap <span class="font-semibold text-slate-700">Claim</span> in Rewards — not their stamp card.
         </p>
       </div>
 
@@ -309,7 +309,7 @@ watch(scannerVenueId, () => {
           <div
             v-else-if="status === 'processing'"
             class="grid h-full place-items-center text-white"
-            :class="lastScanKind === 'redeem' ? 'bg-amber-950' : 'bg-slate-950'"
+            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-indigo-950 to-slate-950' : 'bg-slate-950'"
           >
             <div class="text-center">
               <div class="mx-auto size-16 animate-spin rounded-full border-4 border-white/20 border-t-white" />
@@ -330,7 +330,7 @@ watch(scannerVenueId, () => {
           <div
             v-else
             class="grid h-full place-items-center text-white"
-            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-amber-500 to-amber-950' : 'bg-gradient-to-br from-emerald-500 to-slate-950'"
+            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-indigo-500 via-violet-600 to-slate-950' : 'bg-gradient-to-br from-emerald-500 to-slate-950'"
           >
             <div class="px-6 text-center">
               <SuccessCheck />
@@ -351,11 +351,11 @@ watch(scannerVenueId, () => {
 
         <div
           v-if="status === 'success' && pendingClaimWarning"
-          class="border-b border-amber-200 bg-amber-50 px-5 py-4"
+          class="border-b border-sky-100 bg-sky-50/90 px-5 py-4"
         >
-          <p class="text-sm font-black text-amber-950">Reward ready to claim</p>
-          <p class="mt-1 text-sm font-semibold text-amber-900">{{ pendingClaimWarning.message }}</p>
-          <ul v-if="pendingClaimWarning.rewards.length" class="mt-2 space-y-1 text-sm text-amber-800">
+          <p class="text-sm font-black text-slate-900">Reward ready to claim</p>
+          <p class="mt-1 text-sm font-medium text-slate-600">{{ pendingClaimWarning.message }}</p>
+          <ul v-if="pendingClaimWarning.rewards.length" class="mt-2 space-y-1 text-sm text-slate-600">
             <li v-for="reward in pendingClaimWarning.rewards" :key="reward.id">• {{ reward.title }}</li>
           </ul>
           <div class="mt-3 flex gap-2">
@@ -465,11 +465,11 @@ watch(scannerVenueId, () => {
         </div>
 
         <div v-else-if="status === 'success' && !pendingClaimWarning" class="p-5">
-          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
-            <img :src="rewardThumbUrl(redeemedReward)" alt="" class="size-12 rounded-xl object-cover">
+          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-indigo-50 p-3 ring-1 ring-indigo-100">
+            <img :src="rewardThumbUrl(redeemedReward)" alt="" class="size-12 rounded-xl object-cover ring-1 ring-white">
             <div>
-              <p class="font-black text-amber-950">{{ redeemedReward.title }}</p>
-              <p class="text-sm font-semibold text-amber-800">Marked as used</p>
+              <p class="font-black text-slate-950">{{ redeemedReward.title }}</p>
+              <p class="text-sm font-semibold text-indigo-700">Marked as used</p>
             </div>
           </div>
           <AppButton class="w-full" variant="secondary" @click="resetScanner">

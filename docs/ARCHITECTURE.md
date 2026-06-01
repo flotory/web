@@ -169,7 +169,7 @@ One `/scanner` page; camera payload determines the action:
 
 Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
 
-After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an amber banner: ask the customer to open **Rewards → Claim**, not the stamp card).
+After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an info banner: ask the customer to open **Rewards → Claim**, not the stamp card).
 
 ### Customer reward claim (QR)
 
@@ -178,7 +178,7 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
 4. Staff scans claim QR on the same scanner → redeem flow above
 
-`/card` QR is **stamps only**. Claim QRs are **amber** and only appear in the claim modal.
+`/card` QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
 
 ### Staff claim (manual fallback)
 
@@ -214,7 +214,7 @@ Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
 
-Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards → Claim** (amber QR for staff) → poll until claimed → success celebration.
+Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards → Claim** (claim QR for staff) → poll until claimed → success celebration.
 
 ### Key pages
 

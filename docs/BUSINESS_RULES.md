@@ -62,7 +62,7 @@ Read alongside [MVP_DECISIONS.md](./MVP_DECISIONS.md) (approved engineering deci
 - A customer enrolls at a venue by scanning its QR code or joining through the venue landing page.
 - A user may have **one loyalty card per venue**. Joining the same venue again returns the existing card.
 - Customers may belong to **multiple venues** simultaneously.
-- Customers redeem rewards **at the venue** by opening **Rewards → Claim**, showing the **amber claim QR** to staff, and staff scanning it on the same scanner used for stamps (not the stamp card QR).
+- Customers redeem rewards **at the venue** by opening **Rewards → Claim**, showing the **claim QR** to staff, and staff scanning it on the same scanner used for stamps (not the stamp card QR).
 - Customers may only view and redeem **their own** loyalty cards and rewards.
 - Customers may only interact with rewards and stamps for venues where they are enrolled.
 

@@ -53,7 +53,7 @@ onMounted(loadRewards)
     <div class="mx-auto w-full max-w-md">
       <h1 class="text-2xl font-black tracking-tight text-slate-950">Your rewards</h1>
       <p class="mt-1 text-sm text-slate-500">
-        At the counter, tap <strong class="text-slate-700">Claim</strong> and show the amber QR to staff.
+        At the counter, tap <strong class="text-slate-700">Claim</strong> and show the QR to staff.
       </p>
 
       <div v-if="loading" class="mt-6">
@@ -106,7 +106,11 @@ onMounted(loadRewards)
                 <p class="truncate text-sm text-slate-500">{{ item.customer.venue?.name }}</p>
               </div>
             </div>
-            <AppButton size="sm" class="shrink-0" @click="openClaim(item)">
+            <AppButton
+              size="sm"
+              class="shrink-0 bg-indigo-600 text-white shadow-md shadow-indigo-600/25 hover:bg-indigo-700"
+              @click="openClaim(item)"
+            >
               Claim
             </AppButton>
           </div>

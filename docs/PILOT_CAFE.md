@@ -25,7 +25,7 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 - [ ] QR download / print asset works for counter display
 - [ ] Staff invitation email delivers (check spam; verify SMTP in production)
 - [ ] Scanner flow: scan customer QR → stamp → customer sees update on card
-- [ ] Redeem flow: customer taps Claim → staff scans amber QR → customer sees success
+- [ ] Redeem flow: customer taps Claim → staff scans claim QR → customer sees success
 - [ ] Wrong-QR drill: customer shows stamp card for reward → staff sees amber warning after stamp
 - [ ] You can demo end-to-end in under 5 minutes
 
@@ -68,7 +68,7 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 1. Staff accepts invite → opens Scanner on phone
 2. Practice scan: owner’s personal phone as “customer” (join via QR, then scan)
 3. Show +1 vs +2 stamps; explain 5-second double-scan protection
-4. Practice redeem: customer taps Claim in Rewards → staff scans amber QR
+4. Practice redeem: customer taps Claim in Rewards → staff scans claim QR
 
 ### With customers (ongoing)
 

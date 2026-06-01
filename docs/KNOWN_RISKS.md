@@ -176,7 +176,7 @@ Related: [BUSINESS_RULES.md](./BUSINESS_RULES.md), [MVP_DECISIONS.md](./MVP_DECI
 | | |
 |---|---|
 | **Impact** | Staff scan adds a stamp instead of redeeming; customer frustration at counter. |
-| **Mitigation (shipped)** | Claim flow uses a separate amber QR (`/r/{token}`). Scanner auto-detects QR type. Stamp scans return `pending_claim_warning` when unclaimed rewards exist. Card copy directs customers to Rewards → Claim. |
+| **Mitigation (shipped)** | Claim flow uses a separate `flotory:redeem:{token}` QR. Scanner auto-detects QR type. Stamp scans return `pending_claim_warning` when unclaimed rewards exist. Card copy directs customers to Rewards → Claim. |
 | **Planned fix** | Optional staff training mode; block stamp when pending unlock unless staff confirms. |
 
 ### Card redeem modal showed “locked” after cycle completion
