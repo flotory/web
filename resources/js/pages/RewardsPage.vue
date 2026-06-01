@@ -171,7 +171,7 @@ function rewardById(milestoneId: number): Reward | undefined {
 }
 
 function onGridMenuAction(
-  action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete',
+  action: 'edit' | 'archive' | 'reactivate' | 'delete',
   milestoneId: number,
 ) {
   const reward = rewardById(milestoneId)
@@ -181,10 +181,6 @@ function onGridMenuAction(
 
   if (action === 'edit') {
     startEditing(reward)
-    return
-  }
-  if (action === 'duplicate') {
-    void duplicateReward(reward)
     return
   }
   if (action === 'archive') {
@@ -425,38 +421,6 @@ async function applyTemplate(template: RewardTemplate) {
     }
   } catch (exception) {
     toast.error(exception instanceof ApiError ? exception.message : 'Could not apply template.')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function duplicateReward(reward: Reward) {
-  if (!venue.value) return
-
-  let stamps = reward.required_stamps
-  const used = new Set(rewards.value.map((item) => item.required_stamps))
-  while (used.has(stamps) && stamps < 100) {
-    stamps += 1
-  }
-  if (used.has(stamps)) {
-    toast.error('No free stamp threshold available to duplicate.')
-    return
-  }
-
-  saving.value = true
-
-  try {
-    const body = new FormData()
-    body.append('title', `${reward.title} (copy)`)
-    body.append('required_stamps', String(stamps))
-    body.append('description', reward.description ?? '')
-    body.append('active', '1')
-    const { reward: created } = await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, { method: 'POST', body })
-    await loadRewards()
-    toast.success('Milestone duplicated')
-    startEditing(created)
-  } catch (exception) {
-    toast.error(exception instanceof ApiError ? exception.message : 'Could not duplicate milestone.')
   } finally {
     saving.value = false
   }

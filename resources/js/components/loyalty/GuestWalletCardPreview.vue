@@ -41,7 +41,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
+  menuAction: [action: 'edit' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
 const stampCount = computed(() => props.stamps ?? 0)

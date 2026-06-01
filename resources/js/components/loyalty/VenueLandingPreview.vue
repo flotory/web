@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Archive, Copy, Gift, Pencil } from '@lucide/vue'
+import { Archive, Gift, Pencil } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 
 import { rewardThumbUrl } from '@/lib/rewardMedia'
@@ -33,7 +33,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
+  menuAction: [action: 'edit' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
 const clickedMilestoneId = ref<number | null>(null)
@@ -116,7 +116,7 @@ function canManageMilestone(milestone: GridMilestone): boolean {
   return props.editable && milestone.id > 0 && !milestone.isDraft
 }
 
-function onAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
+function onAction(action: 'edit' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
   emit('menuAction', action, milestoneId)
 }
 
@@ -314,16 +314,6 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
         >
           <Pencil class="size-4" :stroke-width="2.2" />
           Edit
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          :disabled="menuSaving || !activeManageMilestone"
-          tabindex="-1"
-          @click.stop="activeManageMilestone && onAction('duplicate', activeManageMilestone.id)"
-        >
-          <Copy class="size-4" :stroke-width="2.2" />
-          Duplicate
         </button>
         <button
           v-if="!activeManageMilestone || activeManageMilestone.active !== false"
