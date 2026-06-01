@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminActivityController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BroadcastAuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
@@ -72,4 +73,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/venues/{venue}/team/invitations/{invitation}', [VenueTeamController::class, 'cancelInvitation']);
     Route::patch('/venues/{venue}/team/{user}', [VenueTeamController::class, 'update']);
     Route::delete('/venues/{venue}/team/{user}', [VenueTeamController::class, 'destroy']);
+
+    Route::middleware('admin')->prefix('admin')->group(function (): void {
+        Route::get('/activity', [AdminActivityController::class, 'index']);
+    });
 });

@@ -19,6 +19,7 @@ import ScannerPage from '@/pages/ScannerPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import StaffInvitePage from '@/pages/StaffInvitePage.vue'
+import AdminActivityPage from '@/pages/AdminActivityPage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -58,6 +59,7 @@ const router = createRouter({
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: false } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/card', redirect: (to) => ({ path: '/wallet', query: to.query }) },
     { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
@@ -84,6 +86,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
+  }
+
+  if (to.meta.adminOnly && auth.isAuthenticated && !auth.user?.is_admin) {
+    return { path: '/dashboard' }
   }
 
   if (auth.isAuthenticated) {

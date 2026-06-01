@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Support\AuditLog;
 use App\Support\VenueAccess;
 
 class RewardController extends Controller
@@ -45,6 +46,11 @@ class RewardController extends Controller
         }
 
         $reward = $venue->rewards()->create($payload);
+
+        AuditLog::loyalty('reward.created', $reward, $request->user(), 'success', [
+            'status' => 'success',
+            'required_stamps' => $reward->required_stamps,
+        ]);
 
         return response()->json([
             'reward' => $reward,
@@ -79,6 +85,8 @@ class RewardController extends Controller
 
         $reward->update($payload);
 
+        AuditLog::loyalty('reward.updated', $reward, $request->user(), 'success', ['status' => 'success']);
+
         return response()->json([
             'reward' => $reward,
         ]);
@@ -96,6 +104,8 @@ class RewardController extends Controller
 
         $reward->update(['active' => false]);
 
+        AuditLog::loyalty('reward.archived', $reward, $request->user(), 'success', ['status' => 'success']);
+
         return response()->json([
             'reward' => $reward->fresh(),
         ]);
@@ -107,6 +117,8 @@ class RewardController extends Controller
         abort_unless($reward->venue_id === $venue->id, 404);
 
         $reward->update(['active' => true]);
+
+        AuditLog::loyalty('reward.reactivated', $reward, $request->user(), 'success', ['status' => 'success']);
 
         return response()->json([
             'reward' => $reward->fresh(),
@@ -136,6 +148,13 @@ class RewardController extends Controller
         }
 
         $this->deleteRewardImage($reward);
+
+        AuditLog::loyalty('reward.purged', $reward, $request->user(), 'success', [
+            'status' => 'success',
+            'reward_id' => $reward->id,
+            'title' => $reward->title,
+        ]);
+
         $reward->delete();
 
         return response()->json(status: 204);

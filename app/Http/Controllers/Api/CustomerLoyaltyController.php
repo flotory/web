@@ -10,6 +10,7 @@ use App\Models\Venue;
 use App\Models\Reward;
 use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
+use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -83,6 +84,12 @@ class CustomerLoyaltyController extends Controller
                 'stamps' => 0,
             ],
         );
+
+        if ($customer->wasRecentlyCreated) {
+            AuditLog::loyalty('customer.joined', $customer, $request->user(), 'success', [
+                'status' => 'success',
+            ]);
+        }
 
         return response()->json([
             'customer' => $customer->load('venue'),

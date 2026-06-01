@@ -36,6 +36,9 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate
 echo "==> Running migrations..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
+echo "==> Ensuring super admin account..."
+docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --class=AdminUserSeeder --force
+
 echo "==> Refreshing Laravel caches..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear
 docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache

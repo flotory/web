@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
+use App\Support\AuditLog;
 use Carbon\CarbonInterval;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,19 @@ class LoyaltyStampService
             ]);
         }
 
+        AuditLog::loyalty(
+            'stamp.added',
+            $result['customer'],
+            $staff,
+            'success',
+            [
+                'status' => 'success',
+                'visit_id' => $result['visit']->id,
+                'added_stamps' => $result['added_stamps'],
+                'cycle_completed' => $result['cycle_completed'],
+            ],
+        );
+
         return $result;
     }
 
@@ -117,7 +131,21 @@ class LoyaltyStampService
                 'claimed_by' => $redeemer->id,
             ])->save();
 
-            return $unlock->fresh(['reward']);
+            $unlock = $unlock->fresh(['reward']);
+
+            AuditLog::loyalty(
+                'reward.redeemed',
+                $unlock,
+                $redeemer,
+                'success',
+                [
+                    'status' => 'success',
+                    'reward_id' => $reward->id,
+                    'reward_title' => $reward->title,
+                ],
+            );
+
+            return $unlock;
         });
     }
 

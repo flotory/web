@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(AdminUserSeeder::class);
+
         $owner = User::updateOrCreate(
             ['email' => 'owner@example.com'],
             [

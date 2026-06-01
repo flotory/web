@@ -1,5 +1,13 @@
 import { useAuthStore } from '@/stores/auth'
 
+const REQUEST_ID_HEADER = 'X-Request-Id'
+
+let lastRequestId: string | null = null
+
+export function getLastRequestId(): string | null {
+  return lastRequestId
+}
+
 export type ApiOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null
   includeAuth?: boolean
@@ -35,6 +43,10 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     headers.set('Authorization', `Bearer ${auth.token}`)
   }
 
+  if (!headers.has(REQUEST_ID_HEADER)) {
+    headers.set(REQUEST_ID_HEADER, crypto.randomUUID())
+  }
+
   // PHP does not populate uploaded files on PUT/PATCH — use POST + method spoofing.
   let method = options.method ?? 'GET'
   if (body instanceof FormData && method && ['PUT', 'PATCH'].includes(method.toUpperCase())) {
@@ -49,6 +61,11 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     body,
   })
 
+  const responseRequestId = response.headers.get(REQUEST_ID_HEADER)
+  if (responseRequestId) {
+    lastRequestId = responseRequestId
+  }
+
   if (response.status === 204) {
     return undefined as T
   }
@@ -61,11 +78,10 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
       ? Object.values(fieldErrors).flat().find((message) => typeof message === 'string' && message.length > 0)
       : undefined
 
-    throw new ApiError(
-      firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`,
-      response.status,
-      fieldErrors ?? {},
-    )
+    const baseMessage = firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`
+    const message = responseRequestId ? `${baseMessage} (request ${responseRequestId})` : baseMessage
+
+    throw new ApiError(message, response.status, fieldErrors ?? {})
   }
 
   return payload as T

@@ -7,6 +7,7 @@ use App\Models\RedemptionRequest;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
+use App\Support\AuditLog;
 use App\Support\LoyaltyQr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,11 +42,25 @@ class RedemptionClaimService
                 ->where('expires_at', '>', now())
                 ->delete();
 
-            return RedemptionRequest::query()->create([
+            $request = RedemptionRequest::query()->create([
                 'reward_unlock_id' => $unlock->id,
                 'token' => (string) Str::uuid(),
                 'expires_at' => now()->addMinutes(10),
             ]);
+
+            AuditLog::loyalty(
+                'claim.session_created',
+                $request,
+                $unlock->customer->user,
+                'success',
+                [
+                    'status' => 'success',
+                    'reward_id' => $unlock->reward_id,
+                    'unlock_id' => $unlock->id,
+                ],
+            );
+
+            return $request;
         });
     }
 
@@ -144,6 +159,18 @@ class RedemptionClaimService
             ])->save();
 
             $customer = $customer->fresh()->load('user', 'venue');
+
+            AuditLog::loyalty(
+                'claim.redeemed',
+                $request,
+                $staff,
+                'success',
+                [
+                    'status' => 'success',
+                    'reward_id' => $reward->id,
+                    'unlock_id' => $unlock->id,
+                ],
+            );
 
             return [
                 'scan_type' => 'redeem',

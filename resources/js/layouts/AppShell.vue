@@ -63,7 +63,7 @@ const nav = computed(() => {
     ]
   }
 
-  return [
+  const items = [
     { label: 'Dashboard', to: '/dashboard', icon: '◈' },
     { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
     { label: 'My Venues', to: '/my-venues', icon: '⌂' },
@@ -73,6 +73,12 @@ const nav = computed(() => {
     { label: 'Team', to: '/team', icon: '◧' },
     { label: 'Workspace', to: '/settings', icon: '⚙' },
   ]
+
+  if (auth.user?.is_admin) {
+    items.push({ label: 'Activity log', to: '/admin/activity', icon: '◫' })
+  }
+
+  return items
 })
 
 const isNavActive = (item: { to: string; routeName?: string }) =>
