@@ -41,6 +41,8 @@ class StaffScanControllerTest extends TestCase
 
         $response
             ->assertCreated()
+            ->assertJsonPath('scan_type', 'stamp')
+            ->assertJsonPath('pending_claim_warning.count', 1)
             ->assertJsonPath('customer.id', $customer->id)
             ->assertJsonPath('customer.stamps', 0)
             ->assertJsonPath('cycle_completed', true)
@@ -113,6 +115,8 @@ class StaffScanControllerTest extends TestCase
             'stamps' => 2,
         ])
             ->assertCreated()
+            ->assertJsonPath('scan_type', 'stamp')
+            ->assertJsonPath('pending_claim_warning', null)
             ->assertJsonPath('customer.stamps', 3)
             ->assertJsonPath('added_stamps', 2);
 

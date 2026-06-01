@@ -62,7 +62,7 @@ Read alongside [MVP_DECISIONS.md](./MVP_DECISIONS.md) (approved engineering deci
 - A customer enrolls at a venue by scanning its QR code or joining through the venue landing page.
 - A user may have **one loyalty card per venue**. Joining the same venue again returns the existing card.
 - Customers may belong to **multiple venues** simultaneously.
-- Customers redeem rewards **at the venue** by showing their phone to staff (swipe-to-redeem flow).
+- Customers redeem rewards **at the venue** by opening **Rewards → Claim**, showing the **amber claim QR** to staff, and staff scanning it on the same scanner used for stamps (not the stamp card QR).
 - Customers may only view and redeem **their own** loyalty cards and rewards.
 - Customers may only interact with rewards and stamps for venues where they are enrolled.
 
@@ -102,4 +102,5 @@ Read alongside [MVP_DECISIONS.md](./MVP_DECISIONS.md) (approved engineering deci
 - **Error states** must offer recovery (retry, go back, contact support) where possible.
 - Customer loyalty surfaces use **stamps**, **rewards**, and **progress** language consistently.
 - Owner analytics surfaces use **visits**, **customers**, and **loyalty activity** language consistently.
-- After redeeming a reward, customers receive clear **success feedback** before returning to their wallet.
+- After staff scans the claim QR, customers receive clear **success feedback** on the claim screen before returning to their wallet.
+- If staff scan the **stamp card** while the customer has unclaimed rewards, staff see a **warning** to ask for the claim QR instead.

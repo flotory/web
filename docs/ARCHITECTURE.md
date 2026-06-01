@@ -158,22 +158,35 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 1. Register with owner intent → `/onboarding/create-venue` (5 steps)
 2. Complete → `/dashboard?onboarding=completed`
 
-### Staff stamp scan
+### Staff scanner (auto-detect)
 
-1. `/scanner?venue_id=` → `POST /api/venues/{venue}/scanner/stamps` with `qr_token`, `stamps`
-2. QR must belong to customer enrolled at **that** venue
+One `/scanner` page; camera payload determines the action:
 
-### Customer redeem
+| QR type | Payload | API |
+|---------|---------|-----|
+| **Stamp card** | Customer `qr_token` (UUID) | `POST /api/venues/{venue}/scanner/stamps` |
+| **Reward claim** | `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
 
-1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one item per unclaimed unlock)
-2. Slide to redeem → `POST /api/customers/{customer}/rewards/{reward}/redeem` (claims oldest pending unlock for that reward)
-3. Success modal → return to `/customer/rewards` (card page redirects there after redeem)
+Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
 
-Shortcut: `/card` can open the same redeem wallet for the first available reward type.
+After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an amber banner: ask the customer to open **Rewards → Claim**, not the stamp card).
 
-### Staff claim
+### Customer reward claim (QR)
 
-1. `POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem`
+1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
+2. Tap **Claim** → `POST /api/customer/rewards/unlocks/{unlock}/claim-session` → short-lived `redemption_requests` row (10 min TTL)
+3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
+4. Staff scans claim QR on the same scanner → redeem flow above
+
+`/card` QR is **stamps only**. Claim QRs are **amber** and only appear in the claim modal.
+
+### Staff claim (manual fallback)
+
+`POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem` — still available for integrations; primary counter flow uses scanner redeem.
+
+### Customer self-redeem (legacy API)
+
+`POST /api/customers/{customer}/rewards/{reward}/redeem` remains for tests/backward compatibility; the product UI uses staff-scanned claim QRs instead of swipe-to-redeem.
 
 ### Staff invitation
 
@@ -201,7 +214,7 @@ Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
 
-Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards** (primary) or a shortcut on the card: slide-to-use → success modal → return to Rewards tab.
+Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards → Claim** (amber QR for staff) → poll until claimed → success celebration.
 
 ### Key pages
 
@@ -238,7 +251,8 @@ Workspace store auto-selects the first active venue when none is chosen (MVP sin
 - `POST /api/broadcasting/auth`
 - Venues: CRUD, select, logo/cover upload, join, **discover**, customers, dashboard
 - Rewards: nested CRUD + archive/reactivate/purge
-- Scanner: lookup, stamps
+- Scanner: lookup, stamps, **redeem** (claim QR token)
+- Customer claim: `POST .../unlocks/{unlock}/claim-session`, `GET .../claim-sessions/{token}`
 - Team: list, invite, resend/cancel invitation, update/remove member
 - Customer: cards, card detail, rewards journey, **rewards wallet** (`GET /api/customer/rewards/wallet`), redeem
 - Staff redeem: venue-scoped claim endpoint
@@ -274,7 +288,7 @@ Uploaded files are gitignored; directories created at deploy/boot.
 - **Validation:** inline field errors from API (`ApiError`)
 - **Destructive actions:** confirmation modal (delete venue, delete/archive reward)
 - **Cross-page feedback:** `vue-sonner` toaster wired in `App.vue` (infrastructure present; use for global success/error)
-- **Customer reward redeem:** slide-to-redeem in `CustomerRewardWallet`, then `RewardRedeemedCelebration` modal, then `@finished` closes the wallet and returns to `/customer/rewards` (card page redirects there after redeem)
+- **Customer reward claim:** `ClaimRewardModal` — claim session QR, poll until staff scan; `RewardRedeemedCelebration` on success
 
 ## Seeded Demo Data
 

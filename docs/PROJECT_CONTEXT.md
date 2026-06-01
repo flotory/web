@@ -29,7 +29,7 @@ Operational setup (local dev, deploy, demo accounts) stays in the root [README.m
 
 ## What Flotory Does (One Paragraph)
 
-Venues get a QR-driven digital stamp card. Customers join via scan, collect **stamps** toward milestone **rewards**, and claim unlocked perks from their phone. Owners configure rewards, download QR assets, invite staff, and view visit-based analytics. Staff scan customer QRs and award stamps at the counter.
+Venues get a QR-driven digital stamp card. Customers join via scan, collect **stamps** toward milestone **rewards**, and claim unlocked perks by showing a **claim QR** (Rewards → Claim) that staff scan on the same counter scanner used for stamps. Owners configure rewards, download QR assets, invite staff, and view visit-based analytics.
 
 **Core value:** Turn occasional customers into regulars.
 

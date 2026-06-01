@@ -34,7 +34,9 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Cycle completion | When stamps reach the **maximum** active milestone threshold, cycle completes, stamps reset to 0, new `CustomerRewardCycle` starts. |
 | Milestone uniqueness | One active milestone per `required_stamps` value per venue (`reward_type = milestone`). |
 | Duplicate scan guard | Same customer cannot be stamped again within **5 seconds**. |
-| Redeem FIFO | `POST .../rewards/{reward}/redeem` claims the **oldest unclaimed** unlock for that reward (`orderBy cycle_number`). Wallet lists one row per unlock; API does not take `unlock_id` in MVP. |
+| Redeem FIFO | Staff scanner redeem (and legacy `POST .../rewards/{reward}/redeem`) claims the **oldest unclaimed** unlock for that reward (`orderBy cycle_number`). Claim QR is created per `unlock_id` via `claim-session`. |
+| Claim QR | `redemption_requests` table: 10 min TTL, single-use token; QR encodes `/r/{token}`. Scanner auto-detects stamp UUID vs redeem URL. |
+| Stamp-scan warning | `pending_claim_warning` on stamp API when customer has unclaimed unlocks — reduces wrong-QR mistakes at counter. |
 | QR venue scoping | Scanner rejects QR tokens for customers not enrolled at the active venue. |
 | Archive before purge | Rewards must be archived (`active = false`) before permanent delete. |
 
@@ -70,7 +72,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Owner onboarding | 5 steps; completion redirects to `/dashboard?onboarding=completed` with a success toast, then query param is cleared. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | Loyalty card and claim flow on `/card`. Customer bottom nav: **Card**, **Rewards** (`/customer/rewards` — wallet of unclaimed unlocks with badge count), **Venues**, **Settings**. No top header on customer routes — tab bar only. Stamp updates use slot animations; reward unlock shows a celebration overlay, then the tab badge bounces. Redeeming a reward shows a success modal, then returns the customer to the Rewards tab. Unlocked rewards stay in the wallet until redeemed. The `/rewards` route is owner workspace (milestone CRUD). |
+| Customer primary surface | Stamp QR on `/card`; claim QR only in **Rewards → Claim** modal. Customer bottom nav: **Card**, **Rewards** (wallet + Claim), **Venues**, **Settings**. Staff scanner auto-detects QR type (green stamp / amber redeem). Unlocked rewards stay in wallet until staff scans claim QR. Owner milestone CRUD stays on `/rewards`. |
 
 ## Data and Infrastructure
 

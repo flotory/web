@@ -416,9 +416,9 @@ watch(
             wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
             :padded="false"
           >
-            <h2 class="text-center text-lg font-black text-slate-950">Show this to staff</h2>
+            <h2 class="text-center text-lg font-black text-slate-950">Add a stamp</h2>
             <p class="mt-1 text-center text-sm text-slate-500">
-              Staff scan this QR to add a stamp.
+              Staff scan this QR to add stamps. To use a reward, open Rewards → Claim.
             </p>
 
             <div class="mt-4 flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AddStampRequest;
+use App\Http\Requests\RedeemScanRequest;
 use App\Models\Customer;
 use App\Models\Venue;
 use App\Services\LoyaltyStampService;
+use App\Services\RedemptionClaimService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -38,8 +40,12 @@ class StaffScanController extends Controller
         ]);
     }
 
-    public function addStamp(AddStampRequest $request, Venue $venue, LoyaltyStampService $loyalty): JsonResponse
-    {
+    public function addStamp(
+        AddStampRequest $request,
+        Venue $venue,
+        LoyaltyStampService $loyalty,
+        RedemptionClaimService $claims,
+    ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         $customer = Customer::query()
@@ -53,8 +59,28 @@ class StaffScanController extends Controller
             ]);
         }
 
+        $customer->load('user');
+
+        $payload = $loyalty->addStamp($customer, $request->user(), $request->integer('stamps', 1));
+        $payload['scan_type'] = 'stamp';
+        $payload['pending_claim_warning'] = $claims->pendingClaimWarningFor($customer->fresh());
+
+        return response()->json($payload, 201);
+    }
+
+    public function redeem(
+        RedeemScanRequest $request,
+        Venue $venue,
+        RedemptionClaimService $claims,
+    ): JsonResponse {
+        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
+
         return response()->json(
-            $loyalty->addStamp($customer, $request->user(), $request->integer('stamps', 1)),
+            $claims->redeemByToken(
+                $request->string('redemption_token')->toString(),
+                $venue,
+                $request->user(),
+            ),
             201,
         );
     }

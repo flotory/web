@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\RedemptionRequest;
+use App\Models\RewardUnlock;
 use App\Models\Venue;
 use App\Models\Reward;
 use App\Services\LoyaltyStampService;
+use App\Services\RedemptionClaimService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -117,5 +120,39 @@ class CustomerLoyaltyController extends Controller
         $unlock = $loyalty->redeemReward($customer, $reward, $request->user());
 
         return response()->json($loyalty->redeemApiPayload($customer, $unlock), 201);
+    }
+
+    public function createClaimSession(
+        Request $request,
+        RewardUnlock $unlock,
+        RedemptionClaimService $claims,
+    ): JsonResponse {
+        $unlock->load('customer', 'reward');
+
+        abort_unless($unlock->customer->user_id === $request->user()->id, 403);
+
+        $session = $claims->createClaimSession($unlock);
+
+        return response()->json(
+            $claims->claimSessionPayload($session, $request->root()),
+            201,
+        );
+    }
+
+    public function claimSessionStatus(
+        Request $request,
+        string $token,
+        RedemptionClaimService $claims,
+    ): JsonResponse {
+        $session = RedemptionRequest::query()
+            ->where('token', $token)
+            ->with('rewardUnlock.customer', 'rewardUnlock.reward')
+            ->firstOrFail();
+
+        abort_unless($session->rewardUnlock->customer->user_id === $request->user()->id, 403);
+
+        return response()->json(
+            $claims->claimSessionPayload($session, $request->root()),
+        );
     }
 }

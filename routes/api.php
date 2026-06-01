@@ -43,6 +43,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);
     Route::get('/customer/rewards/wallet', [CustomerLoyaltyController::class, 'wallet']);
+    Route::post('/customer/rewards/unlocks/{unlock}/claim-session', [CustomerLoyaltyController::class, 'createClaimSession']);
+    Route::get('/customer/rewards/claim-sessions/{token}', [CustomerLoyaltyController::class, 'claimSessionStatus']);
     Route::get('/customers/{customer}/card', [CustomerLoyaltyController::class, 'card']);
     Route::get('/customers/{customer}/rewards', [CustomerLoyaltyController::class, 'rewards']);
     Route::post('/customers/{customer}/rewards/{reward}/redeem', [CustomerLoyaltyController::class, 'redeem']);
@@ -57,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::post('/venues/{venue}/scanner/lookup', [StaffScanController::class, 'lookup']);
     Route::post('/venues/{venue}/scanner/stamps', [StaffScanController::class, 'addStamp']);
+    Route::post('/venues/{venue}/scanner/redeem', [StaffScanController::class, 'redeem']);
 
     Route::get('/venues/{venue}/team', [VenueTeamController::class, 'index']);
     Route::post('/venues/{venue}/team/invite', [VenueTeamController::class, 'invite']);

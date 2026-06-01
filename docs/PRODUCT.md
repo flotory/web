@@ -30,7 +30,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 |------------|---------------|
 | Live in minutes with QR onboarding | No app download — web card on any phone |
 | Staff scanner built for speed | Clear progress toward the next reward |
-| Milestone rewards that drive return visits | Swipe-to-claim unlocked perks |
+| Milestone rewards that drive return visits | Claim QR scanned by staff at the counter |
 | Retention analytics (visits, claims, cycles) | Realtime stamp updates when Reverb is enabled |
 
 ## Customer Journey
@@ -39,7 +39,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 2. **Join** — Register or sign in (email or Google); auto-joins the venue.
 3. **Collect** — Staff scan the customer QR and award stamps (typically 1 per purchase; venue may award more).
 4. **Progress** — Customer sees stamp count and milestone journey on `/card`; pending earned rewards live on `/customer/rewards` (tab badge).
-5. **Redeem** — Customer opens the Rewards wallet, slides to use at the counter; success modal, then back to Rewards. Stamps are not deducted on redeem.
+5. **Redeem** — Customer taps **Claim** in Rewards, shows the amber QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
 6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.
 
 ## Owner Journey
@@ -54,7 +54,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 1. **Invite** — Owner sends email invitation from `/team`.
 2. **Accept** — Staff opens `/invite/{token}`, creates account or signs in, joins as `staff`.
-3. **Scan** — `/scanner` (venue-scoped): scan customer QR or search by name/email fallback.
+3. **Scan** — `/scanner` (venue-scoped): auto-detect stamp card vs claim QR; search-by-name fallback for stamps only.
 4. **Award** — Select stamp amount (presets 1–5 or custom 1–100), confirm.
 5. **Assist** — Optionally claim a milestone on behalf of a customer via staff API when needed.
 
@@ -72,7 +72,8 @@ What ships today:
 - Team: email invitations, resend, cancel; staff role only
 - Staff scanner with QR camera + customer search fallback
 - Customer loyalty card per venue (`/card`) with journey, stamp/reward animations, and redeem shortcut
-- Customer rewards wallet (`/customer/rewards`) — one row per unclaimed unlock, slide-to-redeem, success modal
+- Customer rewards wallet (`/customer/rewards`) — Claim button, claim QR modal, staff scan to redeem
+- Scanner auto-detect: stamp card (green) vs claim QR (amber); pending-reward warning after stamp scans
 - Customer venues list (`/venues`) and settings (`/customer/settings`)
 - Staff-side milestone claim API
 - Optional realtime stamp updates via Reverb
