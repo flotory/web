@@ -33,12 +33,11 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 
 **Current Focus:**
 
-- First pilot venue
-- First real customers
-- UX polishing
-- Onboarding improvements
-- Empty states
-- Error handling
+- **First pilot venue** — see [PILOT_CAFE.md](./PILOT_CAFE.md) and [NEXT_STEPS.md](./NEXT_STEPS.md)
+- End-to-end proof: join → stamp → unlock → claim QR → redeem
+- Owner `/rewards` polish (5-column grid, click-to-edit toolbar, toasts) — shipped
+- Pilot-blocking fixes only (email, redeem edge cases, scanner reliability)
+- Defer Phase 1.5 until one venue has 2+ weeks of live data
 
 ---
 

@@ -21,13 +21,13 @@ Avoid for first pilot: chains with IT procurement, venues without smartphone-fri
 
 Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
-- [ ] Owner can sign up, complete onboarding, and create at least one milestone reward
-- [ ] QR download / print asset works for counter display
-- [ ] Staff invitation email delivers (check spam; verify SMTP in production)
-- [ ] Scanner flow: scan customer QR → stamp → customer sees update on card
-- [ ] Redeem flow: customer taps Claim → staff scans claim QR → customer sees success
-- [ ] Wrong-QR drill: customer shows stamp card for reward → staff sees amber warning after stamp
-- [ ] You can demo end-to-end in under 5 minutes
+- Owner can sign up, complete onboarding, and create at least one milestone reward
+- QR download / print asset works for counter display
+- Staff invitation email delivers (check spam; verify SMTP in production)
+- Scanner flow: scan customer QR → stamp → customer sees update on card
+- Redeem flow: customer taps Claim → staff scans claim QR → customer sees success
+- Wrong-QR drill: customer shows stamp card for reward → staff sees amber warning after stamp
+- You can demo end-to-end in under 5 minutes
 
 ---
 
@@ -81,13 +81,15 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
 Track weekly:
 
-| Metric | Target signal |
-|--------|----------------|
-| Customers joined | ≥ 30 unique cards |
-| Repeat scans | ≥ 40% of joined customers scanned twice+ |
-| Rewards unlocked | ≥ 5 total |
-| Rewards redeemed | ≥ 3 total (proves full loop) |
-| Staff scans without owner help | ≥ 80% of scans by staff |
+
+| Metric                         | Target signal                            |
+| ------------------------------ | ---------------------------------------- |
+| Customers joined               | ≥ 30 unique cards                        |
+| Repeat scans                   | ≥ 40% of joined customers scanned twice+ |
+| Rewards unlocked               | ≥ 5 total                                |
+| Rewards redeemed               | ≥ 3 total (proves full loop)             |
+| Staff scans without owner help | ≥ 80% of scans by staff                  |
+
 
 If joins are low → QR placement or counter script problem.  
 If scans but no repeats → milestone too high or reward not compelling.  
@@ -97,13 +99,15 @@ If unlocks but no redeems → redeem UX or staff training gap.
 
 ## Common blockers and fixes
 
-| Blocker | Fix |
-|---------|-----|
-| Staff didn’t get invite email | Resend from Team; copy invite link if available |
-| Customer confused after join | Show Card tab; point to stamp count |
-| Owner wants POS integration | Defer — MVP is QR at counter only |
-| Owner wants multiple reward tiers day one | Start with one milestone; add second after first week |
-| Wi‑Fi dead zone at counter | Staff use mobile data; QR works offline for customer join if page cached |
+
+| Blocker                                   | Fix                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| Staff didn’t get invite email             | Resend from Team; copy invite link if available                          |
+| Customer confused after join              | Show Card tab; point to stamp count                                      |
+| Owner wants POS integration               | Defer — MVP is QR at counter only                                        |
+| Owner wants multiple reward tiers day one | Start with one milestone; add second after first week                    |
+| Wi‑Fi dead zone at counter                | Staff use mobile data; QR works offline for customer join if page cached |
+
 
 ---
 

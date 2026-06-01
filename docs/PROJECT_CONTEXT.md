@@ -11,6 +11,7 @@ Flotory is a hospitality loyalty platform in **MVP** stage. This document is the
 | [BUSINESS_RULES.md](./BUSINESS_RULES.md) | Product invariants and business expectations (no implementation) |
 | [KNOWN_RISKS.md](./KNOWN_RISKS.md) | Accepted risks, open edge cases, resolved issues |
 | [PILOT_CAFE.md](./PILOT_CAFE.md) | Playbook to onboard the first real pilot venue |
+| [NEXT_STEPS.md](./NEXT_STEPS.md) | What to do next, how, and expected outcomes |
 
 Operational setup (local dev, deploy, demo accounts) stays in the root [README.md](../README.md).
 
