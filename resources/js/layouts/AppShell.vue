@@ -140,16 +140,6 @@ async function logout() {
       <div v-if="!workspace.usesStaffNav || workspace.activeVenues.length > 1" class="mt-4 px-2">
         <VenueFilter />
       </div>
-      <div v-if="auth.isAdmin" class="mx-2 mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-3">
-        <p class="text-[10px] font-bold uppercase tracking-wide text-indigo-600">Super admin</p>
-        <RouterLink
-          to="/admin/activity"
-          class="mt-2 flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700"
-        >
-          <span aria-hidden="true">◫</span>
-          Activity log
-        </RouterLink>
-      </div>
       <nav class="mt-6 space-y-1">
         <RouterLink
           v-for="item in nav"
