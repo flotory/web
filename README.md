@@ -60,9 +60,12 @@ git commit -m "Describe your change"
 
 That script:
 
-1. Pushes `main` to GitHub  
-2. SSHs to the droplet  
-3. Runs `git pull` + `deploy/deploy.sh` (build assets, Docker, migrations, Nginx)
+1. Runs local PHPUnit + frontend build (same as CI)  
+2. Pushes `main` to GitHub  
+3. Waits for GitHub Actions **Tests** to pass (`GITHUB_TOKEN` in `deploy/config.sh`)  
+4. SSHs to the droplet and runs `git pull` + `deploy/deploy.sh`
+
+Broken tests no longer reach production unless you explicitly use `SKIP_CI_GATE=1`.
 
 Manual server deploy (without pushing from Mac):
 

@@ -5,10 +5,27 @@
 ```
 Mac: edit code → git commit → ./deploy/push-prod.sh
                               ↓
-                         GitHub (main)
+                    local CI (PHPUnit + npm build)
+                              ↓
+                         git push → GitHub Actions (Tests)
+                              ↓
+                    wait until CI is green (GITHUB_TOKEN)
                               ↓
                          Droplet: git pull → deploy.sh
 ```
+
+Production deploy **does not run** if local tests fail or if the GitHub **Tests** workflow fails on the pushed commit.
+
+Emergency bypass (avoid unless prod is down): `SKIP_CI_GATE=1 ./deploy/push-prod.sh`
+
+### Recommended: branch protection on `main`
+
+In GitHub → **Settings → Branches → Branch protection rules** for `main`:
+
+- Require status checks: **PHPUnit** and **Frontend build**
+- Require branches to be up to date before merging (if you use PRs)
+
+That blocks merging broken code; `push-prod.sh` blocks deploying it.
 
 ## One-time setup
 
@@ -40,13 +57,22 @@ git push origin main
 
 ## Every release
 
+1. Add `GITHUB_TOKEN` to `deploy/config.sh` (see `deploy/config.example.sh`).
+2. Commit and deploy:
+
 ```bash
 git add .
 git commit -m "Your change"
 ./deploy/push-prod.sh
 ```
 
-`push-prod.sh` requires a clean working tree (commit first). It pushes `main` to GitHub, then SSHs to the droplet and runs `pull-and-deploy.sh`.
+`push-prod.sh` requires a clean working tree. It runs local CI, pushes `main`, waits for GitHub Actions to pass, then SSHs to the droplet and runs `pull-and-deploy.sh`.
+
+Run the same checks without deploying:
+
+```bash
+./scripts/ci-local.sh
+```
 
 ### Post-deploy checks
 

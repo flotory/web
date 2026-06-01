@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run on your Mac: push to GitHub, then deploy on the droplet.
+# Run on your Mac: verify CI, push to GitHub, wait for GitHub Actions, then deploy on the droplet.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,6 +15,7 @@ source "${CONFIG}"
 
 BRANCH="${GIT_BRANCH:-main}"
 SSH_TARGET="${DROPLET_USER}@${DROPLET_HOST}"
+export GITHUB_REPO="${GITHUB_REPO:-flotory/web}"
 
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "You have uncommitted changes. Commit first, then run this script again."
@@ -22,10 +23,29 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+if [[ "${SKIP_CI_GATE:-}" == "1" ]]; then
+  echo "WARNING: SKIP_CI_GATE=1 — skipping local and GitHub CI gates (emergency only)."
+else
+  echo "==> Running local CI (PHPUnit + frontend build)..."
+  "${ROOT}/scripts/ci-local.sh"
+fi
+
 echo "==> Pushing to GitHub (origin ${BRANCH})..."
 git push origin "${BRANCH}"
+
+if [[ "${SKIP_CI_GATE:-}" != "1" ]]; then
+  if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+    echo ""
+    echo "ERROR: GITHUB_TOKEN is not set in deploy/config.sh"
+    echo "Deploy is blocked until GitHub Actions passes on the commit you just pushed."
+    echo "Add a token with Actions read access, or use SKIP_CI_GATE=1 for emergency deploys only."
+    exit 1
+  fi
+  export GITHUB_TOKEN
+  "${ROOT}/scripts/wait-for-github-ci.sh"
+fi
 
 echo "==> Deploying on ${SSH_TARGET}..."
 ssh "${SSH_TARGET}" "cd ${APP_DIR} && chmod +x deploy/pull-and-deploy.sh deploy/deploy.sh && ./deploy/pull-and-deploy.sh"
 
-echo "==> Done. App: http://${DROPLET_HOST}"
+echo "==> Done. App: https://flotory.com"
