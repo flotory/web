@@ -42,9 +42,10 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
 docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
 
 echo "==> Nginx..."
-if [[ -f deploy/nginx-loyalty.conf ]]; then
-  cp deploy/nginx-loyalty.conf /etc/nginx/sites-available/loyalty
-  ln -sf /etc/nginx/sites-available/loyalty /etc/nginx/sites-enabled/loyalty
+if [[ -f deploy/nginx-flotory.conf ]]; then
+  cp deploy/nginx-flotory.conf /etc/nginx/sites-available/flotory
+  ln -sf /etc/nginx/sites-available/flotory /etc/nginx/sites-enabled/flotory
+  rm -f /etc/nginx/sites-enabled/loyalty /etc/nginx/sites-available/loyalty
   rm -f /etc/nginx/sites-enabled/default
   nginx -t
   systemctl reload nginx

@@ -3,6 +3,7 @@ import { Gift, Store } from '@lucide/vue'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -118,9 +119,62 @@ const avgUnlockVisits = computed(() => {
   return Math.round(active.reduce((sum, reward) => sum + reward.required_stamps, 0) / active.length)
 })
 
-const demoProgressStamps = computed(() => {
-  const max = sortedOwnerRewards.value.at(-1)?.required_stamps ?? 10
-  return Math.min(Math.floor(max * 0.45), max - 1)
+const programPreviewStamps = ref(0)
+
+const activeSortedRewards = computed(() =>
+  sortedOwnerRewards.value.filter((reward) => reward.active),
+)
+
+const programCardMilestones = computed(() => {
+  const items = activeSortedRewards.value.map((reward) => ({
+    id: reward.id,
+    title: reward.title,
+    description: reward.description ?? null,
+    image: reward.image ?? null,
+    image_thumb: reward.image_thumb ?? null,
+    required_stamps: reward.required_stamps,
+    isDraft: false,
+  }))
+
+  if (!formOpen.value || !title.value.trim() || requiredStamps.value < 1) {
+    return items
+  }
+
+  const draft = {
+    id: editingReward.value?.id ?? -1,
+    title: title.value.trim(),
+    description: description.value.trim() || null,
+    image: editingReward.value?.image ?? null,
+    image_thumb: editingReward.value?.image_thumb ?? null,
+    required_stamps: requiredStamps.value,
+    isDraft: !editingReward.value || editingReward.value.required_stamps !== requiredStamps.value,
+  }
+
+  if (editingReward.value) {
+    return items
+      .map((milestone) => (milestone.id === editingReward.value!.id
+        ? { ...draft, id: milestone.id, isDraft: true }
+        : milestone))
+      .sort((a, b) => a.required_stamps - b.required_stamps)
+  }
+
+  return [...items, { ...draft, isDraft: true }].sort((a, b) => a.required_stamps - b.required_stamps)
+})
+
+const programMaxStamps = computed(() => programCardMilestones.value.at(-1)?.required_stamps ?? 0)
+
+const hasProgramLayout = computed(
+  () => !needsVenuePick.value && programCardMilestones.value.length > 0,
+)
+
+function isDraftMilestone(milestone: { id: number; isDraft?: boolean }): boolean {
+  return milestone.isDraft === true || milestone.id < 0
+}
+
+watch(programMaxStamps, (max) => {
+  if (programPreviewStamps.value > max) {
+    programPreviewStamps.value = max
+  }
 })
 
 function showSuccess(message: string) {
@@ -592,6 +646,68 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         <p class="text-sm font-bold text-emerald-700">{{ successMessage }}</p>
       </AppCard>
 
+      <!-- Same stamp + rewards layout guests see on Wallet -->
+      <section v-if="hasProgramLayout" class="mt-6">
+        <AppCard wrapper-class="border-slate-200 bg-white p-5 sm:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 class="text-xl font-black text-slate-950">Loyalty card layout</h2>
+              <p class="mt-1 text-sm text-slate-500">
+                This is how milestones appear on the guest wallet — {{ programMaxStamps }} stamp
+                {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle
+                <span v-if="formOpen && programCardMilestones.some(isDraftMilestone)"> (includes unsaved changes)</span>.
+              </p>
+            </div>
+            <div class="w-full shrink-0 sm:max-w-[220px]">
+              <label class="text-xs font-bold uppercase tracking-wide text-slate-400" for="program-preview-stamps">
+                Preview progress
+              </label>
+              <div class="mt-2 flex items-center gap-3">
+                <input
+                  id="program-preview-stamps"
+                  v-model.number="programPreviewStamps"
+                  type="range"
+                  min="0"
+                  :max="programMaxStamps"
+                  class="min-w-0 flex-1 accent-indigo-600"
+                >
+                <span class="w-12 text-right text-sm font-black text-indigo-600">{{ programPreviewStamps }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <VenueLandingPreview
+              :milestones="programCardMilestones"
+              :stamps="programPreviewStamps"
+            />
+          </div>
+
+          <div v-if="programCardMilestones.length" class="mt-5 space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Milestones on the card</p>
+            <div
+              v-for="milestone in programCardMilestones"
+              :key="`card-milestone-${milestone.id}-${milestone.required_stamps}`"
+              class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3"
+              :class="isDraftMilestone(milestone) ? 'border-dashed border-indigo-300 bg-indigo-50/50' : ''"
+            >
+              <p class="min-w-0 truncate text-sm font-bold text-slate-800">
+                {{ milestone.required_stamps }} stamps → {{ milestone.title }}
+              </p>
+              <div class="flex shrink-0 items-center gap-2">
+                <AppBadge v-if="isDraftMilestone(milestone)" tone="blue">Unsaved</AppBadge>
+                <AppBadge
+                  v-else
+                  :tone="programPreviewStamps >= milestone.required_stamps ? 'green' : 'amber'"
+                >
+                  {{ programPreviewStamps >= milestone.required_stamps ? 'Unlocked' : 'Locked' }}
+                </AppBadge>
+              </div>
+            </div>
+          </div>
+        </AppCard>
+      </section>
+
       <!-- Create / edit panel -->
       <div
         v-if="formOpen && canEditRewards && !needsVenuePick"
@@ -736,7 +852,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
       <!-- Empty state -->
       <section
-        v-if="!loading && !sortedOwnerRewards.length && !needsVenuePick && canEditRewards"
+        v-if="!loading && !sortedOwnerRewards.length && !hasProgramLayout && !needsVenuePick && canEditRewards"
         class="mt-6 overflow-hidden rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-8 text-center shadow-inner"
       >
         <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200/80">
@@ -766,12 +882,12 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </div>
       </section>
 
-      <!-- Timeline journey -->
-      <section v-else-if="!loading && sortedOwnerRewards.length && !needsVenuePick" class="mt-6">
+      <!-- Manage milestones -->
+      <section v-if="!loading && sortedOwnerRewards.length && !needsVenuePick" class="mt-6">
         <div class="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 class="text-xl font-black text-slate-950">Your milestone journey</h2>
-            <p class="mt-1 text-sm text-slate-500">Guests progress left to right — each unlock feels collectible.</p>
+            <h2 class="text-xl font-black text-slate-950">Manage milestones</h2>
+            <p class="mt-1 text-sm text-slate-500">Edit, pause, or add rewards — the card layout above updates automatically.</p>
           </div>
         </div>
 
@@ -954,44 +1070,18 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           </button>
         </div>
         <div class="p-5">
-          <div class="mx-auto max-w-xs overflow-hidden rounded-[2rem] border-4 border-slate-800 bg-slate-950 shadow-2xl">
-            <div class="bg-gradient-to-r from-indigo-600 to-cyan-500 px-4 py-5 text-white">
-              <p class="text-xs font-bold uppercase tracking-wide text-white/70">{{ venue?.name ?? 'Your venue' }}</p>
-              <p class="mt-2 text-2xl font-black">Loyalty card</p>
-              <p class="mt-1 text-sm text-white/80">{{ demoProgressStamps }} stamps collected</p>
-            </div>
-            <div class="space-y-3 p-4">
-              <div
-                v-for="reward in sortedOwnerRewards.slice(0, 4)"
-                :key="`preview-${reward.id}`"
-                class="rounded-2xl border border-white/10 bg-white/5 p-3"
-              >
-                <div class="flex items-center gap-3">
-                  <span class="reward-media-frame reward-media-frame--thumb overflow-hidden rounded-xl bg-slate-800">
-                    <img :src="rewardImageUrl(reward)" :alt="reward.title" class="reward-media-img">
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate font-bold text-white">{{ reward.title }}</p>
-                    <p class="text-xs text-white/60">{{ reward.required_stamps }} stamps</p>
-                    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300"
-                        :style="{ width: `${Math.min((demoProgressStamps / reward.required_stamps) * 100, 100)}%` }"
-                      />
-                    </div>
-                  </div>
-                  <AppBadge :tone="demoProgressStamps >= reward.required_stamps ? 'green' : 'amber'">
-                    {{ demoProgressStamps >= reward.required_stamps ? 'Ready' : 'Locked' }}
-                  </AppBadge>
-                </div>
-              </div>
-              <p v-if="!sortedOwnerRewards.length" class="py-6 text-center text-sm text-white/60">
-                Add milestones to preview the guest journey.
-              </p>
-            </div>
+          <div class="mx-auto max-w-md rounded-3xl border border-white/10 bg-white p-4 shadow-inner">
+            <VenueLandingPreview
+              v-if="programCardMilestones.length"
+              :milestones="programCardMilestones"
+              :stamps="programPreviewStamps"
+            />
+            <p v-else class="py-8 text-center text-sm text-slate-500">
+              Add milestones to preview the card layout.
+            </p>
           </div>
           <p class="mt-4 text-center text-sm text-white/70">
-            Guests see progress bars, upcoming rewards, and unlock excitement — designed to feel like a game worth finishing.
+            Same stamp grid and reward list guests see in Wallet after they join {{ venue?.name ?? 'your venue' }}.
           </p>
         </div>
       </div>

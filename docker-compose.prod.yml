@@ -1,6 +1,8 @@
 # Production stack for VPS (DigitalOcean, etc.)
 # Usage: docker compose -f docker-compose.prod.yml up -d --build
 
+name: flotory
+
 services:
   app:
     build:
@@ -91,4 +93,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  # Keep existing data from when the project name was "web" (/var/www/web).
   mysql_data:
+    name: web_mysql_data

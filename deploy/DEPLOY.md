@@ -76,3 +76,7 @@ If migrations were added locally, they run automatically via `deploy.sh` on the 
 - App dir: `/var/www/web`
 - Domain: `https://flotory.com`
 - `www` redirect: `https://www.flotory.com` → `https://flotory.com`
+
+## Docker naming
+
+Compose project name is **`flotory`** (`name:` in `docker-compose.prod.yml`). Containers are `flotory-app-1`, `flotory-mysql-1`, etc. The MySQL volume stays **`web_mysql_data`** so renaming from the old `web-*` project does not reset the database. Nginx site config is `deploy/nginx-flotory.conf` → `/etc/nginx/sites-available/flotory`.

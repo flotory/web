@@ -103,6 +103,8 @@ Each machine can have its own `APP_KEY` (Docker generates one on first boot). Lo
 
 ### Docker (recommended)
 
+Compose uses project name **`flotory`** (`name:` in `docker-compose.yml`), so containers are `flotory-app-1`, `flotory-mysql-1`, etc., even if your clone folder is still named `Loyalty`.
+
 ```bash
 cp .env.secrets.example .env.secrets   # add secret, then:
 ./scripts/setup-local.sh
