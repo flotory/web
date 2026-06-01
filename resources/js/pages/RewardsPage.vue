@@ -14,6 +14,7 @@ import AppShell from '@/layouts/AppShell.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { rewardImageUrl } from '@/lib/rewardMedia'
+import { toast } from '@/lib/toast'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
@@ -70,7 +71,6 @@ const loading = ref(true)
 const saving = ref(false)
 const saveRewardAction = useAsyncAction()
 const error = ref('')
-const successMessage = ref('')
 const fieldErrors = ref<Record<string, string>>({})
 const formOpen = ref(false)
 const showTemplatePicker = ref(false)
@@ -85,7 +85,6 @@ const removeImage = ref(false)
 const editingReward = ref<Reward | null>(null)
 const deleteRewardTarget = ref<Reward | null>(null)
 let refreshTimer: number | undefined
-let successTimer: number | undefined
 
 const needsVenuePick = computed(
   () => workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
@@ -201,16 +200,6 @@ function onGridMenuAction(
   }
 }
 
-function showSuccess(message: string) {
-  successMessage.value = message
-  if (successTimer) {
-    window.clearTimeout(successTimer)
-  }
-  successTimer = window.setTimeout(() => {
-    successMessage.value = ''
-  }, 3500)
-}
-
 function revokeImagePreview() {
   if (imagePreviewUrl.value) {
     URL.revokeObjectURL(imagePreviewUrl.value)
@@ -253,7 +242,7 @@ function clearImage() {
   if (imageInput.value) {
     imageInput.value.value = ''
   }
-  showSuccess('Image will be removed when you save.')
+  toast.info('Image will be removed when you save.')
 }
 
 function startEditing(reward: Reward) {
@@ -350,7 +339,7 @@ async function saveReward() {
     (reward) => reward.required_stamps === requiredStamps.value && reward.id !== editingReward.value?.id,
   )
   if (duplicateThreshold) {
-    error.value = 'A milestone already exists for this stamp threshold.'
+    toast.error('A milestone already exists for this stamp threshold.')
     return
   }
 
@@ -390,7 +379,7 @@ async function saveReward() {
         resetForm()
         formOpen.value = false
         await loadRewards(true)
-        showSuccess(wasEditing ? 'Milestone updated.' : 'Milestone created.')
+        toast.success(wasEditing ? 'Milestone updated' : 'Milestone created')
       } catch (exception) {
         if (exception instanceof ApiError) {
           error.value = exception.message
@@ -429,9 +418,13 @@ async function applyTemplate(template: RewardTemplate) {
     await loadRewards()
     formOpen.value = false
     showTemplatePicker.value = false
-    showSuccess(created ? `${template.name} template applied (${created} milestones).` : 'Those milestones already exist.')
+    if (created) {
+      toast.success(`${template.name} template applied (${created} milestones)`)
+    } else {
+      toast.message('Those milestones already exist')
+    }
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not apply template.'
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not apply template.')
   } finally {
     saving.value = false
   }
@@ -446,12 +439,11 @@ async function duplicateReward(reward: Reward) {
     stamps += 1
   }
   if (used.has(stamps)) {
-    error.value = 'No free stamp threshold available to duplicate.'
+    toast.error('No free stamp threshold available to duplicate.')
     return
   }
 
   saving.value = true
-  error.value = ''
 
   try {
     const body = new FormData()
@@ -459,11 +451,12 @@ async function duplicateReward(reward: Reward) {
     body.append('required_stamps', String(stamps))
     body.append('description', reward.description ?? '')
     body.append('active', '1')
-    await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, { method: 'POST', body })
+    const { reward: created } = await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, { method: 'POST', body })
     await loadRewards()
-    showSuccess('Milestone duplicated.')
+    toast.success('Milestone duplicated')
+    startEditing(created)
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not duplicate milestone.'
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not duplicate milestone.')
   } finally {
     saving.value = false
   }
@@ -480,9 +473,9 @@ async function archiveReward(reward: Reward) {
       method: 'PATCH',
     })
     await loadRewards()
-    showSuccess('Milestone archived.')
+    toast.success('Milestone archived')
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not archive milestone.'
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not archive milestone.')
   } finally {
     saving.value = false
   }
@@ -499,9 +492,9 @@ async function reactivateReward(reward: Reward) {
       method: 'PATCH',
     })
     await loadRewards()
-    showSuccess('Milestone reactivated.')
+    toast.success('Milestone reactivated')
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not reactivate milestone.'
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not reactivate milestone.')
   } finally {
     saving.value = false
   }
@@ -532,9 +525,9 @@ async function deleteReward(reward: Reward) {
     }
     closeDeleteModal()
     await loadRewards()
-    showSuccess('Milestone deleted.')
+    toast.success('Milestone deleted')
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not delete milestone.'
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not delete milestone.')
   } finally {
     saving.value = false
   }
@@ -553,7 +546,6 @@ function onImageChange(event: Event) {
   if (imageFile.value) {
     removeImage.value = false
     imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
-    showSuccess(`Image selected: ${imageFile.value.name}`)
   }
 }
 
@@ -573,9 +565,6 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', refreshIfVisible)
   window.clearInterval(refreshTimer)
   revokeImagePreview()
-  if (successTimer) {
-    window.clearTimeout(successTimer)
-  }
 })
 
 watch(() => workspace.filterVenueId, () => loadRewards())
@@ -639,14 +628,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         :show-retry="!sortedOwnerRewards.length"
         @retry="loadRewards"
       />
-
-      <AppCard v-else-if="error && !formOpen" wrapper-class="mt-4 border-red-200 bg-red-50">
-        <p class="text-sm font-bold text-red-600">{{ error }}</p>
-      </AppCard>
-
-      <AppCard v-else-if="successMessage" wrapper-class="mt-4 border-emerald-200 bg-emerald-50">
-        <p class="text-sm font-bold text-emerald-700">{{ successMessage }}</p>
-      </AppCard>
 
       <!-- Create / edit panel -->
       <div

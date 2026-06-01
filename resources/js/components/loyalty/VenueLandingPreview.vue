@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Archive, Copy, Gift, Pencil } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { rewardThumbUrl } from '@/lib/rewardMedia'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -36,7 +36,7 @@ const emit = defineEmits<{
   menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
-const hoveredMilestoneId = ref<number | null>(null)
+const clickedMilestoneId = ref<number | null>(null)
 
 const isProminent = computed(() => props.variant === 'prominent')
 
@@ -45,7 +45,7 @@ const activeManageMilestone = computed(() => {
     return null
   }
 
-  const id = hoveredMilestoneId.value ?? props.selectedMilestoneId
+  const id = clickedMilestoneId.value ?? props.selectedMilestoneId
   if (id == null) {
     return null
   }
@@ -58,8 +58,8 @@ const activeManageMilestone = computed(() => {
   return milestone
 })
 
-function setHoveredMilestone(milestoneId: number | null) {
-  hoveredMilestoneId.value = milestoneId
+function selectMilestone(milestoneId: number) {
+  clickedMilestoneId.value = clickedMilestoneId.value === milestoneId ? null : milestoneId
 }
 
 function isMilestoneHighlighted(milestoneId: number): boolean {
@@ -71,6 +71,16 @@ const stampCount = computed(() => props.stamps ?? 0)
 const sortedMilestones = computed(() =>
   [...props.milestones].sort((a, b) => a.required_stamps - b.required_stamps),
 )
+
+watch(sortedMilestones, (milestones) => {
+  if (clickedMilestoneId.value == null) {
+    return
+  }
+
+  if (!milestones.some((milestone) => milestone.id === clickedMilestoneId.value)) {
+    clickedMilestoneId.value = null
+  }
+})
 
 const milestoneByPosition = computed(() => {
   const map = new Map<number, GridMilestone>()
@@ -85,20 +95,7 @@ const maxStamps = computed(() => {
   return last && last > 0 ? last : 10
 })
 
-const gridColumnClass = computed(() => {
-  if (isProminent.value) {
-    if (maxStamps.value <= 5) {
-      return 'grid-cols-5'
-    }
-    return 'grid-cols-6'
-  }
-
-  if (maxStamps.value <= 5) {
-    return 'grid-cols-5'
-  }
-
-  return 'grid-cols-6'
-})
+const gridColumnClass = computed(() => 'grid-cols-5')
 
 const milestonePositions = computed(() => new Set(sortedMilestones.value.map((m) => m.required_stamps)))
 
@@ -124,7 +121,7 @@ function onAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'del
 }
 
 function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | null }): string {
-  const selected = props.selectedMilestoneId === slot.milestone?.id
+  const selected = isMilestoneHighlighted(slot.milestone?.id ?? -1)
   const draft = slot.milestone?.isDraft
 
   if (draft) {
@@ -132,7 +129,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
   }
 
   if (selected) {
-    return 'border-indigo-300 bg-white shadow-lg shadow-indigo-100/60 ring-2 ring-indigo-400/35'
+    return 'border-indigo-400 bg-white shadow-lg shadow-indigo-100/60 ring-2 ring-indigo-400/50'
   }
 
   if (slot.filled) {
@@ -176,14 +173,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
         class="rounded-full bg-slate-100 font-semibold uppercase tracking-wide text-slate-500"
         :class="isProminent ? 'px-2.5 py-1 text-[11px]' : 'hidden px-2 py-0.5 text-[10px] sm:inline'"
       >
-        Hover a reward to edit
+        Click a reward to manage
       </span>
     </div>
 
-    <div
-      class="w-full"
-      @mouseleave="setHoveredMilestone(null)"
-    >
+    <div class="w-full">
     <div
       class="grid w-full"
       :class="[
@@ -207,13 +201,13 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
               ? 'min-h-[5.75rem] sm:min-h-[6.75rem] md:min-h-[7.5rem]'
               : 'h-[4.75rem] sm:h-[5.25rem]',
             rewardCardClass(slot),
-            editable && canManageMilestone(slot.milestone) && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg',
-            canManageMilestone(slot.milestone) && isMilestoneHighlighted(slot.milestone.id) && 'ring-2 ring-indigo-400/80',
+            editable && canManageMilestone(slot.milestone) && 'cursor-pointer',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
             celebratingReward && slot.filled && 'animate-reward-glow',
           ]"
-          @mouseenter="canManageMilestone(slot.milestone) && setHoveredMilestone(slot.milestone.id)"
-          @focusin="canManageMilestone(slot.milestone) && setHoveredMilestone(slot.milestone.id)"
+          @click="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
+          @keydown.enter.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
+          @keydown.space.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
         >
           <div
             class="relative min-h-0 overflow-hidden bg-slate-100"
@@ -286,11 +280,13 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
     </div>
 
     <div
-      v-if="activeManageMilestone"
-      class="mt-3 flex flex-col gap-3 rounded-xl border border-indigo-200/80 bg-indigo-50/90 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-4"
-      @mouseenter="setHoveredMilestone(activeManageMilestone.id)"
+      v-if="editable"
+      class="mt-3 flex h-[6.75rem] flex-col justify-center gap-2 overflow-hidden rounded-xl border px-3 py-2 shadow-sm sm:h-[4.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-0"
+      :class="activeManageMilestone
+        ? 'border-indigo-200/80 bg-indigo-50/90'
+        : 'border-slate-200/80 bg-slate-50/60'"
     >
-      <div class="min-w-0">
+      <div v-if="activeManageMilestone" class="min-h-0 min-w-0 flex-1">
         <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
           {{ activeManageMilestone.required_stamps }} {{ activeManageMilestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
         </p>
@@ -298,12 +294,23 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           {{ activeManageMilestone.title }}
         </p>
       </div>
-      <div class="flex shrink-0 flex-wrap gap-2">
+      <p
+        v-else
+        class="min-w-0 flex-1 text-center text-sm text-slate-400 sm:text-left"
+      >
+        Click a reward card to edit or archive
+      </p>
+
+      <div
+        class="flex shrink-0 flex-wrap justify-center gap-2 sm:justify-end"
+        :class="!activeManageMilestone && 'invisible'"
+      >
         <button
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          :disabled="menuSaving"
-          @click="onAction('edit', activeManageMilestone.id)"
+          :disabled="menuSaving || !activeManageMilestone"
+          tabindex="-1"
+          @click.stop="activeManageMilestone && onAction('edit', activeManageMilestone.id)"
         >
           <Pencil class="size-4" :stroke-width="2.2" />
           Edit
@@ -311,18 +318,20 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
         <button
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          :disabled="menuSaving"
-          @click="onAction('duplicate', activeManageMilestone.id)"
+          :disabled="menuSaving || !activeManageMilestone"
+          tabindex="-1"
+          @click.stop="activeManageMilestone && onAction('duplicate', activeManageMilestone.id)"
         >
           <Copy class="size-4" :stroke-width="2.2" />
           Duplicate
         </button>
         <button
-          v-if="activeManageMilestone.active !== false"
+          v-if="!activeManageMilestone || activeManageMilestone.active !== false"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 disabled:opacity-50"
-          :disabled="menuSaving"
-          @click="onAction('archive', activeManageMilestone.id)"
+          :disabled="menuSaving || !activeManageMilestone"
+          tabindex="-1"
+          @click.stop="activeManageMilestone && onAction('archive', activeManageMilestone.id)"
         >
           <Archive class="size-4" :stroke-width="2.2" />
           Archive
@@ -332,21 +341,13 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-50"
           :disabled="menuSaving"
-          @click="onAction('reactivate', activeManageMilestone.id)"
+          @click.stop="onAction('reactivate', activeManageMilestone.id)"
         >
           Restore
         </button>
       </div>
     </div>
     </div>
-
-    <p
-      v-if="editable"
-      class="text-center text-slate-400"
-      :class="isProminent ? 'mt-4 text-xs' : 'mt-3 text-[11px]'"
-    >
-      Hover a reward card — actions appear below the grid
-    </p>
   </article>
 </template>
 
