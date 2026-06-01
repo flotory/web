@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { MoreVertical } from '@lucide/vue'
-import { computed, ref, watch } from 'vue'
+import { Archive, Copy, Gift, Pencil } from '@lucide/vue'
+import { computed } from 'vue'
 
 import { rewardThumbUrl } from '@/lib/rewardMedia'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -17,25 +17,14 @@ const props = defineProps<{
   celebratingReward?: boolean
   editable?: boolean
   selectedMilestoneId?: number | null
-  menuOpenMilestoneId?: number | null
   menuSaving?: boolean
 }>()
 
 const emit = defineEmits<{
-  toggleMenu: [milestoneId: number]
   menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
-const menuPosition = ref<{ top: number; left: number } | null>(null)
-
 const stampCount = computed(() => props.stamps ?? 0)
-
-const openMenuMilestone = computed(() => {
-  if (props.menuOpenMilestoneId === null) {
-    return null
-  }
-  return sortedMilestones.value.find((milestone) => milestone.id === props.menuOpenMilestoneId) ?? null
-})
 
 const sortedMilestones = computed(() =>
   [...props.milestones].sort((a, b) => a.required_stamps - b.required_stamps),
@@ -54,6 +43,16 @@ const maxStamps = computed(() => {
   return last && last > 0 ? last : 10
 })
 
+const gridColumnClass = computed(() => {
+  if (maxStamps.value <= 5) {
+    return 'grid-cols-5'
+  }
+  if (maxStamps.value <= 6) {
+    return 'grid-cols-6'
+  }
+  return 'grid-cols-6 sm:grid-cols-6'
+})
+
 const milestonePositions = computed(() => new Set(sortedMilestones.value.map((m) => m.required_stamps)))
 
 const slots = computed(() =>
@@ -69,223 +68,176 @@ const slots = computed(() =>
   }),
 )
 
-watch(
-  () => props.menuOpenMilestoneId,
-  (id) => {
-    if (id === null) {
-      menuPosition.value = null
-    }
-  },
-)
-
-function slotRingClass(slot: { isReward: boolean; milestone: GridMilestone | null }): string {
-  if (!props.editable || !slot.isReward || !slot.milestone) {
-    return ''
-  }
-
-  if (props.selectedMilestoneId === slot.milestone.id || props.menuOpenMilestoneId === slot.milestone.id) {
-    return 'ring-2 ring-indigo-500 ring-offset-2'
-  }
-
-  return 'ring-1 ring-rose-200'
-}
-
-function slotBaseClass(slot: { filled: boolean; isReward: boolean }): string[] {
-  if (slot.isReward) {
-    return ['relative overflow-visible p-0 ring-1 ring-rose-100']
-  }
-
-  if (slot.filled) {
-    return ['bg-amber-400 text-white shadow-sm shadow-amber-200']
-  }
-
-  return ['bg-slate-100 text-slate-300']
-}
-
 function canManageMilestone(milestone: GridMilestone): boolean {
   return props.editable && milestone.id > 0 && !milestone.isDraft
 }
 
-function onMenuToggle(event: MouseEvent, milestone: GridMilestone) {
-  event.stopPropagation()
-  event.preventDefault()
-
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-
-  if (props.menuOpenMilestoneId === milestone.id) {
-    menuPosition.value = null
-  } else {
-    menuPosition.value = {
-      top: rect.bottom + 4,
-      left: Math.max(8, rect.right - 144),
-    }
-  }
-
-  emit('toggleMenu', milestone.id)
+function onAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
+  emit('menuAction', action, milestoneId)
 }
 
-function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
-  menuPosition.value = null
-  emit('menuAction', action, milestoneId)
+function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | null }): string {
+  const selected = props.selectedMilestoneId === slot.milestone?.id
+  const draft = slot.milestone?.isDraft
+
+  if (draft) {
+    return 'border-dashed border-indigo-300 bg-indigo-50/40 ring-1 ring-indigo-200/60'
+  }
+
+  if (selected) {
+    return 'border-indigo-300 bg-white shadow-md shadow-indigo-100/50 ring-2 ring-indigo-400/30'
+  }
+
+  if (slot.filled) {
+    return 'border-amber-200/80 bg-white shadow-sm shadow-amber-100/40'
+  }
+
+  return 'border-slate-200/90 bg-white shadow-sm shadow-slate-200/40'
 }
 </script>
 
 <template>
-  <article class="rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)]">
-    <div class="flex items-start gap-4">
-      <div class="shrink-0">
-        <p class="text-4xl font-black leading-none tracking-tight text-slate-950" :class="animatingSlots?.length ? 'animate-stamp-count' : undefined">
-          {{ stampCount }}<span class="text-2xl text-slate-400">/{{ maxStamps }}</span>
-        </p>
-        <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">stamps</p>
+  <article class="loyalty-preview-card mx-auto w-full max-w-xl rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] sm:p-5">
+    <div class="mb-3 flex items-center justify-between gap-3">
+      <div class="flex items-baseline gap-1.5">
+        <span
+          class="text-2xl font-semibold tabular-nums tracking-tight text-slate-950"
+          :class="animatingSlots?.length ? 'animate-stamp-count' : undefined"
+        >
+          {{ stampCount }}
+        </span>
+        <span class="text-sm font-medium text-slate-400">/ {{ maxStamps }} stamps</span>
       </div>
+      <span
+        v-if="editable"
+        class="hidden rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:inline"
+      >
+        Hover to edit
+      </span>
+    </div>
 
-      <div class="grid min-w-0 flex-1 grid-cols-5 gap-1.5 overflow-visible sm:gap-2">
+    <div class="grid gap-1.5 sm:gap-2" :class="gridColumnClass">
+      <div
+        v-for="slot in slots"
+        :key="slot.position"
+        class="flex min-h-0 items-center justify-center"
+        :class="slot.isReward ? 'row-span-1' : ''"
+      >
+        <!-- Reward milestone -->
         <div
-          v-for="slot in slots"
-          :key="slot.position"
-          :title="slot.milestone ? `${slot.milestone.required_stamps} stamps → ${slot.milestone.title}` : undefined"
+          v-if="slot.isReward && slot.milestone"
+          :title="`${slot.milestone.required_stamps} stamps → ${slot.milestone.title}`"
+          :tabindex="canManageMilestone(slot.milestone) ? 0 : undefined"
+          class="group relative flex h-[4.75rem] w-full min-w-0 flex-col overflow-hidden rounded-xl border transition duration-200 sm:h-[5.25rem]"
           :class="[
-            'min-h-0 rounded-xl text-sm font-bold transition',
-            slot.isReward ? 'flex aspect-square' : 'grid aspect-square place-items-center',
-            ...slotBaseClass(slot),
+            rewardCardClass(slot),
+            editable && canManageMilestone(slot.milestone) && 'cursor-pointer hover:-translate-y-px hover:shadow-md',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
-            celebratingReward && slot.isReward && slot.filled && 'animate-reward-glow',
-            slotRingClass(slot),
+            celebratingReward && slot.filled && 'animate-reward-glow',
           ]"
         >
-          <!-- Milestone: gift icon on top, photo + info stacked below -->
-          <div
-            v-if="slot.isReward && slot.milestone"
-            class="flex h-full w-full min-w-0 flex-col"
-          >
-            <div
-              class="flex h-[22%] min-h-[18px] shrink-0 items-center justify-center border-b border-rose-100/80"
-              :class="slot.filled ? 'bg-amber-400 text-white border-amber-300/50' : 'bg-rose-50 text-rose-500'"
+          <div class="relative min-h-0 flex-[1.15] overflow-hidden bg-slate-100">
+            <img
+              :src="rewardThumbUrl(slot.milestone)"
+              :alt="slot.milestone.title"
+              class="size-full object-cover transition duration-300 group-hover:scale-[1.03]"
             >
-              <svg
-                viewBox="0 0 24 24"
-                class="size-3.5 shrink-0 sm:size-4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
+            <div
+              class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent"
+            />
+
+            <span
+              v-if="slot.filled"
+              class="absolute left-1 top-1 grid size-4 place-items-center rounded-full bg-amber-400 text-[9px] text-white shadow-sm"
+              aria-hidden="true"
+            >
+              ★
+            </span>
+
+            <span
+              class="absolute left-1 bottom-1 inline-flex items-center gap-0.5 rounded-md bg-white/90 px-1 py-0.5 text-[9px] font-medium text-rose-500 shadow-sm backdrop-blur-sm"
+              aria-hidden="true"
+            >
+              <Gift class="size-2.5" :stroke-width="2.2" />
+            </span>
+
+            <span
+              class="absolute right-1 top-1 rounded-full bg-white/95 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-slate-700 shadow-sm ring-1 ring-slate-200/80"
+            >
+              {{ slot.milestone.required_stamps }}
+            </span>
+
+            <!-- Owner hover actions -->
+            <div
+              v-if="canManageMilestone(slot.milestone)"
+              class="absolute inset-0 z-10 flex items-end justify-center gap-1 bg-slate-950/45 p-1.5 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+            >
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                :disabled="menuSaving"
+                @click.stop="onAction('edit', slot.milestone.id)"
               >
-                <rect x="3" y="8" width="18" height="13" rx="2" />
-                <path d="M12 8v13M3 12h18M8 8c0-2 1.5-4 4-4s4 2 4 4" />
-              </svg>
-            </div>
-
-            <div
-              class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white"
-              :class="slot.filled ? 'bg-amber-50/90' : ''"
-            >
-              <div class="relative h-[58%] min-h-[1.5rem] w-full shrink-0 bg-slate-100">
-                <img
-                  :src="rewardThumbUrl(slot.milestone)"
-                  :alt="slot.milestone.title"
-                  class="size-full object-cover"
-                >
-                <span
-                  v-if="slot.filled"
-                  class="absolute left-0.5 top-0.5 grid size-3.5 place-items-center rounded-full bg-amber-400 text-[8px] text-white shadow-sm sm:size-4 sm:text-[9px]"
-                  aria-hidden="true"
-                >
-                  ★
-                </span>
-
-                <button
-                  v-if="canManageMilestone(slot.milestone)"
-                  type="button"
-                  class="absolute right-0.5 top-0.5 z-10 grid size-5 place-items-center rounded-md bg-white/95 text-slate-600 shadow-sm ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-900"
-                  :aria-label="`Manage ${slot.milestone.title}`"
-                  :aria-expanded="menuOpenMilestoneId === slot.milestone.id"
-                  @click="onMenuToggle($event, slot.milestone)"
-                >
-                  <MoreVertical class="size-3" :stroke-width="2.5" />
-                </button>
-              </div>
-
-              <div class="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-1.5 py-1">
-                <p class="line-clamp-2 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
-                  {{ slot.milestone.title }}
-                </p>
-                <p class="truncate text-[6px] font-semibold text-slate-500 sm:text-[7px]">
-                  {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
-                </p>
-              </div>
+                <Pencil class="size-3" :stroke-width="2.2" />
+                Edit
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                :disabled="menuSaving"
+                @click.stop="onAction('duplicate', slot.milestone.id)"
+              >
+                <Copy class="size-3" :stroke-width="2.2" />
+              </button>
+              <button
+                v-if="slot.milestone.active !== false"
+                type="button"
+                class="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-semibold text-amber-800 shadow-sm hover:bg-amber-50"
+                :disabled="menuSaving"
+                @click.stop="onAction('archive', slot.milestone.id)"
+              >
+                <Archive class="size-3" :stroke-width="2.2" />
+              </button>
+              <button
+                v-else
+                type="button"
+                class="rounded-lg bg-white px-2 py-1 text-[10px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                :disabled="menuSaving"
+                @click.stop="onAction('reactivate', slot.milestone.id)"
+              >
+                Restore
+              </button>
             </div>
           </div>
 
-          <span v-else-if="slot.filled" aria-hidden="true">★</span>
-          <span v-else>{{ slot.position }}</span>
+          <div class="flex shrink-0 items-center border-t border-slate-100/90 bg-white px-1.5 py-1">
+            <p class="line-clamp-1 min-w-0 flex-1 text-[10px] font-semibold leading-tight text-slate-900 sm:text-[11px]">
+              {{ slot.milestone.title }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Empty / progress stamp placeholder -->
+        <div
+          v-else
+          class="flex size-8 items-center justify-center rounded-lg border transition sm:size-9"
+          :class="[
+            slot.filled
+              ? 'border-amber-200/80 bg-amber-100 text-amber-600 shadow-sm'
+              : 'border-dashed border-slate-200/90 bg-slate-50/60 text-slate-300',
+            animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
+          ]"
+          :aria-label="`Stamp ${slot.position}`"
+        >
+          <span v-if="slot.filled" class="text-[11px] font-bold" aria-hidden="true">★</span>
+          <span v-else class="text-[10px] font-medium tabular-nums">{{ slot.position }}</span>
         </div>
       </div>
     </div>
 
-    <p v-if="editable" class="mt-4 text-center text-xs text-slate-500">
-      Use ⋯ on a reward to edit, duplicate, or archive.
+    <p v-if="editable" class="mt-3 text-center text-[11px] text-slate-400">
+      Reward cards match guest Wallet · hover a reward to manage
     </p>
-
-    <Teleport to="body">
-      <button
-        v-if="menuOpenMilestoneId !== null && openMenuMilestone"
-        type="button"
-        class="fixed inset-0 z-[80] cursor-default bg-transparent"
-        aria-label="Close milestone menu"
-        @click="emit('toggleMenu', openMenuMilestone.id)"
-      />
-
-      <div
-        v-if="menuOpenMilestoneId !== null && openMenuMilestone && menuPosition"
-        class="fixed z-[90] w-36 rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-200"
-        :style="{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }"
-        @click.stop
-      >
-        <button
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
-          :disabled="menuSaving"
-          @click="onMenuAction('edit', openMenuMilestone.id)"
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
-          :disabled="menuSaving"
-          @click="onMenuAction('duplicate', openMenuMilestone.id)"
-        >
-          Duplicate
-        </button>
-        <button
-          v-if="openMenuMilestone.active !== false"
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
-          :disabled="menuSaving"
-          @click="onMenuAction('archive', openMenuMilestone.id)"
-        >
-          Archive
-        </button>
-        <button
-          v-else
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-          :disabled="menuSaving"
-          @click="onMenuAction('reactivate', openMenuMilestone.id)"
-        >
-          Reactivate
-        </button>
-        <button
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50"
-          :disabled="menuSaving"
-          @click="onMenuAction('delete', openMenuMilestone.id)"
-        >
-          Delete
-        </button>
-      </div>
-    </Teleport>
   </article>
 </template>
 
@@ -297,7 +249,7 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
   }
 
   55% {
-    transform: scale(1.18);
+    transform: scale(1.12);
   }
 
   100% {
@@ -313,27 +265,27 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
   }
 
   40% {
-    transform: scale(1.08);
+    transform: scale(1.06);
   }
 }
 
 @keyframes reward-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.45);
+    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.35);
   }
 
   50% {
-    box-shadow: 0 0 0 6px rgb(251 191 36 / 0);
+    box-shadow: 0 0 0 5px rgb(251 191 36 / 0);
   }
 }
 
 .animate-stamp-pop {
-  animation: stamp-pop 0.65s ease-out;
+  animation: stamp-pop 0.55s ease-out;
 }
 
 .animate-stamp-count {
-  animation: stamp-count 0.65s ease-out;
+  animation: stamp-count 0.55s ease-out;
 }
 
 .animate-reward-glow {

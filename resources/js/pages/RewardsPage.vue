@@ -110,8 +110,6 @@ const avgUnlockVisits = computed(() => {
   return Math.round(active.reduce((sum, reward) => sum + reward.required_stamps, 0) / active.length)
 })
 
-const gridMenuMilestoneId = ref<number | null>(null)
-
 const activeSortedRewards = computed(() =>
   sortedOwnerRewards.value.filter((reward) => reward.active),
 )
@@ -173,14 +171,6 @@ function rewardById(milestoneId: number): Reward | undefined {
   return rewards.value.find((reward) => reward.id === milestoneId)
 }
 
-function closeGridMenu() {
-  gridMenuMilestoneId.value = null
-}
-
-function toggleGridMenu(milestoneId: number) {
-  gridMenuMilestoneId.value = gridMenuMilestoneId.value === milestoneId ? null : milestoneId
-}
-
 function onGridMenuAction(
   action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete',
   milestoneId: number,
@@ -189,8 +179,6 @@ function onGridMenuAction(
   if (!reward) {
     return
   }
-
-  closeGridMenu()
 
   if (action === 'edit') {
     startEditing(reward)
@@ -269,7 +257,6 @@ function clearImage() {
 }
 
 function startEditing(reward: Reward) {
-  closeGridMenu()
   formOpen.value = true
   showTemplatePicker.value = false
   editingReward.value = reward
@@ -320,7 +307,6 @@ function openCreateForm() {
 function closeCreateForm() {
   resetForm()
   formOpen.value = false
-  closeGridMenu()
 }
 
 async function loadRewards(silent = false) {
@@ -493,7 +479,6 @@ async function archiveReward(reward: Reward) {
     await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${reward.id}/archive`, {
       method: 'PATCH',
     })
-    closeGridMenu()
     await loadRewards()
     showSuccess('Milestone archived.')
   } catch (exception) {
@@ -545,7 +530,6 @@ async function deleteReward(reward: Reward) {
       resetForm()
       formOpen.value = false
     }
-    closeGridMenu()
     closeDeleteModal()
     await loadRewards()
     showSuccess('Milestone deleted.')
@@ -823,29 +807,27 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </form>
       </div>
 
-      <!-- Loyalty card grid (guest view + owner management) -->
+      <!-- Customer card preview -->
       <section v-if="!loading && !needsVenuePick" class="mt-6">
-        <AppCard wrapper-class="border-slate-200 bg-white p-5 sm:p-6">
-          <div>
-            <h2 class="text-xl font-black text-slate-950">Loyalty card</h2>
+        <AppCard wrapper-class="border-slate-200/80 bg-white p-5 sm:p-6">
+          <div class="text-center sm:text-left">
+            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Customer Card Preview</p>
+            <h2 class="mt-1 text-lg font-semibold text-slate-950">Loyalty card</h2>
             <p class="mt-1 text-sm text-slate-500">
-              Same stamp grid guests see on Wallet
+              This is how customers will see your loyalty card.
               <template v-if="programMaxStamps > 0">
-                — {{ programMaxStamps }} {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle.
+                {{ programMaxStamps }} stamp positions per cycle — only live milestones are shown.
               </template>
-              Only live milestones appear on guest cards.
             </p>
           </div>
 
-          <div class="mt-5">
+          <div class="mt-5 flex justify-center">
             <GuestWalletCardPreview
               :milestones="programCardMilestones"
               :venue-name="venue?.name"
               :editable="canEditRewards"
               :selected-milestone-id="selectedGridMilestoneId"
-              :menu-open-milestone-id="gridMenuMilestoneId"
               :menu-saving="saving"
-              @toggle-menu="toggleGridMenu"
               @menu-action="onGridMenuAction"
             />
           </div>

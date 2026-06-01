@@ -25,7 +25,6 @@ const props = withDefaults(
     celebratingReward?: boolean
     editable?: boolean
     selectedMilestoneId?: number | null
-    menuOpenMilestoneId?: number | null
     menuSaving?: boolean
   }>(),
   {
@@ -35,13 +34,11 @@ const props = withDefaults(
     celebratingReward: false,
     editable: false,
     selectedMilestoneId: null,
-    menuOpenMilestoneId: null,
     menuSaving: false,
   },
 )
 
 const emit = defineEmits<{
-  toggleMenu: [milestoneId: number]
   menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
@@ -64,7 +61,7 @@ const landingMilestones = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div>
     <VenueLandingPreview
       v-if="landingMilestones.length"
       :milestones="landingMilestones"
@@ -73,15 +70,13 @@ const landingMilestones = computed(() =>
       :celebrating-reward="celebratingReward"
       :editable="editable"
       :selected-milestone-id="selectedMilestoneId"
-      :menu-open-milestone-id="menuOpenMilestoneId"
       :menu-saving="menuSaving"
-      @toggle-menu="emit('toggleMenu', $event)"
       @menu-action="(action, id) => emit('menuAction', action, id)"
     />
 
     <p
       v-else
-      class="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500"
+      class="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-sm text-slate-500"
     >
       Add a milestone to preview the guest card{{ venueName ? ` at ${venueName}` : '' }}.
     </p>
