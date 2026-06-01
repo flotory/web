@@ -74,6 +74,15 @@ Run the same checks without deploying:
 ./scripts/ci-local.sh
 ```
 
+### CI status (read this if Actions looks “broken”)
+
+Open the **latest** run on `main`, not an old failed one:
+
+- [Actions → Tests workflow](https://github.com/flotory/web/actions/workflows/tests.yml)
+- Latest green commits: `72ee379`, `0c97214`, `7548b98` (Google auth tests fixed; Node action warnings addressed)
+
+Run **#31** failed on `54bceca` only (tests still expected `/card` instead of `/wallet`). That is fixed on `main`; newer runs should show **success**.
+
 ### Post-deploy checks
 
 - https://flotory.com loads the SPA
