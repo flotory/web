@@ -93,6 +93,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Keep existing data from when the project name was "web" (/var/www/web).
+  # Created by the previous Compose project name "web" — do not recreate on rename to "flotory".
   mysql_data:
+    external: true
     name: web_mysql_data
