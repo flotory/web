@@ -61,7 +61,8 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 2. Set realistic first milestone (e.g. **5 stamps = free drink**) — not too high
 3. Download / print QR → place at register and on a table tent
 4. Owner invites 1–2 staff via email from Team page
-5. Walk through dashboard: visits today, customers joined
+5. Walk through dashboard: **Venue active ✓**, visits this month, insights, **Open scanner**
+6. Optional: set venue address in Settings → shown on `/v/{slug}` with **Open in Maps**
 
 ### With staff (15 min)
 

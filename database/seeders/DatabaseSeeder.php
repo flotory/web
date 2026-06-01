@@ -27,8 +27,8 @@ class DatabaseSeeder extends Seeder
         );
 
         $venues = collect([
-            ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe'],
-            ['name' => 'Harbor Coffee', 'slug' => 'harbor-coffee', 'category' => 'cafe'],
+            ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe', 'address' => '12 Market Street, Toruń'],
+            ['name' => 'Harbor Coffee', 'slug' => 'harbor-coffee', 'category' => 'cafe', 'address' => '8 Harbor Road, Gdańsk'],
             ['name' => 'North Star Burgers', 'slug' => 'north-star-burgers', 'category' => 'restaurant'],
             ['name' => 'Olive Street Kitchen', 'slug' => 'olive-street-kitchen', 'category' => 'restaurant'],
         ])->map(fn (array $data) => Venue::updateOrCreate(
@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => $data['name'],
                 'category' => $data['category'],
+                'address' => $data['address'] ?? null,
             ],
         ));
 

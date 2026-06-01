@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Gift } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -14,27 +13,32 @@ import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
-import { rewardPresetsForCategory } from '@/lib/defaultImages'
-import { rewardThumbUrl } from '@/lib/rewardMedia'
-import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
-import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { Customer, Reward, Venue } from '@/types'
+import type { Customer, Venue } from '@/types'
+
+interface DashboardInsight {
+  text: string
+  tone: 'positive' | 'warning' | 'neutral'
+}
 
 interface DashboardResponse {
   scope: 'all' | 'venue' | 'none'
   venue: Pick<Venue, 'id' | 'name' | 'slug'> | null
   venues_count: number
+  has_loyalty_activity?: boolean
   stats: {
     total_customers: number
     active_progressors: number
+    returning_customers: number
     total_visits: number
+    visits_this_month: number
     milestones_claimed: number
     milestones_unlocked: number
+    rewards_claimed: number
     cycles_completed: number
   }
   most_loyal_customers: Customer[]
-  monthly_activity: Array<{ month: string; visits: number }>
   milestone_conversions: Array<{
     reward_id: number
     title: string
@@ -42,9 +46,9 @@ interface DashboardResponse {
     unlocked_count: number
     claimed_count: number
     claim_rate: number
-    venue_id?: number
     venue_name?: string
   }>
+  insights: DashboardInsight[]
   venue_summaries: Array<{
     venue_id: number
     venue_name: string
@@ -56,7 +60,6 @@ const router = useRouter()
 const route = useRoute()
 const workspace = useWorkspaceStore()
 const dashboard = ref<DashboardResponse | null>(null)
-const rewards = ref<Reward[]>([])
 const loading = ref(true)
 const error = ref('')
 
@@ -73,120 +76,104 @@ const selectedVenue = computed(() => {
 })
 
 const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue?.name ?? 'Your venue')
-
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
+const scannerPath = computed(() => (selectedVenue.value ? `/scanner?venue_id=${selectedVenue.value.id}` : '/scanner'))
 
-const stats = computed(() => [
-  { label: 'Visits today', value: dashboard.value?.stats.total_visits ?? 0 },
-  { label: 'Returning guests', value: dashboard.value?.stats.active_progressors ?? 0 },
-  { label: 'Rewards unlocked', value: dashboard.value?.stats.milestones_unlocked ?? 0 },
-  { label: 'Repeat rate', value: `${conversionOverview.value.rate}%` },
-])
+const hasActivity = computed(() => dashboard.value?.has_loyalty_activity ?? (dashboard.value?.stats.total_visits ?? 0) > 0)
+const setupComplete = computed(() => hasActivity.value)
 
-const conversionOverview = computed(() => {
-  const rows = dashboard.value?.milestone_conversions ?? []
-  const unlocked = rows.reduce((sum, row) => sum + row.unlocked_count, 0)
-  const claimed = rows.reduce((sum, row) => sum + row.claimed_count, 0)
-  const rate = unlocked > 0 ? Math.round((claimed / unlocked) * 1000) / 10 : 0
-  return { unlocked, claimed, rate }
+const repeatRate = computed(() => {
+  const total = dashboard.value?.stats.total_customers ?? 0
+  const returning = dashboard.value?.stats.returning_customers ?? dashboard.value?.stats.active_progressors ?? 0
+  if (!total) {
+    return '—'
+  }
+
+  return `${Math.round((returning / total) * 100)}%`
 })
 
-const hasCustomers = computed(() => (dashboard.value?.stats.total_customers ?? 0) > 0)
-const activityItems = computed(() => {
-  if (!dashboard.value) {
+const stats = computed(() => [
+  {
+    label: 'Visits this month',
+    value: dashboard.value?.stats.visits_this_month ?? 0,
+  },
+  {
+    label: 'Returning guests',
+    value: dashboard.value?.stats.returning_customers ?? dashboard.value?.stats.active_progressors ?? 0,
+  },
+  {
+    label: 'Rewards unlocked',
+    value: dashboard.value?.stats.milestones_unlocked ?? 0,
+  },
+  {
+    label: 'Repeat rate',
+    value: repeatRate.value,
+  },
+])
+
+const activityRows = computed(() => {
+  if (!dashboard.value || !hasActivity.value) {
     return []
   }
 
-  if (!hasCustomers.value) {
-    return [
-      'Waiting for first guest scan',
-      'Print your QR and place it on tables',
-      'Invite staff to open scanner flow',
-      'Your rewards are ready to unlock',
-    ]
+  const rows: Array<{ label: string; detail: string }> = []
+
+  for (const customer of dashboard.value.most_loyal_customers.slice(0, 3)) {
+    const name = customer.user?.name ?? 'Guest'
+    rows.push({
+      label: name,
+      detail: `${customer.stamps} stamps`,
+    })
   }
 
-  const visits = dashboard.value.stats.total_visits
-  const guests = dashboard.value.stats.total_customers
-  const unlocked = dashboard.value.stats.milestones_unlocked
-  return [
-    `${guests} guests joined loyalty`,
-    `${visits} visits recorded`,
-    `${unlocked} rewards unlocked`,
-    'Scanner and QR flow are active',
-  ]
+  const conversions = [...(dashboard.value.milestone_conversions ?? [])]
+    .filter((row) => row.claimed_count > 0 || row.unlocked_count > 0)
+    .sort((a, b) => b.claimed_count - a.claimed_count || b.unlocked_count - a.unlocked_count)
+
+  for (const row of conversions.slice(0, 3)) {
+    if (rows.length >= 5) {
+      break
+    }
+
+    const venuePrefix = row.venue_name && dashboard.value.scope === 'all' ? `${row.venue_name} · ` : ''
+    rows.push({
+      label: `${venuePrefix}${row.title}`,
+      detail: row.claimed_count > 0
+        ? `${row.claimed_count} redeemed`
+        : `${row.unlocked_count} unlocked`,
+    })
+  }
+
+  return rows.slice(0, 5)
 })
 
-const activityFeed = computed(() => {
-  if (!hasCustomers.value) {
-    return [
-      { icon: '🟢', title: 'QR downloaded', time: 'just now' },
-      { icon: '🟢', title: 'Rewards published', time: '2 min ago' },
-      { icon: '🟢', title: 'Scanner ready', time: '5 min ago' },
-      { icon: '🟢', title: 'Venue activated', time: '8 min ago' },
-    ]
+const insights = computed(() => dashboard.value?.insights ?? [])
+
+function insightToneClass(tone: DashboardInsight['tone']) {
+  switch (tone) {
+    case 'positive':
+      return 'text-emerald-800'
+    case 'warning':
+      return 'text-amber-800'
+    default:
+      return 'text-slate-700'
   }
-
-  return [
-    { icon: '🟢', title: `${dashboard.value?.stats.total_customers ?? 0} guests joined loyalty`, time: 'today' },
-    { icon: '🟢', title: `${dashboard.value?.stats.total_visits ?? 0} visits recorded`, time: 'today' },
-    { icon: '🟢', title: `${dashboard.value?.stats.milestones_unlocked ?? 0} rewards unlocked`, time: 'today' },
-    { icon: '🟢', title: 'Scanner and QR flow active', time: 'live' },
-  ]
-})
-
-const heroCopy = computed(() => {
-  if (!hasCustomers.value) {
-    return 'QR ready • Rewards active • Waiting for first guests'
-  }
-
-  return 'Loyalty active • Guests returning • Rewards unlocking'
-})
-
-const previewRewards = computed(() => rewards.value.slice(0, 3))
-
-function rewardPreviewImage(reward: Reward): string {
-  const preset = rewardPresetsForCategory(selectedVenue.value?.category).find((item) => item.title === reward.title)
-  if (preset) {
-    return preset.image
-  }
-
-  return rewardThumbUrl(reward)
 }
-const canOpenActions = computed(() => Boolean(selectedVenue.value && landingUrl.value))
-const primaryActionText = computed(() => (hasCustomers.value ? 'Keep scanner ready' : 'Invite your first guest'))
-
-const setupChecklist = computed(() => {
-  const rewardsReady = rewards.value.length > 0
-  const venueReady = Boolean(selectedVenue.value)
-  const qrReady = Boolean(landingUrl.value)
-  const hasVisits = (dashboard.value?.stats.total_visits ?? 0) > 0
-  const items = [
-    { label: 'Venue created', done: venueReady },
-    { label: 'Rewards configured', done: rewardsReady },
-    { label: 'Print QR stand', done: qrReady && hasVisits },
-    { label: 'Invite first guest', done: hasCustomers.value },
-    { label: 'Open scanner', done: hasVisits },
-  ]
-  const completed = items.filter((item) => item.done).length
-  return {
-    items,
-    completed,
-    total: items.length,
-    percent: Math.round((completed / items.length) * 100),
-  }
-})
 
 function downloadQrPng() {
   const canvas = document.querySelector<HTMLCanvasElement>('#dashboard-qr canvas')
   if (!canvas) {
     return
   }
+
   const exportCanvas = document.createElement('canvas')
   exportCanvas.width = 512
   exportCanvas.height = 512
   const ctx = exportCanvas.getContext('2d')
-  if (!ctx) return
+  if (!ctx) {
+    return
+  }
+
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, 512, 512)
   ctx.drawImage(canvas, 0, 0, 512, 512)
@@ -196,11 +183,6 @@ function downloadQrPng() {
   document.body.appendChild(link)
   link.click()
   link.remove()
-}
-
-function copyInviteLink() {
-  if (!landingUrl.value) return
-  void navigator.clipboard.writeText(landingUrl.value)
 }
 
 async function loadDashboard() {
@@ -222,7 +204,6 @@ async function loadDashboard() {
     const venueId = selectedVenue.value?.id ?? workspace.filterVenueId
     const query = venueId ? `?venue_id=${venueId}` : ''
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
-    rewards.value = venueId ? (await api<{ rewards: Reward[] }>(`/venues/${venueId}/rewards`)).rewards : []
   } catch (exception) {
     error.value = apiErrorMessage(exception, 'Could not load dashboard data.')
   } finally {
@@ -236,7 +217,7 @@ onMounted(loadDashboard)
 
 onMounted(() => {
   if (route.query.onboarding === 'completed') {
-    toast.success('Your venue is live! Share your QR to start collecting stamps.')
+    toast.success('Your venue is live.')
     void router.replace({ query: { ...route.query, onboarding: undefined } })
   }
 })
@@ -244,332 +225,151 @@ onMounted(() => {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
       <div class="flex items-center gap-3">
-        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
           <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
         <div>
-        <AppBadge tone="green">Loyalty active</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">{{ title }}</h1>
-        <p class="mt-2 text-slate-500">Your live venue workspace. Invite guests, track returns, and unlock rewards.</p>
+          <AppBadge v-if="setupComplete" tone="green">Venue active ✓</AppBadge>
+          <AppBadge v-else tone="amber">Setup in progress</AppBadge>
+          <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{{ title }}</h1>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <AppBadge v-if="workspace.activeVenues.length > 1" tone="blue">Switch venue from sidebar</AppBadge>
-        <RouterLink :to="selectedVenue ? `/scanner?venue_id=${selectedVenue.id}` : '/scanner'">
-          <AppButton class="top-scanner-btn bg-slate-950 text-white shadow-lg shadow-slate-950/25 hover:bg-slate-800">
-            ◎ Open scanner
-          </AppButton>
-        </RouterLink>
-      </div>
+
+      <RouterLink :to="scannerPath" class="shrink-0">
+        <AppButton size="lg" class="w-full bg-slate-950 text-white shadow-lg shadow-slate-950/20 hover:bg-slate-800 sm:w-auto">
+          Open scanner
+        </AppButton>
+      </RouterLink>
     </div>
 
-    <AppCard v-if="loading" wrapper-class="mb-4">
+    <AppCard v-if="loading" wrapper-class="mb-6">
       <EmptyState compact title="Loading dashboard…" />
     </AppCard>
     <ErrorState
       v-else-if="error"
-      class="mb-4"
+      class="mb-6"
       :message="error"
       @retry="loadDashboard"
     />
 
     <template v-else>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
-    </div>
+      <div
+        v-if="landingUrl"
+        id="dashboard-qr"
+        class="pointer-events-none fixed -left-[9999px] opacity-0"
+        aria-hidden="true"
+      >
+        <QrcodeVue :value="landingUrl" :size="145" level="M" render-as="canvas" :margin="2" />
+      </div>
 
-    <div class="mt-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-      <AppCard wrapper-class="hero-shell overflow-hidden !border-slate-700/60 !bg-slate-950 p-0 text-white shadow-2xl shadow-slate-900/40">
-        <div class="relative h-36 overflow-hidden">
-          <img :src="venueCoverUrl(selectedVenue)" alt="" class="h-full w-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-900/30" />
-        </div>
-        <div class="hero-ambient pointer-events-none absolute inset-0 opacity-50" />
-        <div class="relative grid gap-4 bg-slate-950 p-4 pt-2 -mt-10">
-          <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-            <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-100">
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-1 ring-1 ring-emerald-300/30"><span class="live-dot" /> QR active</span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-blue-400/15 px-2.5 py-1 ring-1 ring-blue-300/30"><span class="live-dot" /> Rewards live</span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-indigo-400/15 px-2.5 py-1 ring-1 ring-indigo-300/30"><span class="live-dot" /> Scanner ready</span>
-            </div>
-            <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your loyalty program is live</h2>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Guests can now scan your QR, collect stamps, and unlock rewards.</p>
-          </div>
-
-          <div class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Primary actions</p>
-              <div class="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                <AppButton size="lg" class="hero-btn-primary w-full" :disabled="!canOpenActions" @click="downloadQrPng">
-                  ↓ Download QR
-                </AppButton>
-                <RouterLink :to="landingUrl || '/my-venues'" class="inline-flex w-full">
-                  <AppButton size="lg" variant="secondary" class="hero-btn-secondary w-full" :disabled="!canOpenActions">◍ Preview customer experience</AppButton>
-                </RouterLink>
-              </div>
-              <div class="mt-3 grid gap-2 sm:grid-cols-2">
-                <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-                  <p class="text-sm font-semibold text-white">Ready for first scan</p>
-                  <p class="mt-1 text-xs text-white/70">Print your QR and place it near tables.</p>
-                </div>
-                <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-                  <p class="text-sm font-semibold text-white">Guests unlock rewards</p>
-                  <p class="mt-1 text-xs text-white/70">Progress updates automatically after each stamp.</p>
-                </div>
-              </div>
-              <p class="mt-3 text-xs font-medium text-white/65">Operational status: waiting for first guests.</p>
-            </div>
-
-            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Venue QR asset</p>
-              <div class="mt-3 rounded-[1.4rem] bg-white p-3 shadow-xl shadow-black/30">
-                <div id="dashboard-qr" class="qr-pulse mx-auto rounded-2xl bg-white p-2 ring-1 ring-slate-200">
-                  <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="145" level="M" render-as="canvas" :margin="2" />
-                </div>
-                <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
-              </div>
-              <p class="mt-3 text-xs leading-relaxed text-slate-300">
-                Print and place on tables. Guests scan to join and collect stamps instantly.
-              </p>
-            </div>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard>
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-xl font-black text-slate-950">Rewards preview</h2>
-          <RouterLink to="/rewards" class="text-xs font-bold uppercase tracking-wide text-slate-500">Manage rewards</RouterLink>
-        </div>
-        <p class="mt-1 text-sm text-slate-500">Make rewards feel exciting and collectible for your guests.</p>
-        <div v-if="previewRewards.length" class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <RouterLink
-            v-for="reward in previewRewards"
-            :key="reward.id"
-            :to="`/rewards?reward_id=${reward.id}${selectedVenue ? `&venue_id=${selectedVenue.id}` : ''}`"
-            class="group overflow-hidden rounded-2xl border border-slate-200 bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            <div class="relative h-28 overflow-hidden">
-              <img :src="rewardPreviewImage(reward)" :alt="reward.title" class="h-full w-full object-cover transition group-hover:scale-[1.03]">
-              <span class="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
-                {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
-              </span>
-            </div>
-            <div class="space-y-2 p-4">
-              <div class="flex items-center justify-between gap-2">
-                <p class="font-black text-slate-900">{{ reward.title }}</p>
-                <AppBadge :tone="reward.active ? 'green' : 'amber'">{{ reward.active ? 'Active' : 'Paused' }}</AppBadge>
-              </div>
-              <p class="text-xs text-slate-500">{{ reward.description || 'Reward ready for guests to unlock.' }}</p>
-              <p class="text-sm font-semibold text-slate-700">{{ reward.required_stamps }} stamps required</p>
-              <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full rounded-full bg-slate-900/80" :style="{ width: `${Math.min((dashboard?.stats.total_visits ?? 0) / reward.required_stamps * 100, 100)}%` }" />
-              </div>
-              <p class="text-xs font-semibold text-slate-500">{{ Math.min(dashboard?.stats.total_visits ?? 0, reward.required_stamps) }} / {{ reward.required_stamps }}</p>
-            </div>
+      <AppCard
+        v-if="!setupComplete"
+        wrapper-class="mb-6 border-amber-200/80 bg-amber-50/50"
+      >
+        <p class="text-sm font-semibold text-amber-950">
+          Launch your program: configure rewards, download your QR, and scan your first guest.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <RouterLink to="/rewards">
+            <AppButton size="sm" variant="secondary">Manage rewards</AppButton>
+          </RouterLink>
+          <AppButton size="sm" variant="secondary" :disabled="!landingUrl" @click="downloadQrPng">
+            Download QR
+          </AppButton>
+          <RouterLink :to="scannerPath">
+            <AppButton size="sm">Open scanner</AppButton>
           </RouterLink>
         </div>
-        <div v-else class="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+      </AppCard>
+
+      <div class="flex flex-wrap gap-2">
+        <AppButton variant="secondary" size="sm" :disabled="!landingUrl" @click="downloadQrPng">
+          Download QR
+        </AppButton>
+        <RouterLink to="/rewards">
+          <AppButton variant="secondary" size="sm">Manage rewards</AppButton>
+        </RouterLink>
+        <RouterLink to="/customers">
+          <AppButton variant="secondary" size="sm">View customers</AppButton>
+        </RouterLink>
+      </div>
+
+      <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
+      </div>
+
+      <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        <AppCard>
+          <h2 class="text-lg font-black text-slate-950">Recent activity</h2>
+          <ul v-if="activityRows.length" class="mt-4 space-y-2">
+            <li
+              v-for="row in activityRows"
+              :key="`${row.label}-${row.detail}`"
+              class="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200/80"
+            >
+              <span class="truncate text-sm font-semibold text-slate-800">{{ row.label }}</span>
+              <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-400">{{ row.detail }}</span>
+            </li>
+          </ul>
           <EmptyState
+            v-else
             bare
             compact
-            :icon="Gift"
-            title="No rewards yet"
-            description="Add your first milestone to start motivating repeat stamps."
+            class="mt-4"
+            title="No activity yet"
+            description="Open the scanner when a guest is ready to collect a stamp."
           >
-            <RouterLink to="/rewards">
-              <AppButton size="sm">Create first reward</AppButton>
+            <RouterLink :to="scannerPath">
+              <AppButton size="sm">Open scanner</AppButton>
             </RouterLink>
           </EmptyState>
-        </div>
-      </AppCard>
-    </div>
+        </AppCard>
 
-    <div class="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-      <AppCard>
-        <h2 class="text-xl font-black text-slate-950">Recent activity</h2>
-        <p class="mt-1 text-sm text-slate-500">What is happening in your loyalty program right now.</p>
-        <div class="mt-4 space-y-2">
-          <div v-for="item in activityFeed" :key="item.title" class="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-            <p class="flex items-center gap-2">
-              <span class="text-base">{{ item.icon }}</span>
-              <span>{{ item.title }}</span>
-            </p>
-            <span class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ item.time }}</span>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard>
-        <h2 class="text-xl font-black text-slate-950">Setup assistant</h2>
-        <p class="mt-1 text-sm text-slate-500">Keep momentum. Follow these steps to launch fully.</p>
-        <div class="mt-4 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200">
-          <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wide text-slate-500">
-            <span>Setup progress</span>
-            <span>{{ setupChecklist.percent }}%</span>
-          </div>
-          <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
-            <div class="h-full rounded-full bg-slate-900" :style="{ width: `${setupChecklist.percent}%` }" />
-          </div>
-          <div class="mt-3 space-y-2">
-            <div v-for="item in setupChecklist.items" :key="item.label" class="flex items-center justify-between rounded-xl bg-white px-3 py-2 ring-1 ring-slate-200">
-              <p class="text-sm font-semibold text-slate-700">{{ item.label }}</p>
-              <span class="text-xs font-black" :class="item.done ? 'text-emerald-600' : 'text-slate-400'">{{ item.done ? '✓' : '→' }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 grid gap-2 sm:grid-cols-2">
-          <RouterLink :to="selectedVenue ? `/scanner?venue_id=${selectedVenue.id}` : '/scanner'"><AppButton class="w-full">{{ primaryActionText }}</AppButton></RouterLink>
-          <AppButton variant="secondary" class="w-full" @click="downloadQrPng">Download QR</AppButton>
-        </div>
-      </AppCard>
-    </div>
-
-    <AppCard wrapper-class="mt-6 overflow-hidden bg-gradient-to-br from-slate-950/95 to-slate-900/90 text-white ring-1 ring-white/10">
-      <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <h2 class="text-xl font-black">Analytics preview</h2>
-          <p class="mt-1 text-sm text-white/70">Analytics will appear after your first guest stamps.</p>
-          <ul class="mt-4 space-y-2 text-sm font-semibold text-white/80">
-            <li>• Track repeat stamps</li>
-            <li>• See busiest hours</li>
-            <li>• Measure reward performance</li>
+        <AppCard>
+          <h2 class="text-lg font-black text-slate-950">Insights</h2>
+          <ul v-if="insights.length" class="mt-4 space-y-2">
+            <li
+              v-for="(insight, index) in insights"
+              :key="`${insight.text}-${index}`"
+              class="flex gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium leading-snug ring-1 ring-slate-200/80"
+              :class="insightToneClass(insight.tone)"
+            >
+              <span class="text-slate-400" aria-hidden="true">•</span>
+              <span>{{ insight.text }}</span>
+            </li>
           </ul>
-        </div>
-        <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-          <div class="mb-3 grid grid-cols-3 gap-2">
-            <div class="h-10 rounded-xl bg-white/10" />
-            <div class="h-10 rounded-xl bg-white/10" />
-            <div class="h-10 rounded-xl bg-white/10" />
-          </div>
-          <div class="flex h-28 items-end gap-2">
-            <div class="h-9 w-1/6 rounded-t-xl bg-blue-300/40" />
-            <div class="h-14 w-1/6 rounded-t-xl bg-blue-300/50" />
-            <div class="h-11 w-1/6 rounded-t-xl bg-blue-300/45" />
-            <div class="h-20 w-1/6 rounded-t-xl bg-blue-300/60" />
-            <div class="h-13 w-1/6 rounded-t-xl bg-blue-300/45" />
-            <div class="h-16 w-1/6 rounded-t-xl bg-blue-300/55" />
-          </div>
-        </div>
-      </div>
-    </AppCard>
-
-    <AppCard v-if="dashboard?.venue_summaries?.length && workspace.activeVenues.length > 1" wrapper-class="mt-6">
-      <h2 class="text-xl font-black text-slate-950">Other venues</h2>
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
-        <div
-          v-for="summary in dashboard.venue_summaries"
-          :key="summary.venue_id"
-          class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200"
-        >
-          <p class="font-black text-slate-950">{{ summary.venue_name }}</p>
-          <p class="mt-2 text-sm font-semibold text-slate-500">
-            {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} visits
+          <p v-else class="mt-4 text-sm text-slate-500">
+            Insights appear once guests start visiting.
+            <RouterLink to="/analytics" class="font-semibold text-slate-700 underline-offset-2 hover:underline">
+              View analytics
+            </RouterLink>
           </p>
-        </div>
+        </AppCard>
       </div>
-    </AppCard>
 
-    <AppCard wrapper-class="mt-6">
-      <h2 class="text-xl font-black text-slate-950">How rewards work</h2>
-      <p class="mt-1 text-sm text-slate-500">Guests love achievable rewards that feel close and clear.</p>
-      <div class="mt-4 grid gap-3 md:grid-cols-3">
-        <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
-          <p class="text-sm font-black text-slate-900">☕ Free coffee reward</p>
-          <p class="mt-1 text-xs text-slate-500">5 stamps required</p>
-          <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-3/5 rounded-full bg-emerald-500" /></div>
-          <p class="mt-2 text-xs font-semibold text-slate-600">Unlocked after stamp #5</p>
-          <AppBadge tone="green" class="mt-2">Most popular</AppBadge>
+      <AppCard
+        v-if="dashboard?.venue_summaries?.length && workspace.activeVenues.length > 1"
+        wrapper-class="mt-6"
+      >
+        <h2 class="text-lg font-black text-slate-950">Other venues</h2>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            v-for="summary in dashboard.venue_summaries"
+            :key="summary.venue_id"
+            type="button"
+            class="rounded-2xl bg-slate-50 p-4 text-left ring-1 ring-slate-200 transition hover:bg-white hover:shadow-sm"
+            @click="workspace.setFilter(summary.venue_id)"
+          >
+            <p class="font-bold text-slate-950">{{ summary.venue_name }}</p>
+            <p class="mt-1 text-sm font-medium text-slate-500">
+              {{ summary.stats.visits_this_month ?? 0 }} visits this month ·
+              {{ summary.stats.total_customers }} guests
+            </p>
+          </button>
         </div>
-        <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
-          <p class="text-sm font-black text-slate-900">🏷 20% OFF reward</p>
-          <p class="mt-1 text-xs text-slate-500">10 stamps required</p>
-          <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-2/5 rounded-full bg-blue-500" /></div>
-          <p class="mt-2 text-xs font-semibold text-slate-600">Claimed when customer redeems</p>
-          <AppBadge tone="blue" class="mt-2">Next unlock</AppBadge>
-        </div>
-        <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 ring-1 ring-slate-200">
-          <p class="text-sm font-black text-slate-900">🍰 Free dessert reward</p>
-          <p class="mt-1 text-xs text-slate-500">15 stamps required</p>
-          <div class="mt-3 h-2 rounded-full bg-slate-200"><div class="h-full w-1/4 rounded-full bg-indigo-500" /></div>
-          <p class="mt-2 text-xs font-semibold text-slate-600">Encourages long-term retention</p>
-          <AppBadge tone="amber" class="mt-2">VIP journey</AppBadge>
-        </div>
-      </div>
-    </AppCard>
-
-    <AppCard wrapper-class="mt-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white ring-1 ring-white/10">
-      <h2 class="text-xl font-black">Guest journey preview</h2>
-      <p class="mt-1 text-sm text-white/70">Scan → collect stamps → unlock reward. Your venue is ready for this loop.</p>
-      <div class="mt-4 grid gap-2 sm:grid-cols-3">
-        <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">1) Guest scans table QR</div>
-        <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">2) Staff adds stamps instantly</div>
-        <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">3) Reward unlock drives return</div>
-      </div>
-    </AppCard>
+      </AppCard>
     </template>
   </AppShell>
 </template>
-
-<style scoped>
-.hero-shell {
-  position: relative;
-}
-
-.hero-ambient {
-  background:
-    radial-gradient(circle at 16% 18%, rgba(56, 189, 248, 0.22), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.22), transparent 45%);
-}
-
-.live-dot {
-  width: 0.38rem;
-  height: 0.38rem;
-  border-radius: 9999px;
-  background: #34d399;
-  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
-  animation: livePulse 2s ease-in-out infinite;
-}
-
-.hero-btn-primary {
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
-}
-
-.hero-btn-secondary {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hero-btn-secondary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
-}
-
-.top-scanner-btn {
-  animation: scannerPulse 2.2s ease-in-out infinite;
-}
-
-.qr-pulse {
-  animation: qrGlow 3s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.45); }
-  50% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
-}
-
-@keyframes qrGlow {
-  0%, 100% { box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 22px rgba(99, 102, 241, 0.25); }
-}
-
-@keyframes scannerPulse {
-  0%, 100% {
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35), 0 0 0 0 rgba(15, 23, 42, 0.42);
-  }
-  50% {
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35), 0 0 0 9px rgba(15, 23, 42, 0);
-  }
-}
-</style>

@@ -88,10 +88,19 @@ trait BuildsLoyaltyData
 
     protected function createVisit(Customer $customer, User $staff, array $attributes = []): Visit
     {
-        return Visit::query()->create(array_merge([
+        $createdAt = $attributes['created_at'] ?? null;
+        unset($attributes['created_at']);
+
+        $visit = Visit::query()->create(array_merge([
             'customer_id' => $customer->id,
             'venue_id' => $customer->venue_id,
             'created_by' => $staff->id,
         ], $attributes));
+
+        if ($createdAt !== null) {
+            $visit->forceFill(['created_at' => $createdAt])->saveQuietly();
+        }
+
+        return $visit->refresh();
     }
 }

@@ -190,7 +190,7 @@ OAuth preserves onboarding intent:
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. 5-step wizard: venue name → category → logo → rewards presets → QR.
-4. Lands on `/dashboard?onboarding=completed` with a success toast and the setup assistant visible.
+4. Lands on `/dashboard?onboarding=completed` with a success toast and an operational dashboard (KPIs, insights, **Open scanner**).
 
 Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
 
@@ -257,7 +257,7 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 1. Log in as `owner@example.com` or `staff@example.com`
 2. Open **Scanner** (header) or **My Venues → Open scanner**
 3. Scan or search for `customer@example.com` and add stamps
-4. Download QR from dashboard hero or venue settings
+4. Download QR from dashboard (**Download QR**) or venue settings
 
 **Customer**
 
@@ -313,7 +313,9 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Customer **Claim** flow: claim-session QR, staff scan redeem, poll until claimed
 - Staff scanner redeem endpoint + legacy venue-scoped manual redeem API
 - Realtime stamp updates on customer devices (Reverb)
-- Dashboard stats and guided empty states per active venue
+- Operational owner dashboard per venue: monthly visits, returning guests, rewards unlocked, repeat rate, recent activity, API insights, primary **Open scanner** CTA
+- Public venue page address + **Open in Maps** (Google Maps search URL; no Maps API)
+- Venue address in settings (optional; shown on `/v/:slug` when set)
 
 ## Progression And QR Model
 

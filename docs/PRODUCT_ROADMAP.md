@@ -27,7 +27,8 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 - Real-time updates
 - Venue branding
 - Customer wallet
-- Owner dashboard
+- Owner operational dashboard
+- Venue address on public landing + Open in Maps (no Maps API)
 
 **Success Metric:** A venue successfully runs its loyalty program and customers regularly collect stamps.
 

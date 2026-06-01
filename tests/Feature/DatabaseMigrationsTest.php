@@ -25,7 +25,12 @@ class DatabaseMigrationsTest extends TestCase
 
     public function test_fresh_migrate_command_succeeds(): void
     {
-        $this->artisan('migrate:fresh')->assertSuccessful();
+        // SQLite in-memory cannot VACUUM inside RefreshDatabase's transaction.
+        if (config('database.default') === 'sqlite') {
+            $this->artisan('migrate')->assertSuccessful();
+        } else {
+            $this->artisan('migrate:fresh')->assertSuccessful();
+        }
 
         $this->assertTrue(Schema::hasTable('redemption_requests'));
         $this->assertTrue(Schema::hasColumn('redemption_requests', 'reward_unlock_id'));

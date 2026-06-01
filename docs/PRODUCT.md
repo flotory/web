@@ -47,8 +47,8 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 1. **Sign up** — Homepage → register with `intent=owner` (or Google equivalent).
 2. **Onboard** — 5-step wizard: name → category → logo → reward presets → QR preview.
 3. **Launch** — Download QR PNG, share invite link, place materials in venue.
-4. **Operate** — Dashboard for setup checklist and stats; `/rewards` to manage milestones; `/team` to invite staff.
-5. **Measure** — Analytics and dashboard: customers, visits, progression rate, milestone claims.
+4. **Operate** — Operational dashboard (KPIs, insights, scanner); `/rewards` for milestones; `/team` for staff.
+5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces today’s signals and insights.
 
 ## Staff Journey
 
@@ -77,7 +77,7 @@ What ships today:
 - Customer venues list (`/venues`) and settings (`/customer/settings`)
 - Staff-side milestone claim API
 - Optional realtime stamp updates via Reverb
-- Owner dashboard and analytics (visits, customers, milestone conversion)
+- Owner operational dashboard (visits this month, returning guests, rewards unlocked, repeat rate, activity, insights) and `/analytics` for trends
 - Staff-only simplified nav (Scanner, Customers, Account)
 
 **Venue categories in product:** cafe, bar, restaurant, bakery.

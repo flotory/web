@@ -142,7 +142,10 @@ class VenueControllerTest extends TestCase
 
     public function test_public_landing_returns_venue_and_milestones(): void
     {
-        $venue = $this->createVenue(['slug' => 'landing-cafe']);
+        $venue = $this->createVenue([
+            'slug' => 'landing-cafe',
+            'address' => '12 Market Street, Toruń',
+        ]);
         $this->createReward($venue, [
             'title' => 'Free Drink',
             'required_stamps' => 5,
@@ -153,6 +156,7 @@ class VenueControllerTest extends TestCase
         $this->getJson('/api/public/venues/landing-cafe/landing')
             ->assertOk()
             ->assertJsonPath('venue.slug', 'landing-cafe')
+            ->assertJsonPath('venue.address', '12 Market Street, Toruń')
             ->assertJsonCount(1, 'milestones')
             ->assertJsonPath('milestones.0.title', 'Free Drink');
     }

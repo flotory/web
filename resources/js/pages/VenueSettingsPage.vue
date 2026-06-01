@@ -404,8 +404,16 @@ onMounted(loadVenue)
             </div>
             <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />
             <div class="md:col-span-2">
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-address">Address optional</label>
-              <input id="edit-venue-address" v-model="address" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="12 Market Street">
+              <label class="text-sm font-bold text-slate-600" for="edit-venue-address">Address</label>
+              <input
+                id="edit-venue-address"
+                v-model="address"
+                class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+                placeholder="12 Market Street, Toruń"
+              >
+              <p class="mt-2 text-xs font-medium text-slate-500">
+                Shown on your public venue page and used for Google Maps.
+              </p>
             </div>
           </div>
 

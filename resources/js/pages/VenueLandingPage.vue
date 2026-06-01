@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import VenueLocationBlock from '@/components/loyalty/VenueLocationBlock.vue'
 import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -141,6 +142,12 @@ onMounted(loadLanding)
             </p>
           </div>
         </div>
+
+        <VenueLocationBlock
+          v-if="landing.venue.address"
+          class="mt-5"
+          :address="landing.venue.address"
+        />
 
         <div class="mt-5 flex-1">
           <VenueLandingPreview :milestones="milestones" :stamps="previewStamps" />
