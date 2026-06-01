@@ -809,20 +809,21 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
       <!-- Customer card preview -->
       <section v-if="!loading && !needsVenuePick" class="mt-6">
-        <AppCard wrapper-class="border-slate-200/80 bg-white p-5 sm:p-6">
-          <div class="text-center sm:text-left">
+        <AppCard wrapper-class="overflow-hidden border-slate-200/90 bg-white p-0">
+          <div class="border-b border-slate-100 bg-slate-50/90 px-5 py-4 sm:px-6">
             <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Customer Card Preview</p>
-            <h2 class="mt-1 text-lg font-semibold text-slate-950">Loyalty card</h2>
-            <p class="mt-1 text-sm text-slate-500">
+            <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">Loyalty card</h2>
+            <p class="mt-1 max-w-2xl text-sm text-slate-500">
               This is how customers will see your loyalty card.
               <template v-if="programMaxStamps > 0">
-                {{ programMaxStamps }} stamp positions per cycle — only live milestones are shown.
+                {{ programMaxStamps }} positions per cycle — numbered slots are stamps, cards are rewards.
               </template>
             </p>
           </div>
 
-          <div class="mt-5 flex justify-center">
+          <div class="bg-gradient-to-b from-slate-50/40 via-white to-white px-3 py-5 sm:px-6 sm:py-6 lg:px-8">
             <GuestWalletCardPreview
+              variant="prominent"
               :milestones="programCardMilestones"
               :venue-name="venue?.name"
               :editable="canEditRewards"
@@ -832,7 +833,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             />
           </div>
 
-          <div v-if="pausedRewards.length && canEditRewards" class="mt-4 border-t border-slate-100 pt-4">
+          <div v-if="pausedRewards.length && canEditRewards" class="border-t border-slate-100 px-5 py-4 sm:px-6">
             <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Paused milestones</p>
             <div class="mt-2 flex flex-wrap gap-2">
               <button

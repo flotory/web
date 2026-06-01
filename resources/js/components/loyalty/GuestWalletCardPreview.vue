@@ -26,6 +26,7 @@ const props = withDefaults(
     editable?: boolean
     selectedMilestoneId?: number | null
     menuSaving?: boolean
+    variant?: 'compact' | 'prominent'
   }>(),
   {
     stamps: 0,
@@ -35,6 +36,7 @@ const props = withDefaults(
     editable: false,
     selectedMilestoneId: null,
     menuSaving: false,
+    variant: 'compact',
   },
 )
 
@@ -71,6 +73,7 @@ const landingMilestones = computed(() =>
       :editable="editable"
       :selected-milestone-id="selectedMilestoneId"
       :menu-saving="menuSaving"
+      :variant="variant"
       @menu-action="(action, id) => emit('menuAction', action, id)"
     />
 

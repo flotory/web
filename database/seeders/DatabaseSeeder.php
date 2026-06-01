@@ -212,5 +212,9 @@ class DatabaseSeeder extends Seeder
                     });
             });
         });
+
+        if (filter_var(env('SEED_DEMO_SCALE', false), FILTER_VALIDATE_BOOLEAN)) {
+            $this->call(DemoScaleSeeder::class);
+        }
     }
 }

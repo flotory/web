@@ -236,6 +236,20 @@ All seeded accounts use password: **`password`**
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 
+### Large demo dataset (6 months of activity)
+
+For analytics, dashboards, and load-style demos, seed ~150 venues, ~2,400 guests, and ~12,000 stamp visits spread over the last 6 months:
+
+```bash
+# After migrate (keeps owner@ / customer@ demo accounts from the default seeder)
+SEED_DEMO_SCALE=1 php artisan db:seed
+
+# Or run only the scale seeder (adds on top of existing data)
+php artisan db:seed --class=DemoScaleSeeder
+```
+
+Scale accounts use password **`password`** and emails like `scale-owner-{slug}@demo.flotory.test`, `scale-guest-{n}@demo.flotory.test`. Includes visits, milestone unlocks, and claimed rewards.
+
 ### Quick test paths
 
 **Owner / staff workspace**
