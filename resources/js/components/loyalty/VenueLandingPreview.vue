@@ -265,16 +265,16 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           v-else
           class="flex shrink-0 items-center justify-center self-center rounded-lg border transition"
           :class="[
-            isProminent ? 'size-8 sm:size-9' : 'size-8 sm:size-9',
+            isProminent ? 'size-10 sm:size-11' : 'size-9 sm:size-10',
             slot.filled
-              ? 'border-amber-200/80 bg-amber-100 text-amber-600 shadow-sm'
-              : 'border-dashed border-slate-200/80 bg-slate-50/50 text-slate-300',
+              ? 'border-amber-300 bg-amber-100 text-amber-700 shadow-sm ring-1 ring-amber-200/60'
+              : 'border-dashed border-slate-300 bg-slate-100/90 text-slate-500 ring-1 ring-slate-200/50',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
           ]"
           :aria-label="`Stamp ${slot.position}`"
         >
-          <span v-if="slot.filled" class="font-bold" :class="isProminent ? 'text-xs' : 'text-[11px]'" aria-hidden="true">★</span>
-          <span v-else class="font-medium tabular-nums" :class="isProminent ? 'text-[11px]' : 'text-[10px]'">{{ slot.position }}</span>
+          <span v-if="slot.filled" class="font-bold" :class="isProminent ? 'text-sm' : 'text-xs'" aria-hidden="true">★</span>
+          <span v-else class="font-semibold tabular-nums" :class="isProminent ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-xs'">{{ slot.position }}</span>
         </div>
       </div>
     </div>

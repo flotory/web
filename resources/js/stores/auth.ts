@@ -9,6 +9,13 @@ interface AuthResponse {
   token: string
 }
 
+function normalizeUser(user: User & { is_admin?: boolean | 0 | 1 }): User {
+  return {
+    ...user,
+    is_admin: Boolean(user.is_admin),
+  }
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('auth_token'),
@@ -17,6 +24,7 @@ export const useAuthStore = defineStore('auth', {
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
+    isAdmin: (state) => state.user?.is_admin === true,
   },
   actions: {
     async login(payload: { email: string; password: string }) {
@@ -48,7 +56,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await api<{ user: User }>('/auth/me')
-        this.user = response.user
+        this.user = normalizeUser(response.user)
       } catch {
         this.clearSession()
       } finally {
@@ -73,7 +81,7 @@ export const useAuthStore = defineStore('auth', {
       this.clearSession()
     },
     setSession(user: User, token: string) {
-      this.user = user
+      this.user = normalizeUser(user)
       this.token = token
       this.booted = true
       localStorage.setItem('auth_token', token)
