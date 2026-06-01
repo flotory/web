@@ -11,7 +11,6 @@ use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Models\Visit;
 use Carbon\Carbon;
-use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +36,7 @@ class DemoScaleSeeder extends Seeder
 
     private string $passwordHash;
 
-    private Generator $faker;
+    private SeededRandom $rng;
 
     private Carbon $historyStart;
 
@@ -52,8 +51,7 @@ class DemoScaleSeeder extends Seeder
     public function run(): void
     {
         $this->passwordHash = Hash::make('password');
-        $this->faker = \Faker\Factory::create();
-        $this->faker->seed(20260529);
+        $this->rng = new SeededRandom(20260529);
         $this->historyEnd = now()->endOfDay();
         $this->historyStart = $this->historyEnd->copy()->subMonths(self::MONTHS_OF_HISTORY)->startOfDay();
 
@@ -108,13 +106,13 @@ class DemoScaleSeeder extends Seeder
         $usedSlugs = Venue::query()->pluck('slug')->all();
 
         for ($i = 0; $i < self::VENUE_COUNT; $i++) {
-            $category = $this->faker->randomElement($categories);
-            $name = $this->faker->randomElement($prefixes).' '.$this->faker->randomElement($nouns).' '.$this->faker->randomElement($suffixes);
+            $category = $this->rng->randomElement($categories);
+            $name = $this->rng->randomElement($prefixes).' '.$this->rng->randomElement($nouns).' '.$this->rng->randomElement($suffixes);
             $slug = $this->uniqueSlug($name, $usedSlugs);
             $usedSlugs[] = $slug;
 
             $owner = User::query()->create([
-                'name' => $this->faker->name(),
+                'name' => $this->rng->name(),
                 'email' => "scale-owner-{$slug}@demo.flotory.test",
                 'password' => $this->passwordHash,
                 'is_admin' => false,
@@ -124,8 +122,8 @@ class DemoScaleSeeder extends Seeder
                 'name' => $name,
                 'slug' => $slug,
                 'category' => $category,
-                'address' => $this->faker->buildingNumber().' '.$this->faker->randomElement($streets).', '.$this->faker->randomElement($cities),
-                'phone' => $this->faker->numerify('###-###-####'),
+                'address' => $this->rng->buildingNumber().' '.$this->rng->randomElement($streets).', '.$this->rng->randomElement($cities),
+                'phone' => $this->rng->numerify('###-###-####'),
                 'website' => "https://{$slug}.example.com",
                 'created_at' => $this->randomPastTimestamp(120, 150),
                 'updated_at' => now(),
@@ -139,12 +137,12 @@ class DemoScaleSeeder extends Seeder
                 'role' => 'owner',
             ]);
 
-            $staffCount = $this->faker->numberBetween(1, 2);
+            $staffCount = $this->rng->numberBetween(1, 2);
             $staffIds = [];
 
             for ($s = 0; $s < $staffCount; $s++) {
                 $staff = User::query()->create([
-                    'name' => $this->faker->name(),
+                    'name' => $this->rng->name(),
                     'email' => "scale-staff-{$slug}-{$s}@demo.flotory.test",
                     'password' => $this->passwordHash,
                     'is_admin' => false,
@@ -173,7 +171,7 @@ class DemoScaleSeeder extends Seeder
                     'required_stamps' => $stamps,
                     'sort_order' => $stamps,
                     'reward_type' => 'milestone',
-                    'active' => $this->faker->boolean(92),
+                    'active' => $this->rng->boolean(92),
                     'created_at' => $venue->created_at,
                     'updated_at' => now(),
                 ]);
@@ -208,7 +206,7 @@ class DemoScaleSeeder extends Seeder
                 $joinedAt = $this->randomPastTimestamp(10, 170);
 
                 $rows[] = [
-                    'name' => $this->faker->name(),
+                    'name' => $this->rng->name(),
                     'email' => "scale-guest-{$index}@demo.flotory.test",
                     'password' => $this->passwordHash,
                     'is_admin' => false,
@@ -238,11 +236,11 @@ class DemoScaleSeeder extends Seeder
     private function seedCustomers(array $venueIds, array $guestUserIds): array
     {
         $customers = [];
-        shuffle($guestUserIds);
+        $this->rng->shuffle($guestUserIds);
 
         foreach ($guestUserIds as $offset => $userId) {
-            $venueCount = $this->faker->boolean(78) ? 1 : 2;
-            $pickedVenues = $this->faker->randomElements($venueIds, min($venueCount, count($venueIds)));
+            $venueCount = $this->rng->boolean(78) ? 1 : 2;
+            $pickedVenues = $this->rng->randomElements($venueIds, min($venueCount, count($venueIds)));
 
             foreach ($pickedVenues as $venueId) {
                 $joinedAt = $this->randomPastTimestamp(14, 175);
@@ -297,7 +295,7 @@ class DemoScaleSeeder extends Seeder
             $remainingCustomers = $totalCustomers - $index;
             $remainingBudget = $visitBudget - $totalVisits;
             $avg = max(1, (int) round($remainingBudget / max(1, $remainingCustomers)));
-            $visitTarget = $this->faker->numberBetween(max(1, $avg - 3), $avg + 5);
+            $visitTarget = $this->rng->numberBetween(max(1, $avg - 3), $avg + 5);
             $visitTarget = min($visitTarget, $remainingBudget);
 
             $totalVisits += $this->simulateCustomer(
@@ -336,7 +334,7 @@ class DemoScaleSeeder extends Seeder
 
         for ($v = 0; $v < $visitTarget; $v++) {
             $at = $this->randomTimestampBetween($start, $this->historyEnd);
-            $added = $this->faker->boolean(8) ? 2 : 1;
+            $added = $this->rng->boolean(8) ? 2 : 1;
             $stamps = min($stamps + $added, $maxStamps + 4);
 
             $visitRows[] = [
@@ -371,13 +369,13 @@ class DemoScaleSeeder extends Seeder
 
                 if ($this->shouldClaimUnlock($at)) {
                     $unlock->forceFill([
-                        'claimed_at' => $at->copy()->addHours($this->faker->numberBetween(2, 96)),
+                        'claimed_at' => $at->copy()->addHours($this->rng->numberBetween(2, 96)),
                         'claimed_by' => $profile['staff_id'],
                     ])->save();
                 }
             }
 
-            if ($stamps >= $maxStamps && $this->faker->boolean(35)) {
+            if ($stamps >= $maxStamps && $this->rng->boolean(35)) {
                 CustomerRewardCycle::query()
                     ->where('customer_id', $profile['customer_id'])
                     ->where('cycle_number', $cycle)
@@ -385,7 +383,7 @@ class DemoScaleSeeder extends Seeder
                     ->update(['completed_at' => $at]);
 
                 $cycle++;
-                $stamps = $this->faker->numberBetween(0, 3);
+                $stamps = $this->rng->numberBetween(0, 3);
                 $unlockedIds = [];
 
                 CustomerRewardCycle::query()->create([
@@ -427,14 +425,14 @@ class DemoScaleSeeder extends Seeder
         $daysAgo = $unlockedAt->diffInDays($this->historyEnd);
 
         if ($daysAgo > 45) {
-            return $this->faker->boolean(72);
+            return $this->rng->boolean(72);
         }
 
         if ($daysAgo > 14) {
-            return $this->faker->boolean(48);
+            return $this->rng->boolean(48);
         }
 
-        return $this->faker->boolean(18);
+        return $this->rng->boolean(18);
     }
 
     /**
@@ -487,8 +485,8 @@ class DemoScaleSeeder extends Seeder
     {
         return $this->historyEnd
             ->copy()
-            ->subDays($this->faker->numberBetween($minDaysAgo, $maxDaysAgo))
-            ->setTime($this->faker->numberBetween(7, 21), $this->faker->numberBetween(0, 59));
+            ->subDays($this->rng->numberBetween($minDaysAgo, $maxDaysAgo))
+            ->setTime($this->rng->numberBetween(7, 21), $this->rng->numberBetween(0, 59));
     }
 
     private function randomTimestampBetween(Carbon $start, Carbon $end): Carbon
@@ -498,7 +496,7 @@ class DemoScaleSeeder extends Seeder
         }
 
         return Carbon::createFromTimestamp(
-            $this->faker->numberBetween($start->timestamp, $end->timestamp),
-        )->setTime($this->faker->numberBetween(7, 22), $this->faker->randomElement([0, 10, 15, 20, 30, 45]));
+            $this->rng->numberBetween($start->timestamp, $end->timestamp),
+        )->setTime($this->rng->numberBetween(7, 22), $this->rng->randomElement([0, 10, 15, 20, 30, 45]));
     }
 }
