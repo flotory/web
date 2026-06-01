@@ -147,25 +147,25 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
           :title="slot.milestone ? `${slot.milestone.required_stamps} stamps → ${slot.milestone.title}` : undefined"
           :class="[
             'min-h-0 rounded-xl text-sm font-bold transition',
-            slot.isReward ? 'flex aspect-[4/3] sm:aspect-square' : 'grid aspect-square place-items-center',
+            slot.isReward ? 'flex aspect-square' : 'grid aspect-square place-items-center',
             ...slotBaseClass(slot),
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
             celebratingReward && slot.isReward && slot.filled && 'animate-reward-glow',
             slotRingClass(slot),
           ]"
         >
-          <!-- Milestone: row split 10% gift | 90% (photo + info horizontally) -->
+          <!-- Milestone: gift icon on top, photo + info stacked below -->
           <div
             v-if="slot.isReward && slot.milestone"
-            class="flex h-full w-full min-w-0 flex-row"
+            class="flex h-full w-full min-w-0 flex-col"
           >
             <div
-              class="flex w-[10%] min-w-[14px] shrink-0 flex-col items-center justify-center sm:min-w-[16px]"
-              :class="slot.filled ? 'bg-amber-400 text-white' : 'bg-rose-50 text-rose-500'"
+              class="flex h-[22%] min-h-[18px] shrink-0 items-center justify-center border-b border-rose-100/80"
+              :class="slot.filled ? 'bg-amber-400 text-white border-amber-300/50' : 'bg-rose-50 text-rose-500'"
             >
               <svg
                 viewBox="0 0 24 24"
-                class="size-3 shrink-0 sm:size-4"
+                class="size-3.5 shrink-0 sm:size-4"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="1.8"
@@ -177,10 +177,10 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
             </div>
 
             <div
-              class="relative flex h-full w-[90%] min-w-0 flex-row items-stretch overflow-hidden bg-white"
+              class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white"
               :class="slot.filled ? 'bg-amber-50/90' : ''"
             >
-              <div class="relative h-full w-[42%] shrink-0 bg-slate-100 sm:w-[40%]">
+              <div class="relative h-[58%] min-h-[1.5rem] w-full shrink-0 bg-slate-100">
                 <img
                   :src="rewardThumbUrl(slot.milestone)"
                   :alt="slot.milestone.title"
@@ -193,15 +193,6 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
                 >
                   ★
                 </span>
-              </div>
-
-              <div class="relative flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1 py-0.5 pr-5">
-                <p class="line-clamp-2 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
-                  {{ slot.milestone.title }}
-                </p>
-                <p class="truncate text-[6px] font-semibold text-slate-500 sm:text-[7px]">
-                  {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
-                </p>
 
                 <button
                   v-if="canManageMilestone(slot.milestone)"
@@ -213,6 +204,15 @@ function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 
                 >
                   <MoreVertical class="size-3" :stroke-width="2.5" />
                 </button>
+              </div>
+
+              <div class="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-1.5 py-1">
+                <p class="line-clamp-2 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
+                  {{ slot.milestone.title }}
+                </p>
+                <p class="truncate text-[6px] font-semibold text-slate-500 sm:text-[7px]">
+                  {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
+                </p>
               </div>
             </div>
           </div>
