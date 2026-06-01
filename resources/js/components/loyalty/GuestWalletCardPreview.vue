@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 
 import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
-import AppCard from '@/components/ui/AppCard.vue'
 
 export type GuestCardMilestone = {
   id: number
@@ -11,6 +10,7 @@ export type GuestCardMilestone = {
   image?: string | null
   image_thumb?: string | null
   required_stamps: number
+  active?: boolean
   unlocked?: boolean
   claimed?: boolean
   isDraft?: boolean
@@ -21,25 +21,28 @@ const props = withDefaults(
     milestones: GuestCardMilestone[]
     stamps?: number
     venueName?: string | null
-    showStampQr?: boolean
     animatingSlots?: number[]
     celebratingReward?: boolean
     editable?: boolean
     selectedMilestoneId?: number | null
+    menuOpenMilestoneId?: number | null
+    menuSaving?: boolean
   }>(),
   {
     stamps: 0,
     venueName: null,
-    showStampQr: false,
     animatingSlots: () => [],
     celebratingReward: false,
     editable: false,
     selectedMilestoneId: null,
+    menuOpenMilestoneId: null,
+    menuSaving: false,
   },
 )
 
 const emit = defineEmits<{
-  selectMilestone: [milestoneId: number]
+  toggleMenu: [milestoneId: number]
+  menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
 const stampCount = computed(() => props.stamps ?? 0)
@@ -54,28 +57,14 @@ const landingMilestones = computed(() =>
       image: milestone.image ?? null,
       image_thumb: milestone.image_thumb ?? null,
       required_stamps: milestone.required_stamps,
+      active: milestone.active,
+      isDraft: milestone.isDraft,
     })),
 )
 </script>
 
 <template>
   <div class="space-y-4">
-    <AppCard
-      v-if="showStampQr"
-      wrapper-class="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm"
-      :padded="false"
-    >
-      <h2 class="text-center text-lg font-black text-slate-950">Add a stamp</h2>
-      <p class="mt-1 text-center text-sm text-slate-500">
-        Staff scan the guest QR on Wallet. Rewards are claimed from the Rewards tab.
-      </p>
-      <div class="mt-4 flex justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
-        <div class="grid size-[200px] place-items-center rounded-2xl bg-white ring-1 ring-slate-200">
-          <span class="text-xs font-semibold text-slate-400">Guest QR</span>
-        </div>
-      </div>
-    </AppCard>
-
     <VenueLandingPreview
       v-if="landingMilestones.length"
       :milestones="landingMilestones"
@@ -84,7 +73,10 @@ const landingMilestones = computed(() =>
       :celebrating-reward="celebratingReward"
       :editable="editable"
       :selected-milestone-id="selectedMilestoneId"
-      @select-milestone="emit('selectMilestone', $event)"
+      :menu-open-milestone-id="menuOpenMilestoneId"
+      :menu-saving="menuSaving"
+      @toggle-menu="emit('toggleMenu', $event)"
+      @menu-action="(action, id) => emit('menuAction', action, id)"
     />
 
     <p

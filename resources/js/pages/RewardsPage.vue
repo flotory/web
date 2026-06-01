@@ -84,7 +84,6 @@ const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
 const editingReward = ref<Reward | null>(null)
 const deleteRewardTarget = ref<Reward | null>(null)
-const focusedRewardId = ref<number | null>(null)
 let refreshTimer: number | undefined
 let successTimer: number | undefined
 
@@ -111,7 +110,7 @@ const avgUnlockVisits = computed(() => {
   return Math.round(active.reduce((sum, reward) => sum + reward.required_stamps, 0) / active.length)
 })
 
-const programPreviewStamps = ref(0)
+const gridMenuMilestoneId = ref<number | null>(null)
 
 const activeSortedRewards = computed(() =>
   sortedOwnerRewards.value.filter((reward) => reward.active),
@@ -125,6 +124,7 @@ const programCardMilestones = computed(() => {
     image: reward.image ?? null,
     image_thumb: reward.image_thumb ?? null,
     required_stamps: reward.required_stamps,
+    active: reward.active,
     isDraft: false,
   }))
 
@@ -167,19 +167,51 @@ const programMaxStamps = computed(() => programCardMilestones.value.at(-1)?.requ
 
 const pausedRewards = computed(() => sortedOwnerRewards.value.filter((reward) => !reward.active))
 
-const focusedReward = computed(() =>
-  focusedRewardId.value === null
-    ? null
-    : rewards.value.find((reward) => reward.id === focusedRewardId.value) ?? null,
-)
+const selectedGridMilestoneId = computed(() => editingReward.value?.id ?? null)
 
-const selectedGridMilestoneId = computed(() => editingReward.value?.id ?? focusedRewardId.value)
+function rewardById(milestoneId: number): Reward | undefined {
+  return rewards.value.find((reward) => reward.id === milestoneId)
+}
 
-watch(programMaxStamps, (max) => {
-  if (programPreviewStamps.value > max) {
-    programPreviewStamps.value = max
+function closeGridMenu() {
+  gridMenuMilestoneId.value = null
+}
+
+function toggleGridMenu(milestoneId: number) {
+  gridMenuMilestoneId.value = gridMenuMilestoneId.value === milestoneId ? null : milestoneId
+}
+
+function onGridMenuAction(
+  action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete',
+  milestoneId: number,
+) {
+  const reward = rewardById(milestoneId)
+  if (!reward) {
+    return
   }
-})
+
+  closeGridMenu()
+
+  if (action === 'edit') {
+    startEditing(reward)
+    return
+  }
+  if (action === 'duplicate') {
+    void duplicateReward(reward)
+    return
+  }
+  if (action === 'archive') {
+    void archiveReward(reward)
+    return
+  }
+  if (action === 'reactivate') {
+    void reactivateReward(reward)
+    return
+  }
+  if (action === 'delete') {
+    openDeleteModal(reward)
+  }
+}
 
 function showSuccess(message: string) {
   successMessage.value = message
@@ -237,7 +269,7 @@ function clearImage() {
 }
 
 function startEditing(reward: Reward) {
-  focusedRewardId.value = reward.id
+  closeGridMenu()
   formOpen.value = true
   showTemplatePicker.value = false
   editingReward.value = reward
@@ -266,14 +298,6 @@ function applyRouteEditingIntent() {
   void router.replace({ query: { ...route.query, reward_id: undefined } })
 }
 
-function onGridMilestoneSelect(milestoneId: number) {
-  if (milestoneId < 0) {
-    return
-  }
-
-  focusedRewardId.value = milestoneId
-}
-
 function openCreateForm() {
   if (needsVenuePick.value) {
     error.value = 'Select a specific venue in the sidebar filter first.'
@@ -296,7 +320,7 @@ function openCreateForm() {
 function closeCreateForm() {
   resetForm()
   formOpen.value = false
-  focusedRewardId.value = null
+  closeGridMenu()
 }
 
 async function loadRewards(silent = false) {
@@ -469,9 +493,7 @@ async function archiveReward(reward: Reward) {
     await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${reward.id}/archive`, {
       method: 'PATCH',
     })
-    if (focusedRewardId.value === reward.id) {
-      focusedRewardId.value = null
-    }
+    closeGridMenu()
     await loadRewards()
     showSuccess('Milestone archived.')
   } catch (exception) {
@@ -523,9 +545,7 @@ async function deleteReward(reward: Reward) {
       resetForm()
       formOpen.value = false
     }
-    if (focusedRewardId.value === reward.id) {
-      focusedRewardId.value = null
-    }
+    closeGridMenu()
     closeDeleteModal()
     await loadRewards()
     showSuccess('Milestone deleted.')
@@ -806,82 +826,28 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       <!-- Loyalty card grid (guest view + owner management) -->
       <section v-if="!loading && !needsVenuePick" class="mt-6">
         <AppCard wrapper-class="border-slate-200 bg-white p-5 sm:p-6">
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 class="text-xl font-black text-slate-950">Loyalty card</h2>
-              <p class="mt-1 text-sm text-slate-500">
-                Same stamp grid guests see on Wallet
-                <template v-if="programMaxStamps > 0">
-                  — {{ programMaxStamps }} {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle.
-                </template>
-                Only live milestones appear on guest cards.
-              </p>
-            </div>
-            <div v-if="programMaxStamps > 0" class="w-full shrink-0 sm:max-w-[220px]">
-              <label class="text-xs font-bold uppercase tracking-wide text-slate-400" for="program-preview-stamps">
-                Preview stamps
-              </label>
-              <div class="mt-2 flex items-center gap-3">
-                <input
-                  id="program-preview-stamps"
-                  v-model.number="programPreviewStamps"
-                  type="range"
-                  min="0"
-                  :max="programMaxStamps"
-                  class="min-w-0 flex-1 accent-indigo-600"
-                >
-                <span class="w-12 text-right text-sm font-black text-indigo-600">{{ programPreviewStamps }}</span>
-              </div>
-            </div>
+          <div>
+            <h2 class="text-xl font-black text-slate-950">Loyalty card</h2>
+            <p class="mt-1 text-sm text-slate-500">
+              Same stamp grid guests see on Wallet
+              <template v-if="programMaxStamps > 0">
+                — {{ programMaxStamps }} {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle.
+              </template>
+              Only live milestones appear on guest cards.
+            </p>
           </div>
 
           <div class="mt-5">
             <GuestWalletCardPreview
               :milestones="programCardMilestones"
-              :stamps="programPreviewStamps"
               :venue-name="venue?.name"
               :editable="canEditRewards"
               :selected-milestone-id="selectedGridMilestoneId"
-              show-stamp-qr
-              @select-milestone="onGridMilestoneSelect"
+              :menu-open-milestone-id="gridMenuMilestoneId"
+              :menu-saving="saving"
+              @toggle-menu="toggleGridMenu"
+              @menu-action="onGridMenuAction"
             />
-          </div>
-
-          <div
-            v-if="focusedReward && canEditRewards"
-            class="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3"
-          >
-            <p class="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">
-              {{ focusedReward.required_stamps }} stamps → {{ focusedReward.title }}
-            </p>
-            <AppBadge :tone="focusedReward.active ? 'green' : 'amber'">
-              {{ focusedReward.active ? 'Live' : 'Paused' }}
-            </AppBadge>
-            <div class="flex flex-wrap gap-2">
-              <AppButton size="sm" variant="secondary" @click="startEditing(focusedReward)">Edit</AppButton>
-              <AppButton size="sm" variant="ghost" :disabled="saving" @click="duplicateReward(focusedReward)">Duplicate</AppButton>
-              <AppButton
-                v-if="focusedReward.active"
-                size="sm"
-                variant="ghost"
-                :disabled="saving"
-                @click="archiveReward(focusedReward)"
-              >
-                Archive
-              </AppButton>
-              <AppButton
-                v-else
-                size="sm"
-                variant="ghost"
-                :disabled="saving"
-                @click="reactivateReward(focusedReward)"
-              >
-                Reactivate
-              </AppButton>
-              <AppButton size="sm" variant="ghost" class="text-red-600" :disabled="saving" @click="openDeleteModal(focusedReward)">
-                Delete
-              </AppButton>
-            </div>
           </div>
 
           <div v-if="pausedRewards.length && canEditRewards" class="mt-4 border-t border-slate-100 pt-4">
@@ -892,7 +858,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                 :key="`paused-${reward.id}`"
                 type="button"
                 class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-                @click="onGridMilestoneSelect(reward.id)"
+                @click="startEditing(reward)"
               >
                 {{ reward.required_stamps }} · {{ reward.title }}
               </button>
@@ -932,6 +898,14 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </div>
       </section>
 
+
+    <button
+      v-if="gridMenuMilestoneId !== null"
+      type="button"
+      class="fixed inset-0 z-20 cursor-default bg-transparent"
+      aria-label="Close milestone menu"
+      @click="closeGridMenu"
+    />
 
     <!-- Delete confirmation -->
     <div

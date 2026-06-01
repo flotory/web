@@ -1,19 +1,29 @@
 <script setup lang="ts">
+import { MoreVertical } from '@lucide/vue'
 import { computed } from 'vue'
 
+import { rewardThumbUrl } from '@/lib/rewardMedia'
 import type { VenueLandingPayload } from '@/lib/onboarding'
 
+export type GridMilestone = VenueLandingPayload['milestones'][number] & {
+  active?: boolean
+  isDraft?: boolean
+}
+
 const props = defineProps<{
-  milestones: VenueLandingPayload['milestones']
+  milestones: GridMilestone[]
   stamps?: number
   animatingSlots?: number[]
   celebratingReward?: boolean
   editable?: boolean
   selectedMilestoneId?: number | null
+  menuOpenMilestoneId?: number | null
+  menuSaving?: boolean
 }>()
 
 const emit = defineEmits<{
-  selectMilestone: [milestoneId: number]
+  toggleMenu: [milestoneId: number]
+  menuAction: [action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number]
 }>()
 
 const stampCount = computed(() => props.stamps ?? 0)
@@ -23,7 +33,7 @@ const sortedMilestones = computed(() =>
 )
 
 const milestoneByPosition = computed(() => {
-  const map = new Map<number, VenueLandingPayload['milestones'][number]>()
+  const map = new Map<number, GridMilestone>()
   for (const milestone of sortedMilestones.value) {
     map.set(milestone.required_stamps, milestone)
   }
@@ -50,27 +60,36 @@ const slots = computed(() =>
   }),
 )
 
-function onRewardSlotClick(position: number) {
-  if (!props.editable) {
-    return
-  }
-
-  const milestone = milestoneByPosition.value.get(position)
-  if (milestone) {
-    emit('selectMilestone', milestone.id)
-  }
-}
-
-function slotRingClass(slot: { position: number; isReward: boolean; milestone: VenueLandingPayload['milestones'][number] | null }): string {
+function slotRingClass(slot: { isReward: boolean; milestone: GridMilestone | null }): string {
   if (!props.editable || !slot.isReward || !slot.milestone) {
     return ''
   }
 
-  if (props.selectedMilestoneId === slot.milestone.id) {
+  if (props.selectedMilestoneId === slot.milestone.id || props.menuOpenMilestoneId === slot.milestone.id) {
     return 'ring-2 ring-indigo-500 ring-offset-2'
   }
 
-  return 'ring-1 ring-rose-200 hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1'
+  return 'ring-1 ring-rose-200'
+}
+
+function slotBaseClass(slot: { filled: boolean; isReward: boolean }): string[] {
+  if (slot.isReward) {
+    return ['relative overflow-hidden p-0 ring-1 ring-rose-100']
+  }
+
+  if (slot.filled) {
+    return ['bg-amber-400 text-white shadow-sm shadow-amber-200']
+  }
+
+  return ['bg-slate-100 text-slate-300']
+}
+
+function canManageMilestone(milestone: GridMilestone): boolean {
+  return props.editable && milestone.id > 0 && !milestone.isDraft
+}
+
+function onMenuAction(action: 'edit' | 'duplicate' | 'archive' | 'reactivate' | 'delete', milestoneId: number) {
+  emit('menuAction', action, milestoneId)
 }
 </script>
 
@@ -84,47 +103,139 @@ function slotRingClass(slot: { position: number; isReward: boolean; milestone: V
         <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">stamps</p>
       </div>
 
-      <div class="grid min-w-0 flex-1 grid-cols-5 gap-2">
-        <component
-          :is="editable && slot.isReward && slot.milestone ? 'button' : 'div'"
+      <div class="grid min-w-0 flex-1 grid-cols-5 gap-1.5 sm:gap-2">
+        <div
           v-for="slot in slots"
           :key="slot.position"
-          :type="editable && slot.isReward && slot.milestone ? 'button' : undefined"
           :title="slot.milestone ? `${slot.milestone.required_stamps} stamps → ${slot.milestone.title}` : undefined"
           :class="[
-            'grid aspect-square place-items-center rounded-xl text-sm font-bold transition',
-            slot.filled
-              ? 'bg-amber-400 text-white shadow-sm shadow-amber-200'
-              : slot.isReward
-                ? 'bg-rose-50 text-rose-500 ring-1 ring-rose-100'
-                : 'bg-slate-100 text-slate-300',
+            'grid aspect-square min-h-0 rounded-xl text-sm font-bold transition',
+            ...slotBaseClass(slot),
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
             celebratingReward && slot.isReward && slot.filled && 'animate-reward-glow',
             slotRingClass(slot),
-            editable && slot.isReward && slot.milestone && 'cursor-pointer',
+            !slot.isReward && 'place-items-center',
           ]"
-          @click="onRewardSlotClick(slot.position)"
         >
-          <span v-if="slot.filled" aria-hidden="true">★</span>
-          <svg
-            v-else-if="slot.isReward"
-            viewBox="0 0 24 24"
-            class="size-4"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            aria-hidden="true"
+          <div
+            v-if="slot.isReward && slot.milestone"
+            class="flex h-full w-full min-w-0"
           >
-            <rect x="3" y="8" width="18" height="13" rx="2" />
-            <path d="M12 8v13M3 12h18M8 8c0-2 1.5-4 4-4s4 2 4 4" />
-          </svg>
+            <div
+              class="flex w-[10%] min-w-[12px] shrink-0 items-center justify-center sm:min-w-[14px]"
+              :class="slot.filled ? 'bg-amber-400 text-white' : 'bg-rose-50 text-rose-500'"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                class="size-3 shrink-0 sm:size-3.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect x="3" y="8" width="18" height="13" rx="2" />
+                <path d="M12 8v13M3 12h18M8 8c0-2 1.5-4 4-4s4 2 4 4" />
+              </svg>
+            </div>
+
+            <div
+              class="relative flex w-[90%] min-w-0 flex-col overflow-visible bg-white"
+              :class="slot.filled ? 'bg-amber-50/90' : ''"
+            >
+              <div class="relative h-[52%] min-h-[1.25rem] w-full shrink-0 overflow-hidden bg-slate-100">
+                <img
+                  :src="rewardThumbUrl(slot.milestone)"
+                  :alt="slot.milestone.title"
+                  class="size-full object-cover"
+                >
+                <span
+                  v-if="slot.filled"
+                  class="absolute left-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-amber-400 text-[9px] text-white shadow-sm"
+                  aria-hidden="true"
+                >
+                  ★
+                </span>
+
+                <button
+                  v-if="canManageMilestone(slot.milestone)"
+                  type="button"
+                  class="absolute right-0 top-0 z-10 grid size-5 place-items-center rounded-bl-md bg-white/95 text-slate-600 shadow-sm ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-900 sm:size-6"
+                  :aria-label="`Manage ${slot.milestone.title}`"
+                  :aria-expanded="menuOpenMilestoneId === slot.milestone.id"
+                  @click.stop="emit('toggleMenu', slot.milestone.id)"
+                >
+                  <MoreVertical class="size-3 sm:size-3.5" :stroke-width="2.5" />
+                </button>
+              </div>
+
+              <div class="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-1 py-0.5">
+                <p class="line-clamp-2 pr-4 text-[7px] font-black leading-tight text-slate-900 sm:text-[8px]">
+                  {{ slot.milestone.title }}
+                </p>
+                <p class="truncate text-[6px] font-semibold text-slate-500 sm:text-[7px]">
+                  {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
+                </p>
+              </div>
+
+              <div
+                v-if="menuOpenMilestoneId === slot.milestone.id"
+                class="absolute right-0 top-full z-30 mt-0.5 w-36 rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-200"
+                @click.stop
+              >
+                <button
+                  type="button"
+                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  :disabled="menuSaving"
+                  @click="onMenuAction('edit', slot.milestone.id)"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  :disabled="menuSaving"
+                  @click="onMenuAction('duplicate', slot.milestone.id)"
+                >
+                  Duplicate
+                </button>
+                <button
+                  v-if="slot.milestone.active !== false"
+                  type="button"
+                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                  :disabled="menuSaving"
+                  @click="onMenuAction('archive', slot.milestone.id)"
+                >
+                  Archive
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                  :disabled="menuSaving"
+                  @click="onMenuAction('reactivate', slot.milestone.id)"
+                >
+                  Reactivate
+                </button>
+                <button
+                  type="button"
+                  class="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50"
+                  :disabled="menuSaving"
+                  @click="onMenuAction('delete', slot.milestone.id)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <span v-else-if="slot.filled" aria-hidden="true">★</span>
           <span v-else>{{ slot.position }}</span>
-        </component>
+        </div>
       </div>
     </div>
 
     <p v-if="editable" class="mt-4 text-center text-xs text-slate-500">
-      Tap a gift slot on the grid to edit that milestone.
+      Use ⋯ on a reward to edit, duplicate, or archive.
     </p>
   </article>
 </template>

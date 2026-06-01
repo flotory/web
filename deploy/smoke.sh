@@ -11,6 +11,7 @@ check_url() {
   local retries="${3:-1}"
   local delay_s="${4:-2}"
   local accept_header="${5:-}"
+  local also_ok="${6:-}"
   local actual
   local attempt=1
 
@@ -20,7 +21,7 @@ check_url() {
     else
       actual="$(curl -s -o /dev/null -w '%{http_code}' "${url}")"
     fi
-    if [[ "${actual}" == "${expected}" ]]; then
+    if [[ "${actual}" == "${expected}" || ( -n "${also_ok}" && "${actual}" == "${also_ok}" ) ]]; then
       echo "OK ${url} -> ${actual}"
       return
     fi
@@ -36,7 +37,8 @@ check_url() {
   exit 1
 }
 
-check_url "${APP_URL}/" "200" 12 2
+# HTTP→HTTPS redirect on production returns 301 for localhost checks.
+check_url "${APP_URL}/" "200" 12 2 "" "301"
 check_url "${APP_URL}/manifest.webmanifest" "200" 5 1
 check_url "${APP_URL}/api/customer/cards" "401" 5 1 "application/json"
 
