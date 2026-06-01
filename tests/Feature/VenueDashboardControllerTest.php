@@ -47,8 +47,52 @@ class VenueDashboardControllerTest extends TestCase
             ->assertJsonPath('venue.id', $venue->id)
             ->assertJsonPath('stats.total_customers', 1)
             ->assertJsonPath('stats.total_visits', 2)
+            ->assertJsonPath('stats.visits_this_month', 2)
+            ->assertJsonPath('stats.active_customers', 1)
+            ->assertJsonPath('stats.returning_customers', 1)
+            ->assertJsonPath('stats.rewards_claimed', 1)
             ->assertJsonPath('stats.milestones_unlocked', 1)
-            ->assertJsonPath('stats.milestones_claimed', 1);
+            ->assertJsonPath('stats.milestones_claimed', 1)
+            ->assertJsonPath('has_loyalty_activity', true)
+            ->assertJsonStructure([
+                'insights',
+                'monthly_activity' => [
+                    ['month', 'label', 'visits'],
+                ],
+            ]);
+    }
+
+    public function test_dashboard_insights_surface_customers_close_to_reward(): void
+    {
+        $owner = $this->createUser();
+        $guest = $this->createUser(['email' => 'close@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $customer = $this->createCustomer($venue, $guest, ['stamps' => 4]);
+        $this->createReward($venue, ['required_stamps' => 5, 'title' => 'Free Pastry']);
+        $this->createVisit($customer, $owner);
+
+        Sanctum::actingAs($owner);
+
+        $response = $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk();
+
+        $insights = collect($response->json('insights'))->pluck('text')->implode(' ');
+        $this->assertStringContainsString('1 more stamp', $insights);
+    }
+
+    public function test_dashboard_reports_no_activity_for_empty_venue(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk()
+            ->assertJsonPath('has_loyalty_activity', false)
+            ->assertJsonPath('stats.visits_this_month', 0);
     }
 
     public function test_dashboard_aggregates_all_owner_venues(): void

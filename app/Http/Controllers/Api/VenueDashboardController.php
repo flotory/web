@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use App\Services\VenueAnalyticsService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class VenueDashboardController extends Controller
 {
+    public function __construct(private VenueAnalyticsService $analytics) {}
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -34,6 +37,10 @@ class VenueDashboardController extends Controller
                 'venues_count' => 0,
                 'stats' => [
                     'total_customers' => 0,
+                    'active_customers' => 0,
+                    'visits_this_month' => 0,
+                    'rewards_claimed' => 0,
+                    'returning_customers' => 0,
                     'active_progressors' => 0,
                     'total_visits' => 0,
                     'milestones_claimed' => 0,
@@ -44,35 +51,21 @@ class VenueDashboardController extends Controller
                 'monthly_activity' => [],
                 'milestone_conversions' => [],
                 'venue_summaries' => [],
+                'insights' => [],
+                'has_loyalty_activity' => false,
             ]);
         }
 
         $venues = Venue::query()->whereIn('id', $venueIds)->get();
 
-        $stats = [
-            'total_customers' => 0,
-            'active_progressors' => 0,
-            'total_visits' => 0,
-            'milestones_claimed' => 0,
-            'milestones_unlocked' => 0,
-            'cycles_completed' => 0,
-        ];
-        $monthly = [];
+        $stats = $this->analytics->aggregateStats($venues);
+        $monthlyActivity = $this->analytics->aggregateMonthlyActivity($venues);
+        $insights = $this->analytics->aggregateInsights($venues);
         $milestoneConversions = [];
         $summaries = [];
 
         foreach ($venues as $venue) {
             $payload = $this->dashboardForVenue($venue);
-            $stats['total_customers'] += $payload['stats']['total_customers'];
-            $stats['active_progressors'] += $payload['stats']['active_progressors'];
-            $stats['total_visits'] += $payload['stats']['total_visits'];
-            $stats['milestones_claimed'] += $payload['stats']['milestones_claimed'];
-            $stats['milestones_unlocked'] += $payload['stats']['milestones_unlocked'];
-            $stats['cycles_completed'] += $payload['stats']['cycles_completed'];
-
-            foreach ($payload['monthly_activity'] as $row) {
-                $monthly[$row['month']] = ($monthly[$row['month']] ?? 0) + $row['visits'];
-            }
 
             foreach ($payload['milestone_conversions'] as $row) {
                 $milestoneConversions[] = [
@@ -93,12 +86,6 @@ class VenueDashboardController extends Controller
                 'stats' => $payload['stats'],
             ];
         }
-
-        ksort($monthly);
-        $monthlyActivity = collect($monthly)
-            ->map(fn (int $visits, string $month) => ['month' => $month, 'visits' => $visits])
-            ->values()
-            ->take(-12);
 
         $mostLoyal = DB::table('customers')
             ->join('users', 'customers.user_id', '=', 'users.id')
@@ -133,6 +120,8 @@ class VenueDashboardController extends Controller
             'monthly_activity' => $monthlyActivity,
             'milestone_conversions' => $milestoneConversions,
             'venue_summaries' => $summaries,
+            'insights' => $insights,
+            'has_loyalty_activity' => $this->analytics->hasAggregateActivity($venues),
         ]);
     }
 
@@ -141,13 +130,6 @@ class VenueDashboardController extends Controller
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         return response()->json($this->dashboardForVenue($venue));
-    }
-
-    private function monthBucketExpression(): string
-    {
-        return DB::connection()->getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', created_at)"
-            : 'DATE_FORMAT(created_at, "%Y-%m")';
     }
 
     /**
@@ -171,44 +153,19 @@ class VenueDashboardController extends Controller
      */
     private function dashboardForVenue(Venue $venue): array
     {
-        $activeProgressors = $venue->customers()
-            ->has('visits', '>=', 2)
-            ->count();
-
         return [
             'scope' => 'venue',
             'venue' => $venue->only(['id', 'name', 'slug']),
             'venues_count' => 1,
-            'stats' => [
-                'total_customers' => $venue->customers()->count(),
-                'active_progressors' => $activeProgressors,
-                'total_visits' => $venue->visits()->count(),
-                'milestones_claimed' => DB::table('reward_unlocks')
-                    ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-                    ->where('rewards.venue_id', $venue->id)
-                    ->whereNotNull('reward_unlocks.claimed_at')
-                    ->count(),
-                'milestones_unlocked' => DB::table('reward_unlocks')
-                    ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-                    ->where('rewards.venue_id', $venue->id)
-                    ->count(),
-                'cycles_completed' => DB::table('customer_reward_cycles')
-                    ->join('customers', 'customer_reward_cycles.customer_id', '=', 'customers.id')
-                    ->where('customers.venue_id', $venue->id)
-                    ->whereNotNull('customer_reward_cycles.completed_at')
-                    ->count(),
-            ],
+            'stats' => $this->analytics->statsForVenue($venue),
             'most_loyal_customers' => $venue->customers()
                 ->with('user:id,name,email')
                 ->orderByDesc('stamps')
                 ->limit(5)
                 ->get(['id', 'venue_id', 'user_id', 'stamps']),
-            'monthly_activity' => $venue->visits()
-                ->selectRaw($this->monthBucketExpression().' as month, COUNT(*) as visits')
-                ->groupBy('month')
-                ->orderBy('month')
-                ->limit(12)
-                ->get(),
+            'monthly_activity' => $this->analytics->monthlyActivityForVenue($venue),
+            'insights' => $this->analytics->insightsForVenue($venue),
+            'has_loyalty_activity' => $this->analytics->hasLoyaltyActivity($venue),
             'milestone_conversions' => DB::table('reward_unlocks')
                 ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
                 ->where('rewards.venue_id', $venue->id)
