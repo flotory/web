@@ -6,8 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
-import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
+import GuestWalletCardPreview from '@/components/loyalty/GuestWalletCardPreview.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -65,6 +64,8 @@ const previewMilestones = computed(() =>
     image: milestone.image ?? null,
     image_thumb: milestone.image_thumb ?? null,
     required_stamps: milestone.required_stamps,
+    unlocked: milestone.unlocked,
+    claimed: milestone.claimed,
   })),
 )
 const previewStamps = computed(() => displayStamps.value ?? card.value?.stamps ?? 0)
@@ -448,35 +449,12 @@ watch(
           </AppCard>
 
           <div class="mt-5">
-            <VenueLandingPreview
+            <GuestWalletCardPreview
               :milestones="previewMilestones"
               :stamps="previewStamps"
               :animating-slots="animatingSlots"
               :celebrating-reward="celebratingReward"
             />
-
-            <p
-              v-if="!previewMilestones.length"
-              class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500"
-            >
-              Rewards are being set up. Your next stamp is on the way.
-            </p>
-          </div>
-
-          <div v-if="journey?.milestones?.length" class="mt-4 space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Reward status</p>
-            <div
-              v-for="milestone in journey.milestones.slice(0, 4)"
-              :key="milestone.id"
-              class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm"
-            >
-              <p class="min-w-0 truncate text-sm font-bold text-slate-800">
-                {{ milestone.required_stamps }} stamps → {{ milestone.title }}
-              </p>
-              <AppBadge :tone="milestone.claimed ? 'blue' : (milestone.unlocked ? 'green' : 'amber')">
-                {{ milestone.claimed ? 'Claimed' : (milestone.unlocked ? 'Unlocked' : 'Locked') }}
-              </AppBadge>
-            </div>
           </div>
 
           <AppButton

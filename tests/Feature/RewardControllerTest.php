@@ -178,6 +178,25 @@ class RewardControllerTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_owner_can_create_reward_via_multipart_form_with_active_flag(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->post("/api/venues/{$venue->id}/rewards", [
+            'title' => 'Form Milestone',
+            'required_stamps' => 6,
+            'description' => 'From owner builder.',
+            'active' => '1',
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('reward.title', 'Form Milestone')
+            ->assertJsonPath('reward.active', true);
+    }
+
     public function test_owner_cannot_create_duplicate_milestone_threshold(): void
     {
         $owner = $this->createUser();

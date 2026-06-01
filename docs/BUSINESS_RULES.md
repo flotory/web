@@ -99,6 +99,7 @@ Read alongside [MVP_DECISIONS.md](./MVP_DECISIONS.md) (approved engineering deci
 - Cross-page success and errors use **toasts**; form field errors use **inline validation**.
 - **Dangerous actions** require a confirmation step before proceeding.
 - **Empty states** must explain what happened and what to do next (e.g. “No rewards yet — create your first milestone”).
+- Owner **Rewards** page shows the same stamp grid guests see; owners manage milestones by tapping gift slots on that grid (not a separate card list).
 - **Error states** must offer recovery (retry, go back, contact support) where possible.
 - Customer loyalty surfaces use **stamps**, **rewards**, and **progress** language consistently.
 - Owner analytics surfaces use **visits**, **customers**, and **loyalty activity** language consistently.

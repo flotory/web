@@ -224,7 +224,7 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/onboarding/create-venue` | Onboarding wizard | New owner |
 | `/dashboard` | Dashboard + setup assistant | Owner |
 | `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
-| `/rewards` | Milestone management (+ owner preview) | Owner |
+| `/rewards` | Milestone CRUD on the guest stamp grid (tap gift slots to edit) | Owner |
 | `/scanner` | QR scanner | Owner, staff |
 | `/customers` | CRM list | Owner, staff |
 | `/analytics` | Retention stats | Owner |

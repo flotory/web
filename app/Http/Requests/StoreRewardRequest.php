@@ -5,6 +5,21 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 class StoreRewardRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('active')) {
+            $this->merge([
+                'active' => filter_var($this->input('active'), FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+
+        if ($this->has('remove_image')) {
+            $this->merge([
+                'remove_image' => filter_var($this->input('remove_image'), FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [

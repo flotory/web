@@ -3,7 +3,7 @@ import { Gift, Store } from '@lucide/vue'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
+import GuestWalletCardPreview from '@/components/loyalty/GuestWalletCardPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -13,8 +13,7 @@ import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
-import { rewardImageUrl, rewardHasCustomImage, rewardThumbUrl } from '@/lib/rewardMedia'
-import { rewardCategoryFromTitle, rewardCategoryLabel } from '@/lib/rewardVisuals'
+import { rewardImageUrl } from '@/lib/rewardMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
@@ -61,12 +60,6 @@ const rewardTemplates: RewardTemplate[] = [
   },
 ]
 
-const bestPractices = [
-  'Smaller rewards unlock faster — guests stay motivated when progress feels close.',
-  '5–7 stamp milestones perform best for cafes and bars.',
-  'Visible progress bars increase completion rates more than hidden thresholds.',
-]
-
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
@@ -90,9 +83,8 @@ const imageInput = ref<HTMLInputElement | null>(null)
 const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
 const editingReward = ref<Reward | null>(null)
-const menuRewardId = ref<number | null>(null)
-const previewOpen = ref(false)
 const deleteRewardTarget = ref<Reward | null>(null)
+const focusedRewardId = ref<number | null>(null)
 let refreshTimer: number | undefined
 let successTimer: number | undefined
 
@@ -140,6 +132,16 @@ const programCardMilestones = computed(() => {
     return items
   }
 
+  const isEditingDraft = Boolean(
+    editingReward.value && (
+      title.value.trim() !== editingReward.value.title
+      || description.value.trim() !== (editingReward.value.description ?? '')
+      || requiredStamps.value !== editingReward.value.required_stamps
+      || imageFile.value
+      || removeImage.value
+    ),
+  )
+
   const draft = {
     id: editingReward.value?.id ?? -1,
     title: title.value.trim(),
@@ -147,29 +149,31 @@ const programCardMilestones = computed(() => {
     image: editingReward.value?.image ?? null,
     image_thumb: editingReward.value?.image_thumb ?? null,
     required_stamps: requiredStamps.value,
-    isDraft: !editingReward.value || editingReward.value.required_stamps !== requiredStamps.value,
+    isDraft: true,
   }
 
   if (editingReward.value) {
     return items
       .map((milestone) => (milestone.id === editingReward.value!.id
-        ? { ...draft, id: milestone.id, isDraft: true }
+        ? { ...draft, id: milestone.id, isDraft: isEditingDraft }
         : milestone))
       .sort((a, b) => a.required_stamps - b.required_stamps)
   }
 
-  return [...items, { ...draft, isDraft: true }].sort((a, b) => a.required_stamps - b.required_stamps)
+  return [...items, draft].sort((a, b) => a.required_stamps - b.required_stamps)
 })
 
 const programMaxStamps = computed(() => programCardMilestones.value.at(-1)?.required_stamps ?? 0)
 
-const hasProgramLayout = computed(
-  () => !needsVenuePick.value && programCardMilestones.value.length > 0,
+const pausedRewards = computed(() => sortedOwnerRewards.value.filter((reward) => !reward.active))
+
+const focusedReward = computed(() =>
+  focusedRewardId.value === null
+    ? null
+    : rewards.value.find((reward) => reward.id === focusedRewardId.value) ?? null,
 )
 
-function isDraftMilestone(milestone: { id: number; isDraft?: boolean }): boolean {
-  return milestone.isDraft === true || milestone.id < 0
-}
+const selectedGridMilestoneId = computed(() => editingReward.value?.id ?? focusedRewardId.value)
 
 watch(programMaxStamps, (max) => {
   if (programPreviewStamps.value > max) {
@@ -232,16 +236,8 @@ function clearImage() {
   showSuccess('Image will be removed when you save.')
 }
 
-function toggleMenu(rewardId: number) {
-  menuRewardId.value = menuRewardId.value === rewardId ? null : rewardId
-}
-
-function closeMenu() {
-  menuRewardId.value = null
-}
-
 function startEditing(reward: Reward) {
-  closeMenu()
+  focusedRewardId.value = reward.id
   formOpen.value = true
   showTemplatePicker.value = false
   editingReward.value = reward
@@ -270,6 +266,14 @@ function applyRouteEditingIntent() {
   void router.replace({ query: { ...route.query, reward_id: undefined } })
 }
 
+function onGridMilestoneSelect(milestoneId: number) {
+  if (milestoneId < 0) {
+    return
+  }
+
+  focusedRewardId.value = milestoneId
+}
+
 function openCreateForm() {
   if (needsVenuePick.value) {
     error.value = 'Select a specific venue in the sidebar filter first.'
@@ -279,15 +283,20 @@ function openCreateForm() {
     resetForm()
   }
   formOpen.value = true
-  showTemplatePicker.value = true
+  showTemplatePicker.value = false
   requiredStamps.value = suggestedNextStamp()
   fieldErrors.value = {}
   error.value = ''
+  nextTick(() => {
+    titleInput.value?.focus()
+    titleInput.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
 }
 
 function closeCreateForm() {
   resetForm()
   formOpen.value = false
+  focusedRewardId.value = null
 }
 
 async function loadRewards(silent = false) {
@@ -354,6 +363,8 @@ async function saveReward() {
           body.append('image', imageFile.value)
         }
 
+        const wasEditing = Boolean(editingReward.value)
+
         if (editingReward.value) {
           await api<{ reward: Reward }>(`/venues/${venue.value!.id}/rewards/${editingReward.value.id}`, {
             method: 'PUT',
@@ -368,7 +379,8 @@ async function saveReward() {
 
         resetForm()
         formOpen.value = false
-        await loadRewards()
+        await loadRewards(true)
+        showSuccess(wasEditing ? 'Milestone updated.' : 'Milestone created.')
       } catch (exception) {
         if (exception instanceof ApiError) {
           error.value = exception.message
@@ -388,7 +400,6 @@ async function saveReward() {
 
 async function applyTemplate(template: RewardTemplate) {
   if (!venue.value) return
-  closeMenu()
   saving.value = true
   error.value = ''
   let created = 0
@@ -418,7 +429,6 @@ async function applyTemplate(template: RewardTemplate) {
 
 async function duplicateReward(reward: Reward) {
   if (!venue.value) return
-  closeMenu()
 
   let stamps = reward.required_stamps
   const used = new Set(rewards.value.map((item) => item.required_stamps))
@@ -451,8 +461,6 @@ async function duplicateReward(reward: Reward) {
 
 async function archiveReward(reward: Reward) {
   if (!venue.value) return
-  closeMenu()
-
   saving.value = true
   error.value = ''
   fieldErrors.value = {}
@@ -461,6 +469,9 @@ async function archiveReward(reward: Reward) {
     await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards/${reward.id}/archive`, {
       method: 'PATCH',
     })
+    if (focusedRewardId.value === reward.id) {
+      focusedRewardId.value = null
+    }
     await loadRewards()
     showSuccess('Milestone archived.')
   } catch (exception) {
@@ -472,8 +483,6 @@ async function archiveReward(reward: Reward) {
 
 async function reactivateReward(reward: Reward) {
   if (!venue.value) return
-  closeMenu()
-
   saving.value = true
   error.value = ''
   fieldErrors.value = {}
@@ -492,7 +501,6 @@ async function reactivateReward(reward: Reward) {
 }
 
 function openDeleteModal(reward: Reward) {
-  closeMenu()
   deleteRewardTarget.value = reward
 }
 
@@ -514,6 +522,9 @@ async function deleteReward(reward: Reward) {
     if (editingReward.value?.id === reward.id) {
       resetForm()
       formOpen.value = false
+    }
+    if (focusedRewardId.value === reward.id) {
+      focusedRewardId.value = null
     }
     closeDeleteModal()
     await loadRewards()
@@ -540,16 +551,6 @@ function onImageChange(event: Event) {
     imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
     showSuccess(`Image selected: ${imageFile.value.name}`)
   }
-}
-
-function progressPercent(reward: Reward): number {
-  const visits = venue.value?.visits_count ?? 0
-  return Math.min((visits / reward.required_stamps) * 100, 100)
-}
-
-function timelineReach(reward: Reward, index: number): boolean {
-  const visits = venue.value?.visits_count ?? 0
-  return visits >= reward.required_stamps || index === 0
 }
 
 onMounted(() => {
@@ -607,9 +608,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             </p>
           </div>
           <div v-if="canEditRewards" class="flex flex-wrap gap-2">
-            <AppButton variant="secondary" class="border-white/15 bg-white/10 text-white hover:bg-white/20" @click="previewOpen = true">
-              Preview guest journey
-            </AppButton>
             <AppButton variant="secondary" class="hero-cta shrink-0 bg-white font-bold text-slate-950 shadow-lg shadow-black/20 hover:bg-slate-100" @click="openCreateForm">
               + Create milestone
             </AppButton>
@@ -638,75 +636,13 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         @retry="loadRewards"
       />
 
-      <AppCard v-else-if="error" wrapper-class="mt-4 border-red-200 bg-red-50">
+      <AppCard v-else-if="error && !formOpen" wrapper-class="mt-4 border-red-200 bg-red-50">
         <p class="text-sm font-bold text-red-600">{{ error }}</p>
       </AppCard>
 
       <AppCard v-else-if="successMessage" wrapper-class="mt-4 border-emerald-200 bg-emerald-50">
         <p class="text-sm font-bold text-emerald-700">{{ successMessage }}</p>
       </AppCard>
-
-      <!-- Same stamp + rewards layout guests see on Wallet -->
-      <section v-if="hasProgramLayout" class="mt-6">
-        <AppCard wrapper-class="border-slate-200 bg-white p-5 sm:p-6">
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 class="text-xl font-black text-slate-950">Loyalty card layout</h2>
-              <p class="mt-1 text-sm text-slate-500">
-                This is how milestones appear on the guest wallet — {{ programMaxStamps }} stamp
-                {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle
-                <span v-if="formOpen && programCardMilestones.some(isDraftMilestone)"> (includes unsaved changes)</span>.
-              </p>
-            </div>
-            <div class="w-full shrink-0 sm:max-w-[220px]">
-              <label class="text-xs font-bold uppercase tracking-wide text-slate-400" for="program-preview-stamps">
-                Preview progress
-              </label>
-              <div class="mt-2 flex items-center gap-3">
-                <input
-                  id="program-preview-stamps"
-                  v-model.number="programPreviewStamps"
-                  type="range"
-                  min="0"
-                  :max="programMaxStamps"
-                  class="min-w-0 flex-1 accent-indigo-600"
-                >
-                <span class="w-12 text-right text-sm font-black text-indigo-600">{{ programPreviewStamps }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-5">
-            <VenueLandingPreview
-              :milestones="programCardMilestones"
-              :stamps="programPreviewStamps"
-            />
-          </div>
-
-          <div v-if="programCardMilestones.length" class="mt-5 space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Milestones on the card</p>
-            <div
-              v-for="milestone in programCardMilestones"
-              :key="`card-milestone-${milestone.id}-${milestone.required_stamps}`"
-              class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3"
-              :class="isDraftMilestone(milestone) ? 'border-dashed border-indigo-300 bg-indigo-50/50' : ''"
-            >
-              <p class="min-w-0 truncate text-sm font-bold text-slate-800">
-                {{ milestone.required_stamps }} stamps → {{ milestone.title }}
-              </p>
-              <div class="flex shrink-0 items-center gap-2">
-                <AppBadge v-if="isDraftMilestone(milestone)" tone="blue">Unsaved</AppBadge>
-                <AppBadge
-                  v-else
-                  :tone="programPreviewStamps >= milestone.required_stamps ? 'green' : 'amber'"
-                >
-                  {{ programPreviewStamps >= milestone.required_stamps ? 'Unlocked' : 'Locked' }}
-                </AppBadge>
-              </div>
-            </div>
-          </div>
-        </AppCard>
-      </section>
 
       <!-- Create / edit panel -->
       <div
@@ -720,6 +656,23 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           <p class="mt-1 text-sm text-slate-500">
             {{ editingReward ? 'Update how guests unlock this reward.' : 'Pick a template or craft your own — achievable rewards drive repeat stamps.' }}
           </p>
+        </div>
+
+        <div
+          v-if="error"
+          class="border-b border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 sm:px-6"
+        >
+          {{ error }}
+        </div>
+
+        <div v-if="!editingReward" class="border-b border-slate-100 px-5 py-3 sm:px-6">
+          <button
+            type="button"
+            class="text-sm font-bold text-indigo-600 hover:text-indigo-800"
+            @click="showTemplatePicker = !showTemplatePicker"
+          >
+            {{ showTemplatePicker ? 'Hide templates' : 'Start from a template' }}
+          </button>
         </div>
 
         <div v-if="showTemplatePicker && !editingReward" class="border-b border-slate-100 p-5 sm:p-6">
@@ -850,9 +803,107 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </form>
       </div>
 
+      <!-- Loyalty card grid (guest view + owner management) -->
+      <section v-if="!loading && !needsVenuePick" class="mt-6">
+        <AppCard wrapper-class="border-slate-200 bg-white p-5 sm:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 class="text-xl font-black text-slate-950">Loyalty card</h2>
+              <p class="mt-1 text-sm text-slate-500">
+                Same stamp grid guests see on Wallet
+                <template v-if="programMaxStamps > 0">
+                  — {{ programMaxStamps }} {{ programMaxStamps === 1 ? 'slot' : 'slots' }} per cycle.
+                </template>
+                Only live milestones appear on guest cards.
+              </p>
+            </div>
+            <div v-if="programMaxStamps > 0" class="w-full shrink-0 sm:max-w-[220px]">
+              <label class="text-xs font-bold uppercase tracking-wide text-slate-400" for="program-preview-stamps">
+                Preview stamps
+              </label>
+              <div class="mt-2 flex items-center gap-3">
+                <input
+                  id="program-preview-stamps"
+                  v-model.number="programPreviewStamps"
+                  type="range"
+                  min="0"
+                  :max="programMaxStamps"
+                  class="min-w-0 flex-1 accent-indigo-600"
+                >
+                <span class="w-12 text-right text-sm font-black text-indigo-600">{{ programPreviewStamps }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <GuestWalletCardPreview
+              :milestones="programCardMilestones"
+              :stamps="programPreviewStamps"
+              :venue-name="venue?.name"
+              :editable="canEditRewards"
+              :selected-milestone-id="selectedGridMilestoneId"
+              show-stamp-qr
+              @select-milestone="onGridMilestoneSelect"
+            />
+          </div>
+
+          <div
+            v-if="focusedReward && canEditRewards"
+            class="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3"
+          >
+            <p class="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">
+              {{ focusedReward.required_stamps }} stamps → {{ focusedReward.title }}
+            </p>
+            <AppBadge :tone="focusedReward.active ? 'green' : 'amber'">
+              {{ focusedReward.active ? 'Live' : 'Paused' }}
+            </AppBadge>
+            <div class="flex flex-wrap gap-2">
+              <AppButton size="sm" variant="secondary" @click="startEditing(focusedReward)">Edit</AppButton>
+              <AppButton size="sm" variant="ghost" :disabled="saving" @click="duplicateReward(focusedReward)">Duplicate</AppButton>
+              <AppButton
+                v-if="focusedReward.active"
+                size="sm"
+                variant="ghost"
+                :disabled="saving"
+                @click="archiveReward(focusedReward)"
+              >
+                Archive
+              </AppButton>
+              <AppButton
+                v-else
+                size="sm"
+                variant="ghost"
+                :disabled="saving"
+                @click="reactivateReward(focusedReward)"
+              >
+                Reactivate
+              </AppButton>
+              <AppButton size="sm" variant="ghost" class="text-red-600" :disabled="saving" @click="openDeleteModal(focusedReward)">
+                Delete
+              </AppButton>
+            </div>
+          </div>
+
+          <div v-if="pausedRewards.length && canEditRewards" class="mt-4 border-t border-slate-100 pt-4">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Paused milestones</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button
+                v-for="reward in pausedRewards"
+                :key="`paused-${reward.id}`"
+                type="button"
+                class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                @click="onGridMilestoneSelect(reward.id)"
+              >
+                {{ reward.required_stamps }} · {{ reward.title }}
+              </button>
+            </div>
+          </div>
+        </AppCard>
+      </section>
+
       <!-- Empty state -->
       <section
-        v-if="!loading && !sortedOwnerRewards.length && !hasProgramLayout && !needsVenuePick && canEditRewards"
+        v-if="!loading && !sortedOwnerRewards.length && !needsVenuePick && canEditRewards"
         class="mt-6 overflow-hidden rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-8 text-center shadow-inner"
       >
         <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200/80">
@@ -864,7 +915,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </p>
         <div class="mt-6 flex flex-wrap justify-center gap-2">
           <AppButton @click="openCreateForm">Create first milestone</AppButton>
-          <AppButton variant="secondary" @click="previewOpen = true">Preview guest journey</AppButton>
         </div>
         <div class="mt-8 grid gap-3 text-left md:grid-cols-3">
           <button
@@ -882,156 +932,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </div>
       </section>
 
-      <!-- Manage milestones -->
-      <section v-if="!loading && sortedOwnerRewards.length && !needsVenuePick" class="mt-6">
-        <div class="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-black text-slate-950">Manage milestones</h2>
-            <p class="mt-1 text-sm text-slate-500">Edit, pause, or add rewards — the card layout above updates automatically.</p>
-          </div>
-        </div>
-
-        <div class="timeline-track relative">
-          <div class="timeline-line hidden md:block" aria-hidden="true" />
-          <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            <article
-              v-for="(reward, index) in sortedOwnerRewards"
-              :key="reward.id"
-              class="milestone-card group relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/50 transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100/40"
-              :class="{ 'milestone-card--paused': !reward.active }"
-            >
-              <div class="relative">
-                <div class="reward-media-frame bg-slate-100">
-                  <img :src="rewardThumbUrl(reward)" :alt="reward.title" class="reward-media-img milestone-card-img">
-                  <div v-if="!rewardHasCustomImage(reward)" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
-                </div>
-                <div class="absolute left-3 top-3 flex flex-wrap gap-2">
-                  <span class="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700 shadow-sm">
-                    {{ rewardCategoryLabel(rewardCategoryFromTitle(reward.title)) }}
-                  </span>
-                  <AppBadge :tone="reward.active ? 'green' : 'amber'">{{ reward.active ? 'Live' : 'Paused' }}</AppBadge>
-                </div>
-                <div class="absolute right-3 top-3">
-                  <button
-                    type="button"
-                    class="rounded-xl bg-white/95 px-2.5 py-1.5 text-sm font-black text-slate-600 shadow-sm ring-1 ring-slate-200 hover:bg-white"
-                    @click="toggleMenu(reward.id)"
-                  >
-                    ⋯
-                  </button>
-                  <div
-                    v-if="menuRewardId === reward.id"
-                    class="absolute right-0 z-20 mt-2 w-48 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200"
-                  >
-                    <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" @click="startEditing(reward)">
-                      Edit reward
-                    </button>
-                    <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" @click="previewOpen = true">
-                      Preview guest view
-                    </button>
-                    <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" :disabled="saving" @click="duplicateReward(reward)">
-                      Duplicate
-                    </button>
-                    <button
-                      v-if="reward.active"
-                      class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-amber-700 hover:bg-amber-50"
-                      :disabled="saving"
-                      @click="archiveReward(reward)"
-                    >
-                      Archive
-                    </button>
-                    <button
-                      v-else
-                      class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                      :disabled="saving"
-                      @click="reactivateReward(reward)"
-                    >
-                      Reactivate
-                    </button>
-                    <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50" :disabled="saving" @click="openDeleteModal(reward)">
-                      Delete permanently
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-5">
-                <div class="flex items-start gap-2">
-                  <span
-                    class="timeline-node mt-1 grid size-7 shrink-0 place-items-center rounded-full text-xs font-black"
-                    :class="timelineReach(reward, index) ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200'"
-                  >
-                    {{ reward.required_stamps }}
-                  </span>
-                  <div>
-                    <h3 class="text-xl font-black text-slate-950">{{ reward.title }}</h3>
-                    <p class="mt-1 text-sm font-semibold text-indigo-600">
-                      Unlock after {{ reward.required_stamps }} {{ reward.required_stamps === 1 ? 'stamp' : 'stamps' }}
-                    </p>
-                  </div>
-                </div>
-                <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                  {{ reward.description || 'Reward regular guests and make every stamp feel closer to something special.' }}
-                </p>
-                <div class="mt-4">
-                  <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-                    <span>Guest progress preview</span>
-                    <span>{{ Math.min(venue?.visits_count ?? 0, reward.required_stamps) }} / {{ reward.required_stamps }}</span>
-                  </div>
-                  <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      class="progress-fill h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
-                      :style="{ width: `${progressPercent(reward)}%` }"
-                    />
-                  </div>
-                </div>
-                <div class="mt-4 flex flex-wrap gap-2">
-                  <AppButton size="sm" variant="secondary" @click="startEditing(reward)">Edit</AppButton>
-                  <AppButton size="sm" variant="ghost" @click="previewOpen = true">Guest preview</AppButton>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- Bottom: insights + preview CTA -->
-      <div v-if="!loading && !needsVenuePick" class="mt-8 grid gap-4 lg:grid-cols-3">
-        <AppCard wrapper-class="lg:col-span-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-          <h2 class="text-lg font-black text-slate-950">Reward psychology</h2>
-          <p class="mt-1 text-sm text-slate-500">Flotory helps you design milestones guests actually complete.</p>
-          <ul class="mt-4 space-y-3">
-            <li v-for="tip in bestPractices" :key="tip" class="flex gap-3 text-sm text-slate-700">
-              <span class="mt-0.5 text-emerald-500">◆</span>
-              <span>{{ tip }}</span>
-            </li>
-          </ul>
-        </AppCard>
-
-        <AppCard wrapper-class="relative overflow-hidden border-slate-800 bg-gradient-to-br from-slate-950 to-indigo-950 text-white">
-          <div class="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-cyan-400/20 blur-2xl" />
-          <h2 class="relative text-lg font-black">Analytics preview</h2>
-          <p class="relative mt-1 text-sm text-white/60">Unlocks after your first guest stamp.</p>
-          <div class="relative mt-4 space-y-2 opacity-70">
-            <div class="h-16 rounded-xl bg-white/10" />
-            <div class="grid grid-cols-3 gap-2">
-              <div class="h-10 rounded-lg bg-white/10" />
-              <div class="h-10 rounded-lg bg-white/15" />
-              <div class="h-10 rounded-lg bg-white/10" />
-            </div>
-          </div>
-          <p class="relative mt-4 text-xs font-semibold text-cyan-200/80">Track repeat stamps • Busiest hours • Reward performance</p>
-        </AppCard>
-      </div>
-
-    <!-- Menu backdrop -->
-    <button
-      v-if="menuRewardId !== null"
-      type="button"
-      class="fixed inset-0 z-10 cursor-default bg-transparent"
-      aria-label="Close reward menu"
-      @click="closeMenu"
-    />
 
     <!-- Delete confirmation -->
     <div
@@ -1053,39 +953,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       </AppCard>
     </div>
 
-    <!-- Guest journey preview modal -->
-    <div
-      v-if="previewOpen"
-      class="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 px-4 py-8 backdrop-blur-sm"
-      @click.self="previewOpen = false"
-    >
-      <div class="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/80">Customer experience</p>
-            <h2 class="text-lg font-black text-white">How guests see your journey</h2>
-          </div>
-          <button type="button" class="rounded-xl bg-white/10 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/20" @click="previewOpen = false">
-            Close
-          </button>
-        </div>
-        <div class="p-5">
-          <div class="mx-auto max-w-md rounded-3xl border border-white/10 bg-white p-4 shadow-inner">
-            <VenueLandingPreview
-              v-if="programCardMilestones.length"
-              :milestones="programCardMilestones"
-              :stamps="programPreviewStamps"
-            />
-            <p v-else class="py-8 text-center text-sm text-slate-500">
-              Add milestones to preview the card layout.
-            </p>
-          </div>
-          <p class="mt-4 text-center text-sm text-white/70">
-            Same stamp grid and reward list guests see in Wallet after they join {{ venue?.name ?? 'your venue' }}.
-          </p>
-        </div>
-      </div>
-    </div>
   </AppShell>
 </template>
 
@@ -1096,15 +963,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
 .hero-cta {
   box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
-}
-
-.timeline-line {
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 5.5rem;
-  height: 2px;
-  background: linear-gradient(90deg, rgb(99 102 241 / 0.2), rgb(34 211 238 / 0.5), rgb(99 102 241 / 0.2));
 }
 
 .reward-media-frame {
@@ -1137,48 +995,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
   max-height: none;
   object-fit: cover;
   object-position: center;
-}
-
-.milestone-card:hover .milestone-card-img {
-  transform: scale(1.03);
-}
-
-.milestone-card-img {
-  transition: transform 0.45s ease;
-}
-
-.reward-media-fallback {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  text-align: center;
-  color: #fff;
-}
-
-.milestone-card--paused {
-  opacity: 0.85;
-}
-
-.milestone-shimmer {
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-.progress-fill {
-  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(120%);
-  }
 }
 
 @keyframes ambient-drift {
