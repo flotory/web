@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Activity } from '@lucide/vue'
 import { onMounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -90,12 +91,20 @@ watch(page, loadActivity)
 <template>
   <AppShell>
     <div class="mx-auto max-w-6xl space-y-6">
-      <div>
-        <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Admin</p>
-        <h1 class="mt-1 text-3xl font-black text-slate-950">Activity log</h1>
-        <p class="mt-2 max-w-2xl text-sm text-slate-600">
-          Loyalty actions and API validation failures from production. Use the request ID from the network tab when correlating issues.
-        </p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Super admin</p>
+          <h1 class="mt-1 text-3xl font-black text-slate-950">Activity log</h1>
+          <p class="mt-2 max-w-2xl text-sm text-slate-600">
+            Loyalty actions and API validation failures. Use the request ID from the network tab when correlating issues.
+          </p>
+        </div>
+        <RouterLink
+          to="/dashboard"
+          class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          ← Owner dashboard
+        </RouterLink>
       </div>
 
       <AppCard class="space-y-4 p-5">

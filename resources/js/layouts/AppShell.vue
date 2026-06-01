@@ -18,6 +18,10 @@ const rewardBadgePulsing = ref(false)
 let rewardBadgePulseTimer: number | undefined
 
 const isWorkspace = computed(() => {
+  if (route.meta.adminOnly === true && auth.isAdmin) {
+    return true
+  }
+
   if (route.meta.workspace === false) {
     return false
   }

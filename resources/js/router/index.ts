@@ -59,7 +59,7 @@ const router = createRouter({
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: false } },
+    { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/card', redirect: (to) => ({ path: '/wallet', query: to.query }) },
     { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
@@ -88,7 +88,7 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
   }
 
-  if (to.meta.adminOnly && auth.isAuthenticated && !auth.user?.is_admin) {
+  if (to.meta.adminOnly && auth.isAuthenticated && !auth.isAdmin) {
     return { path: '/dashboard' }
   }
 
