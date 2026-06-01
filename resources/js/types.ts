@@ -30,6 +30,8 @@ export interface User {
   active_venue?: Venue | null
 }
 
+export type CustomerActivityStatus = 'active' | 'inactive' | 'new' | 'cooling'
+
 export interface Customer {
   id: number
   venue_id: number
@@ -37,8 +39,70 @@ export interface Customer {
   qr_token: string
   stamps: number
   venue?: Venue
-  user?: User
+  user?: User & { birthday?: string | null }
   summary?: CustomerCardSummary
+  joined_at?: string | null
+  last_visit_at?: string | null
+  visits_count?: number
+  rewards_unlocked_count?: number
+  rewards_claimed_count?: number
+  activity_status?: CustomerActivityStatus
+}
+
+export interface CustomerActivitySummary {
+  total: number
+  active: number
+  inactive: number
+  new: number
+  cooling: number
+}
+
+export interface CustomerVisitRecord {
+  id: number
+  created_at: string
+  staff_name?: string | null
+}
+
+export interface CustomerRewardHistoryRecord {
+  id: number
+  reward_id: number
+  title?: string | null
+  required_stamps?: number | null
+  cycle_number: number
+  unlocked_at?: string | null
+  claimed_at?: string | null
+  claimed_by_name?: string | null
+}
+
+export interface CustomerNoteRecord {
+  id: number
+  body: string
+  author_name?: string | null
+  created_at: string
+}
+
+export interface CustomerTimelineEvent {
+  type: 'joined' | 'visit' | 'milestone_unlocked' | 'redemption' | 'cycle_completed'
+  occurred_at: string
+  title: string
+  detail?: string | null
+}
+
+export interface CustomerProfileResponse {
+  customer: Customer
+  stats: {
+    joined_at?: string | null
+    last_visit_at?: string | null
+    visits_count: number
+    rewards_claimed_count: number
+    rewards_unlocked_count: number
+    stamps: number
+    activity_status: CustomerActivityStatus
+  }
+  visits: CustomerVisitRecord[]
+  reward_history: CustomerRewardHistoryRecord[]
+  notes: CustomerNoteRecord[]
+  timeline: CustomerTimelineEvent[]
 }
 
 export interface CustomerCardSummary {

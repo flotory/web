@@ -7,6 +7,7 @@ import CustomerVenuesPage from '@/pages/CustomerVenuesPage.vue'
 import CustomerWalletPage from '@/pages/customer/CustomerWalletPage.vue'
 import VenueLandingPage from '@/pages/VenueLandingPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
+import CustomerProfilePage from '@/pages/CustomerProfilePage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
@@ -51,6 +52,7 @@ const router = createRouter({
     { path: '/cafes', redirect: '/wallet' },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
+    { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },

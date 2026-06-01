@@ -226,7 +226,8 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
 | `/rewards` | Milestone CRUD on guest stamp grid (click reward → toolbar: Edit / Archive) | Owner |
 | `/scanner` | QR scanner | Owner, staff |
-| `/customers` | CRM list | Owner, staff |
+| `/customers` | Retention list (activity filters, last visit, redeems) | Owner, staff |
+| `/customers/:customerId` | Profile: timeline, visits, rewards, notes, birthday | Owner, staff |
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
 | `/wallet` | Loyalty wallet (venue list + per-venue card detail) | Customer |

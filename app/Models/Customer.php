@@ -49,4 +49,9 @@ class Customer extends Model
     {
         return $this->hasMany(RewardUnlock::class);
     }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(CustomerNote::class)->latest();
+    }
 }

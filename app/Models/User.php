@@ -29,6 +29,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'password',
         'is_admin',
         'active_venue_id',
+        'birthday',
     ];
 
     protected $hidden = [
@@ -42,6 +43,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'birthday' => 'date',
         ];
     }
 

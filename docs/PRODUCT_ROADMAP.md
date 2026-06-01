@@ -43,7 +43,7 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 
 ## Phase 1.5 — Retention Foundation
 
-**Status:** Planned
+**Status:** Shipped (MVP)
 
 **Goal:** Help owners bring customers back.
 
@@ -63,7 +63,7 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 
 ## Phase 2 — Customer Profiles
 
-**Status:** Future
+**Status:** Shipped (MVP — profile page, visit/reward history, notes, birthday)
 
 **Goal:** Create lightweight customer CRM capabilities.
 
@@ -82,7 +82,7 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 
 ## Phase 3 — Customer Timeline
 
-**Status:** Future
+**Status:** Shipped (MVP — unified activity timeline on customer profile)
 
 **Goal:** Provide a complete customer relationship history.
 

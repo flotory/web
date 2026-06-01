@@ -112,19 +112,6 @@ class VenueController extends Controller
         ]);
     }
 
-    public function customers(Request $request, Venue $venue): JsonResponse
-    {
-        VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
-
-        return response()->json([
-            'customers' => $venue->customers()
-                ->with('user:id,name,email')
-                ->withCount('visits')
-                ->orderByDesc('stamps')
-                ->get(),
-        ]);
-    }
-
     public function show(Request $request, Venue $venue): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);

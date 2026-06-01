@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BroadcastAuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
 use App\Http\Controllers\Api\VenueController;
+use App\Http\Controllers\Api\VenueCustomerController;
 use App\Http\Controllers\Api\VenueDashboardController;
 use App\Http\Controllers\Api\VenueStaffRedemptionController;
 use App\Http\Controllers\Api\VenueTeamController;
@@ -38,7 +39,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/venues/{venue}/logo', [VenueController::class, 'destroyLogo']);
     Route::post('/venues/{venue}/cover', [VenueController::class, 'uploadCover']);
     Route::delete('/venues/{venue}/cover', [VenueController::class, 'destroyCover']);
-    Route::get('/venues/{venue}/customers', [VenueController::class, 'customers']);
+    Route::get('/venues/{venue}/customers', [VenueCustomerController::class, 'index']);
+    Route::get('/venues/{venue}/customers/{customer}', [VenueCustomerController::class, 'show']);
+    Route::patch('/venues/{venue}/customers/{customer}', [VenueCustomerController::class, 'update']);
+    Route::post('/venues/{venue}/customers/{customer}/notes', [VenueCustomerController::class, 'storeNote']);
     Route::post('/venues/{venue:slug}/join', [CustomerLoyaltyController::class, 'join']);
 
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);

@@ -52,28 +52,17 @@ Fix issues that stop the pilot checklist. Examples from [KNOWN_RISKS.md](./KNOWN
 
 ---
 
-## Priority 3 — Phase 1.5 retention foundation (product, after pilot starts)
+## Priority 3 — Use retention CRM (shipped)
 
-**Status in roadmap:** Planned — not started.
+**Shipped:** `/customers` with activity filters + `/customers/:id` profile (timeline, visits, rewards, notes, birthday).
 
-**What to build (smallest slice):**
+**What to do now:**
 
-- On **Customers** list: `last_visit_at`, `visit_count`, `joined_at`, `rewards_claimed_count`
-- Sort/filter: “active last 14 days” vs “inactive 30+ days”
+1. During pilot, open **Customers** weekly and filter **Inactive (30d+)**.
+2. Add a note on regulars (“prefers oat milk”, “usually visits Saturdays”).
+3. Use insights to adjust milestone difficulty or plan win-back outreach manually.
 
-**How:**
-
-1. Add columns or computed fields from `visits` + `reward_unlocks` (no new tables required for v1).
-2. Expose in `GET /api/venues/{id}/customers` (or extend existing CRM endpoint).
-3. Owner table UI on `/customers`.
-
-**What it brings:**
-
-- Owners answer: *“Who should I try to bring back?”*
-- Bridge between “loyalty toy” and “retention tool”
-- Sets up Phase 4 campaigns (win-back) with a real audience list
-
-**Defer until:** At least one venue has 2+ weeks of real visits.
+**Next product slice after pilot data:** Phase 4 campaigns (double-stamp day, win-back email) using the inactive list.
 
 ---
 
