@@ -26,7 +26,12 @@ class VenueController extends Controller
                     ->select('venues.*')
                     ->selectRaw("'owner' as membership_role")
                     ->withTrashed()
-                    ->withCount(['customers', 'visits', 'rewards'])
+                    ->withCount([
+                        'customers',
+                        'visits',
+                        'rewards',
+                        'memberships as staff_count' => fn ($query) => $query->where('role', 'staff'),
+                    ])
                     ->orderByRaw('deleted_at is not null')
                     ->latest()
                     ->get(),
@@ -45,7 +50,12 @@ class VenueController extends Controller
                     'membership_role',
                 )
                 ->withTrashed()
-                ->withCount(['customers', 'visits', 'rewards'])
+                ->withCount([
+                    'customers',
+                    'visits',
+                    'rewards',
+                    'memberships as staff_count' => fn ($query) => $query->where('role', 'staff'),
+                ])
                 ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))
                 ->orderByRaw('deleted_at is not null')
                 ->latest()

@@ -71,7 +71,7 @@ const nav = computed(() => {
     { label: 'Rewards', to: '/rewards', icon: '★' },
     { label: 'Analytics', to: '/analytics', icon: '◔' },
     { label: 'Team', to: '/team', icon: '◧' },
-    { label: 'Settings', to: '/settings', icon: '⚙' },
+    { label: 'Workspace', to: '/settings', icon: '⚙' },
   ]
 })
 

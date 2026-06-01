@@ -18,6 +18,7 @@ export interface Venue {
   customers_count?: number
   visits_count?: number
   rewards_count?: number
+  staff_count?: number
   joined_count?: number
 }
 
