@@ -145,7 +145,7 @@ class GoogleAuthControllerTest extends TestCase
 
         $this->assertSame([
             'venue_slug' => null,
-            'redirect' => '/card',
+            'redirect' => '/wallet',
             'intent' => null,
         ], session('google_auth.intent'));
     }
@@ -194,6 +194,6 @@ class GoogleAuthControllerTest extends TestCase
 
         $this->get('/auth/google/redirect?redirect=card');
 
-        $this->assertSame('/card', session('google_auth.intent')['redirect']);
+        $this->assertSame('/wallet', session('google_auth.intent')['redirect']);
     }
 }
