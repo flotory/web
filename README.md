@@ -232,7 +232,7 @@ All seeded accounts use password: **`password`**
 |--------|--------|----------------|
 | **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
-| **Customer** | `customer@example.com` | Flotory card, milestone journey, unlock + claim flow |
+| **Customer** | `customer@example.com` | Wallet (`/wallet`), Rewards claim flow, milestone journey |
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 
@@ -262,8 +262,8 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 **Customer**
 
 1. Log in as `customer@example.com`
-2. Open **Card** or scan the venue QR → `/v/your-venue-slug`
-3. Earned rewards appear on **Rewards** (`/customer/rewards`); tap **Claim** and show the amber QR to staff
+2. Open **Wallet** (`/wallet`) or scan the venue QR → `/v/demo-cafe`
+3. Earned rewards appear on **Rewards** (`/customer/rewards`); tap **Claim** and show the claim QR to staff
 4. Staff scan the claim QR on **Scanner**; your phone updates when the reward is used
 
 **Team (staff invitation)**
@@ -300,9 +300,9 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Owner 5-step onboarding wizard and dashboard success state
 - Owner `/rewards`: 5-column customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
 - Owner/staff **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
-- Customer loyalty card per venue with QR token
-- Customer bottom nav: Card, **Rewards**, Venues, Settings (account + logout)
-- Stamp and reward-unlock animations on the customer card (no persistent banner)
+- Customer loyalty wallet (`/wallet`) with per-venue stamp QR and journey
+- Customer bottom nav: **Wallet**, **Rewards**, Venues, Settings (account + logout)
+- Stamp and reward-unlock animations on the wallet detail view (no persistent banner)
 - Customer rewards wallet (`/customer/rewards`) with tab badge for pending unlocks
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
 - Single-venue-focused dashboard (auto-selects first venue)

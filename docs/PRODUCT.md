@@ -48,7 +48,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 2. **Onboard** — 5-step wizard: name → category → logo → reward presets → QR preview.
 3. **Launch** — Download QR PNG, share invite link, place materials in venue.
 4. **Operate** — Operational dashboard (KPIs, insights, scanner); `/rewards` for milestones; `/team` for staff.
-5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces today’s signals and insights.
+5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces current-month KPIs and API insights.
 
 ## Staff Journey
 

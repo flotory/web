@@ -126,11 +126,6 @@ onMounted(load)
                 Invite staff
               </AppButton>
             </RouterLink>
-            <RouterLink to="/team">
-              <AppButton variant="ghost" class="gap-2 text-slate-700">
-                Open Team page
-              </AppButton>
-            </RouterLink>
           </div>
         </AppCard>
 

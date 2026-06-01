@@ -179,12 +179,16 @@ class DatabaseSeeder extends Seeder
                 $visitCount = min($stamps + 1, 9);
 
                 foreach (range(1, $visitCount) as $visitIndex) {
+                    // Most recent visit is always in the current month (dashboard KPIs).
+                    $daysAgo = $visitIndex === $visitCount
+                        ? 0
+                        : (($visitCount - $visitIndex) * 3) + $customerIndex + $venueIndex;
+
                     Visit::create([
                         'customer_id' => $customer->id,
                         'venue_id' => $venue->id,
                         'created_by' => $owner->id,
-                        'created_at' => now()
-                            ->subDays(($visitIndex * 3) + $customerIndex + $venueIndex)
+                        'created_at' => ($daysAgo === 0 ? now() : now()->subDays($daysAgo))
                             ->setTime(10 + ($visitIndex % 8), 15),
                     ]);
                 }
