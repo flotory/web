@@ -38,7 +38,6 @@ export default function CardDetailScreen() {
   }
 
   const insets = useSafeAreaInsets()
-  const refreshOffset = insets.top + 120
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -129,12 +128,8 @@ export default function CardDetailScreen() {
   const nextImage = rewardImageUrl(nextReward ?? undefined)
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void load(true)} tintColor={colors.primary} />}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-    >
-      <Pressable onPress={handleBack} style={{ paddingTop: insets.top + 8, paddingHorizontal: space.screenX }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 8 }}>
+      <Pressable onPress={handleBack} style={{ paddingHorizontal: space.screenX }}>
         <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
       </Pressable>
 
@@ -142,6 +137,11 @@ export default function CardDetailScreen() {
         <Text style={{ color: colors.danger, paddingHorizontal: space.screenX, marginTop: 8 }}>{error}</Text>
       ) : null}
 
+      <ScrollView
+        style={{ flex: 1, marginTop: 14 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+      >
       <Animated.View style={{ opacity: fade }}>
         <View style={{ marginTop: 12, marginHorizontal: space.screenX, borderRadius: radius.card, overflow: 'hidden' }}>
           {cover ? (
@@ -308,6 +308,7 @@ export default function CardDetailScreen() {
           </Animated.View>
         ) : null}
       </Animated.View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }

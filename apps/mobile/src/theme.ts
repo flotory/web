@@ -1,25 +1,27 @@
 export const colors = {
-  bg: '#FAFBFF',
+  bg: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceMuted: '#F7F8FC',
-  ink: '#172033',
-  inkMuted: '#667085',
+  surfaceMuted: '#F1F5F9',
+  ink: '#0F172A',
+  inkMuted: '#64748B',
   inkSoft: '#98A2B3',
   border: '#E2E8F0',
-  primary: '#5B4CF0',
+  primary: '#0F172A',
+  primarySoft: '#334155',
   primaryText: '#FFFFFF',
   danger: '#F04438',
   dangerSoft: '#FFE4E2',
   successText: '#166534',
-  success: '#12B76A',
-  successBg: '#ECFDF5',
-  successBorder: '#A7F3D0',
-  accent: '#F4B942',
-  accentSoft: '#FFF8E7',
-  accentBorder: '#F6D37B',
-  lavender: '#F8F7FF',
-  lavenderBorder: '#E8E4FF',
+  success: '#22C55E',
+  successBg: '#ECFDF3',
+  successBorder: '#BBF7D0',
+  accent: '#D97706',
+  accentSoft: '#FCF6E9',
+  accentBorder: '#FDE68A',
+  lavender: '#EEF2FF',
+  lavenderBorder: '#E0E7FF',
   plum: '#1E293B',
+  progressTrack: '#E2E8F0',
 } as const
 
 export const space = {
@@ -32,6 +34,30 @@ export const radius = {
   card: 22,
   button: 999,
   image: 20,
+} as const
+
+export const shadows = {
+  sm: {
+    shadowColor: colors.ink,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  md: {
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  button: {
+    shadowColor: colors.ink,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
 } as const
 
 export const type = {

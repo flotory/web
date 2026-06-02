@@ -32,7 +32,6 @@ interface DiscoverVenue {
 
 export default function VenuesScreen() {
   const insets = useSafeAreaInsets()
-  const refreshOffset = insets.top + 164
   const { token, role } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -124,20 +123,10 @@ export default function VenuesScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void load(true)} tintColor={colors.primary} />}
-      contentContainerStyle={{
-        paddingTop: 12,
-        paddingBottom: insets.bottom + 28,
-        paddingHorizontal: space.screenX,
-      }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Animated.View style={{ opacity: fade }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
+      <View style={{ paddingHorizontal: space.screenX }}>
         <Text style={typography.hero}>Discover</Text>
         <Text style={{ ...typography.body, marginTop: 4 }}>Find your next favorite reward spot.</Text>
-
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -155,10 +144,20 @@ export default function VenuesScreen() {
             color: colors.ink,
           }}
         />
-
         {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
+      </View>
 
-        <View style={{ marginTop: space.sectionY, gap: 16 }}>
+      <ScrollView
+        style={{ flex: 1, marginTop: 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 28,
+          paddingHorizontal: space.screenX,
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Animated.View style={{ opacity: fade }}>
+          <View style={{ gap: 16 }}>
           {filtered.map((item) => {
             const joined = (item.joined_count ?? 0) > 0
             const cover = venueCoverUrl(item)
@@ -176,6 +175,11 @@ export default function VenuesScreen() {
                   overflow: 'hidden',
                   borderWidth: 1,
                   borderColor: colors.border,
+                  shadowColor: '#0F172A',
+                  shadowOpacity: 0.05,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 6 },
+                  elevation: 2,
                 }}
               >
                 {cover ? (
@@ -267,10 +271,11 @@ export default function VenuesScreen() {
           })}
         </View>
 
-        {!filtered.length ? (
-          <Text style={{ ...typography.body, marginTop: 20, textAlign: 'center' }}>No venues match your search.</Text>
-        ) : null}
-      </Animated.View>
-    </ScrollView>
+          {!filtered.length ? (
+            <Text style={{ ...typography.body, marginTop: 20, textAlign: 'center' }}>No venues match your search.</Text>
+          ) : null}
+        </Animated.View>
+      </ScrollView>
+    </View>
   )
 }

@@ -14,10 +14,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
+import PrimaryButton from '../src/components/ui/PrimaryButton'
+import ScreenHeader from '../src/components/ui/ScreenHeader'
 import { apiRequest } from '../src/lib/api'
 import { venueCoverUrl, venueLogoUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors, radius, space, type as typography } from '../src/theme'
+import { colors, radius, shadows, space, type as typography } from '../src/theme'
 import type { WalletCard } from '../src/types/loyalty'
 
 export default function WalletScreen() {
@@ -73,8 +75,7 @@ export default function WalletScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
       <View style={{ paddingHorizontal: space.screenX }}>
-        <Text style={typography.hero}>Wallet</Text>
-        <Text style={{ ...typography.body, marginTop: 4 }}>Your loyalty cards at joined venues.</Text>
+        <ScreenHeader title="Wallet" subtitle="Your loyalty cards at joined venues." />
         {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
         {cards.length > 0 ? (
           <TextInput
@@ -113,17 +114,7 @@ export default function WalletScreen() {
             Discover venues and start collecting stamps.
           </Text>
           <Link href="/(customer)/venues" asChild>
-            <Pressable
-              style={{
-                marginTop: 24,
-                backgroundColor: colors.primary,
-                borderRadius: radius.button,
-                paddingVertical: 14,
-                paddingHorizontal: 28,
-              }}
-            >
-              <Text style={{ color: colors.primaryText, fontWeight: '800', fontSize: 16 }}>Browse venues</Text>
-            </Pressable>
+            <PrimaryButton label="Browse venues" style={{ marginTop: 24, paddingHorizontal: 28 }} />
           </Link>
         </Animated.View>
       ) : (
@@ -156,11 +147,12 @@ export default function WalletScreen() {
                 >
                   <Pressable
                     style={{
-                      backgroundColor: colors.lavender,
+                      backgroundColor: colors.surface,
                       borderRadius: radius.card,
                       overflow: 'hidden',
                       borderWidth: 1,
-                      borderColor: colors.lavenderBorder,
+                      borderColor: colors.border,
+                      ...shadows.md,
                     }}
                   >
                     {cover ? (
@@ -175,7 +167,7 @@ export default function WalletScreen() {
                             width: 44,
                             height: 44,
                             borderRadius: 12,
-                            backgroundColor: colors.lavender,
+                            backgroundColor: colors.surfaceMuted,
                             borderWidth: 2,
                             borderColor: colors.surface,
                             overflow: 'hidden',

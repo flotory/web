@@ -13,11 +13,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
+import ElevatedCard from '../src/components/ui/ElevatedCard'
+import PrimaryButton from '../src/components/ui/PrimaryButton'
+import ScreenHeader from '../src/components/ui/ScreenHeader'
 import { apiRequest } from '../src/lib/api'
 import { formatShortDate } from '../src/lib/format'
 import { rewardImageUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors, radius, space, type as typography } from '../src/theme'
+import { colors, radius, shadows, space, type as typography } from '../src/theme'
 import type { RewardJourney, RewardWalletItem, WalletCard } from '../src/types/loyalty'
 
 interface RewardsWalletResponse {
@@ -159,22 +162,22 @@ export default function RewardsScreen() {
     )
   }
 
-  const refreshOffset = insets.top + 116
-
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />}
-      contentContainerStyle={{
-        paddingTop: insets.top + 12,
-        paddingBottom: insets.bottom + 28,
-        paddingHorizontal: space.screenX,
-      }}
-    >
-      <Animated.View style={{ opacity: fade }}>
-        <Text style={typography.hero}>Rewards</Text>
-        <Text style={{ ...typography.body, marginTop: 4 }}>What you can redeem now, and what is next.</Text>
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
+      <View style={{ paddingHorizontal: space.screenX }}>
+        <ScreenHeader title="Rewards" subtitle="What you can redeem now, and what is next." />
         {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
+      </View>
+
+      <ScrollView
+        style={{ flex: 1, marginTop: 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 28,
+          paddingHorizontal: space.screenX,
+        }}
+      >
+        <Animated.View style={{ opacity: fade }}>
 
         {!hasContent ? (
           <View style={{ marginTop: space.sectionY, alignItems: 'center' }}>
@@ -211,15 +214,7 @@ export default function RewardsScreen() {
 
                 return (
                   <CardWrapper key={item.unlock_id} {...wrapperProps}>
-                    <View
-                      style={{
-                        backgroundColor: colors.surface,
-                        borderRadius: radius.card,
-                        overflow: 'hidden',
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                      }}
-                    >
+                    <ElevatedCard style={{ overflow: 'hidden' }} intensity="md">
                       {image ? (
                         <Image source={{ uri: image }} style={{ width: '100%', height: 150 }} resizeMode="cover" />
                       ) : (
@@ -228,7 +223,7 @@ export default function RewardsScreen() {
                         </View>
                       )}
                       <View style={{ padding: space.cardPad }}>
-                        <Text style={{ ...typography.label, color: colors.primary }}>READY NOW</Text>
+                        <Text style={{ ...typography.label, color: colors.accent }}>🎉 Reward unlocked</Text>
                         <Text style={{ fontSize: 26, fontWeight: '800', color: colors.plum, marginTop: 6 }}>
                           {item.reward.title}
                         </Text>
@@ -237,20 +232,10 @@ export default function RewardsScreen() {
                           href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(item.unlock_id) } }}
                           asChild
                         >
-                          <Pressable
-                            style={{
-                              marginTop: 14,
-                              backgroundColor: colors.primary,
-                              borderRadius: radius.button,
-                              paddingVertical: 13,
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Text style={{ color: colors.primaryText, fontWeight: '800', fontSize: 16 }}>Claim now</Text>
-                          </Pressable>
+                          <PrimaryButton label="Claim now" style={{ marginTop: 14 }} />
                         </Link>
                       </View>
-                    </View>
+                    </ElevatedCard>
                   </CardWrapper>
                 )
               })}
@@ -285,6 +270,7 @@ export default function RewardsScreen() {
                         padding: 16,
                         borderWidth: 1,
                         borderColor: colors.border,
+                        ...shadows.sm,
                       }}
                     >
                       <Text style={{ fontSize: 17, fontWeight: '700', color: colors.ink }}>{title}</Text>
@@ -335,7 +321,8 @@ export default function RewardsScreen() {
             ) : null}
           </View>
         ) : null}
-      </Animated.View>
-    </ScrollView>
+        </Animated.View>
+      </ScrollView>
+    </View>
   )
 }

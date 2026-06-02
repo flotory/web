@@ -4,11 +4,14 @@ import { ActivityIndicator, Animated, Image, Pressable, RefreshControl, ScrollVi
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import RewardJourneyRibbon from '../src/components/customer/RewardJourneyRibbon'
+import ElevatedCard from '../src/components/ui/ElevatedCard'
+import PrimaryButton from '../src/components/ui/PrimaryButton'
+import ScreenHeader from '../src/components/ui/ScreenHeader'
 import { apiRequest } from '../src/lib/api'
-import { formatRelativeTime, greetingForHour } from '../src/lib/format'
+import { formatRelativeTime } from '../src/lib/format'
 import { rewardImageUrl, venueLogoUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors, radius, space, type as typography } from '../src/theme'
+import { colors, radius, shadows, space, type as typography } from '../src/theme'
 import type { ActivityRow, RewardWalletItem, VisitRow, WalletCard } from '../src/types/loyalty'
 
 interface CardsResponse {
@@ -189,82 +192,70 @@ export default function CustomerHomeScreen() {
   const pendingCount = readyItems.length
   const nextTitle = priorityCard?.summary?.next_reward_title ?? 'your next reward'
   const stampsLeft = priorityCard?.summary?.stamps_to_next ?? null
-  const refreshOffset = insets.top + 140
   const homeInk = colors.ink
   const homeMuted = colors.inkMuted
   const homeBorder = colors.border
   const homeAccent = colors.primary
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => {
-        if (!token || role !== 'customer') return
-        setRefreshing(true)
-        setError('')
-        Promise.all([
-          apiRequest<CardsResponse>('/customer/cards', { token }),
-          apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
-        ]).then(async ([cardsResponse, walletResponse]) => {
-          setCards(cardsResponse.cards)
-          setReadyItems(walletResponse.items)
-
-          const visitSources = await Promise.all(
-            cardsResponse.cards.slice(0, 3).map(async (card) => {
-              try {
-                const detail = await apiRequest<CardDetailSlice>(`/customer/cards?venue_id=${card.venue_id}`, { token })
-                return { card, visits: detail.recent_visits ?? [] }
-              } catch {
-                return { card, visits: [] as VisitRow[] }
-              }
-            }),
-          )
-
-          const rows: ActivityRow[] = []
-          for (const source of visitSources) {
-            const venueName = source.card.venue?.name ?? 'Venue'
-            for (const visit of source.visits.slice(0, 2)) {
-              rows.push({ id: `visit-${visit.id}`, label: `+1 stamp · ${venueName}`, time: formatRelativeTime(visit.created_at) })
-            }
-          }
-          for (const item of walletResponse.items.slice(0, 2)) {
-            rows.push({ id: `unlock-${item.unlock_id}`, label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`, time: 'Today' })
-          }
-          const unique = new Map<string, ActivityRow>()
-          for (const row of rows) if (!unique.has(row.id)) unique.set(row.id, row)
-          setActivity([...unique.values()].slice(0, 3))
-        }).catch(() => setError('Could not refresh your home.')).finally(() => setRefreshing(false))
-      }} tintColor={colors.primary} />}
-      contentContainerStyle={{
-        paddingTop: insets.top + 12,
-        paddingBottom: insets.bottom + 28,
-        paddingHorizontal: space.screenX,
-      }}
-    >
-      <Animated.View style={{ opacity: fade }}>
-        <Text style={{ ...typography.caption, fontWeight: '600' }}>
-          {greetingForHour()}, {firstName}
-        </Text>
-        <Text style={{ ...typography.hero, marginTop: 6 }}>
-          {pendingCount > 0 ? 'Reward waiting for you' : stampsLeft && stampsLeft > 0 ? `Only ${stampsLeft} left` : 'Keep going'}
-        </Text>
-        <Text style={{ ...typography.body, marginTop: 6 }}>
-          {pendingCount > 0 ? 'Claim it on your next visit.' : `Unlock ${nextTitle}`}
-        </Text>
-
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
+      <View style={{ paddingHorizontal: space.screenX }}>
+        <ScreenHeader
+          pretitle={`Hi, ${firstName}`}
+          title={pendingCount > 0 ? 'Reward waiting for you' : stampsLeft && stampsLeft > 0 ? `Only ${stampsLeft} left` : 'Keep going'}
+          subtitle={pendingCount > 0 ? 'Claim it on your next visit.' : `Unlock ${nextTitle}`}
+        />
         {error ? <Text style={{ color: colors.danger, marginTop: 12, fontWeight: '600' }}>{error}</Text> : null}
+      </View>
 
+      <ScrollView
+        style={{ flex: 1, marginTop: 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {
+          if (!token || role !== 'customer') return
+          setRefreshing(true)
+          setError('')
+          Promise.all([
+            apiRequest<CardsResponse>('/customer/cards', { token }),
+            apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
+          ]).then(async ([cardsResponse, walletResponse]) => {
+            setCards(cardsResponse.cards)
+            setReadyItems(walletResponse.items)
+
+            const visitSources = await Promise.all(
+              cardsResponse.cards.slice(0, 3).map(async (card) => {
+                try {
+                  const detail = await apiRequest<CardDetailSlice>(`/customer/cards?venue_id=${card.venue_id}`, { token })
+                  return { card, visits: detail.recent_visits ?? [] }
+                } catch {
+                  return { card, visits: [] as VisitRow[] }
+                }
+              }),
+            )
+
+            const rows: ActivityRow[] = []
+            for (const source of visitSources) {
+              const venueName = source.card.venue?.name ?? 'Venue'
+              for (const visit of source.visits.slice(0, 2)) {
+                rows.push({ id: `visit-${visit.id}`, label: `+1 stamp · ${venueName}`, time: formatRelativeTime(visit.created_at) })
+              }
+            }
+            for (const item of walletResponse.items.slice(0, 2)) {
+              rows.push({ id: `unlock-${item.unlock_id}`, label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`, time: 'Today' })
+            }
+            const unique = new Map<string, ActivityRow>()
+            for (const row of rows) if (!unique.has(row.id)) unique.set(row.id, row)
+            setActivity([...unique.values()].slice(0, 3))
+          }).catch(() => setError('Could not refresh your home.')).finally(() => setRefreshing(false))
+        }} tintColor={colors.primary} />}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 28,
+          paddingHorizontal: space.screenX,
+        }}
+      >
+        <Animated.View style={{ opacity: fade }}>
         {heroReward ? (
           <Animated.View style={{ marginTop: space.sectionY, transform: [{ scale: heroPulse }] }}>
-            <View
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: radius.card,
-                overflow: 'hidden',
-                borderWidth: 1,
-                borderColor: homeBorder,
-              }}
-            >
+            <ElevatedCard style={{ overflow: 'hidden', borderColor: homeBorder }} intensity="md">
               {rewardImageUrl(heroReward.reward) ? (
                 <Image
                   source={{ uri: rewardImageUrl(heroReward.reward)! }}
@@ -277,36 +268,24 @@ export default function CustomerHomeScreen() {
                 </View>
               )}
               <View style={{ padding: space.cardPad }}>
-                <Text style={{ ...typography.label, color: homeAccent }}>READY NOW</Text>
+                <Text style={{ ...typography.label, color: colors.accent }}>🎉 Reward unlocked</Text>
                 <Text style={{ fontSize: 30, fontWeight: '800', color: homeInk }}>{heroReward.reward.title}</Text>
                 <Text style={{ ...typography.body, marginTop: 4, color: homeMuted }}>{heroReward.customer.venue?.name ?? 'Venue'}</Text>
                 <Link href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(heroReward.unlock_id) } }} asChild>
-                  <Pressable
-                    style={{
-                      marginTop: 16,
-                      backgroundColor: homeAccent,
-                      borderRadius: radius.button,
-                      paddingVertical: 14,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: colors.primaryText, fontWeight: '800', fontSize: 16 }}>Claim reward</Text>
-                  </Pressable>
+                  <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} />
                 </Link>
               </View>
-            </View>
+            </ElevatedCard>
           </Animated.View>
         ) : (
-          <View style={{ marginTop: space.sectionY, backgroundColor: colors.surface, borderRadius: radius.card, padding: space.cardPad, borderWidth: 1, borderColor: homeBorder }}>
+          <ElevatedCard style={{ marginTop: space.sectionY, padding: space.cardPad, borderColor: homeBorder }} intensity="sm">
             <Text style={{ ...typography.label, color: homeAccent }}>NEXT UP</Text>
             <Text style={{ marginTop: 6, fontSize: 26, fontWeight: '800', color: homeInk }}>{nextTitle}</Text>
             <Text style={{ ...typography.body, marginTop: 6 }}>{stampsLeft ? `${stampsLeft} stamps away` : 'You are on track'}</Text>
             <Link href="/(customer)/wallet" asChild>
-              <Pressable style={{ marginTop: 14, backgroundColor: homeAccent, borderRadius: radius.button, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: colors.primaryText, fontWeight: '700' }}>View progress</Text>
-              </Pressable>
+              <PrimaryButton label="View progress" style={{ marginTop: 14, paddingVertical: 12 }} />
             </Link>
-          </View>
+          </ElevatedCard>
         )}
 
         {activeCards.length > 0 ? (
@@ -338,6 +317,7 @@ export default function CustomerHomeScreen() {
                         padding: 14,
                         borderWidth: 1,
                         borderColor: colors.border,
+                        ...shadows.sm,
                       }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -394,17 +374,7 @@ export default function CustomerHomeScreen() {
             <Text style={{ fontSize: 18, fontWeight: '700', color: colors.ink }}>Start your first card</Text>
             <Text style={{ ...typography.body, marginTop: 6 }}>Join a venue to collect stamps and unlock rewards.</Text>
             <Link href="/(customer)/venues" asChild>
-              <Pressable
-                style={{
-                  marginTop: 16,
-                  backgroundColor: colors.primary,
-                  borderRadius: radius.button,
-                  paddingVertical: 13,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Discover venues</Text>
-              </Pressable>
+              <PrimaryButton label="Discover venues" style={{ marginTop: 16 }} />
             </Link>
           </View>
         )}
@@ -422,7 +392,8 @@ export default function CustomerHomeScreen() {
             </View>
           </View>
         ) : null}
-      </Animated.View>
-    </ScrollView>
+        </Animated.View>
+      </ScrollView>
+    </View>
   )
 }
