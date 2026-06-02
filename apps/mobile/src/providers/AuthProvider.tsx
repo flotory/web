@@ -9,7 +9,6 @@ interface AuthContextValue {
   token: string | null
   user: MobileUser | null
   role: UserRole | null
-  error: string
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -30,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<MobileUser | null>(null)
   const [role, setRole] = useState<UserRole | null>(null)
-  const [error, setError] = useState('')
 
   async function hydrateSession(sessionToken: string) {
     const me = await apiRequest<{ user: MobileUser }>('/auth/me', { token: sessionToken })
@@ -62,7 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
-    setError('')
     const payload = await apiRequest<AuthResponse>('/auth/login', {
       method: 'POST',
       body: { email, password, device_name: 'flotory-mobile' },
@@ -82,7 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(name: string, email: string, password: string) {
-    setError('')
     const payload = await apiRequest<AuthResponse>('/auth/register', {
       method: 'POST',
       body: {
@@ -118,8 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, error, signIn, signUp, signOut }),
-    [booting, token, user, role, error],
+    () => ({ booting, token, user, role, signIn, signUp, signOut }),
+    [booting, token, user, role],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

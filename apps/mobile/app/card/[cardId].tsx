@@ -1,5 +1,5 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   Animated,
   Image,
@@ -13,28 +13,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MilestonePath from '../../src/components/customer/MilestonePath'
 import QrImage from '../../src/components/QrImage'
 import CoverImage from '../../src/components/ui/CoverImage'
+import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
-import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
-import ScreenSkeleton from '../../src/components/ui/ScreenSkeleton'
+import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import ShakeGiftBadge from '../../src/components/ui/ShakeGiftBadge'
 import StateCard from '../../src/components/ui/StateCard'
-import { apiRequest } from '../../src/lib/api'
+import { useCardDetail } from '../../src/hooks/useCardDetail'
+import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
 import { progressCountCopy, progressHintCopy, visitsToRewardCopy } from '../../src/lib/progressCopy'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { rewardImageUrl, venueCoverUrl, venueLogoUrl } from '../../src/lib/media'
-import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../../src/theme'
-import type { RewardJourney, RewardRef, WalletCard } from '../../src/types/loyalty'
-
-interface CardPayload {
-  active_card: WalletCard | null
-  next_reward: RewardRef | null
-  available_rewards: RewardRef[]
-  journey: RewardJourney | null
-}
 
 export default function CardDetailScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
+  const venueId = params.venueId ? String(params.venueId) : undefined
+  const { data: payload, loading, refreshing, error, refresh, reload } = useCardDetail(venueId)
+  const fade = useFadeOnReady(!loading)
+  const readyHapticDone = useRef(false)
+
   function handleBack() {
     if (router.canGoBack()) {
       router.back()
@@ -43,53 +42,10 @@ export default function CardDetailScreen() {
     router.replace('/(customer)/wallet')
   }
 
-  const insets = useSafeAreaInsets()
-  const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
-  const { token } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState('')
-  const [payload, setPayload] = useState<CardPayload | null>(null)
-  const fade = useRef(new Animated.Value(0)).current
-  const readyHapticDone = useRef(false)
-
   const maxStamps = useMemo(() => {
     const required = payload?.journey?.milestones.map((item) => item.required_stamps) ?? []
     return Math.max(10, ...required, payload?.next_reward?.required_stamps ?? 0)
   }, [payload])
-
-  async function load(isRefresh = false) {
-    if (!token) return
-    if (isRefresh) {
-      setRefreshing(true)
-    } else {
-      setLoading(true)
-    }
-    setError('')
-    try {
-      const query = params.venueId ? `?venue_id=${params.venueId}` : ''
-      const response = await apiRequest<CardPayload>(`/customer/cards${query}`, { token })
-      setPayload(response)
-    } catch {
-      setError('Could not load this loyalty card.')
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false)
-      } else {
-        setLoading(false)
-      }
-    }
-  }
-
-  useEffect(() => {
-    void load()
-  }, [params.venueId, token])
-
-  useEffect(() => {
-    if (loading) return
-    fade.setValue(0)
-    Animated.timing(fade, { toValue: 1, duration: 300, useNativeDriver: true }).start()
-  }, [fade, loading])
 
   const readyReward = payload?.available_rewards[0] ?? null
 
@@ -105,15 +61,13 @@ export default function CardDetailScreen() {
   }, [readyReward])
 
   if (loading) {
-    return (
-      <ScreenGradientLoading>
-        <ScreenSkeleton topInset={0} cardCount={2} />
-      </ScreenGradientLoading>
-    )
+    return <CustomerScreen loading tabBarInset={false} header={null} children={null} />
   }
 
   const card = payload?.active_card
-  if (!card) {
+  const cardMismatch = Boolean(params.cardId && card && String(card.id) !== String(params.cardId))
+
+  if (!venueId || !card || cardMismatch) {
     return (
       <ScreenGradientLayout flexContent tabBarInset={false} paddingTop={insets.top + 8}>
         <View style={{ paddingHorizontal: space.screenX }}>
@@ -147,7 +101,7 @@ export default function CardDetailScreen() {
       scrollable
       tabBarInset={false}
       paddingTop={insets.top + 8}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
     >
       <Pressable onPress={handleBack} style={{ paddingHorizontal: space.screenX }}>
         <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
@@ -159,7 +113,7 @@ export default function CardDetailScreen() {
             emoji="⚠️"
             title="Could not load card"
             message="Try again or return to your wallet."
-            primaryAction={{ label: 'Try again', onPress: () => void load(true) }}
+            primaryAction={{ label: 'Try again', onPress: reload }}
             secondaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
           />
         </View>

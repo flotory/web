@@ -29,6 +29,20 @@ For local backend:
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile run start
 ```
 
+## Architecture (customer app)
+
+- **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
+- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useCardDetail`, `useScreenResource`
+- **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
+- **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`
+
+### Conventions
+
+1. Customer data goes through hooks in `src/hooks/`, not direct `apiRequest` in screens
+2. Use theme tokens — no inline hex in customer UI
+3. Empty/error states use `StateCard`
+4. Card detail requires `venueId`; `cardId` is validated against the loaded card
+
 ## Design System (Current)
 
 Theme tokens live in `src/theme.ts`:
@@ -50,7 +64,9 @@ Reusable building blocks are in `src/components/ui`:
 
 - `ScreenHeader`: standard title/subtitle/pretitle block
 - `PrimaryButton`: default CTA (optional `pulse`, `haptic`)
-- `ElevatedCard`: consistent card container with tokenized border/shadow
+- `GradientCard`: soft gradient card with optional cover overlap (`overlap` slot for wallet avatars)
+- `GradientOutlineButton`: white pill CTA used on reward cards
+- `CustomerScreen`: shared loading/error/refresh shell for customer tabs
 - `CoverImage`: unified list-card cover height + top corner radius
 - `StateCard`: empty/error states with primary + secondary recovery actions
 - `PressableCard`: subtle press-scale on tappable cards

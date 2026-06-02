@@ -11,8 +11,8 @@ export default function LoginScreen() {
   const { signIn, signUp, token, booting } = useAuth()
   const [isRegisterMode, setIsRegisterMode] = useState(false)
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('customer@example.com')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 

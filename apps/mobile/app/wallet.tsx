@@ -1,24 +1,22 @@
 import { Link, useRouter } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
-import { Animated, FlatList, Image, RefreshControl, Text, TextInput, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { Animated, FlatList, Image, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
-import AnimatedSection from '../src/components/ui/AnimatedSection'
+import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/CustomerScreen'
 import CoverImage from '../src/components/ui/CoverImage'
 import GradientCard from '../src/components/ui/GradientCard'
 import GradientOutlineButton from '../src/components/ui/GradientOutlineButton'
 import PressableCard from '../src/components/ui/PressableCard'
-import ScreenGradientLayout, { ScreenGradientLoading } from '../src/components/ui/ScreenGradientLayout'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
-import { apiRequest } from '../src/lib/api'
+import { useCustomerCards } from '../src/hooks/useCustomerCards'
+import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { walletCardProgressCopy } from '../src/lib/progressCopy'
 import { venueCoverUrl, venueLogoUrl } from '../src/lib/media'
-import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
-import type { WalletCard } from '../src/types/loyalty'
 
 const WALLET_AVATAR = 44
 const WALLET_AVATAR_GAP = 10
@@ -26,96 +24,70 @@ const WALLET_AVATAR_GAP = 10
 export default function WalletScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { token } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [cards, setCards] = useState<WalletCard[]>([])
-  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const fade = useRef(new Animated.Value(0)).current
+  const { data: cards, loading, refreshing, error, refresh, reload } = useCustomerCards()
+  const fade = useFadeOnReady(!loading)
 
-  async function load(isRefresh = false) {
-    if (!token) return
-    if (isRefresh) {
-      setRefreshing(true)
-    } else {
-      setLoading(true)
-    }
-    try {
-      const response = await apiRequest<{ cards: WalletCard[] }>('/customer/cards', { token })
-      setCards(response.cards)
-      setError('')
-    } catch {
-      setError('Could not load your wallet.')
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false)
-      } else {
-        setLoading(false)
-      }
-    }
-  }
+  const cardList = cards ?? []
 
-  useEffect(() => {
-    void load()
-  }, [token])
-
-  useEffect(() => {
-    if (loading) return
-    fade.setValue(0)
-    Animated.timing(fade, { toValue: 1, duration: 300, useNativeDriver: true }).start()
-  }, [fade, loading])
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return cardList
+    return cardList.filter((item) => (item.venue?.name ?? '').toLowerCase().includes(query))
+  }, [cardList, search])
 
   if (loading) {
     return (
-      <ScreenGradientLoading>
-        <ScreenSkeleton topInset={0} withSearch cardCount={3} />
-      </ScreenGradientLoading>
+      <CustomerScreenLoading skeleton={<ScreenSkeleton topInset={0} withSearch cardCount={3} />} />
     )
   }
 
-  const filtered = cards.filter((item) => {
-    const query = search.trim().toLowerCase()
-    if (!query) return true
-    return (item.venue?.name ?? '').toLowerCase().includes(query)
-  })
+  const header = (
+    <View style={{ paddingHorizontal: space.screenX }}>
+      <ScreenHeader title="Wallet" subtitle="Your loyalty cards at joined venues." />
+      {cardList.length > 0 ? (
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search venues"
+          placeholderTextColor={colors.inkSoft}
+          style={{
+            marginTop: space.sectionGap,
+            backgroundColor: colors.surface,
+            borderRadius: radius.image,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            color: colors.ink,
+            fontSize: 15,
+          }}
+        />
+      ) : null}
+    </View>
+  )
 
   return (
-    <ScreenGradientLayout flexContent tabBarInset>
-      <View style={{ paddingHorizontal: space.screenX }}>
-        <ScreenHeader title="Wallet" subtitle="Your loyalty cards at joined venues." />
-        {cards.length > 0 ? (
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search venues"
-            placeholderTextColor={colors.inkSoft}
-            style={{
-              marginTop: space.sectionGap,
-              backgroundColor: colors.surface,
-              borderRadius: radius.image,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-              color: colors.ink,
-              fontSize: 15,
-            }}
-          />
-        ) : null}
-      </View>
-
-      {error ? (
-        <AnimatedSection style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
-          <StateCard
-            emoji="⚠️"
-            title="Could not load wallet"
-            message="Check your connection and try again."
-            primaryAction={{ label: 'Try again', onPress: () => void load() }}
-            secondaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
-          />
-        </AnimatedSection>
-      ) : cards.length === 0 ? (
+    <CustomerScreen
+      loading={false}
+      flexContent
+      tabBarInset
+      header={header}
+      error={error}
+      errorState={
+        error
+          ? {
+              title: 'Could not load wallet',
+              message: 'Check your connection and try again.',
+              primaryLabel: 'Try again',
+              onPrimary: reload,
+              secondaryLabel: 'Browse venues',
+              onSecondary: () => router.push('/(customer)/venues'),
+            }
+          : undefined
+      }
+    >
+      {!error && cardList.length === 0 ? (
         <Animated.View style={{ flex: 1, opacity: fade, justifyContent: 'center', paddingHorizontal: space.screenX }}>
           <StateCard
             emoji="💳"
@@ -124,11 +96,12 @@ export default function WalletScreen() {
             primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
           />
         </Animated.View>
-      ) : (
+      ) : !error ? (
         <Animated.View style={{ flex: 1, opacity: fade, marginTop: space.headerBottom }}>
           <FlatList
             contentContainerStyle={{ paddingHorizontal: space.screenX, paddingBottom: insets.bottom + 18, gap: space.cardGap }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+            refreshing={refreshing}
+            onRefresh={refresh}
             data={filtered}
             keyExtractor={(item) => String(item.id)}
             ListEmptyComponent={
@@ -205,7 +178,7 @@ export default function WalletScreen() {
             }}
           />
         </Animated.View>
-      )}
-    </ScreenGradientLayout>
+      ) : null}
+    </CustomerScreen>
   )
 }

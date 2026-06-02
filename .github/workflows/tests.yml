@@ -71,3 +71,27 @@ jobs:
 
       - name: Typecheck and build
         run: npm run build
+
+  mobile:
+    name: Mobile typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: apps/mobile
+        run: npm run typecheck
