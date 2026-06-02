@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ChevronLeft, MapPin, Wallet } from '@lucide/vue'
+import { ChevronLeft, Gift, QrCode, Wallet } from '@lucide/vue'
 import QrcodeVue from 'qrcode.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CustomerRewardWallet from '@/components/loyalty/CustomerRewardWallet.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
-import GuestWalletCardPreview from '@/components/loyalty/GuestWalletCardPreview.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -43,6 +42,7 @@ const celebratingReward = ref(false)
 const celebrationTitle = ref('')
 const celebrationSubtitle = ref('')
 const showCelebration = ref(false)
+const showQr = ref(false)
 const displayStamps = ref<number | null>(null)
 let refreshTimer: number | undefined
 let animationTimer: number | undefined
@@ -56,19 +56,31 @@ interface CardResponse {
   recent_visits: Visit[]
 }
 
-const previewMilestones = computed(() =>
-  (journey.value?.milestones ?? []).map((milestone) => ({
-    id: milestone.id,
-    title: milestone.title,
-    description: milestone.description ?? null,
-    image: milestone.image ?? null,
-    image_thumb: milestone.image_thumb ?? null,
-    required_stamps: milestone.required_stamps,
-    unlocked: milestone.unlocked,
-    claimed: milestone.claimed,
-  })),
-)
 const previewStamps = computed(() => displayStamps.value ?? card.value?.stamps ?? 0)
+const sortedMilestones = computed(() =>
+  [...(journey.value?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps),
+)
+const journeyMaxStamps = computed(() => Math.max(10, sortedMilestones.value.at(-1)?.required_stamps ?? 10))
+const journeyRows = computed(() => {
+  const rows: number[][] = []
+  for (let start = 1; start <= journeyMaxStamps.value; start += 5) {
+    const row: number[] = []
+    for (let stamp = start; stamp < start + 5 && stamp <= journeyMaxStamps.value; stamp += 1) {
+      row.push(stamp)
+    }
+    rows.push(row)
+  }
+  return rows
+})
+const nextRewardStampsRemaining = computed(() =>
+  nextReward.value ? Math.max(nextReward.value.required_stamps - previewStamps.value, 0) : 0,
+)
+const focusReward = computed(() => availableRewards.value[0] ?? nextReward.value)
+const hasReadyReward = computed(() => availableRewards.value.length > 0)
+const focusRewardProgress = computed(() => {
+  if (!focusReward.value) return ''
+  return `${Math.min(previewStamps.value, focusReward.value.required_stamps)} / ${focusReward.value.required_stamps} stamps collected`
+})
 const selectedVenueId = computed(() => {
   const venueId = route.query.venue_id
   return typeof venueId === 'string' ? venueId : null
@@ -329,6 +341,18 @@ function closeRewardWallet() {
   selectedReward.value = null
 }
 
+function isGiftStamp(stamp: number): boolean {
+  return sortedMilestones.value.some((milestone) => milestone.required_stamps === stamp)
+}
+
+function isStampCollected(stamp: number): boolean {
+  return stamp <= previewStamps.value
+}
+
+function isStampAnimating(stamp: number): boolean {
+  return animatingSlots.value.includes(stamp)
+}
+
 function applyRedemption(response: RedemptionResponse) {
   card.value = response.customer
   nextReward.value = response.next_reward
@@ -401,7 +425,7 @@ watch(
 
       <template v-else>
         <header v-if="card.venue" class="relative z-10">
-          <div class="relative h-44 w-full overflow-hidden sm:h-48">
+          <div class="relative h-36 w-full overflow-hidden sm:h-40">
             <img :src="venueCoverUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-slate-950/10" />
             <button
@@ -414,57 +438,103 @@ watch(
             </button>
             <div class="absolute bottom-4 left-4 right-4">
               <h1 class="text-2xl font-black tracking-tight text-white">{{ card.venue.name }}</h1>
-              <p
-                v-if="card.venue.address"
-                class="mt-1 flex items-start gap-1.5 text-sm text-white/90"
-              >
-                <MapPin class="mt-0.5 size-4 shrink-0" />
-                <span>{{ card.venue.address }}</span>
-              </p>
+              <p class="mt-1 text-sm font-medium text-white/85">Collect stamps. Unlock rewards.</p>
             </div>
           </div>
         </header>
 
         <section class="relative z-10 -mt-4 flex flex-col px-4 pb-8">
-          <AppCard
-            wrapper-class="w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.18)] sm:p-6"
-            :padded="false"
-          >
-            <h2 class="text-center text-lg font-black text-slate-950">Add a stamp</h2>
-            <p class="mt-1 text-center text-sm text-slate-500">
-              Staff scan this QR to add stamps. To use a reward, open Rewards → Claim.
-            </p>
+          <AppCard wrapper-class="w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">
+            <div class="flex items-end justify-between gap-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Your progress</p>
+                <p class="mt-2 text-4xl font-black leading-none text-slate-950">{{ previewStamps }}</p>
+                <p class="mt-1 text-sm font-medium text-slate-500">stamps collected</p>
+              </div>
+              <p v-if="nextReward" class="text-right text-sm font-semibold text-slate-600">
+                {{ nextRewardStampsRemaining }} {{ nextRewardStampsRemaining === 1 ? 'stamp' : 'stamps' }} to next reward
+              </p>
+            </div>
 
-            <div class="mt-4 flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="mt-5 space-y-2.5">
+              <div
+                v-for="(row, rowIndex) in journeyRows"
+                :key="`row-${rowIndex}`"
+                class="grid grid-cols-5 gap-2.5"
+              >
+                <div
+                  v-for="stamp in row"
+                  :key="stamp"
+                  class="grid h-12 place-items-center rounded-2xl text-sm font-black transition"
+                  :class="[
+                    isGiftStamp(stamp)
+                      ? isStampCollected(stamp)
+                        ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
+                        : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200'
+                      : isStampCollected(stamp)
+                        ? 'bg-slate-950 text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.6)]'
+                        : 'bg-white text-slate-400 ring-1 ring-slate-200',
+                    isStampAnimating(stamp) ? 'scale-105 animate-pulse' : '',
+                  ]"
+                >
+                  <Gift v-if="isGiftStamp(stamp)" class="size-4" />
+                  <span v-else>{{ stamp }}</span>
+                </div>
+              </div>
+            </div>
+          </AppCard>
+
+          <AppCard v-if="focusReward" wrapper-class="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.2)] sm:p-6">
+            <template v-if="hasReadyReward">
+              <p class="text-xs font-bold uppercase tracking-[0.14em] text-emerald-600">Reward ready</p>
+              <h2 class="mt-2 text-3xl font-black leading-tight text-slate-950">🎉 Reward Ready</h2>
+              <p class="mt-2 text-lg font-semibold text-slate-800">{{ focusReward.title }}</p>
+              <AppButton
+                class="mt-5 w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
+                size="lg"
+                @click="openRewardWallet"
+              >
+                Claim reward
+              </AppButton>
+            </template>
+            <template v-else>
+              <p class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Next reward</p>
+              <h2 class="mt-2 text-2xl font-black leading-tight text-slate-950">🎁 {{ focusReward.title }}</h2>
+              <p class="mt-3 text-base font-semibold text-slate-700">
+                {{ nextRewardStampsRemaining }} {{ nextRewardStampsRemaining === 1 ? 'stamp' : 'stamps' }} remaining
+              </p>
+              <p class="mt-1 text-sm text-slate-500">{{ focusRewardProgress }}</p>
+            </template>
+          </AppCard>
+
+          <AppCard wrapper-class="mt-5 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
+              @click="showQr = !showQr"
+            >
+              <span class="inline-flex items-center gap-2">
+                <QrCode class="size-4" />
+                {{ showQr ? 'Hide QR code' : 'Show QR for staff scan' }}
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ showQr ? 'Hide' : 'Show' }}</span>
+            </button>
+
+            <div v-if="showQr" class="mt-4 flex justify-center rounded-2xl bg-slate-50 p-4">
               <div class="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
                 <QrcodeVue
                   :value="card.qr_token"
-                  :size="200"
+                  :size="184"
                   level="M"
                   render-as="canvas"
                   :margin="2"
                 />
               </div>
             </div>
+            <p class="mt-3 text-center text-xs font-medium text-slate-500">
+              Show this only when staff is ready to add stamps.
+            </p>
           </AppCard>
-
-          <div class="mt-5">
-            <GuestWalletCardPreview
-              :milestones="previewMilestones"
-              :stamps="previewStamps"
-              :animating-slots="animatingSlots"
-              :celebrating-reward="celebratingReward"
-            />
-          </div>
-
-          <AppButton
-            v-if="availableRewards.length"
-            class="mt-6 w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
-            size="lg"
-            @click="openRewardWallet"
-          >
-            Redeem unlocked reward
-          </AppButton>
         </section>
       </template>
     </div>
