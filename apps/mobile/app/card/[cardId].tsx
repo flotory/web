@@ -5,6 +5,7 @@ import {
   Animated,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -37,9 +38,11 @@ export default function CardDetailScreen() {
   }
 
   const insets = useSafeAreaInsets()
+  const refreshInsetTop = insets.top + 12
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [payload, setPayload] = useState<CardPayload | null>(null)
   const fade = useRef(new Animated.Value(0)).current
@@ -50,22 +53,30 @@ export default function CardDetailScreen() {
     return Math.max(10, ...required, payload?.next_reward?.required_stamps ?? 0)
   }, [payload])
 
-  useEffect(() => {
-    async function load() {
-      if (!token) return
+  async function load(isRefresh = false) {
+    if (!token) return
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
       setLoading(true)
-      setError('')
-      try {
-        const query = params.venueId ? `?venue_id=${params.venueId}` : ''
-        const response = await apiRequest<CardPayload>(`/customer/cards${query}`, { token })
-        setPayload(response)
-      } catch {
-        setError('Could not load this loyalty card.')
-      } finally {
+    }
+    setError('')
+    try {
+      const query = params.venueId ? `?venue_id=${params.venueId}` : ''
+      const response = await apiRequest<CardPayload>(`/customer/cards${query}`, { token })
+      setPayload(response)
+    } catch {
+      setError('Could not load this loyalty card.')
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
         setLoading(false)
       }
     }
+  }
 
+  useEffect(() => {
     void load()
   }, [params.venueId, token])
 
@@ -95,7 +106,7 @@ export default function CardDetailScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={colors.primary} />
       </View>
     )
   }
@@ -112,6 +123,7 @@ export default function CardDetailScreen() {
   const nextReward = payload?.next_reward
   const stamps = card.stamps
   const stampsToNext = nextReward ? Math.max(nextReward.required_stamps - stamps, 0) : Math.max(maxStamps - stamps, 0)
+  const milestones = [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps)
   const cover = venueCoverUrl(card.venue ?? undefined)
   const logo = venueLogoUrl(card.venue ?? undefined)
   const nextImage = rewardImageUrl(nextReward ?? undefined)
@@ -119,6 +131,9 @@ export default function CardDetailScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
+      contentInset={{ top: refreshInsetTop }}
+      contentOffset={{ x: 0, y: -refreshInsetTop }}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => void load(true)} tintColor={colors.primary} />}
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
     >
       <Pressable onPress={handleBack} style={{ paddingTop: insets.top + 8, paddingHorizontal: space.screenX }}>
@@ -126,7 +141,7 @@ export default function CardDetailScreen() {
       </Pressable>
 
       {error ? (
-        <Text style={{ color: '#B91C1C', paddingHorizontal: space.screenX, marginTop: 8 }}>{error}</Text>
+        <Text style={{ color: colors.danger, paddingHorizontal: space.screenX, marginTop: 8 }}>{error}</Text>
       ) : null}
 
       <Animated.View style={{ opacity: fade }}>
@@ -134,7 +149,7 @@ export default function CardDetailScreen() {
           {cover ? (
             <Image source={{ uri: cover }} style={{ width: '100%', height: 160 }} resizeMode="cover" />
           ) : (
-            <View style={{ height: 160, backgroundColor: '#D6D3D1' }} />
+            <View style={{ height: 160, backgroundColor: colors.surfaceMuted }} />
           )}
           <View style={{ position: 'absolute', left: 16, bottom: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View
@@ -150,7 +165,7 @@ export default function CardDetailScreen() {
             >
               {logo ? <Image source={{ uri: logo }} style={{ width: 52, height: 52 }} /> : <Text style={{ fontSize: 24 }}>☕</Text>}
             </View>
-            <Text style={{ fontSize: 26, fontWeight: '800', color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 }}>
+            <Text style={{ fontSize: 26, fontWeight: '800', color: colors.primaryText, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 }}>
               {card.venue?.name ?? 'Loyalty card'}
             </Text>
           </View>
@@ -170,7 +185,7 @@ export default function CardDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Show this QR when staff scans</Text>
-            <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 10 }}>
+            <View style={{ marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 10 }}>
               <QrImage value={card.qr_token} size={190} />
             </View>
             <Text style={{ ...typography.caption, marginTop: 10, textAlign: 'center' }}>QR updates your current card progress instantly.</Text>
@@ -195,8 +210,9 @@ export default function CardDetailScreen() {
             <View style={{ marginTop: 14 }}>
               <MilestonePath
                 collected={stamps}
-                total={nextReward?.required_stamps ?? maxStamps}
-                milestoneStamp={nextReward?.required_stamps ?? maxStamps}
+                total={maxStamps}
+                milestoneStamps={milestones.map((item) => item.required_stamps)}
+                columns={5}
               />
             </View>
             <Text style={{ ...typography.body, marginTop: 12 }}>
@@ -204,6 +220,33 @@ export default function CardDetailScreen() {
                 ? `${stampsToNext} stamp${stampsToNext === 1 ? '' : 's'} until ${nextReward?.title ?? 'your reward'}`
                 : `${nextReward?.title ?? 'Reward'} unlocked`}
             </Text>
+            {milestones.length > 1 ? (
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ ...typography.caption, fontWeight: '700' }}>All reward milestones</Text>
+                <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {milestones.map((milestone) => {
+                    const unlocked = stamps >= milestone.required_stamps
+                    return (
+                      <View
+                        key={milestone.id}
+                        style={{
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: unlocked ? colors.successBorder : colors.border,
+                          backgroundColor: unlocked ? colors.successBg : colors.bg,
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                        }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: unlocked ? colors.successText : '#475569' }}>
+                          {milestone.required_stamps} • {milestone.title}
+                        </Text>
+                      </View>
+                    )
+                  })}
+                </View>
+              </View>
+            ) : null}
             {nextReward && !readyReward ? (
               <View
                 style={{
@@ -211,17 +254,17 @@ export default function CardDetailScreen() {
                   flexDirection: 'row',
                   gap: 12,
                   alignItems: 'center',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: colors.bg,
                   borderRadius: 14,
                   borderWidth: 1,
-                  borderColor: '#E2E8F0',
+                  borderColor: colors.border,
                   padding: 10,
                 }}
               >
                 {nextImage ? (
                   <Image source={{ uri: nextImage }} style={{ width: 56, height: 56, borderRadius: 12 }} />
                 ) : (
-                  <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: '#EDECE8', alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ fontSize: 22 }}>🎁</Text>
                   </View>
                 )}

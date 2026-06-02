@@ -101,26 +101,26 @@ export default function ClaimScreen() {
       <Pressable onPress={handleBack} style={{ marginTop: 2 }}>
         <Text style={{ color: colors.ink, fontWeight: '700' }}>← Back</Text>
       </Pressable>
-      {error ? <Text style={{ color: '#b91c1c', marginTop: 8 }}>{error}</Text> : null}
+      {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
       {session?.status === 'pending' ? (
         <>
-          <View style={{ marginTop: 16, backgroundColor: '#EEF2FF', borderRadius: radius.card, borderWidth: 1, borderColor: '#C7D2FE', overflow: 'hidden' }}>
-            <View style={{ padding: 18, backgroundColor: '#E0E7FF' }}>
-              <Text style={{ ...typography.label, color: '#4F46E5' }}>REWARD TICKET</Text>
+          <View style={{ marginTop: 16, backgroundColor: colors.lavender, borderRadius: radius.card, borderWidth: 1, borderColor: colors.lavenderBorder, overflow: 'hidden' }}>
+            <View style={{ padding: 18, backgroundColor: colors.lavenderBorder }}>
+              <Text style={{ ...typography.label, color: colors.primary }}>REWARD TICKET</Text>
               <Text style={{ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum }}>{session.reward.title}</Text>
-              <Text style={{ ...typography.body, marginTop: 4, color: '#475569' }}>{session.venue?.name ?? 'Your venue'}</Text>
+              <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{session.venue?.name ?? 'Your venue'}</Text>
             </View>
             <View style={{ padding: 18, alignItems: 'center' }}>
               <Text style={{ ...typography.caption, marginBottom: 10 }}>Show this ticket at the counter</Text>
-              <View style={{ backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: '#C7D2FE', padding: 12 }}>
+              <View style={{ backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.lavenderBorder, padding: 12 }}>
             <QrImage value={session.qr_value} size={220} />
               </View>
             </View>
           </View>
-          <View style={{ backgroundColor: '#EEF2FF', borderRadius: 14, padding: 12, alignItems: 'center' }}>
-            <Text style={{ color: '#4F46E5', fontSize: 12, fontWeight: '800' }}>EXPIRES IN</Text>
-            <Text style={{ fontSize: 34, fontWeight: '800', color: expiresLabel === '0:00' ? '#b91c1c' : colors.plum }}>
+          <View style={{ backgroundColor: colors.lavender, borderRadius: 14, padding: 12, alignItems: 'center' }}>
+            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800' }}>EXPIRES IN</Text>
+            <Text style={{ fontSize: 34, fontWeight: '800', color: expiresLabel === '0:00' ? colors.danger : colors.plum }}>
               {expiresLabel}
             </Text>
           </View>
@@ -128,21 +128,21 @@ export default function ClaimScreen() {
       ) : null}
 
       {session?.status === 'claimed' ? (
-        <View style={{ backgroundColor: '#ecfdf5', borderRadius: 14, borderWidth: 1, borderColor: '#a7f3d0', padding: 14, marginTop: 18 }}>
+        <View style={{ backgroundColor: colors.successBg, borderRadius: 14, borderWidth: 1, borderColor: colors.successBorder, padding: 14, marginTop: 18 }}>
           <Text style={{ fontSize: 18, fontWeight: '800' }}>Reward redeemed</Text>
-          <Text style={{ marginTop: 4, color: '#065f46' }}>Staff completed the redemption.</Text>
+          <Text style={{ marginTop: 4, color: colors.successText }}>Staff completed the redemption.</Text>
           <Pressable
             onPress={() => router.replace('/(customer)/rewards')}
             style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
           >
-            <Text style={{ color: '#fff', fontWeight: '800' }}>Back to rewards</Text>
+            <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Back to rewards</Text>
           </Pressable>
         </View>
       ) : null}
 
       {session?.status === 'expired' ? (
         <Pressable onPress={() => void createSession()} style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center' }}>
-          <Text style={{ color: '#fff', fontWeight: '800' }}>Generate new code</Text>
+          <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Generate new code</Text>
         </Pressable>
       ) : null}
     </View>

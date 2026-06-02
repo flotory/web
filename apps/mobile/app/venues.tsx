@@ -5,6 +5,7 @@ import {
   Animated,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -30,8 +31,10 @@ interface DiscoverVenue {
 
 export default function VenuesScreen() {
   const insets = useSafeAreaInsets()
+  const refreshInsetTop = insets.top + 12
   const { token, role } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [joiningSlug, setJoiningSlug] = useState<string | null>(null)
   const [venues, setVenues] = useState<DiscoverVenue[]>([])
@@ -39,9 +42,13 @@ export default function VenuesScreen() {
   const [search, setSearch] = useState('')
   const fade = useRef(new Animated.Value(0)).current
 
-  async function load() {
+  async function load(isRefresh = false) {
     if (!token) return
-    setLoading(true)
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
     setError('')
     try {
       const [discoverResponse, cardsResponse] = await Promise.all([
@@ -57,7 +64,11 @@ export default function VenuesScreen() {
     } catch {
       setError('Could not load venues.')
     } finally {
-      setLoading(false)
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -106,7 +117,7 @@ export default function VenuesScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={colors.primary} />
       </View>
     )
   }
@@ -114,8 +125,11 @@ export default function VenuesScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
+      contentInset={{ top: refreshInsetTop }}
+      contentOffset={{ x: 0, y: -refreshInsetTop }}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => void load(true)} tintColor={colors.primary} />}
       contentContainerStyle={{
-        paddingTop: insets.top + 12,
+        paddingTop: 12,
         paddingBottom: insets.bottom + 28,
         paddingHorizontal: space.screenX,
       }}
@@ -143,7 +157,7 @@ export default function VenuesScreen() {
           }}
         />
 
-        {error ? <Text style={{ color: '#B91C1C', marginTop: 10 }}>{error}</Text> : null}
+        {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
 
         <View style={{ marginTop: space.sectionY, gap: 16 }}>
           {filtered.map((item) => {
@@ -168,7 +182,7 @@ export default function VenuesScreen() {
                 {cover ? (
                   <Image source={{ uri: cover }} style={{ width: '100%', height: 150 }} resizeMode="cover" />
                 ) : (
-                  <View style={{ height: 150, backgroundColor: '#D6D3D1' }} />
+                  <View style={{ height: 150, backgroundColor: colors.surfaceMuted }} />
                 )}
                 <View style={{ padding: space.cardPad }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -176,14 +190,14 @@ export default function VenuesScreen() {
                       <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{item.name}</Text>
                       <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
                         {item.category ? (
-                          <View style={{ backgroundColor: '#EEF2FF', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-                            <Text style={{ ...typography.caption, color: '#4F46E5', textTransform: 'capitalize' }}>
+                          <View style={{ backgroundColor: colors.lavender, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+                            <Text style={{ ...typography.caption, color: colors.primary, textTransform: 'capitalize' }}>
                               {item.category}
                             </Text>
                           </View>
                         ) : null}
-                        <View style={{ backgroundColor: '#EEF2FF', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-                          <Text style={{ ...typography.caption, color: '#4F46E5' }}>Nearby</Text>
+                        <View style={{ backgroundColor: colors.lavender, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <Text style={{ ...typography.caption, color: colors.primary }}>Nearby</Text>
                         </View>
                       </View>
                     </View>

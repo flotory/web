@@ -79,12 +79,12 @@ export default function SettingsScreen() {
             backgroundColor: colors.surface,
             borderRadius: radius.card,
             borderWidth: 1,
-            borderColor: '#FECACA',
+            borderColor: colors.dangerSoft,
             paddingVertical: 14,
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#B91C1C', fontWeight: '800', fontSize: 16 }}>Sign out</Text>
+          <Text style={{ color: colors.danger, fontWeight: '800', fontSize: 16 }}>Sign out</Text>
         </Pressable>
       </View>
     </ScrollView>

@@ -1,10 +1,26 @@
-import { Tabs } from 'expo-router'
+import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { useAuth } from '../../src/providers/AuthProvider'
 
 export default function CustomerTabsLayout() {
-  const { role } = useAuth()
+  const { token, role } = useAuth()
+
+  if (!token) {
+    return <Redirect href="/login" />
+  }
+
+  if (role === 'staff') {
+    return <Redirect href="/scanner" />
+  }
+
+  if (role === 'owner') {
+    return <Redirect href="/owner-dashboard" />
+  }
+
+  if (role !== 'customer') {
+    return <Redirect href="/" />
+  }
 
   return (
     <Tabs

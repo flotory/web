@@ -1,6 +1,6 @@
 import { Link, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Animated, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Animated, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import RewardJourneyRibbon from '../src/components/customer/RewardJourneyRibbon'
@@ -28,6 +28,7 @@ export default function CustomerHomeScreen() {
   const insets = useSafeAreaInsets()
   const { token, role, user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [cards, setCards] = useState<WalletCard[]>([])
   const [readyItems, setReadyItems] = useState<RewardWalletItem[]>([])
@@ -56,9 +57,13 @@ export default function CustomerHomeScreen() {
     useCallback(() => {
       let active = true
 
-      async function load() {
+      async function load(isRefresh = false) {
         if (!token || role !== 'customer') return
-        setLoading(true)
+        if (isRefresh) {
+          setRefreshing(true)
+        } else {
+          setLoading(true)
+        }
         setError('')
 
         try {
@@ -128,7 +133,12 @@ export default function CustomerHomeScreen() {
         } catch {
           if (active) setError('Could not load your home.')
         } finally {
-          if (active) setLoading(false)
+          if (!active) return
+          if (isRefresh) {
+            setRefreshing(false)
+          } else {
+            setLoading(false)
+          }
         }
       }
 
@@ -171,7 +181,7 @@ export default function CustomerHomeScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={colors.primary} />
       </View>
     )
   }
@@ -179,16 +189,56 @@ export default function CustomerHomeScreen() {
   const pendingCount = readyItems.length
   const nextTitle = priorityCard?.summary?.next_reward_title ?? 'your next reward'
   const stampsLeft = priorityCard?.summary?.stamps_to_next ?? null
+  const refreshInsetTop = insets.top + 12
   const homeInk = colors.ink
-  const homeMuted = '#475569'
+  const homeMuted = colors.inkMuted
   const homeBorder = colors.border
   const homeAccent = colors.primary
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
+      contentInset={{ top: refreshInsetTop }}
+      contentOffset={{ x: 0, y: -refreshInsetTop }}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => {
+        if (!token || role !== 'customer') return
+        setRefreshing(true)
+        setError('')
+        Promise.all([
+          apiRequest<CardsResponse>('/customer/cards', { token }),
+          apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
+        ]).then(async ([cardsResponse, walletResponse]) => {
+          setCards(cardsResponse.cards)
+          setReadyItems(walletResponse.items)
+
+          const visitSources = await Promise.all(
+            cardsResponse.cards.slice(0, 3).map(async (card) => {
+              try {
+                const detail = await apiRequest<CardDetailSlice>(`/customer/cards?venue_id=${card.venue_id}`, { token })
+                return { card, visits: detail.recent_visits ?? [] }
+              } catch {
+                return { card, visits: [] as VisitRow[] }
+              }
+            }),
+          )
+
+          const rows: ActivityRow[] = []
+          for (const source of visitSources) {
+            const venueName = source.card.venue?.name ?? 'Venue'
+            for (const visit of source.visits.slice(0, 2)) {
+              rows.push({ id: `visit-${visit.id}`, label: `+1 stamp · ${venueName}`, time: formatRelativeTime(visit.created_at) })
+            }
+          }
+          for (const item of walletResponse.items.slice(0, 2)) {
+            rows.push({ id: `unlock-${item.unlock_id}`, label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`, time: 'Today' })
+          }
+          const unique = new Map<string, ActivityRow>()
+          for (const row of rows) if (!unique.has(row.id)) unique.set(row.id, row)
+          setActivity([...unique.values()].slice(0, 3))
+        }).catch(() => setError('Could not refresh your home.')).finally(() => setRefreshing(false))
+      }} tintColor={colors.primary} />}
       contentContainerStyle={{
-        paddingTop: insets.top + 12,
+        paddingTop: 12,
         paddingBottom: insets.bottom + 28,
         paddingHorizontal: space.screenX,
       }}
@@ -204,13 +254,13 @@ export default function CustomerHomeScreen() {
           {pendingCount > 0 ? 'Claim it on your next visit.' : `Unlock ${nextTitle}`}
         </Text>
 
-        {error ? <Text style={{ color: '#B91C1C', marginTop: 12, fontWeight: '600' }}>{error}</Text> : null}
+        {error ? <Text style={{ color: colors.danger, marginTop: 12, fontWeight: '600' }}>{error}</Text> : null}
 
         {heroReward ? (
           <Animated.View style={{ marginTop: space.sectionY, transform: [{ scale: heroPulse }] }}>
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.surface,
                 borderRadius: radius.card,
                 overflow: 'hidden',
                 borderWidth: 1,
@@ -224,7 +274,7 @@ export default function CustomerHomeScreen() {
                   resizeMode="cover"
                 />
               ) : (
-                <View style={{ height: 180, backgroundColor: '#EDECE8', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ height: 180, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 48 }}>🎁</Text>
                 </View>
               )}
@@ -249,13 +299,13 @@ export default function CustomerHomeScreen() {
             </View>
           </Animated.View>
         ) : (
-          <View style={{ marginTop: space.sectionY, backgroundColor: '#FFFFFF', borderRadius: radius.card, padding: space.cardPad, borderWidth: 1, borderColor: homeBorder }}>
+          <View style={{ marginTop: space.sectionY, backgroundColor: colors.surface, borderRadius: radius.card, padding: space.cardPad, borderWidth: 1, borderColor: homeBorder }}>
             <Text style={{ ...typography.label, color: homeAccent }}>NEXT UP</Text>
             <Text style={{ marginTop: 6, fontSize: 26, fontWeight: '800', color: homeInk }}>{nextTitle}</Text>
             <Text style={{ ...typography.body, marginTop: 6 }}>{stampsLeft ? `${stampsLeft} stamps away` : 'You are on track'}</Text>
             <Link href="/(customer)/wallet" asChild>
               <Pressable style={{ marginTop: 14, backgroundColor: homeAccent, borderRadius: radius.button, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: '#fff', fontWeight: '700' }}>View progress</Text>
+                <Text style={{ color: colors.primaryText, fontWeight: '700' }}>View progress</Text>
               </Pressable>
             </Link>
           </View>
@@ -298,7 +348,7 @@ export default function CustomerHomeScreen() {
                             width: 48,
                             height: 48,
                             borderRadius: 14,
-                            backgroundColor: '#EDECE8',
+                            backgroundColor: colors.surfaceMuted,
                             alignItems: 'center',
                             justifyContent: 'center',
                             overflow: 'hidden',

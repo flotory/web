@@ -6,6 +6,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -23,24 +24,35 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [cards, setCards] = useState<WalletCard[]>([])
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const fade = useRef(new Animated.Value(0)).current
 
-  useEffect(() => {
-    async function load() {
-      if (!token) return
-      try {
-        const response = await apiRequest<{ cards: WalletCard[] }>('/customer/cards', { token })
-        setCards(response.cards)
-      } catch {
-        setError('Could not load your wallet.')
-      } finally {
+  async function load(isRefresh = false) {
+    if (!token) return
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+    try {
+      const response = await apiRequest<{ cards: WalletCard[] }>('/customer/cards', { token })
+      setCards(response.cards)
+      setError('')
+    } catch {
+      setError('Could not load your wallet.')
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
         setLoading(false)
       }
     }
+  }
 
+  useEffect(() => {
     void load()
   }, [token])
 
@@ -53,7 +65,7 @@ export default function WalletScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={colors.primary} />
       </View>
     )
   }
@@ -63,7 +75,7 @@ export default function WalletScreen() {
       <View style={{ paddingHorizontal: space.screenX }}>
         <Text style={typography.hero}>Wallet</Text>
         <Text style={{ ...typography.body, marginTop: 4 }}>Your loyalty cards at joined venues.</Text>
-        {error ? <Text style={{ color: '#B91C1C', marginTop: 10 }}>{error}</Text> : null}
+        {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
         {cards.length > 0 ? (
           <TextInput
             value={search}
@@ -118,6 +130,7 @@ export default function WalletScreen() {
         <Animated.View style={{ flex: 1, opacity: fade, marginTop: 18 }}>
           <FlatList
             contentContainerStyle={{ paddingHorizontal: space.screenX, paddingBottom: insets.bottom + 18, gap: 12 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
             data={cards.filter((item) => {
               const query = search.trim().toLowerCase()
               if (!query) return true
@@ -143,17 +156,17 @@ export default function WalletScreen() {
                 >
                   <Pressable
                     style={{
-                      backgroundColor: '#EEF2FF',
+                      backgroundColor: colors.lavender,
                       borderRadius: radius.card,
                       overflow: 'hidden',
                       borderWidth: 1,
-                      borderColor: '#C7D2FE',
+                      borderColor: colors.lavenderBorder,
                     }}
                   >
                     {cover ? (
                       <Image source={{ uri: cover }} style={{ width: '100%', height: 122 }} resizeMode="cover" />
                     ) : (
-                      <View style={{ height: 122, backgroundColor: '#D6D3D1' }} />
+                      <View style={{ height: 122, backgroundColor: colors.surfaceMuted }} />
                     )}
                     <View style={{ padding: 14 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: cover ? -24 : 0 }}>
@@ -162,7 +175,7 @@ export default function WalletScreen() {
                             width: 44,
                             height: 44,
                             borderRadius: 12,
-                            backgroundColor: '#EEF2FF',
+                            backgroundColor: colors.lavender,
                             borderWidth: 2,
                             borderColor: colors.surface,
                             overflow: 'hidden',

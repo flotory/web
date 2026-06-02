@@ -5,6 +5,7 @@ import {
   Animated,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -38,6 +39,7 @@ export default function RewardsScreen() {
   const insets = useSafeAreaInsets()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [readyItems, setReadyItems] = useState<RewardWalletItem[]>([])
   const [inProgress, setInProgress] = useState<WalletCard[]>([])
@@ -87,6 +89,19 @@ export default function RewardsScreen() {
 
     historyRows.sort((a, b) => new Date(b.claimedAt).getTime() - new Date(a.claimedAt).getTime())
     setClaimed(historyRows.slice(0, 12))
+  }
+
+  async function handleRefresh() {
+    if (!token) return
+    setRefreshing(true)
+    try {
+      await loadAll()
+      setError('')
+    } catch {
+      setError('Could not refresh rewards.')
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   useEffect(() => {
@@ -139,7 +154,7 @@ export default function RewardsScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={colors.primary} />
       </View>
     )
   }
@@ -147,6 +162,7 @@ export default function RewardsScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={insets.top + 24} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />}
       contentContainerStyle={{
         paddingTop: insets.top + 12,
         paddingBottom: insets.bottom + 28,
@@ -156,7 +172,7 @@ export default function RewardsScreen() {
       <Animated.View style={{ opacity: fade }}>
         <Text style={typography.hero}>Rewards</Text>
         <Text style={{ ...typography.body, marginTop: 4 }}>What you can redeem now, and what is next.</Text>
-        {error ? <Text style={{ color: '#B91C1C', marginTop: 10 }}>{error}</Text> : null}
+        {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
 
         {!hasContent ? (
           <View style={{ marginTop: space.sectionY, alignItems: 'center' }}>
@@ -195,26 +211,26 @@ export default function RewardsScreen() {
                   <CardWrapper key={item.unlock_id} {...wrapperProps}>
                     <View
                       style={{
-                        backgroundColor: '#EEF2FF',
+                        backgroundColor: colors.lavender,
                         borderRadius: radius.card,
                         overflow: 'hidden',
                         borderWidth: 1,
-                        borderColor: '#C7D2FE',
+                        borderColor: colors.lavenderBorder,
                       }}
                     >
                       {image ? (
                         <Image source={{ uri: image }} style={{ width: '100%', height: 150 }} resizeMode="cover" />
                       ) : (
-                        <View style={{ height: 150, backgroundColor: '#EDECE8', alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ height: 150, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
                           <Text style={{ fontSize: 40 }}>🎁</Text>
                         </View>
                       )}
                       <View style={{ padding: space.cardPad }}>
-                        <Text style={{ ...typography.label, color: '#4F46E5' }}>READY NOW</Text>
+                        <Text style={{ ...typography.label, color: colors.primary }}>READY NOW</Text>
                         <Text style={{ fontSize: 26, fontWeight: '800', color: colors.plum, marginTop: 6 }}>
                           {item.reward.title}
                         </Text>
-                        <Text style={{ ...typography.body, marginTop: 4, color: '#475569' }}>{item.customer.venue?.name ?? 'Venue'}</Text>
+                        <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{item.customer.venue?.name ?? 'Venue'}</Text>
                         <Link
                           href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(item.unlock_id) } }}
                           asChild
