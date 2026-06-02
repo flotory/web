@@ -1,0 +1,22 @@
+export type UserRole = 'owner' | 'staff' | 'customer'
+
+export interface MobileUser {
+  id: number
+  name: string
+  email: string
+  is_admin: boolean
+  active_venue_id?: number | null
+}
+
+export interface AuthResponse {
+  user: MobileUser
+  token: string
+}
+
+export interface VenueMembership {
+  id: number
+  name: string
+  slug: string
+  membership_role?: 'owner' | 'staff' | null
+}
+

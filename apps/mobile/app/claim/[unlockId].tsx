@@ -1,0 +1,151 @@
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect, useMemo, useState } from 'react'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+import { apiRequest } from '../../src/lib/api'
+import QrImage from '../../src/components/QrImage'
+import { useAuth } from '../../src/providers/AuthProvider'
+import { colors, radius, space, type as typography } from '../../src/theme'
+
+interface ClaimSessionPayload {
+  token: string
+  expires_at: string
+  status: 'pending' | 'claimed' | 'expired'
+  qr_value: string
+  reward: {
+    id: number
+    title: string
+  }
+  venue: {
+    id: number
+    name: string
+  } | null
+}
+
+export default function ClaimScreen() {
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back()
+      return
+    }
+    router.replace('/(customer)/rewards')
+  }
+
+  const insets = useSafeAreaInsets()
+  const router = useRouter()
+  const { token } = useAuth()
+  const { unlockId } = useLocalSearchParams<{ unlockId: string }>()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [session, setSession] = useState<ClaimSessionPayload | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  const expiresLabel = useMemo(() => {
+    if (!session?.expires_at || session.status !== 'pending') return '0:00'
+    const total = Math.max(0, Math.floor((new Date(session.expires_at).getTime() - now) / 1000))
+    const minutes = Math.floor(total / 60)
+    const seconds = total % 60
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
+  }, [now, session])
+
+  async function createSession() {
+    if (!token || !unlockId) return
+    setLoading(true)
+    setError('')
+    try {
+      const response = await apiRequest<ClaimSessionPayload>(`/customer/rewards/unlocks/${unlockId}/claim-session`, {
+        method: 'POST',
+        token,
+      })
+      setSession(response)
+    } catch {
+      setError('Could not create claim QR session.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void createSession()
+  }, [unlockId, token])
+
+  useEffect(() => {
+    if (!token || !session?.token || session.status !== 'pending') return
+    const poll = setInterval(async () => {
+      try {
+        const next = await apiRequest<ClaimSessionPayload>(`/customer/rewards/claim-sessions/${session.token}`, { token })
+        setSession(next)
+      } catch {
+        // Ignore transient poll errors.
+      }
+    }, 2000)
+
+    const clock = setInterval(() => setNow(Date.now()), 1000)
+    return () => {
+      clearInterval(poll)
+      clearInterval(clock)
+    }
+  }, [session?.token, session?.status, token])
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    )
+  }
+
+  return (
+    <View style={{ flex: 1, paddingHorizontal: space.screenX, paddingTop: insets.top + 8, backgroundColor: colors.bg, gap: 12 }}>
+      <Pressable onPress={handleBack} style={{ marginTop: 2 }}>
+        <Text style={{ color: colors.ink, fontWeight: '700' }}>← Back</Text>
+      </Pressable>
+      {error ? <Text style={{ color: '#b91c1c', marginTop: 8 }}>{error}</Text> : null}
+
+      {session?.status === 'pending' ? (
+        <>
+          <View style={{ marginTop: 16, backgroundColor: '#EEF2FF', borderRadius: radius.card, borderWidth: 1, borderColor: '#C7D2FE', overflow: 'hidden' }}>
+            <View style={{ padding: 18, backgroundColor: '#E0E7FF' }}>
+              <Text style={{ ...typography.label, color: '#4F46E5' }}>REWARD TICKET</Text>
+              <Text style={{ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum }}>{session.reward.title}</Text>
+              <Text style={{ ...typography.body, marginTop: 4, color: '#475569' }}>{session.venue?.name ?? 'Your venue'}</Text>
+            </View>
+            <View style={{ padding: 18, alignItems: 'center' }}>
+              <Text style={{ ...typography.caption, marginBottom: 10 }}>Show this ticket at the counter</Text>
+              <View style={{ backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: '#C7D2FE', padding: 12 }}>
+            <QrImage value={session.qr_value} size={220} />
+              </View>
+            </View>
+          </View>
+          <View style={{ backgroundColor: '#EEF2FF', borderRadius: 14, padding: 12, alignItems: 'center' }}>
+            <Text style={{ color: '#4F46E5', fontSize: 12, fontWeight: '800' }}>EXPIRES IN</Text>
+            <Text style={{ fontSize: 34, fontWeight: '800', color: expiresLabel === '0:00' ? '#b91c1c' : colors.plum }}>
+              {expiresLabel}
+            </Text>
+          </View>
+        </>
+      ) : null}
+
+      {session?.status === 'claimed' ? (
+        <View style={{ backgroundColor: '#ecfdf5', borderRadius: 14, borderWidth: 1, borderColor: '#a7f3d0', padding: 14, marginTop: 18 }}>
+          <Text style={{ fontSize: 18, fontWeight: '800' }}>Reward redeemed</Text>
+          <Text style={{ marginTop: 4, color: '#065f46' }}>Staff completed the redemption.</Text>
+          <Pressable
+            onPress={() => router.replace('/(customer)/rewards')}
+            style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '800' }}>Back to rewards</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {session?.status === 'expired' ? (
+        <Pressable onPress={() => void createSession()} style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center' }}>
+          <Text style={{ color: '#fff', fontWeight: '800' }}>Generate new code</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+
