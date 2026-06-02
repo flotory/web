@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
+import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors } from '../../src/theme'
 
@@ -25,6 +26,11 @@ export default function CustomerTabsLayout() {
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          hapticTabChange()
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.ink,

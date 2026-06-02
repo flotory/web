@@ -1,15 +1,20 @@
-import { Link, useFocusEffect } from 'expo-router'
+import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Animated, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
+import { Animated, Image, RefreshControl, Text, View } from 'react-native'
+import HomeRewardCarousel, { type HomeRewardSlide } from '../src/components/customer/HomeRewardCarousel'
 import RewardJourneyRibbon from '../src/components/customer/RewardJourneyRibbon'
-import ElevatedCard from '../src/components/ui/ElevatedCard'
-import PrimaryButton from '../src/components/ui/PrimaryButton'
+import AnimatedSection from '../src/components/ui/AnimatedSection'
+import PressableCard from '../src/components/ui/PressableCard'
+import ScreenGradientLayout, { ScreenGradientLoading } from '../src/components/ui/ScreenGradientLayout'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
+import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
+import ShakeGiftBadge from '../src/components/ui/ShakeGiftBadge'
+import StateCard from '../src/components/ui/StateCard'
 import { apiRequest } from '../src/lib/api'
 import { formatRelativeTime } from '../src/lib/format'
-import { rewardImageUrl, venueLogoUrl } from '../src/lib/media'
+import { hapticSuccess } from '../src/lib/haptics'
+import { heroProgressSubtitle, heroProgressTitle, progressCountCopy, visitsToRewardCopy } from '../src/lib/progressCopy'
+import { venueLogoUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, shadows, space, type as typography } from '../src/theme'
 import type { ActivityRow, RewardWalletItem, VisitRow, WalletCard } from '../src/types/loyalty'
@@ -28,7 +33,7 @@ interface RewardsWalletResponse {
 }
 
 export default function CustomerHomeScreen() {
-  const insets = useSafeAreaInsets()
+  const router = useRouter()
   const { token, role, user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -37,7 +42,6 @@ export default function CustomerHomeScreen() {
   const [readyItems, setReadyItems] = useState<RewardWalletItem[]>([])
   const [activity, setActivity] = useState<ActivityRow[]>([])
   const fade = useRef(new Animated.Value(0)).current
-  const heroPulse = useRef(new Animated.Value(1)).current
 
   const firstName = useMemo(() => {
     const name = user?.name?.trim() ?? 'there'
@@ -53,103 +57,105 @@ export default function CustomerHomeScreen() {
     [cards],
   )
 
-  const heroReward = readyItems[0] ?? null
+  const readyVenueIds = useMemo(() => new Set(readyItems.map((item) => item.customer.venue_id)), [readyItems])
+
+  const rewardSlides = useMemo((): HomeRewardSlide[] => {
+    if (readyItems.length > 0) {
+      return readyItems.map((item) => ({
+        id: `ready-${item.unlock_id}`,
+        kind: 'ready' as const,
+        item,
+      }))
+    }
+    return activeCards.map((card) => ({
+      id: `next-${card.id}`,
+      kind: 'next' as const,
+      card,
+    }))
+  }, [activeCards, readyItems])
+
   const priorityCard = activeCards[0] ?? null
+  const lastUnlockHaptic = useRef<number | null>(null)
+
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      if (!token || role !== 'customer') return
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
+      setError('')
+
+      try {
+        const [cardsResponse, walletResponse] = await Promise.all([
+          apiRequest<CardsResponse>('/customer/cards', { token }),
+          apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
+        ])
+
+        setCards(cardsResponse.cards)
+        setReadyItems(walletResponse.items)
+
+        const visitSources = await Promise.all(
+          cardsResponse.cards.slice(0, 3).map(async (card) => {
+            try {
+              const detail = await apiRequest<CardDetailSlice>(`/customer/cards?venue_id=${card.venue_id}`, { token })
+              return { card, visits: detail.recent_visits ?? [] }
+            } catch {
+              return { card, visits: [] as VisitRow[] }
+            }
+          }),
+        )
+
+        const rows: ActivityRow[] = []
+        for (const source of visitSources) {
+          const venueName = source.card.venue?.name ?? 'Venue'
+          for (const visit of source.visits.slice(0, 2)) {
+            rows.push({
+              id: `visit-${visit.id}`,
+              label: `+1 visit · ${venueName}`,
+              time: formatRelativeTime(visit.created_at),
+            })
+          }
+        }
+        for (const item of walletResponse.items.slice(0, 2)) {
+          rows.push({
+            id: `unlock-${item.unlock_id}`,
+            label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`,
+            time: 'Today',
+          })
+        }
+        for (const card of cardsResponse.cards) {
+          if (card.created_at) {
+            rows.push({
+              id: `join-${card.id}`,
+              label: `Joined ${card.venue?.name ?? 'venue'}`,
+              time: formatRelativeTime(card.created_at),
+            })
+          }
+        }
+        const unique = new Map<string, ActivityRow>()
+        for (const row of rows) {
+          if (!unique.has(row.id)) unique.set(row.id, row)
+        }
+        setActivity([...unique.values()].slice(0, 3))
+      } catch {
+        setError('Could not load your home.')
+      } finally {
+        if (isRefresh) {
+          setRefreshing(false)
+        } else {
+          setLoading(false)
+        }
+      }
+    },
+    [role, token],
+  )
 
   useFocusEffect(
     useCallback(() => {
-      let active = true
-
-      async function load(isRefresh = false) {
-        if (!token || role !== 'customer') return
-        if (isRefresh) {
-          setRefreshing(true)
-        } else {
-          setLoading(true)
-        }
-        setError('')
-
-        try {
-          const [cardsResponse, walletResponse] = await Promise.all([
-            apiRequest<CardsResponse>('/customer/cards', { token }),
-            apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
-          ])
-
-          if (!active) return
-
-          setCards(cardsResponse.cards)
-          setReadyItems(walletResponse.items)
-
-          const visitSources = await Promise.all(
-            cardsResponse.cards.slice(0, 3).map(async (card) => {
-              try {
-                const detail = await apiRequest<CardDetailSlice>(
-                  `/customer/cards?venue_id=${card.venue_id}`,
-                  { token },
-                )
-                return { card, visits: detail.recent_visits ?? [] }
-              } catch {
-                return { card, visits: [] as VisitRow[] }
-              }
-            }),
-          )
-
-          if (!active) return
-
-          const rows: ActivityRow[] = []
-
-          for (const source of visitSources) {
-            const venueName = source.card.venue?.name ?? 'Venue'
-            for (const visit of source.visits.slice(0, 2)) {
-              rows.push({
-                id: `visit-${visit.id}`,
-                label: `+1 stamp · ${venueName}`,
-                time: formatRelativeTime(visit.created_at),
-              })
-            }
-          }
-
-          for (const item of walletResponse.items.slice(0, 2)) {
-            rows.push({
-              id: `unlock-${item.unlock_id}`,
-              label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`,
-              time: 'Today',
-            })
-          }
-
-          for (const card of cardsResponse.cards) {
-            if (card.created_at) {
-              rows.push({
-                id: `join-${card.id}`,
-                label: `Joined ${card.venue?.name ?? 'venue'}`,
-                time: formatRelativeTime(card.created_at),
-              })
-            }
-          }
-
-          const unique = new Map<string, ActivityRow>()
-          for (const row of rows) {
-            if (!unique.has(row.id)) unique.set(row.id, row)
-          }
-
-          setActivity([...unique.values()].slice(0, 3))
-        } catch {
-          if (active) setError('Could not load your home.')
-        } finally {
-          if (!active) return
-          if (isRefresh) {
-            setRefreshing(false)
-          } else {
-            setLoading(false)
-          }
-        }
-      }
-
-      void load()
-      return () => {
-        active = false
-      }
-    }, [role, token]),
+      void loadData()
+    }, [loadData]),
   )
 
   useEffect(() => {
@@ -159,19 +165,12 @@ export default function CustomerHomeScreen() {
   }, [fade, loading])
 
   useEffect(() => {
-    if (!heroReward) return
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(heroPulse, { toValue: 1.02, duration: 800, useNativeDriver: true }),
-        Animated.timing(heroPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ]),
-    )
-    loop.start()
-    return () => {
-      loop.stop()
-      heroPulse.setValue(1)
-    }
-  }, [heroPulse, heroReward])
+    const newest = readyItems[0]
+    if (!newest) return
+    if (lastUnlockHaptic.current === newest.unlock_id) return
+    lastUnlockHaptic.current = newest.unlock_id
+    hapticSuccess()
+  }, [readyItems])
 
   if (role !== 'customer') {
     return (
@@ -183,113 +182,54 @@ export default function CustomerHomeScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <ScreenGradientLoading>
+        <ScreenSkeleton topInset={0} cardCount={3} />
+      </ScreenGradientLoading>
     )
   }
 
-  const pendingCount = readyItems.length
   const nextTitle = priorityCard?.summary?.next_reward_title ?? 'your next reward'
   const stampsLeft = priorityCard?.summary?.stamps_to_next ?? null
-  const homeInk = colors.ink
-  const homeMuted = colors.inkMuted
-  const homeBorder = colors.border
-  const homeAccent = colors.primary
+  const headerRewardTitle = readyItems[0]?.reward.title ?? nextTitle
+  const headerStampsLeft = readyItems.length > 0 ? 0 : (stampsLeft ?? 0)
+
+  const screenHeader = (
+    <ScreenHeader
+      pretitle={`Hi, ${firstName}`}
+      title={heroProgressTitle(headerStampsLeft, headerRewardTitle)}
+      subtitle={heroProgressSubtitle(headerStampsLeft, headerRewardTitle)}
+    />
+  )
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
-      <View style={{ paddingHorizontal: space.screenX }}>
-        <ScreenHeader
-          pretitle={`Hi, ${firstName}`}
-          title={pendingCount > 0 ? 'Reward waiting for you' : stampsLeft && stampsLeft > 0 ? `Only ${stampsLeft} left` : 'Keep going'}
-          subtitle={pendingCount > 0 ? 'Claim it on your next visit.' : `Unlock ${nextTitle}`}
-        />
-        {error ? <Text style={{ color: colors.danger, marginTop: 12, fontWeight: '600' }}>{error}</Text> : null}
-      </View>
+    <ScreenGradientLayout
+      scrollable
+      tabBarInset
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void loadData(true)} tintColor={colors.primary} />}
+    >
+          {error ? (
+            <AnimatedSection style={{ marginBottom: space.headerBottom, paddingHorizontal: space.screenX }}>
+              <StateCard
+                emoji="⚠️"
+                title="Could not load home"
+                message="Pull to refresh or try again in a moment."
+                primaryAction={{ label: 'Try again', onPress: () => void loadData(true) }}
+                secondaryAction={{ label: 'Open wallet', onPress: () => router.push('/(customer)/wallet') }}
+              />
+            </AnimatedSection>
+          ) : null}
 
-      <ScrollView
-        style={{ flex: 1, marginTop: 16 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {
-          if (!token || role !== 'customer') return
-          setRefreshing(true)
-          setError('')
-          Promise.all([
-            apiRequest<CardsResponse>('/customer/cards', { token }),
-            apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }),
-          ]).then(async ([cardsResponse, walletResponse]) => {
-            setCards(cardsResponse.cards)
-            setReadyItems(walletResponse.items)
+          <Animated.View style={{ opacity: fade }}>
+            <View style={{ paddingHorizontal: space.screenX }}>{screenHeader}</View>
 
-            const visitSources = await Promise.all(
-              cardsResponse.cards.slice(0, 3).map(async (card) => {
-                try {
-                  const detail = await apiRequest<CardDetailSlice>(`/customer/cards?venue_id=${card.venue_id}`, { token })
-                  return { card, visits: detail.recent_visits ?? [] }
-                } catch {
-                  return { card, visits: [] as VisitRow[] }
-                }
-              }),
-            )
-
-            const rows: ActivityRow[] = []
-            for (const source of visitSources) {
-              const venueName = source.card.venue?.name ?? 'Venue'
-              for (const visit of source.visits.slice(0, 2)) {
-                rows.push({ id: `visit-${visit.id}`, label: `+1 stamp · ${venueName}`, time: formatRelativeTime(visit.created_at) })
-              }
-            }
-            for (const item of walletResponse.items.slice(0, 2)) {
-              rows.push({ id: `unlock-${item.unlock_id}`, label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`, time: 'Today' })
-            }
-            const unique = new Map<string, ActivityRow>()
-            for (const row of rows) if (!unique.has(row.id)) unique.set(row.id, row)
-            setActivity([...unique.values()].slice(0, 3))
-          }).catch(() => setError('Could not refresh your home.')).finally(() => setRefreshing(false))
-        }} tintColor={colors.primary} />}
-        contentContainerStyle={{
-          paddingBottom: insets.bottom + 28,
-          paddingHorizontal: space.screenX,
-        }}
-      >
-        <Animated.View style={{ opacity: fade }}>
-        {heroReward ? (
-          <Animated.View style={{ marginTop: space.sectionY, transform: [{ scale: heroPulse }] }}>
-            <ElevatedCard style={{ overflow: 'hidden', borderColor: homeBorder }} intensity="md">
-              {rewardImageUrl(heroReward.reward) ? (
-                <Image
-                  source={{ uri: rewardImageUrl(heroReward.reward)! }}
-                  style={{ width: '100%', height: 180 }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={{ height: 180, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 48 }}>🎁</Text>
-                </View>
-              )}
-              <View style={{ padding: space.cardPad }}>
-                <Text style={{ ...typography.label, color: colors.accent }}>🎉 Reward unlocked</Text>
-                <Text style={{ fontSize: 30, fontWeight: '800', color: homeInk }}>{heroReward.reward.title}</Text>
-                <Text style={{ ...typography.body, marginTop: 4, color: homeMuted }}>{heroReward.customer.venue?.name ?? 'Venue'}</Text>
-                <Link href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(heroReward.unlock_id) } }} asChild>
-                  <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} />
-                </Link>
+            {rewardSlides.length > 0 ? (
+              <View style={{ marginTop: space.sectionGap, backgroundColor: 'transparent' }}>
+                <HomeRewardCarousel slides={rewardSlides} />
               </View>
-            </ElevatedCard>
-          </Animated.View>
-        ) : (
-          <ElevatedCard style={{ marginTop: space.sectionY, padding: space.cardPad, borderColor: homeBorder }} intensity="sm">
-            <Text style={{ ...typography.label, color: homeAccent }}>NEXT UP</Text>
-            <Text style={{ marginTop: 6, fontSize: 26, fontWeight: '800', color: homeInk }}>{nextTitle}</Text>
-            <Text style={{ ...typography.body, marginTop: 6 }}>{stampsLeft ? `${stampsLeft} stamps away` : 'You are on track'}</Text>
-            <Link href="/(customer)/wallet" asChild>
-              <PrimaryButton label="View progress" style={{ marginTop: 14, paddingVertical: 12 }} />
-            </Link>
-          </ElevatedCard>
-        )}
+            ) : null}
 
         {activeCards.length > 0 ? (
-          <View style={{ marginTop: space.sectionY }}>
+          <View style={{ marginTop: space.sectionY, paddingHorizontal: space.screenX }}>
             <Text style={typography.section}>Keep collecting</Text>
             <View style={{ marginTop: 14, gap: 14 }}>
               {activeCards.map((card) => {
@@ -300,6 +240,8 @@ export default function CustomerHomeScreen() {
                 const currentToNextReward = Math.min(stamps, nextTarget)
                 const toNext = Math.max(nextTarget - currentToNextReward, 0)
                 const cardNextTitle = summary?.next_reward_title ?? 'your next reward'
+                const hasReadyReward =
+                  readyVenueIds.has(card.venue_id) || (summary?.pending_rewards_count ?? 0) > 0
 
                 return (
                   <Link
@@ -310,11 +252,11 @@ export default function CustomerHomeScreen() {
                     }}
                     asChild
                   >
-                    <Pressable
+                    <PressableCard
                       style={{
                         backgroundColor: colors.surface,
                         borderRadius: radius.card,
-                        padding: 14,
+                        padding: space.cardPad,
                         borderWidth: 1,
                         borderColor: colors.border,
                         ...shadows.sm,
@@ -344,43 +286,38 @@ export default function CustomerHomeScreen() {
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 18, fontWeight: '700', color: colors.ink }}>{card.venue?.name}</Text>
                           <Text style={{ marginTop: 4, fontSize: 14, color: colors.inkMuted }}>
-                            {toNext > 0 ? `${toNext} until ${cardNextTitle}` : `${cardNextTitle} unlocked`}
+                            {hasReadyReward
+                              ? 'Reward unlocked'
+                              : visitsToRewardCopy(toNext, cardNextTitle)}
                           </Text>
                         </View>
+                        {hasReadyReward ? <ShakeGiftBadge /> : null}
                       </View>
                       <View style={{ marginTop: 14 }}>
                         <RewardJourneyRibbon value={currentToNextReward} target={nextTarget} checkpoints={[nextTarget]} />
                       </View>
                       <Text style={{ ...typography.caption, marginTop: 10 }}>
-                        {currentToNextReward} / {nextTarget}
+                        {progressCountCopy(currentToNextReward, nextTarget)}
                       </Text>
-                    </Pressable>
+                    </PressableCard>
                   </Link>
                 )
               })}
             </View>
           </View>
         ) : (
-          <View
-            style={{
-              marginTop: space.sectionY,
-              backgroundColor: colors.surface,
-              borderRadius: radius.card,
-              padding: space.cardPad,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.ink }}>Start your first card</Text>
-            <Text style={{ ...typography.body, marginTop: 6 }}>Join a venue to collect stamps and unlock rewards.</Text>
-            <Link href="/(customer)/venues" asChild>
-              <PrimaryButton label="Discover venues" style={{ marginTop: 16 }} />
-            </Link>
-          </View>
+          <AnimatedSection style={{ marginTop: space.sectionY, paddingHorizontal: space.screenX }}>
+            <StateCard
+              emoji="☕"
+              title="Start your first card"
+              message="Discover a venue nearby and begin collecting visits toward your first reward."
+              primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+            />
+          </AnimatedSection>
         )}
 
         {activity.length > 0 ? (
-          <View style={{ marginTop: space.sectionY }}>
+          <View style={{ marginTop: space.sectionY, paddingHorizontal: space.screenX }}>
             <Text style={typography.section}>Recent activity</Text>
             <View style={{ marginTop: 14, gap: 12 }}>
               {activity.map((row) => (
@@ -392,8 +329,7 @@ export default function CustomerHomeScreen() {
             </View>
           </View>
         ) : null}
-        </Animated.View>
-      </ScrollView>
-    </View>
+          </Animated.View>
+    </ScreenGradientLayout>
   )
 }

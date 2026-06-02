@@ -34,8 +34,11 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile ru
 Theme tokens live in `src/theme.ts`:
 
 - `colors`: semantic palette (bg, surface, text, border, primary, accent, success, etc.)
-- `space`: shared spacing scale
-- `radius`: shared radii
+- `space`: spacing scale (`screenX`, `headerBottom`, `sectionY`, `sectionGap`, `cardPad`, `cardGap`, `listGap`)
+- `radius`: shared radii (`card`, `mediaTop`, etc.)
+- `media`: shared cover dimensions (`coverHeight: 140`)
+- `motion`: animation timings (`giftBellIntervalMs`, `fadeInMs`, etc.)
+- `rewardReady`: gift badge tokens (icon, size, colors) used by `ShakeGiftBadge`
 - `shadows`: shared depth presets (`sm`, `md`, `button`)
 - `type`: typography presets (`hero`, `section`, `body`, `caption`, `label`)
 
@@ -46,10 +49,21 @@ Use theme tokens instead of hardcoded values in screens.
 Reusable building blocks are in `src/components/ui`:
 
 - `ScreenHeader`: standard title/subtitle/pretitle block
-- `PrimaryButton`: default CTA style
+- `PrimaryButton`: default CTA (optional `pulse`, `haptic`)
 - `ElevatedCard`: consistent card container with tokenized border/shadow
+- `CoverImage`: unified list-card cover height + top corner radius
+- `StateCard`: empty/error states with primary + secondary recovery actions
+- `PressableCard`: subtle press-scale on tappable cards
+- `AnimatedSection`: fade + slide-in on section load
+- `ShakeGiftBadge`: reward-ready gift icon with bell shake (`rewardReady` + `motion` tokens)
+- `ScreenSkeleton` / `SkeletonBlock`: loading placeholders
 
 When adding new screens or redesigning existing ones, prefer these primitives before introducing screen-specific variants.
+
+## Copy + Feedback Helpers
+
+- `src/lib/progressCopy.ts`: human progress lines (e.g. `2 visits to free coffee`)
+- `src/lib/haptics.ts`: `hapticTabChange`, `hapticLightTap`, `hapticSuccess` (tabs, CTAs, join/unlock/claim)
 
 ## Media + Performance
 

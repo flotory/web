@@ -1,10 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { apiRequest } from '../../src/lib/api'
+import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
 import QrImage from '../../src/components/QrImage'
+import { apiRequest } from '../../src/lib/api'
+import { hapticSuccess } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../../src/theme'
 
@@ -40,6 +42,7 @@ export default function ClaimScreen() {
   const [error, setError] = useState('')
   const [session, setSession] = useState<ClaimSessionPayload | null>(null)
   const [now, setNow] = useState(Date.now())
+  const ticketHapticDone = useRef(false)
 
   const expiresLabel = useMemo(() => {
     if (!session?.expires_at || session.status !== 'pending') return '0:00'
@@ -71,6 +74,13 @@ export default function ClaimScreen() {
   }, [unlockId, token])
 
   useEffect(() => {
+    if (session?.status === 'pending' && !ticketHapticDone.current) {
+      ticketHapticDone.current = true
+      hapticSuccess()
+    }
+  }, [session?.status])
+
+  useEffect(() => {
     if (!token || !session?.token || session.status !== 'pending') return
     const poll = setInterval(async () => {
       try {
@@ -90,62 +100,65 @@ export default function ClaimScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <ScreenGradientLoading>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </ScreenGradientLoading>
     )
   }
 
   return (
-    <View style={{ flex: 1, paddingHorizontal: space.screenX, paddingTop: insets.top + 8, backgroundColor: colors.bg, gap: 12 }}>
-      <Pressable onPress={handleBack} style={{ marginTop: 2 }}>
-        <Text style={{ color: colors.ink, fontWeight: '700' }}>← Back</Text>
-      </Pressable>
-      {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
+    <ScreenGradientLayout scrollable tabBarInset={false} paddingTop={insets.top + 8}>
+      <View style={{ paddingHorizontal: space.screenX, gap: 12 }}>
+        <Pressable onPress={handleBack} style={{ marginTop: 2 }}>
+          <Text style={{ color: colors.ink, fontWeight: '700' }}>← Back</Text>
+        </Pressable>
+        {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
-      {session?.status === 'pending' ? (
-        <>
-          <View style={{ marginTop: 16, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
-            <View style={{ padding: 18, backgroundColor: colors.surfaceMuted }}>
-              <Text style={{ ...typography.label, color: colors.primary }}>REWARD TICKET</Text>
-              <Text style={{ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum }}>{session.reward.title}</Text>
-              <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{session.venue?.name ?? 'Your venue'}</Text>
-            </View>
-            <View style={{ padding: 18, alignItems: 'center' }}>
-              <Text style={{ ...typography.caption, marginBottom: 10 }}>Show this ticket at the counter</Text>
-              <View style={{ backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.lavenderBorder, padding: 12 }}>
-            <QrImage value={session.qr_value} size={220} />
+        {session?.status === 'pending' ? (
+          <>
+            <View style={{ marginTop: 16, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+              <View style={{ padding: 18, backgroundColor: colors.surfaceMuted }}>
+                <Text style={{ ...typography.label, color: colors.primary }}>REWARD TICKET</Text>
+                <Text style={{ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum }}>{session.reward.title}</Text>
+                <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{session.venue?.name ?? 'Your venue'}</Text>
+              </View>
+              <View style={{ padding: 18, alignItems: 'center' }}>
+                <Text style={{ ...typography.caption, marginBottom: 10 }}>Show this ticket at the counter</Text>
+                <View style={{ backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.lavenderBorder, padding: 12 }}>
+                  <QrImage value={session.qr_value} size={220} />
+                </View>
               </View>
             </View>
-          </View>
-          <View style={{ backgroundColor: colors.lavender, borderRadius: 14, padding: 12, alignItems: 'center' }}>
-            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800' }}>EXPIRES IN</Text>
-            <Text style={{ fontSize: 34, fontWeight: '800', color: expiresLabel === '0:00' ? colors.danger : colors.plum }}>
-              {expiresLabel}
-            </Text>
-          </View>
-        </>
-      ) : null}
+            <View style={{ backgroundColor: colors.lavender, borderRadius: 14, padding: 12, alignItems: 'center' }}>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800' }}>EXPIRES IN</Text>
+              <Text style={{ fontSize: 34, fontWeight: '800', color: expiresLabel === '0:00' ? colors.danger : colors.plum }}>
+                {expiresLabel}
+              </Text>
+            </View>
+          </>
+        ) : null}
 
-      {session?.status === 'claimed' ? (
-        <View style={{ backgroundColor: colors.successBg, borderRadius: 14, borderWidth: 1, borderColor: colors.successBorder, padding: 14, marginTop: 18 }}>
-          <Text style={{ fontSize: 18, fontWeight: '800' }}>Reward redeemed</Text>
-          <Text style={{ marginTop: 4, color: colors.successText }}>Staff completed the redemption.</Text>
-          <Pressable
-            onPress={() => router.replace('/(customer)/rewards')}
-            style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
-          >
-            <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Back to rewards</Text>
+        {session?.status === 'claimed' ? (
+          <View style={{ backgroundColor: colors.successBg, borderRadius: 14, borderWidth: 1, borderColor: colors.successBorder, padding: 14, marginTop: 18 }}>
+            <Text style={{ fontSize: 18, fontWeight: '800' }}>Reward redeemed</Text>
+            <Text style={{ marginTop: 4, color: colors.successText }}>Staff completed the redemption.</Text>
+            <Pressable
+              onPress={() => router.replace('/(customer)/rewards')}
+              style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
+            >
+              <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Back to rewards</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {session?.status === 'expired' ? (
+          <Pressable onPress={() => void createSession()} style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center' }}>
+            <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Generate new code</Text>
           </Pressable>
-        </View>
-      ) : null}
-
-      {session?.status === 'expired' ? (
-        <Pressable onPress={() => void createSession()} style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center' }}>
-          <Text style={{ color: colors.primaryText, fontWeight: '800' }}>Generate new code</Text>
-        </Pressable>
-      ) : null}
-    </View>
+        ) : null}
+      </View>
+    </ScreenGradientLayout>
   )
 }
-

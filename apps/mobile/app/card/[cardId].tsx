@@ -1,12 +1,10 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
   Animated,
   Image,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   View,
 } from 'react-native'
@@ -14,7 +12,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import MilestonePath from '../../src/components/customer/MilestonePath'
 import QrImage from '../../src/components/QrImage'
+import CoverImage from '../../src/components/ui/CoverImage'
+import PrimaryButton from '../../src/components/ui/PrimaryButton'
+import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
+import ScreenSkeleton from '../../src/components/ui/ScreenSkeleton'
+import ShakeGiftBadge from '../../src/components/ui/ShakeGiftBadge'
+import StateCard from '../../src/components/ui/StateCard'
 import { apiRequest } from '../../src/lib/api'
+import { progressCountCopy, progressHintCopy, visitsToRewardCopy } from '../../src/lib/progressCopy'
+import { hapticSuccess } from '../../src/lib/haptics'
 import { rewardImageUrl, venueCoverUrl, venueLogoUrl } from '../../src/lib/media'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../../src/theme'
@@ -45,7 +51,7 @@ export default function CardDetailScreen() {
   const [error, setError] = useState('')
   const [payload, setPayload] = useState<CardPayload | null>(null)
   const fade = useRef(new Animated.Value(0)).current
-  const readyPulse = useRef(new Animated.Value(1)).current
+  const readyHapticDone = useRef(false)
 
   const maxStamps = useMemo(() => {
     const required = payload?.journey?.milestones.map((item) => item.required_stamps) ?? []
@@ -88,34 +94,43 @@ export default function CardDetailScreen() {
   const readyReward = payload?.available_rewards[0] ?? null
 
   useEffect(() => {
-    if (!readyReward) return
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(readyPulse, { toValue: 1.02, duration: 750, useNativeDriver: true }),
-        Animated.timing(readyPulse, { toValue: 1, duration: 750, useNativeDriver: true }),
-      ]),
-    )
-    loop.start()
-    return () => {
-      loop.stop()
-      readyPulse.setValue(1)
+    if (!readyReward) {
+      readyHapticDone.current = false
+      return
     }
-  }, [readyPulse, readyReward])
+    if (!readyHapticDone.current) {
+      readyHapticDone.current = true
+      hapticSuccess()
+    }
+  }, [readyReward])
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <ScreenGradientLoading>
+        <ScreenSkeleton topInset={0} cardCount={2} />
+      </ScreenGradientLoading>
     )
   }
 
   const card = payload?.active_card
   if (!card) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.screenX, backgroundColor: colors.bg }}>
-        <Text style={{ fontWeight: '700', fontSize: 18 }}>Card not found.</Text>
-      </View>
+      <ScreenGradientLayout flexContent tabBarInset={false} paddingTop={insets.top + 8}>
+        <View style={{ paddingHorizontal: space.screenX }}>
+          <Pressable onPress={handleBack}>
+            <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
+          </Pressable>
+          <View style={{ marginTop: space.sectionY }}>
+            <StateCard
+              emoji="🎫"
+              title="Card not found"
+              message="This loyalty card may have been removed. Check your wallet or discover a new venue."
+              primaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
+              secondaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+            />
+          </View>
+        </View>
+      </ScreenGradientLayout>
     )
   }
 
@@ -128,27 +143,36 @@ export default function CardDetailScreen() {
   const nextImage = rewardImageUrl(nextReward ?? undefined)
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 8 }}>
+    <ScreenGradientLayout
+      scrollable
+      tabBarInset={false}
+      paddingTop={insets.top + 8}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+    >
       <Pressable onPress={handleBack} style={{ paddingHorizontal: space.screenX }}>
         <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
       </Pressable>
 
       {error ? (
-        <Text style={{ color: colors.danger, paddingHorizontal: space.screenX, marginTop: 8 }}>{error}</Text>
+        <View style={{ paddingHorizontal: space.screenX, marginTop: 8 }}>
+          <StateCard
+            emoji="⚠️"
+            title="Could not load card"
+            message="Try again or return to your wallet."
+            primaryAction={{ label: 'Try again', onPress: () => void load(true) }}
+            secondaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
+          />
+        </View>
       ) : null}
 
-      <ScrollView
-        style={{ flex: 1, marginTop: 14 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-      >
-      <Animated.View style={{ opacity: fade }}>
+      <Animated.View style={{ opacity: fade, marginTop: space.headerBottom }}>
         <View style={{ marginTop: 12, marginHorizontal: space.screenX, borderRadius: radius.card, overflow: 'hidden' }}>
-          {cover ? (
-            <Image source={{ uri: cover }} style={{ width: '100%', height: 160 }} resizeMode="cover" />
-          ) : (
-            <View style={{ height: 160, backgroundColor: colors.surfaceMuted }} />
-          )}
+          <CoverImage uri={cover} />
+          {readyReward ? (
+            <View style={{ position: 'absolute', top: 14, right: 14 }}>
+              <ShakeGiftBadge />
+            </View>
+          ) : null}
           <View style={{ position: 'absolute', left: 16, bottom: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View
               style={{
@@ -202,21 +226,22 @@ export default function CardDetailScreen() {
               borderColor: colors.border,
             }}
           >
-            <Text style={{ fontSize: 40, fontWeight: '800', color: colors.ink }}>
-              {stamps} / {nextReward?.required_stamps ?? maxStamps}
+            <Text style={{ fontSize: 28, fontWeight: '800', color: colors.ink }}>
+              {readyReward
+                ? progressHintCopy(0, readyReward.title)
+                : progressHintCopy(stampsToNext, nextReward?.title)}
             </Text>
             <View style={{ marginTop: 14 }}>
               <MilestonePath
                 collected={stamps}
                 total={maxStamps}
                 milestoneStamps={milestones.map((item) => item.required_stamps)}
+                claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
                 columns={5}
               />
             </View>
             <Text style={{ ...typography.body, marginTop: 12 }}>
-              {stampsToNext > 0
-                ? `${stampsToNext} stamp${stampsToNext === 1 ? '' : 's'} until ${nextReward?.title ?? 'your reward'}`
-                : `${nextReward?.title ?? 'Reward'} unlocked`}
+              {progressCountCopy(stamps, nextReward?.required_stamps ?? maxStamps)}
             </Text>
             {milestones.length > 1 ? (
               <View style={{ marginTop: 12 }}>
@@ -269,7 +294,7 @@ export default function CardDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, fontWeight: '800', color: colors.ink }}>{nextReward.title}</Text>
                   <Text style={{ ...typography.caption, marginTop: 2 }}>
-                    Unlocks at {nextReward.required_stamps} stamps
+                    {visitsToRewardCopy(stampsToNext, nextReward.title)}
                   </Text>
                 </View>
               </View>
@@ -278,7 +303,7 @@ export default function CardDetailScreen() {
         </View>
 
         {readyReward ? (
-          <Animated.View
+          <View
             style={{
               marginTop: space.sectionY,
               marginHorizontal: space.screenX,
@@ -287,28 +312,16 @@ export default function CardDetailScreen() {
               padding: space.cardPad,
               borderWidth: 1,
               borderColor: colors.successBorder,
-              transform: [{ scale: readyPulse }],
             }}
           >
             <Text style={{ ...typography.label, color: colors.success }}>REWARD READY</Text>
-            <Text style={{ marginTop: 8, fontSize: 28, fontWeight: '800', color: colors.ink }}>🎉 {readyReward.title}</Text>
+            <Text style={{ marginTop: 8, fontSize: 28, fontWeight: '800', color: colors.ink }}>{readyReward.title}</Text>
             <Link href="/(customer)/rewards" asChild>
-              <Pressable
-                style={{
-                  marginTop: 16,
-                  backgroundColor: colors.primary,
-                  borderRadius: radius.button,
-                  paddingVertical: 14,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: colors.primaryText, fontWeight: '800', fontSize: 16 }}>Claim reward</Text>
-              </Pressable>
+              <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} />
             </Link>
-          </Animated.View>
+          </View>
         ) : null}
       </Animated.View>
-      </ScrollView>
-    </View>
+    </ScreenGradientLayout>
   )
 }

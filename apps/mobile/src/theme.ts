@@ -26,14 +26,63 @@ export const colors = {
 
 export const space = {
   screenX: 18,
+  headerBottom: 16,
   sectionY: 28,
+  sectionGap: 14,
   cardPad: 18,
+  cardGap: 12,
+  listGap: 14,
+} as const
+
+export const carousel = {
+  rewardCardPeek: 40,
+  rewardCardGap: 10,
+  rewardImageSize: 84,
+  cardPad: 14,
+} as const
+
+export const gradients = {
+  /** App-wide warm background — slate → lavender → soft peach → lavender → slate */
+  screen: ['#F8FAFC', '#EEF2FF', '#F5EFE4', '#FCF6E9', '#EEF2FF', '#F8FAFC'] as const,
+  screenLocations: [0, 0.2, 0.38, 0.55, 0.78, 1] as const,
+  /** Carousel reward card — soft white → lavender → peach → white */
+  carouselCard: ['#FFFFFF', '#F6F8FF', '#FDF8F0', '#FAF7FF', '#FFFFFF'] as const,
+  carouselCardLocations: [0, 0.3, 0.55, 0.8, 1] as const,
 } as const
 
 export const radius = {
   card: 22,
   button: 999,
   image: 20,
+  mediaTop: 20,
+} as const
+
+/** Shared cover image dimensions for list cards */
+export const media = {
+  coverHeight: 140,
+} as const
+
+export const motion = {
+  fadeInMs: 300,
+  pressScale: 0.985,
+  ctaPulseMax: 1.02,
+  ctaPulseMs: 900,
+  shadowPulseMin: 0.06,
+  shadowPulseMax: 0.14,
+  shadowPulseMs: 1400,
+  giftBellIntervalMs: 3000,
+  giftBellRotateDeg: 16,
+} as const
+
+/** Shared “reward ready” gift badge (ShakeGiftBadge) */
+export const rewardReady = {
+  iconName: 'gift' as const,
+  iconSize: 22,
+  badgeSize: 40,
+  badgeRadius: 12,
+  backgroundColor: colors.accentSoft,
+  borderColor: colors.accentBorder,
+  iconColor: colors.accent,
 } as const
 
 export const shadows = {
@@ -57,6 +106,13 @@ export const shadows = {
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
+  },
+  carousel: {
+    shadowColor: colors.ink,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
 } as const
 

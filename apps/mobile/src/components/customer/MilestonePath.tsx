@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Animated, Text, View } from 'react-native'
 
+import ShadowPulse from '../ui/ShadowPulse'
 import { colors } from '../../theme'
 
 interface MilestonePathProps {
@@ -8,18 +9,32 @@ interface MilestonePathProps {
   total: number
   milestoneStamp?: number
   milestoneStamps?: number[]
+  /** Stamp positions where the reward was redeemed — static, smaller cells */
+  claimedStamps?: number[]
   columns?: number
 }
 
-export default function MilestonePath({ collected, total, milestoneStamp, milestoneStamps, columns }: MilestonePathProps) {
+const CLAIMED_SIZE = 36
+const DEFAULT_SIZE = 44
+
+export default function MilestonePath({
+  collected,
+  total,
+  milestoneStamp,
+  milestoneStamps,
+  claimedStamps = [],
+  columns,
+}: MilestonePathProps) {
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
-  const stamps = Array.from({ length: total }, (_, index) => index + 1)
+  const claimed = new Set(claimedStamps)
   const giftPulse = useRef(new Animated.Value(1)).current
   const giftGlow = useRef(new Animated.Value(0.18)).current
   const giftLift = useRef(new Animated.Value(0)).current
 
+  const hasUpcomingGift = [...gifts].some((stamp) => !claimed.has(stamp))
+
   useEffect(() => {
-    if (!gifts.size) return
+    if (!hasUpcomingGift) return
     const loop = Animated.loop(
       Animated.parallel([
         Animated.sequence([
@@ -43,17 +58,22 @@ export default function MilestonePath({ collected, total, milestoneStamp, milest
       giftGlow.setValue(0.18)
       giftLift.setValue(0)
     }
-  }, [giftGlow, giftLift, giftPulse, gifts.size])
+  }, [giftGlow, giftLift, giftPulse, hasUpcomingGift])
 
   function renderCell(stamp: number) {
     const filled = stamp <= collected
     const isGift = gifts.has(stamp)
+    const isClaimed = isGift && claimed.has(stamp)
 
     let backgroundColor = '#FFFFFF'
     let borderColor = '#E2E8F0'
     let textColor = '#94A3B8'
 
-    if (isGift && filled) {
+    if (isClaimed) {
+      backgroundColor = colors.successBg
+      borderColor = colors.successBorder
+      textColor = colors.successText
+    } else if (isGift && filled) {
       backgroundColor = '#FEF3C7'
       borderColor = '#FDE68A'
       textColor = '#B45309'
@@ -67,15 +87,15 @@ export default function MilestonePath({ collected, total, milestoneStamp, milest
       textColor = '#FFFFFF'
     }
 
-    const content = isGift ? '🎁' : filled ? '✓' : String(stamp)
+    const size = isClaimed ? CLAIMED_SIZE : DEFAULT_SIZE
+    const content = isClaimed ? '✓' : isGift ? '🎁' : filled ? '✓' : String(stamp)
 
     const cell = (
       <View
-        key={stamp}
         style={{
-          width: 44,
-          height: 44,
-          borderRadius: 14,
+          width: size,
+          height: size,
+          borderRadius: isClaimed ? 12 : 14,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor,
@@ -83,9 +103,19 @@ export default function MilestonePath({ collected, total, milestoneStamp, milest
           borderColor,
         }}
       >
-        <Text style={{ fontSize: isGift ? 16 : 14, fontWeight: '800', color: textColor }}>{content}</Text>
+        <Text style={{ fontSize: isClaimed ? 14 : isGift ? 16 : 14, fontWeight: '800', color: textColor }}>
+          {content}
+        </Text>
       </View>
     )
+
+    if (isClaimed) {
+      return (
+        <ShadowPulse key={stamp}>
+          {cell}
+        </ShadowPulse>
+      )
+    }
 
     if (isGift) {
       return (
@@ -104,10 +134,11 @@ export default function MilestonePath({ collected, total, milestoneStamp, milest
       )
     }
 
-    return cell
+    return <View key={stamp}>{cell}</View>
   }
 
   if (columns && columns > 0) {
+    const stamps = Array.from({ length: total }, (_, index) => index + 1)
     const rows: number[][] = []
     for (let index = 0; index < stamps.length; index += columns) {
       rows.push(stamps.slice(index, index + columns))
@@ -130,6 +161,8 @@ export default function MilestonePath({ collected, total, milestoneStamp, milest
       </View>
     )
   }
+
+  const stamps = Array.from({ length: total }, (_, index) => index + 1)
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

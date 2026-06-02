@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 
+import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../src/lib/api'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors } from '../src/theme'
@@ -40,7 +41,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20, gap: 12, backgroundColor: colors.bg }}>
+    <ScreenGradientLayout scrollable tabBarInset={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+    <View style={{ padding: 20, gap: 12 }}>
       <Text style={{ fontSize: 28, fontWeight: '800' }}>Flotory Mobile</Text>
       <Text style={{ color: colors.inkMuted }}>
         {isRegisterMode ? 'Create your account' : 'Sign in'}
@@ -94,6 +96,7 @@ export default function LoginScreen() {
         </Text>
       </Pressable>
     </View>
+    </ScreenGradientLayout>
   )
 }
 

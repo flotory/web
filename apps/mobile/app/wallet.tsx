@@ -1,29 +1,31 @@
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  Image,
-  Pressable,
-  RefreshControl,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { Animated, FlatList, Image, RefreshControl, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
-import PrimaryButton from '../src/components/ui/PrimaryButton'
+import AnimatedSection from '../src/components/ui/AnimatedSection'
+import CoverImage from '../src/components/ui/CoverImage'
+import GradientCard from '../src/components/ui/GradientCard'
+import GradientOutlineButton from '../src/components/ui/GradientOutlineButton'
+import PressableCard from '../src/components/ui/PressableCard'
+import ScreenGradientLayout, { ScreenGradientLoading } from '../src/components/ui/ScreenGradientLayout'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
+import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
+import StateCard from '../src/components/ui/StateCard'
 import { apiRequest } from '../src/lib/api'
+import { walletCardProgressCopy } from '../src/lib/progressCopy'
 import { venueCoverUrl, venueLogoUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors, radius, shadows, space, type as typography } from '../src/theme'
+import { colors, radius, space, type as typography } from '../src/theme'
 import type { WalletCard } from '../src/types/loyalty'
+
+const WALLET_AVATAR = 44
+const WALLET_AVATAR_GAP = 10
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets()
+  const router = useRouter()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -66,17 +68,22 @@ export default function WalletScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <ScreenGradientLoading>
+        <ScreenSkeleton topInset={0} withSearch cardCount={3} />
+      </ScreenGradientLoading>
     )
   }
 
+  const filtered = cards.filter((item) => {
+    const query = search.trim().toLowerCase()
+    if (!query) return true
+    return (item.venue?.name ?? '').toLowerCase().includes(query)
+  })
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 12 }}>
+    <ScreenGradientLayout flexContent tabBarInset>
       <View style={{ paddingHorizontal: space.screenX }}>
         <ScreenHeader title="Wallet" subtitle="Your loyalty cards at joined venues." />
-        {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
         {cards.length > 0 ? (
           <TextInput
             value={search}
@@ -84,9 +91,9 @@ export default function WalletScreen() {
             placeholder="Search venues"
             placeholderTextColor={colors.inkSoft}
             style={{
-              marginTop: 14,
+              marginTop: space.sectionGap,
               backgroundColor: colors.surface,
-              borderRadius: 14,
+              borderRadius: radius.image,
               borderWidth: 1,
               borderColor: colors.border,
               paddingHorizontal: 14,
@@ -98,44 +105,48 @@ export default function WalletScreen() {
         ) : null}
       </View>
 
-      {cards.length === 0 ? (
-        <Animated.View
-          style={{
-            flex: 1,
-            opacity: fade,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: space.screenX,
-          }}
-        >
-          <Text style={{ fontSize: 56 }}>💳</Text>
-          <Text style={{ ...typography.section, marginTop: 16, textAlign: 'center' }}>No cards yet</Text>
-          <Text style={{ ...typography.body, marginTop: 8, textAlign: 'center' }}>
-            Discover venues and start collecting stamps.
-          </Text>
-          <Link href="/(customer)/venues" asChild>
-            <PrimaryButton label="Browse venues" style={{ marginTop: 24, paddingHorizontal: 28 }} />
-          </Link>
+      {error ? (
+        <AnimatedSection style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
+          <StateCard
+            emoji="⚠️"
+            title="Could not load wallet"
+            message="Check your connection and try again."
+            primaryAction={{ label: 'Try again', onPress: () => void load() }}
+            secondaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+          />
+        </AnimatedSection>
+      ) : cards.length === 0 ? (
+        <Animated.View style={{ flex: 1, opacity: fade, justifyContent: 'center', paddingHorizontal: space.screenX }}>
+          <StateCard
+            emoji="💳"
+            title="No cards yet"
+            message="Discover venues nearby and start collecting visits toward your first reward."
+            primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+          />
         </Animated.View>
       ) : (
-        <Animated.View style={{ flex: 1, opacity: fade, marginTop: 18 }}>
+        <Animated.View style={{ flex: 1, opacity: fade, marginTop: space.headerBottom }}>
           <FlatList
-            contentContainerStyle={{ paddingHorizontal: space.screenX, paddingBottom: insets.bottom + 18, gap: 12 }}
+            contentContainerStyle={{ paddingHorizontal: space.screenX, paddingBottom: insets.bottom + 18, gap: space.cardGap }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
-            data={cards.filter((item) => {
-              const query = search.trim().toLowerCase()
-              if (!query) return true
-              return (item.venue?.name ?? '').toLowerCase().includes(query)
-            })}
+            data={filtered}
             keyExtractor={(item) => String(item.id)}
+            ListEmptyComponent={
+              <StateCard
+                emoji="🔍"
+                title="No matches"
+                message="Try a different venue name."
+                primaryAction={{ label: 'Clear search', onPress: () => setSearch('') }}
+              />
+            }
             renderItem={({ item }) => {
               const summary = item.summary
               const max = summary?.max_stamps ?? 10
               const stamps = summary?.stamps ?? item.stamps
               const toNext = summary?.stamps_to_next ?? Math.max(max - stamps, 0)
               const nextTitle = summary?.next_reward_title ?? 'your reward'
-              const cover = venueCoverUrl(item.venue ?? undefined)
               const logo = venueLogoUrl(item.venue ?? undefined)
+              const progress = walletCardProgressCopy(stamps, max, toNext, nextTitle)
 
               return (
                 <Link
@@ -145,27 +156,14 @@ export default function WalletScreen() {
                   }}
                   asChild
                 >
-                  <Pressable
-                    style={{
-                      backgroundColor: colors.surface,
-                      borderRadius: radius.card,
-                      overflow: 'hidden',
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      ...shadows.md,
-                    }}
-                  >
-                    {cover ? (
-                      <Image source={{ uri: cover }} style={{ width: '100%', height: 122 }} resizeMode="cover" />
-                    ) : (
-                      <View style={{ height: 122, backgroundColor: colors.surfaceMuted }} />
-                    )}
-                    <View style={{ padding: 14 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: cover ? -24 : 0 }}>
+                  <PressableCard style={{ backgroundColor: 'transparent' }}>
+                    <GradientCard
+                      header={<CoverImage uri={venueCoverUrl(item.venue ?? undefined)} />}
+                      overlap={
                         <View
                           style={{
-                            width: 44,
-                            height: 44,
+                            width: WALLET_AVATAR,
+                            height: WALLET_AVATAR,
                             borderRadius: 12,
                             backgroundColor: colors.surfaceMuted,
                             borderWidth: 2,
@@ -176,32 +174,38 @@ export default function WalletScreen() {
                           }}
                         >
                           {logo ? (
-                            <Image source={{ uri: logo }} style={{ width: 44, height: 44 }} />
+                            <Image source={{ uri: logo }} style={{ width: WALLET_AVATAR, height: WALLET_AVATAR }} />
                           ) : (
                             <Text style={{ fontSize: 20 }}>☕</Text>
                           )}
                         </View>
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.plum, flex: 1 }}>
+                      }
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          height: WALLET_AVATAR,
+                          marginBottom: space.sectionGap,
+                        }}
+                      >
+                        <View style={{ width: WALLET_AVATAR + WALLET_AVATAR_GAP }} />
+                        <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: colors.plum }} numberOfLines={1}>
                           {item.venue?.name ?? 'Venue'}
                         </Text>
                       </View>
-                      <View style={{ marginTop: 12 }}>
-                        <ProgressBar value={stamps} max={max} />
-                      </View>
-                      <Text style={{ marginTop: 8, fontSize: 15, fontWeight: '700', color: colors.ink }}>
-                        {stamps} / {max} stamps
-                      </Text>
-                      <Text style={{ ...typography.caption, marginTop: 4 }}>
-                        {toNext > 0 ? `${nextTitle} in ${toNext} stamp${toNext === 1 ? '' : 's'}` : `${nextTitle} ready`}
-                      </Text>
-                    </View>
-                  </Pressable>
+                      <ProgressBar value={stamps} max={max} />
+                      <Text style={{ marginTop: 8, fontSize: 15, fontWeight: '700', color: colors.ink }}>{progress.primary}</Text>
+                      <Text style={{ ...typography.caption, marginTop: 4 }}>{progress.secondary}</Text>
+                      <GradientOutlineButton label="View progress" />
+                    </GradientCard>
+                  </PressableCard>
                 </Link>
               )
             }}
           />
         </Animated.View>
       )}
-    </View>
+    </ScreenGradientLayout>
   )
 }

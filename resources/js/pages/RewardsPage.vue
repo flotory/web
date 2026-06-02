@@ -15,7 +15,7 @@ import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { rewardImageUrl } from '@/lib/rewardMedia'
 import { toast } from '@/lib/toast'
-import { useAuthStore } from '@/stores/auth'
+﻿import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
 
