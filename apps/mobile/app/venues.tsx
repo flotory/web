@@ -24,6 +24,7 @@ interface DiscoverVenue {
   name: string
   slug: string
   cover_image?: string | null
+  cover_image_thumb?: string | null
   category?: string | null
   joined_count?: number
   rewards_count?: number
@@ -31,7 +32,7 @@ interface DiscoverVenue {
 
 export default function VenuesScreen() {
   const insets = useSafeAreaInsets()
-  const refreshInsetTop = insets.top + 12
+  const refreshOffset = insets.top + 164
   const { token, role } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -125,9 +126,7 @@ export default function VenuesScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentInset={{ top: refreshInsetTop }}
-      contentOffset={{ x: 0, y: -refreshInsetTop }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void load(true)} tintColor={colors.primary} />}
       contentContainerStyle={{
         paddingTop: 12,
         paddingBottom: insets.bottom + 28,
@@ -190,13 +189,13 @@ export default function VenuesScreen() {
                       <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{item.name}</Text>
                       <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
                         {item.category ? (
-                          <View style={{ backgroundColor: colors.lavender, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
                             <Text style={{ ...typography.caption, color: colors.primary, textTransform: 'capitalize' }}>
                               {item.category}
                             </Text>
                           </View>
                         ) : null}
-                        <View style={{ backgroundColor: colors.lavender, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+                        <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
                           <Text style={{ ...typography.caption, color: colors.primary }}>Nearby</Text>
                         </View>
                       </View>

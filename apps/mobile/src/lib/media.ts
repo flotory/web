@@ -80,8 +80,8 @@ function pickStable(list: string[], seed: string): string {
   return list[hashSeed(seed) % list.length] ?? list[0]
 }
 
-export function venueCoverUrl(venue?: { cover_image?: string | null; category?: string | null; name?: string | null }) {
-  const uploaded = resolveMediaUrl(venue?.cover_image)
+export function venueCoverUrl(venue?: { cover_image?: string | null; cover_image_thumb?: string | null; category?: string | null; name?: string | null }) {
+  const uploaded = resolveMediaUrl(venue?.cover_image_thumb ?? venue?.cover_image)
   if (uploaded) return uploaded
   const category = normalizeCategory(venue?.category)
   return resolveMediaUrl(pickStable(VENUE_COVER_DEFAULTS[category], venue?.name ?? category))
@@ -95,7 +95,7 @@ export function venueLogoUrl(venue?: { logo?: string | null; logo_thumb?: string
 }
 
 export function rewardImageUrl(reward?: { image?: string | null; image_thumb?: string | null; title?: string | null }) {
-  const uploaded = resolveMediaUrl(reward?.image ?? reward?.image_thumb)
+  const uploaded = resolveMediaUrl(reward?.image_thumb ?? reward?.image)
   if (uploaded) return uploaded
   const title = (reward?.title ?? '').toLowerCase()
   if (title.includes('coffee') || title.includes('drink')) return resolveMediaUrl(REWARD_DEFAULTS.drink)

@@ -189,7 +189,7 @@ export default function CustomerHomeScreen() {
   const pendingCount = readyItems.length
   const nextTitle = priorityCard?.summary?.next_reward_title ?? 'your next reward'
   const stampsLeft = priorityCard?.summary?.stamps_to_next ?? null
-  const refreshInsetTop = insets.top + 12
+  const refreshOffset = insets.top + 140
   const homeInk = colors.ink
   const homeMuted = colors.inkMuted
   const homeBorder = colors.border
@@ -198,9 +198,7 @@ export default function CustomerHomeScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentInset={{ top: refreshInsetTop }}
-      contentOffset={{ x: 0, y: -refreshInsetTop }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => {
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => {
         if (!token || role !== 'customer') return
         setRefreshing(true)
         setError('')
@@ -238,7 +236,7 @@ export default function CustomerHomeScreen() {
         }).catch(() => setError('Could not refresh your home.')).finally(() => setRefreshing(false))
       }} tintColor={colors.primary} />}
       contentContainerStyle={{
-        paddingTop: 12,
+        paddingTop: insets.top + 12,
         paddingBottom: insets.bottom + 28,
         paddingHorizontal: space.screenX,
       }}

@@ -105,8 +105,8 @@ export default function ClaimScreen() {
 
       {session?.status === 'pending' ? (
         <>
-          <View style={{ marginTop: 16, backgroundColor: colors.lavender, borderRadius: radius.card, borderWidth: 1, borderColor: colors.lavenderBorder, overflow: 'hidden' }}>
-            <View style={{ padding: 18, backgroundColor: colors.lavenderBorder }}>
+          <View style={{ marginTop: 16, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+            <View style={{ padding: 18, backgroundColor: colors.surfaceMuted }}>
               <Text style={{ ...typography.label, color: colors.primary }}>REWARD TICKET</Text>
               <Text style={{ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum }}>{session.reward.title}</Text>
               <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{session.venue?.name ?? 'Your venue'}</Text>

@@ -159,10 +159,12 @@ export default function RewardsScreen() {
     )
   }
 
+  const refreshOffset = insets.top + 116
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={insets.top + 24} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />}
       contentContainerStyle={{
         paddingTop: insets.top + 12,
         paddingBottom: insets.bottom + 28,
@@ -211,11 +213,11 @@ export default function RewardsScreen() {
                   <CardWrapper key={item.unlock_id} {...wrapperProps}>
                     <View
                       style={{
-                        backgroundColor: colors.lavender,
+                        backgroundColor: colors.surface,
                         borderRadius: radius.card,
                         overflow: 'hidden',
                         borderWidth: 1,
-                        borderColor: colors.lavenderBorder,
+                        borderColor: colors.border,
                       }}
                     >
                       {image ? (

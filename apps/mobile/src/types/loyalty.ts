@@ -14,6 +14,7 @@ export interface VenueRef {
   logo?: string | null
   logo_thumb?: string | null
   cover_image?: string | null
+  cover_image_thumb?: string | null
   category?: string | null
   address?: string | null
 }

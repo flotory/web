@@ -19,7 +19,7 @@ export default function RewardJourneyRibbon({ value, target, checkpoints = [] }:
         style={{
           height: 14,
           borderRadius: 999,
-          backgroundColor: '#E2E8F0',
+          backgroundColor: colors.surfaceMuted,
           overflow: 'hidden',
         }}
       >
@@ -45,16 +45,16 @@ export default function RewardJourneyRibbon({ value, target, checkpoints = [] }:
                 paddingVertical: 4,
                 paddingHorizontal: 9,
                 borderRadius: 999,
-                backgroundColor: unlocked ? '#FEF3C7' : '#F8FAFC',
+                backgroundColor: unlocked ? colors.accentSoft : colors.surface,
                 borderWidth: 1,
-                borderColor: unlocked ? '#FDE68A' : '#E2E8F0',
+                borderColor: unlocked ? colors.accentBorder : colors.border,
               }}
             >
               <Text
                 style={{
                   fontSize: 11,
                   fontWeight: '700',
-                  color: unlocked ? '#B45309' : '#64748B',
+                  color: unlocked ? colors.accent : colors.inkMuted,
                 }}
               >
                 {isNext ? `Next ${checkpoint}` : unlocked ? `Unlocked ${checkpoint}` : `${checkpoint}`}

@@ -38,7 +38,7 @@ export default function CardDetailScreen() {
   }
 
   const insets = useSafeAreaInsets()
-  const refreshInsetTop = insets.top + 12
+  const refreshOffset = insets.top + 120
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const { token } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -131,9 +131,7 @@ export default function CardDetailScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentInset={{ top: refreshInsetTop }}
-      contentOffset={{ x: 0, y: -refreshInsetTop }}
-      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshInsetTop + 56} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} progressViewOffset={refreshOffset} onRefresh={() => void load(true)} tintColor={colors.primary} />}
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
     >
       <Pressable onPress={handleBack} style={{ paddingTop: insets.top + 8, paddingHorizontal: space.screenX }}>
