@@ -29,7 +29,7 @@ app/
   Support/                   VenueAccess authorization
 
 resources/js/
-  components/                UI + loyalty (SwipeToRedeem, VenueFilter, …)
+  components/                UI + loyalty (ClaimRewardModal, VenueFilter, …)
   composables/               useAsyncAction, useVenueTeam
   layouts/                   AppShell (owner vs staff vs customer nav)
   lib/                       api, onboarding, redirect, toast, realtime
