@@ -12,10 +12,8 @@ interface MilestonePathProps {
   /** Stamp positions where the reward was redeemed — static, smaller cells */
   claimedStamps?: number[]
   columns?: number
+  sizeScale?: number
 }
-
-const CLAIMED_SIZE = 36
-const DEFAULT_SIZE = 44
 
 export default function MilestonePath({
   collected,
@@ -24,14 +22,17 @@ export default function MilestonePath({
   milestoneStamps,
   claimedStamps = [],
   columns,
+  sizeScale = 1,
 }: MilestonePathProps) {
+  const defaultSize = Math.round(44 * sizeScale)
+  const cellGap = Math.round(8 * sizeScale)
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
   const claimed = new Set(claimedStamps)
   const giftPulse = useRef(new Animated.Value(1)).current
   const giftGlow = useRef(new Animated.Value(0.18)).current
   const giftLift = useRef(new Animated.Value(0)).current
 
-  const hasUpcomingGift = [...gifts].some((stamp) => !claimed.has(stamp))
+  const hasUpcomingGift = [...gifts].some((stamp) => stamp > collected && !claimed.has(stamp))
 
   useEffect(() => {
     if (!hasUpcomingGift) return
@@ -69,33 +70,25 @@ export default function MilestonePath({
     let borderColor = '#E2E8F0'
     let textColor = '#94A3B8'
 
-    if (isClaimed) {
+    if (filled) {
       backgroundColor = colors.successBg
       borderColor = colors.successBorder
       textColor = colors.successText
-    } else if (isGift && filled) {
-      backgroundColor = '#FEF3C7'
-      borderColor = '#FDE68A'
-      textColor = '#B45309'
     } else if (isGift) {
       backgroundColor = '#F1F5F9'
       borderColor = '#E2E8F0'
       textColor = '#94A3B8'
-    } else if (filled) {
-      backgroundColor = colors.ink
-      borderColor = colors.ink
-      textColor = '#FFFFFF'
     }
 
-    const size = isClaimed ? CLAIMED_SIZE : DEFAULT_SIZE
-    const content = isClaimed ? '✓' : isGift ? '🎁' : filled ? '✓' : String(stamp)
+    const size = defaultSize
+    const content = filled ? '✓' : isGift ? '🎁' : String(stamp)
 
     const cell = (
       <View
         style={{
           width: size,
           height: size,
-          borderRadius: isClaimed ? 12 : 14,
+          borderRadius: Math.round(14 * sizeScale),
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor,
@@ -103,7 +96,7 @@ export default function MilestonePath({
           borderColor,
         }}
       >
-        <Text style={{ fontSize: isClaimed ? 14 : isGift ? 16 : 14, fontWeight: '800', color: textColor }}>
+        <Text style={{ fontSize: Math.round((filled ? 14 : isGift ? 16 : 14) * sizeScale), fontWeight: '800', color: textColor }}>
           {content}
         </Text>
       </View>
@@ -117,7 +110,7 @@ export default function MilestonePath({
       )
     }
 
-    if (isGift) {
+    if (isGift && !filled) {
       return (
         <Animated.View
           key={stamp}
@@ -145,9 +138,9 @@ export default function MilestonePath({
     }
 
     return (
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: cellGap }}>
         {rows.map((row, rowIndex) => (
-          <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: 8 }}>
+          <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: cellGap }}>
             {row.map((stamp) => (
               <View key={stamp} style={{ flex: 1, alignItems: 'center' }}>
                 {renderCell(stamp)}
@@ -165,7 +158,7 @@ export default function MilestonePath({
   const stamps = Array.from({ length: total }, (_, index) => index + 1)
 
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: cellGap }}>
       {stamps.map((stamp) => renderCell(stamp))}
     </View>
   )

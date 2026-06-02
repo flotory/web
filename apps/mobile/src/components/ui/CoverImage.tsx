@@ -5,15 +5,16 @@ import ImageWithOverlay from './ImageWithOverlay'
 
 interface CoverImageProps {
   uri?: string | null
+  height?: number
 }
 
-export default function CoverImage({ uri }: CoverImageProps) {
+export default function CoverImage({ uri, height = media.coverHeight }: CoverImageProps) {
   if (!uri) {
     return (
       <View
         style={{
           width: '100%',
-          height: media.coverHeight,
+          height,
           backgroundColor: colors.surfaceMuted,
         }}
       />
@@ -25,7 +26,7 @@ export default function CoverImage({ uri }: CoverImageProps) {
       uri={uri}
       style={{
         width: '100%',
-        height: media.coverHeight,
+        height,
         borderTopLeftRadius: radius.mediaTop,
         borderTopRightRadius: radius.mediaTop,
       }}

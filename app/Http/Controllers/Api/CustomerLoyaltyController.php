@@ -66,6 +66,14 @@ class CustomerLoyaltyController extends Controller
             'active_card' => $activeCard,
             'next_reward' => $activeCard ? $loyalty->nextRewardFor($activeCard) : null,
             'available_rewards' => $activeCard ? $loyalty->availableRewardsFor($activeCard) : [],
+            'pending_unlocks' => $activeCard
+                ? $loyalty->pendingUnlocksFor($activeCard)
+                    ->map(fn (RewardUnlock $unlock): array => [
+                        'unlock_id' => $unlock->id,
+                        'reward' => $unlock->reward,
+                    ])
+                    ->values()
+                : [],
             'journey' => $activeCard ? $loyalty->journeyFor($activeCard) : null,
             'recent_visits' => $activeCard ? $activeCard->visits()->latest()->limit(10)->get() : [],
             'pending_rewards_count' => $cards->sum(

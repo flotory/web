@@ -12,6 +12,7 @@ export interface CardDetailPayload {
   active_card: WalletCard | null
   next_reward: RewardRef | null
   available_rewards: RewardRef[]
+  pending_unlocks?: { unlock_id: number; reward: RewardRef }[]
   journey: RewardJourney | null
   recent_visits?: import('../types/loyalty').VisitRow[]
 }
@@ -125,13 +126,26 @@ export async function fetchRewardsWallet(token: string, fresh = false): Promise<
   return fetchWithCache(key, () => apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }), fresh)
 }
 
+function pendingUnlocksForVenue(wallet: RewardsWalletResponse, venueId: string) {
+  const id = Number(venueId)
+  return wallet.items
+    .filter((item) => item.customer.venue_id === id)
+    .map((item) => ({ unlock_id: item.unlock_id, reward: item.reward }))
+}
+
 export async function fetchCardDetail(token: string, venueId: string, fresh = false): Promise<CardDetailPayload> {
   const key = `${cacheKey('customer', token)}:card:${venueId}`
-  return fetchWithCache(
+  const detail = await fetchWithCache(
     key,
     () => apiRequest<CardDetailPayload>(`/customer/cards?venue_id=${venueId}`, { token }),
     fresh,
   )
+
+  const pending_unlocks = detail.pending_unlocks?.length
+    ? detail.pending_unlocks
+    : pendingUnlocksForVenue(await fetchRewardsWallet(token, fresh), venueId)
+
+  return { ...detail, pending_unlocks }
 }
 
 export async function fetchRewardsOverview(token: string, fresh = false): Promise<RewardsOverviewData> {
