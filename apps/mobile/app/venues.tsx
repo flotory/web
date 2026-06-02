@@ -1,92 +1,33 @@
-import { Link, useFocusEffect, useRouter } from 'expo-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Animated,
-  Pressable,
-  RefreshControl,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { Link, useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import { Animated, Pressable, Text, TextInput, View } from 'react-native'
 
 import CoverImage from '../src/components/ui/CoverImage'
+import CustomerScreen from '../src/components/ui/CustomerScreen'
 import GradientCard from '../src/components/ui/GradientCard'
 import GradientOutlineButton from '../src/components/ui/GradientOutlineButton'
-import ScreenGradientLayout, { ScreenGradientLoading } from '../src/components/ui/ScreenGradientLayout'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
-import { apiRequest } from '../src/lib/api'
+import { useDiscoverVenues } from '../src/hooks/useDiscoverVenues'
+import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
+import { joinVenueBySlug } from '../src/lib/customerData'
 import { hapticSuccess } from '../src/lib/haptics'
 import { venueCoverUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
-import type { WalletCard } from '../src/types/loyalty'
-
-interface DiscoverVenue {
-  id: number
-  name: string
-  slug: string
-  cover_image?: string | null
-  cover_image_thumb?: string | null
-  category?: string | null
-  joined_count?: number
-  rewards_count?: number
-}
 
 export default function VenuesScreen() {
   const router = useRouter()
   const { token, role } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState('')
+  const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
   const [joiningSlug, setJoiningSlug] = useState<string | null>(null)
-  const [venues, setVenues] = useState<DiscoverVenue[]>([])
-  const [cardsByVenue, setCardsByVenue] = useState<Record<number, WalletCard>>({})
+  const [joinError, setJoinError] = useState('')
   const [search, setSearch] = useState('')
-  const fade = useRef(new Animated.Value(0)).current
+  const fade = useFadeOnReady(!loading)
 
-  async function load(isRefresh = false) {
-    if (!token) return
-    if (isRefresh) {
-      setRefreshing(true)
-    } else {
-      setLoading(true)
-    }
-    setError('')
-    try {
-      const [discoverResponse, cardsResponse] = await Promise.all([
-        apiRequest<{ venues: DiscoverVenue[] }>('/venues/discover', { token }),
-        apiRequest<{ cards: WalletCard[] }>('/customer/cards', { token }).catch(() => ({ cards: [] })),
-      ])
-      setVenues(discoverResponse.venues)
-      const map: Record<number, WalletCard> = {}
-      for (const card of cardsResponse.cards) {
-        map[card.venue_id] = card
-      }
-      setCardsByVenue(map)
-    } catch {
-      setError('Could not load venues.')
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false)
-      } else {
-        setLoading(false)
-      }
-    }
-  }
-
-  useFocusEffect(
-    useCallback(() => {
-      void load()
-    }, [token]),
-  )
-
-  useEffect(() => {
-    if (loading) return
-    fade.setValue(0)
-    Animated.timing(fade, { toValue: 1, duration: 280, useNativeDriver: true }).start()
-  }, [fade, loading])
+  const venues = data?.venues ?? []
+  const cardsByVenue = data?.cardsByVenue ?? {}
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -100,12 +41,13 @@ export default function VenuesScreen() {
   async function joinVenue(slug: string) {
     if (!token) return
     setJoiningSlug(slug)
+    setJoinError('')
     try {
-      await apiRequest(`/venues/${slug}/join`, { method: 'POST', token })
+      await joinVenueBySlug(token, slug)
       hapticSuccess()
-      await load()
+      await reload()
     } catch {
-      setError('Could not join venue.')
+      setJoinError('Could not join venue.')
     } finally {
       setJoiningSlug(null)
     }
@@ -119,138 +61,149 @@ export default function VenuesScreen() {
     )
   }
 
-  if (loading) {
-    return (
-      <ScreenGradientLoading>
-        <ScreenSkeleton topInset={0} withSearch cardCount={3} />
-      </ScreenGradientLoading>
-    )
-  }
+  const header = (
+    <View style={{ paddingHorizontal: space.screenX }}>
+      <ScreenHeader title="Discover" subtitle="Find your next favorite reward spot." />
+      <TextInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search venues"
+        placeholderTextColor={colors.inkSoft}
+        style={{
+          marginTop: space.sectionGap,
+          backgroundColor: colors.surface,
+          borderRadius: radius.image,
+          borderWidth: 1,
+          borderColor: colors.border,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          fontSize: 16,
+          color: colors.ink,
+        }}
+      />
+    </View>
+  )
 
   return (
-    <ScreenGradientLayout
+    <CustomerScreen
+      loading={loading}
+      error={error}
       scrollable
       tabBarInset
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
+      refreshing={refreshing}
+      onRefresh={refresh}
+      header={header}
+      skeleton={<ScreenSkeleton topInset={0} withSearch cardCount={3} />}
+      errorState={
+        error
+          ? {
+              title: 'Could not load venues',
+              message: 'Check your connection and try again.',
+              primaryLabel: 'Try again',
+              onPrimary: reload,
+              secondaryLabel: 'Open wallet',
+              onSecondary: () => router.push('/(customer)/wallet'),
+            }
+          : undefined
+      }
     >
-      <View style={{ paddingHorizontal: space.screenX }}>
-        <ScreenHeader title="Discover" subtitle="Find your next favorite reward spot." />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search venues"
-          placeholderTextColor={colors.inkSoft}
-          style={{
-            marginTop: space.sectionGap,
-            backgroundColor: colors.surface,
-            borderRadius: radius.image,
-            borderWidth: 1,
-            borderColor: colors.border,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            fontSize: 16,
-            color: colors.ink,
-          }}
-        />
-      </View>
-
-      {error ? (
-        <View style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
-          <StateCard
-            emoji="⚠️"
-            title="Could not load venues"
-            message="Check your connection and try again."
-            primaryAction={{ label: 'Try again', onPress: () => void load(true) }}
-            secondaryAction={{ label: 'Open wallet', onPress: () => router.push('/(customer)/wallet') }}
-          />
-        </View>
-      ) : null}
-
+      {!error ? (
         <Animated.View
           style={{
             opacity: fade,
-            marginTop: error ? space.sectionGap : space.headerBottom,
+            marginTop: space.headerBottom,
             paddingHorizontal: space.screenX,
           }}
         >
-          <View style={{ gap: space.listGap }}>
-          {filtered.map((item) => {
-            const joined = (item.joined_count ?? 0) > 0
-            const cover = venueCoverUrl(item)
-            const offer =
-              (item.rewards_count ?? 0) > 0
-                ? 'Earn visits and unlock your first reward'
-                : 'Join to start earning rewards'
+          {joinError ? (
+            <View style={{ marginBottom: space.sectionGap }}>
+              <StateCard
+                emoji="⚠️"
+                title="Could not join"
+                message={joinError}
+                primaryAction={{ label: 'Try again', onPress: () => setJoinError('') }}
+              />
+            </View>
+          ) : null}
 
-            return (
-              <GradientCard key={item.id} header={<CoverImage uri={cover} />}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{item.name}</Text>
-                    <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
-                      {item.category ? (
+          <View style={{ gap: space.listGap }}>
+            {filtered.map((item) => {
+              const joined = (item.joined_count ?? 0) > 0
+              const cover = venueCoverUrl(item)
+              const offer =
+                (item.rewards_count ?? 0) > 0
+                  ? 'Earn visits and unlock your first reward'
+                  : 'Join to start earning rewards'
+
+              return (
+                <GradientCard key={item.id} header={<CoverImage uri={cover} />}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{item.name}</Text>
+                      <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
+                        {item.category ? (
+                          <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
+                            <Text style={{ ...typography.caption, color: colors.primary, textTransform: 'capitalize' }}>
+                              {item.category}
+                            </Text>
+                          </View>
+                        ) : null}
                         <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
-                          <Text style={{ ...typography.caption, color: colors.primary, textTransform: 'capitalize' }}>
-                            {item.category}
-                          </Text>
+                          <Text style={{ ...typography.caption, color: colors.primary }}>Nearby</Text>
                         </View>
-                      ) : null}
-                      <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
-                        <Text style={{ ...typography.caption, color: colors.primary }}>Nearby</Text>
                       </View>
                     </View>
+                    {joined ? (
+                      <View
+                        style={{
+                          backgroundColor: colors.successBg,
+                          borderRadius: radius.button,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderWidth: 1,
+                          borderColor: colors.successBorder,
+                        }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.success }}>Joined</Text>
+                      </View>
+                    ) : null}
                   </View>
+                  <Text style={{ ...typography.body, marginTop: 10, color: colors.plum, fontWeight: '600' }}>{offer}</Text>
                   {joined ? (
-                    <View
-                      style={{
-                        backgroundColor: colors.successBg,
-                        borderRadius: radius.button,
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
-                        borderWidth: 1,
-                        borderColor: colors.successBorder,
-                      }}
+                    <Link
+                      href={
+                        cardsByVenue[item.id]
+                          ? {
+                              pathname: '/card/[cardId]',
+                              params: {
+                                cardId: String(cardsByVenue[item.id].id),
+                                venueId: String(item.id),
+                              },
+                            }
+                          : '/(customer)/wallet'
+                      }
+                      asChild
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.success }}>Joined</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={{ ...typography.body, marginTop: 10, color: colors.plum, fontWeight: '600' }}>{offer}</Text>
-                {joined ? (
-                  <Link
-                    href={
-                      cardsByVenue[item.id]
-                        ? {
-                            pathname: '/card/[cardId]',
-                            params: {
-                              cardId: String(cardsByVenue[item.id].id),
-                              venueId: String(item.id),
-                            },
-                          }
-                        : '/(customer)/wallet'
-                    }
-                    asChild
-                  >
-                    <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.97 : 1 })}>
-                      <GradientOutlineButton label="Continue collecting" />
+                      <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.97 : 1 })}>
+                        <GradientOutlineButton label="Continue collecting" />
+                      </Pressable>
+                    </Link>
+                  ) : (
+                    <Pressable
+                      onPress={() => void joinVenue(item.slug)}
+                      disabled={joiningSlug === item.slug}
+                      style={({ pressed }) => ({ opacity: pressed || joiningSlug === item.slug ? 0.97 : 1 })}
+                    >
+                      <GradientOutlineButton
+                        label={joiningSlug === item.slug ? 'Joining…' : 'Join venue'}
+                        style={joiningSlug === item.slug ? { opacity: 0.65 } : undefined}
+                      />
                     </Pressable>
-                  </Link>
-                ) : (
-                  <Pressable
-                    onPress={() => void joinVenue(item.slug)}
-                    disabled={joiningSlug === item.slug}
-                    style={({ pressed }) => ({ opacity: pressed || joiningSlug === item.slug ? 0.97 : 1 })}
-                  >
-                    <GradientOutlineButton
-                      label={joiningSlug === item.slug ? 'Joining…' : 'Join venue'}
-                      style={joiningSlug === item.slug ? { opacity: 0.65 } : undefined}
-                    />
-                  </Pressable>
-                )}
-              </GradientCard>
-            )
-          })}
-        </View>
+                  )}
+                </GradientCard>
+              )
+            })}
+          </View>
 
           {!filtered.length ? (
             <View style={{ marginTop: space.sectionY }}>
@@ -263,6 +216,7 @@ export default function VenuesScreen() {
             </View>
           ) : null}
         </Animated.View>
-    </ScreenGradientLayout>
+      ) : null}
+    </CustomerScreen>
   )
 }

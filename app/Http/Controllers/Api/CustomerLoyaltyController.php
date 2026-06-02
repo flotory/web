@@ -21,7 +21,10 @@ class CustomerLoyaltyController extends Controller
     {
         $cards = Customer::query()
             ->where('user_id', $request->user()->id)
-            ->with('venue')
+            ->with([
+                'venue',
+                'visits' => fn ($query) => $query->latest()->limit(2),
+            ])
             ->orderBy('venue_id')
             ->get();
 
@@ -29,11 +32,36 @@ class CustomerLoyaltyController extends Controller
             ? $cards->firstWhere('venue_id', $request->integer('venue_id'))
             : $cards->first();
 
-        return response()->json([
+        $isList = ! $request->integer('venue_id');
+
+        $claimedHistory = $isList
+            ? RewardUnlock::query()
+                ->whereIn('customer_id', $cards->pluck('id'))
+                ->whereNotNull('claimed_at')
+                ->with('reward:id,title')
+                ->orderByDesc('claimed_at')
+                ->limit(12)
+                ->get()
+                ->map(fn (RewardUnlock $unlock): array => [
+                    'id' => "{$unlock->customer_id}-{$unlock->reward_id}-{$unlock->cycle_number}",
+                    'card_id' => $unlock->customer_id,
+                    'title' => $unlock->reward->title,
+                    'claimed_at' => $unlock->claimed_at,
+                ])
+                ->values()
+            : collect();
+
+        $payload = [
             'cards' => $cards->map(fn (Customer $card): array => [
                 ...$card->toArray(),
                 'venue' => $card->venue,
                 'summary' => $loyalty->cardListSummary($card),
+                ...($isList ? [
+                    'recent_visits' => $card->visits->map(fn ($visit): array => [
+                        'id' => $visit->id,
+                        'created_at' => $visit->created_at,
+                    ])->values(),
+                ] : []),
             ])->values(),
             'active_card' => $activeCard,
             'next_reward' => $activeCard ? $loyalty->nextRewardFor($activeCard) : null,
@@ -43,7 +71,13 @@ class CustomerLoyaltyController extends Controller
             'pending_rewards_count' => $cards->sum(
                 fn (Customer $card): int => $loyalty->pendingRewardCountFor($card),
             ),
-        ]);
+        ];
+
+        if ($isList) {
+            $payload['claimed_history'] = $claimedHistory;
+        }
+
+        return response()->json($payload);
     }
 
     public function wallet(Request $request, LoyaltyStampService $loyalty): JsonResponse

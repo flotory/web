@@ -81,11 +81,12 @@ export default function CustomerScreen({
   return (
     <ScreenGradientLayout
       scrollable={scrollable}
+      fixedHeader={scrollable && header ? header : undefined}
       flexContent={flexContent}
       tabBarInset={tabBarInset}
       refreshControl={refreshControl}
     >
-      {header}
+      {!scrollable ? header : null}
       {error && errorState ? (
         <View style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
           <CustomerScreenError {...errorState} />

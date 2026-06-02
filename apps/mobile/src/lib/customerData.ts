@@ -1,4 +1,4 @@
-import type { ActivityRow, RewardJourney, RewardRef, RewardWalletItem, VisitRow, WalletCard } from '../types/loyalty'
+import type { ActivityRow, ApiClaimedReward, RewardJourney, RewardRef, RewardWalletItem, WalletCard } from '../types/loyalty'
 import { apiRequest } from './api'
 import { formatRelativeTime } from './format'
 import { fetchWithCache, invalidateCache } from './resourceCache'
@@ -13,7 +13,7 @@ export interface CardDetailPayload {
   next_reward: RewardRef | null
   available_rewards: RewardRef[]
   journey: RewardJourney | null
-  recent_visits?: VisitRow[]
+  recent_visits?: import('../types/loyalty').VisitRow[]
 }
 
 export interface ClaimedRewardRow {
@@ -22,10 +22,32 @@ export interface ClaimedRewardRow {
   claimedAt: string
 }
 
+export interface CustomerCardsListResponse {
+  cards: WalletCard[]
+  claimed_history: ApiClaimedReward[]
+  pending_rewards_count?: number
+}
+
 export interface RewardsOverviewData {
   readyItems: RewardWalletItem[]
   inProgress: WalletCard[]
   claimed: ClaimedRewardRow[]
+}
+
+export interface DiscoverVenue {
+  id: number
+  name: string
+  slug: string
+  cover_image?: string | null
+  cover_image_thumb?: string | null
+  category?: string | null
+  joined_count?: number
+  rewards_count?: number
+}
+
+export interface DiscoverVenuesData {
+  venues: DiscoverVenue[]
+  cardsByVenue: Record<number, WalletCard>
 }
 
 function cacheKey(scope: string, token: string) {
@@ -36,9 +58,65 @@ export function invalidateCustomerCaches(token: string) {
   invalidateCache(cacheKey('customer', token))
 }
 
-export async function fetchCustomerCards(token: string, fresh = false): Promise<WalletCard[]> {
+export function mapClaimedHistory(rows: ApiClaimedReward[]): ClaimedRewardRow[] {
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    claimedAt: row.claimed_at,
+  }))
+}
+
+export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletItem[]): ActivityRow[] {
+  const rows: ActivityRow[] = []
+
+  for (const card of cards.slice(0, 3)) {
+    const venueName = card.venue?.name ?? 'Venue'
+    for (const visit of card.recent_visits ?? []) {
+      rows.push({
+        id: `visit-${visit.id}`,
+        label: `+1 visit · ${venueName}`,
+        time: formatRelativeTime(visit.created_at),
+      })
+    }
+  }
+
+  for (const item of readyItems.slice(0, 2)) {
+    rows.push({
+      id: `unlock-${item.unlock_id}`,
+      label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`,
+      time: 'Today',
+    })
+  }
+
+  for (const card of cards) {
+    if (card.created_at) {
+      rows.push({
+        id: `join-${card.id}`,
+        label: `Joined ${card.venue?.name ?? 'venue'}`,
+        time: formatRelativeTime(card.created_at),
+      })
+    }
+  }
+
+  const unique = new Map<string, ActivityRow>()
+  for (const row of rows) {
+    if (!unique.has(row.id)) unique.set(row.id, row)
+  }
+
+  return [...unique.values()].slice(0, 3)
+}
+
+export async function fetchCustomerCardsList(token: string, fresh = false): Promise<CustomerCardsListResponse> {
   const key = `${cacheKey('customer', token)}:cards`
-  const response = await fetchWithCache(key, () => apiRequest<{ cards: WalletCard[] }>('/customer/cards', { token }), fresh)
+  return fetchWithCache(
+    key,
+    () => apiRequest<CustomerCardsListResponse>('/customer/cards', { token }),
+    fresh,
+  )
+}
+
+export async function fetchCustomerCards(token: string, fresh = false): Promise<WalletCard[]> {
+  const response = await fetchCustomerCardsList(token, fresh)
   return response.cards
 }
 
@@ -56,106 +134,42 @@ export async function fetchCardDetail(token: string, venueId: string, fresh = fa
   )
 }
 
-export async function fetchRecentVisits(token: string, venueId: string, fresh = false): Promise<VisitRow[]> {
-  const detail = await fetchCardDetail(token, venueId, fresh)
-  return detail.recent_visits ?? []
-}
-
-export async function fetchClaimHistory(token: string, cards: WalletCard[], fresh = false): Promise<ClaimedRewardRow[]> {
-  const rows: ClaimedRewardRow[] = []
-
-  await Promise.all(
-    cards.map(async (card) => {
-      try {
-        const detail = await fetchCardDetail(token, String(card.venue_id), fresh)
-        for (const milestone of detail.journey?.milestones ?? []) {
-          if (milestone.claimed && milestone.claimed_at) {
-            rows.push({
-              id: `${card.id}-${milestone.id}`,
-              title: milestone.title,
-              claimedAt: milestone.claimed_at,
-            })
-          }
-        }
-      } catch {
-        // skip card history on failure
-      }
-    }),
-  )
-
-  rows.sort((a, b) => new Date(b.claimedAt).getTime() - new Date(a.claimedAt).getTime())
-  return rows.slice(0, 12)
-}
-
-export async function fetchHomeActivity(
-  token: string,
-  cards: WalletCard[],
-  readyItems: RewardWalletItem[],
-  fresh = false,
-): Promise<ActivityRow[]> {
-  const visitSources = await Promise.all(
-    cards.slice(0, 3).map(async (card) => {
-      try {
-        const visits = await fetchRecentVisits(token, String(card.venue_id), fresh)
-        return { card, visits }
-      } catch {
-        return { card, visits: [] as VisitRow[] }
-      }
-    }),
-  )
-
-  const rows: ActivityRow[] = []
-  for (const source of visitSources) {
-    const venueName = source.card.venue?.name ?? 'Venue'
-    for (const visit of source.visits.slice(0, 2)) {
-      rows.push({
-        id: `visit-${visit.id}`,
-        label: `+1 visit · ${venueName}`,
-        time: formatRelativeTime(visit.created_at),
-      })
-    }
-  }
-  for (const item of readyItems.slice(0, 2)) {
-    rows.push({
-      id: `unlock-${item.unlock_id}`,
-      label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`,
-      time: 'Today',
-    })
-  }
-  for (const card of cards) {
-    if (card.created_at) {
-      rows.push({
-        id: `join-${card.id}`,
-        label: `Joined ${card.venue?.name ?? 'venue'}`,
-        time: formatRelativeTime(card.created_at),
-      })
-    }
-  }
-
-  const unique = new Map<string, ActivityRow>()
-  for (const row of rows) {
-    if (!unique.has(row.id)) unique.set(row.id, row)
-  }
-  return [...unique.values()].slice(0, 3)
-}
-
 export async function fetchRewardsOverview(token: string, fresh = false): Promise<RewardsOverviewData> {
-  const [wallet, cards] = await Promise.all([
+  const [wallet, cardsList] = await Promise.all([
     fetchRewardsWallet(token, fresh),
-    fetchCustomerCards(token, fresh),
+    fetchCustomerCardsList(token, fresh),
   ])
 
+  const cards = cardsList.cards
   const pendingVenueIds = new Set(wallet.items.map((item) => item.customer.venue_id))
   const inProgress = cards.filter((card) => {
     const toNext = card.summary?.stamps_to_next ?? 0
     return toNext > 0 && !pendingVenueIds.has(card.venue_id)
   })
 
-  const claimed = await fetchClaimHistory(token, cards, fresh)
-
   return {
     readyItems: wallet.items,
     inProgress,
-    claimed,
+    claimed: mapClaimedHistory(cardsList.claimed_history ?? []),
   }
+}
+
+export async function fetchDiscoverVenues(token: string, fresh = false): Promise<DiscoverVenuesData> {
+  const venuesKey = `${cacheKey('customer', token)}:discover-venues`
+  const venues = await fetchWithCache(
+    venuesKey,
+    () => apiRequest<{ venues: DiscoverVenue[] }>('/venues/discover', { token }).then((response) => response.venues),
+    fresh,
+  )
+  const cards = await fetchCustomerCards(token, fresh)
+  const cardsByVenue: Record<number, WalletCard> = {}
+  for (const card of cards) {
+    cardsByVenue[card.venue_id] = card
+  }
+  return { venues, cardsByVenue }
+}
+
+export async function joinVenueBySlug(token: string, slug: string): Promise<void> {
+  await apiRequest(`/venues/${slug}/join`, { method: 'POST', token })
+  invalidateCustomerCaches(token)
 }

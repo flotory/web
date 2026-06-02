@@ -1,5 +1,5 @@
 import { Link, useRouter } from 'expo-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Animated, Image, Text, View } from 'react-native'
 import HomeRewardCarousel, { type HomeRewardSlide } from '../src/components/customer/HomeRewardCarousel'
 import RewardJourneyRibbon from '../src/components/customer/RewardJourneyRibbon'
@@ -12,20 +12,18 @@ import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsWallet } from '../src/hooks/useRewardsWallet'
-import { fetchHomeActivity } from '../src/lib/customerData'
+import { buildHomeActivity } from '../src/lib/customerData'
 import { hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle, progressCountCopy, visitsToRewardCopy } from '../src/lib/progressCopy'
 import { venueLogoUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, shadows, space, type as typography } from '../src/theme'
-import type { ActivityRow } from '../src/types/loyalty'
 
 export default function CustomerHomeScreen() {
   const router = useRouter()
-  const { token, role, user } = useAuth()
+  const { role, user } = useAuth()
   const cardsQuery = useCustomerCards({ refetchOnFocus: true })
   const walletQuery = useRewardsWallet({ refetchOnFocus: true })
-  const [activity, setActivity] = useState<ActivityRow[]>([])
   const lastUnlockHaptic = useRef<number | null>(null)
 
   const loading = cardsQuery.loading || walletQuery.loading
@@ -78,10 +76,10 @@ export default function CustomerHomeScreen() {
 
   const priorityCard = activeCards[0] ?? null
 
-  useEffect(() => {
-    if (!token || loading) return
-    void fetchHomeActivity(token, cards, readyItems, true).then(setActivity).catch(() => setActivity([]))
-  }, [cards, loading, readyItems, token])
+  const activity = useMemo(
+    () => buildHomeActivity(cards, readyItems),
+    [cards, readyItems],
+  )
 
   useEffect(() => {
     const newest = readyItems[0]

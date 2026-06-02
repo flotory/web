@@ -23,6 +23,8 @@ interface ScreenGradientLayoutProps {
   children: ReactNode
   /** Wrap content in ScrollView; gradient grows with scroll height */
   scrollable?: boolean
+  /** Pinned above the scroll body — stays put during pull-to-refresh */
+  fixedHeader?: ReactNode
   refreshControl?: ReactElement<RefreshControlProps>
   contentContainerStyle?: StyleProp<ViewStyle>
   tabBarInset?: boolean
@@ -58,6 +60,7 @@ export function ScreenGradientLoading({ children }: { children: ReactNode }) {
 export default function ScreenGradientLayout({
   children,
   scrollable = false,
+  fixedHeader,
   refreshControl,
   contentContainerStyle,
   tabBarInset = true,
@@ -76,6 +79,27 @@ export default function ScreenGradientLayout({
     paddingTop: topPad,
     paddingBottom: bottomPad,
     backgroundColor: 'transparent',
+  }
+
+  if (scrollable && fixedHeader) {
+    return (
+      <View style={styles.root}>
+        <ScreenGradientBackground minHeight={windowHeight} />
+        <View style={{ flex: 1, paddingTop: topPad, backgroundColor: 'transparent' }}>
+          {fixedHeader}
+          <ScrollView
+            style={styles.transparentScroll}
+            contentContainerStyle={[{ flexGrow: 1, paddingBottom: bottomPad }, contentContainerStyle]}
+            refreshControl={refreshControl}
+            showsVerticalScrollIndicator={false}
+            directionalLockEnabled
+            nestedScrollEnabled
+          >
+            {children}
+          </ScrollView>
+        </View>
+      </View>
+    )
   }
 
   if (scrollable) {

@@ -36,6 +36,14 @@ export interface WalletCard {
   created_at?: string
   venue?: VenueRef | null
   summary?: CardSummary
+  recent_visits?: VisitRow[]
+}
+
+export interface ApiClaimedReward {
+  id: string
+  card_id: number
+  title: string
+  claimed_at: string
 }
 
 export interface MilestoneProgress {

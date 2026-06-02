@@ -136,15 +136,40 @@ class CustomerLoyaltyControllerTest extends TestCase
                 'journey',
                 'recent_visits',
                 'available_rewards',
+                'claimed_history',
                 'cards' => [
-                    ['summary' => ['stamps', 'max_stamps', 'pending_rewards_count', 'next_reward_title']],
+                    ['summary' => ['stamps', 'max_stamps', 'pending_rewards_count', 'next_reward_title'], 'recent_visits'],
                 ],
             ]);
 
         $this->getJson("/api/customer/cards?venue_id={$venueB->id}")
             ->assertOk()
-            ->assertJsonPath('active_card.venue_id', $venueB->id);
+            ->assertJsonPath('active_card.venue_id', $venueB->id)
+            ->assertJsonMissing(['claimed_history']);
     }
+
+    public function test_customer_card_list_includes_claimed_history(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
+        $reward = $this->createReward($venue, [
+            'title' => 'Free Coffee',
+            'required_stamps' => 5,
+        ]);
+        $this->createRewardCycle($customer);
+        $this->createRewardUnlock($customer, $reward, [
+            'claimed_at' => now()->subDay(),
+            'claimed_by' => $user->id,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonCount(1, 'claimed_history')
+            ->assertJsonPath('claimed_history.0.title', 'Free Coffee')
+            ->assertJsonPath('claimed_history.0.card_id', $customer->id);
 
     public function test_customer_can_view_rewards_journey(): void
     {

@@ -32,7 +32,7 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile ru
 ## Architecture (customer app)
 
 - **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
-- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useCardDetail`, `useScreenResource`
+- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useDiscoverVenues`, `useCardDetail`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
 - **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`
 
