@@ -9,5 +9,5 @@
 | 2.2 DemoCampaignsSeederTest | Done | Idempotent seed regression |
 | 3.1 useCampaignsPage | Done | `resources/js/composables/useCampaignsPage.ts` |
 | 3.2 Vitest + CI | Done | `npm run test:unit` in GitHub Actions |
-| 4.x Split CampaignService | Pending | After engine stabilizes |
+| 4.x Split CampaignService | Done | `CampaignEngine` + `CampaignOwnerPresenter` |
 | 5.x Playwright E2E | Pending | Login → scan → claim |

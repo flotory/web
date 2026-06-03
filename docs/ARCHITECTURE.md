@@ -25,9 +25,9 @@ app/
   Http/Controllers/Auth/       Google OAuth
   Http/Requests/               Form validation
   Models/                    Eloquent domain models
-  Services/                  CampaignService, CustomerRetentionService, LoyaltyStampService,
-                             RedemptionClaimService, VenueAnalyticsService, VenueStaffInvitationService,
-                             ImageThumbnailService
+  Services/                  CampaignService (facade), CampaignEngine, CampaignOwnerPresenter,
+                             CustomerRetentionService, LoyaltyStampService, RedemptionClaimService,
+                             VenueAnalyticsService, VenueStaffInvitationService, ImageThumbnailService
   Support/                   VenueAccess, CampaignTemplates
 
 resources/js/
