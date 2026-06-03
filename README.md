@@ -150,13 +150,16 @@ If login fails after wiping only MySQL (`docker compose down -v`), restart the a
 docker compose exec app php artisan app:ensure-local-demo
 ```
 
-**E2E smoke tests** (Playwright, app must be running on port 8000):
+**E2E tests** (Playwright, app must be running on port 8000 with demo seed):
 
 ```bash
+docker compose exec app php artisan app:ensure-local-demo
 npm install
 npx playwright install chromium
 npm run test:e2e
 ```
+
+Covers owner campaigns, staff stamp fallback, and customer claim → staff redeem.
 
 Run pending migrations only:
 
