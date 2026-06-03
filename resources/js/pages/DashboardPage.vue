@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
-import CampaignIcon from '@/components/campaigns/CampaignIcon.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import StatCard from '@/components/loyalty/StatCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -12,12 +11,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
-import {
-  campaignTemplateIcon,
-  campaignTemplateTone,
-  type CampaignRecommendation as CampaignRecommendationType,
-  type CampaignTemplateId,
-} from '@/lib/campaignTemplates'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
 import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
@@ -28,8 +21,6 @@ interface DashboardInsight {
   text: string
   tone: 'positive' | 'warning' | 'neutral'
 }
-
-type CampaignRecommendation = CampaignRecommendationType
 
 interface DashboardResponse {
   scope: 'all' | 'venue' | 'none'
@@ -48,7 +39,6 @@ interface DashboardResponse {
     cycles_completed: number
   }
   insights?: DashboardInsight[]
-  campaign_recommendations?: CampaignRecommendation[]
   active_campaign?: { id: number; name: string; template_id: string } | null
   most_loyal_customers: Customer[]
   monthly_activity: Array<{ month: string; visits: number }>
@@ -109,11 +99,6 @@ const conversionOverview = computed(() => {
 
 const hasCustomers = computed(() => (dashboard.value?.stats.total_customers ?? 0) > 0)
 const insights = computed(() => dashboard.value?.insights ?? [])
-const campaignRecommendations = computed(() => dashboard.value?.campaign_recommendations ?? [])
-
-function campaignQuery(templateId: string) {
-  return { path: '/campaigns', query: { template: templateId } }
-}
 
 function insightToneClass(tone: DashboardInsight['tone']) {
   switch (tone) {
@@ -301,30 +286,7 @@ onMounted(() => {
         </div>
       </AppCard>
 
-      <div v-if="campaignRecommendations.length" class="mt-6 grid gap-3">
-        <AppCard
-          v-for="item in campaignRecommendations"
-          :key="item.template_id"
-          class="flex flex-wrap items-center justify-between gap-3 border-amber-100 bg-amber-50/40"
-        >
-          <div class="flex items-start gap-3">
-            <CampaignIcon
-              :icon="campaignTemplateIcon(item.template_id as CampaignTemplateId)"
-              :tone="campaignTemplateTone(item.template_id as CampaignTemplateId)"
-              size="md"
-            />
-            <div>
-              <p class="font-bold text-slate-900">{{ item.title }}</p>
-              <p class="mt-1 text-sm text-slate-600">{{ item.audience_count }} customers in scope</p>
-            </div>
-          </div>
-          <RouterLink :to="campaignQuery(item.template_id)">
-            <AppButton>{{ item.cta_label }}</AppButton>
-          </RouterLink>
-        </AppCard>
-      </div>
-
-      <AppCard wrapper-class="mt-6">
+      <AppCard>
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-xl font-black text-slate-950">Insights</h2>
           <RouterLink to="/analytics" class="text-xs font-bold uppercase tracking-wide text-slate-500">View analytics</RouterLink>
