@@ -104,6 +104,6 @@ Do not add without approval:
 - `owner_user_id` or role columns on `users`
 - POS integrations
 - Push notifications
-- Customer segmentation / campaigns
+- Customer campaigns (see [CAMPAIGNS.md](./CAMPAIGNS.md) — plan approved separately before build)
 - Co-owner invitations
 - HEIC image upload (JPG, PNG, WEBP, GIF only)

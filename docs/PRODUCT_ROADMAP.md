@@ -34,7 +34,7 @@ The long-term goal is to evolve from a loyalty platform into a customer growth p
 
 **Current Focus:**
 
-- **First pilot venue** — see [PILOT_CAFE.md](./PILOT_CAFE.md) and [NEXT_STEPS.md](./NEXT_STEPS.md)
+- **First pilot venue** — see [PILOT_CAFE.md](./PILOT_CAFE.md)
 - End-to-end proof: join → stamp → unlock → claim QR → redeem
 - Owner `/rewards` polish (5-column grid, click-to-edit toolbar, toasts) — shipped
 - Pilot-blocking fixes only (email, redeem edge cases, scanner reliability)
@@ -110,50 +110,42 @@ Customer:
 
 ## Phase 4 — Campaigns & Promotions
 
-**Status:** High Priority Future
+**Status:** Planned — see [CAMPAIGNS.md](./CAMPAIGNS.md)
 
-**Goal:** Actively increase customer retention.
+**Goal:** Actively increase customer retention with simple stamp promotions.
 
-**Features:**
+**MVP templates (owner web):**
 
-- Double stamp days
-- Happy hour campaigns
-- Birthday rewards
-- Welcome rewards
-- Win-back campaigns
-- Seasonal promotions
+1. Happy hour (time window, 2× stamps)
+2. Birthday week (2× during birthday week)
+3. VIP regulars (2× for loyal guests)
+4. Slow day boost (e.g. Monday 2×)
+5. Win-back (2× for inactive 30d+ guests)
 
-**Examples:**
+**Rules (MVP):** One active stamp campaign per venue; stamp logic + push are separate build slices.
 
-- Double stamps on Mondays
-- Free dessert on birthdays
-- Come back this week for bonus rewards
-
-**Success Metric:** Measurable increase in repeat visits.
+**Success Metric:** Measurable increase in repeat visits during promo windows.
 
 ---
 
 ## Phase 5 — Customer Communication
 
-**Status:** Future
+**Status:** Planned (mobile-first)
 
-**Goal:** Allow venues to engage customers directly.
+**Goal:** Notify customers about loyalty progress and campaigns.
 
-**Channels:**
+**Primary channel:** Push notifications in the **mobile app** (not email or phone in MVP).
 
-- Email
-- Push notifications
-- SMS (optional)
-- WhatsApp (future)
+**Deferred:** Email blasts, SMS, WhatsApp.
 
 **Examples:**
 
-- 2 stamps until your next reward
-- We miss you
-- Birthday reward available
-- New promotion launched
+- Happy hour started at your café
+- Birthday week — extra stamps
+- We miss you (win-back)
+- Reward ready to claim
 
-**Success Metric:** Improved customer retention.
+**Success Metric:** Customers return after a push, measured by visits (not open rates alone).
 
 ---
 
