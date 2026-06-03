@@ -15,13 +15,7 @@ composer install --no-interaction --prefer-dist
 php artisan key:generate --force 2>/dev/null || true
 php artisan migrate --force
 
-# Demo accounts and seed data only for local development — never on production.
-APP_ENV_VALUE="${APP_ENV:-}"
-if [ -z "$APP_ENV_VALUE" ] && [ -f .env ]; then
-  APP_ENV_VALUE="$(grep -E '^APP_ENV=' .env | head -1 | cut -d= -f2- | tr -d ' "'\''')"
-fi
-if [ "$APP_ENV_VALUE" = "local" ]; then
-  php artisan app:ensure-local-demo --no-interaction
-fi
+# Idempotent demo seed; EnsureLocalDemoCommand no-ops unless APP_ENV=local (see app/Console).
+php artisan app:ensure-local-demo --no-interaction
 
 exec php artisan serve --host=0.0.0.0 --port=8000

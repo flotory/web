@@ -136,7 +136,7 @@ Reset database after schema changes:
 docker compose exec app php artisan migrate:fresh --seed
 ```
 
-**Demo login** (re-applied on `docker compose up` when `APP_ENV=local` only):
+**Demo login** (re-applied on every app container start when `APP_ENV=local` in Laravel config):
 
 | Email | Password |
 |-------|----------|
