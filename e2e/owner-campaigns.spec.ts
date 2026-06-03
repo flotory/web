@@ -10,10 +10,15 @@ test.describe('Owner campaigns', () => {
     await page.waitForURL((url) => !url.pathname.endsWith('/login'), { timeout: 15_000 })
 
     await page.goto('/campaigns')
+    await expect(page.getByRole('heading', { name: 'Campaigns', exact: true })).toBeVisible()
+
+    const venueSelect = page.locator('select').first()
+    await venueSelect.selectOption({ label: 'Demo Cafe' })
 
     await expect(page.getByRole('heading', { name: 'Campaigns', exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Active campaigns' })).toBeVisible()
-    await expect(page.getByText('Demo · Quiet Day Promotion')).toBeVisible()
-    await expect(page.getByText('Demo · Happy Hour')).toBeVisible()
+    const activeSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Active campaigns' }) })
+    await expect(activeSection.getByRole('heading', { name: 'Demo · Quiet Day Promotion' })).toBeVisible()
+    await expect(activeSection.getByRole('heading', { name: 'Demo · Happy Hour' })).toBeVisible()
   })
 })
