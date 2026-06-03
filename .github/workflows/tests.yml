@@ -72,6 +72,9 @@ jobs:
       - name: Typecheck and build
         run: npm run build
 
+      - name: Unit tests
+        run: npm run test:unit
+
   mobile:
     name: Mobile typecheck
     runs-on: ubuntu-latest

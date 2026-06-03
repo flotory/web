@@ -25,8 +25,10 @@ app/
   Http/Controllers/Auth/       Google OAuth
   Http/Requests/               Form validation
   Models/                    Eloquent domain models
-  Services/                  LoyaltyStampService, VenueStaffInvitationService
-  Support/                   VenueAccess authorization
+  Services/                  CampaignService, CustomerRetentionService, LoyaltyStampService,
+                             RedemptionClaimService, VenueAnalyticsService, VenueStaffInvitationService,
+                             ImageThumbnailService
+  Support/                   VenueAccess, CampaignTemplates
 
 resources/js/
   components/                UI + loyalty (ClaimRewardModal, VenueFilter, …)
@@ -57,7 +59,7 @@ Request → Route → Controller → (VenueAccess) → Service → Model/DB → 
 |-------|----------------|
 | Routes | HTTP mapping, middleware (`auth:sanctum`) |
 | Controllers | Authorize, validate, delegate, respond — no loyalty math |
-| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle |
+| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle; campaign multipliers (see [CAMPAIGNS.md](./CAMPAIGNS.md)) |
 | Models | Relationships, casts, accessors — no multi-step workflows |
 | Vue | Fetch, display, forms — **no business logic** |
 

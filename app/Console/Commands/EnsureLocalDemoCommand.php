@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Venue;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoAccountsSeeder;
+use Database\Seeders\DemoCampaignsSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -18,6 +19,11 @@ class EnsureLocalDemoCommand extends Command
     {
         $this->call('db:seed', [
             '--class' => DemoAccountsSeeder::class,
+            '--force' => true,
+        ]);
+
+        $this->call('db:seed', [
+            '--class' => DemoCampaignsSeeder::class,
             '--force' => true,
         ]);
 

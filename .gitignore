@@ -3,6 +3,7 @@
 /public/build
 /public/hot
 /storage/*.key
+/storage/.local-seeded
 /storage/logs/
 /storage/framework/views/*.php
 !/storage/framework/views/.gitignore
