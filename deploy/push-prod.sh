@@ -34,7 +34,7 @@ else
     exit 1
   fi
 
-  echo "==> Running local CI (PHPUnit + frontend build + unit tests)..."
+  echo "==> Running local CI (PHPUnit + frontend + mobile)..."
   "${ROOT}/scripts/ci-local.sh"
 fi
 

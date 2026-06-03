@@ -79,7 +79,7 @@ Run the same checks without deploying:
 ./scripts/ci-local.sh
 ```
 
-This mirrors the web jobs in GitHub Actions: **PHPUnit**, **npm run build**, and **npm run test:unit**.
+This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **npm run test:unit**, and **mobile typecheck**.
 
 ### CI status (read this if Actions looks “broken”)
 

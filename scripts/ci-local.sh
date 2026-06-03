@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Same checks as .github/workflows/tests.yml (web) — run before production deploy.
+# Same checks as .github/workflows/tests.yml — run before production deploy.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -45,4 +45,8 @@ npm run build
 echo "==> Local CI: frontend unit tests"
 npm run test:unit
 
-echo "==> Local CI passed (backend + frontend)."
+echo "==> Local CI: mobile typecheck"
+npm ci --prefix apps/mobile
+npm run typecheck --prefix apps/mobile
+
+echo "==> Local CI passed (backend + frontend + mobile)."
