@@ -17,6 +17,12 @@ class EnsureLocalDemoCommand extends Command
 
     public function handle(): int
     {
+        if (! app()->environment('local')) {
+            $this->warn('Skipped demo seeding: app:ensure-local-demo only runs when APP_ENV=local.');
+
+            return self::SUCCESS;
+        }
+
         $this->call('db:seed', [
             '--class' => DemoAccountsSeeder::class,
             '--force' => true,
