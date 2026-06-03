@@ -125,6 +125,7 @@ export default function CardDetailScreen() {
   const cover = venueCoverUrl(card.venue ?? undefined)
   const logo = venueLogoUrl(card.venue ?? undefined)
   const nextImage = rewardImageUrl(nextReward ?? undefined)
+  const promotion = payload?.promotion
 
   return (
     <ScreenGradientLayout
@@ -176,6 +177,28 @@ export default function CardDetailScreen() {
             </Text>
           </View>
         </View>
+
+        {promotion ? (
+          <View
+            style={{
+              marginTop: s(space.sectionY),
+              marginHorizontal: space.screenX,
+              backgroundColor: colors.accentSoft,
+              borderRadius: radius.card,
+              borderWidth: 1,
+              borderColor: colors.accentBorder,
+              padding: s(space.cardPad),
+            }}
+          >
+            <Text style={{ fontSize: s(16), fontWeight: '800', color: colors.accent }}>🔥 {promotion.headline}</Text>
+            <Text style={{ ...typography.body, fontSize: s(16), marginTop: s(6), color: colors.inkMuted }}>{promotion.message}</Text>
+            {promotion.days_left != null && promotion.days_left >= 0 ? (
+              <Text style={{ ...typography.caption, fontSize: s(13), marginTop: s(8), color: colors.inkSoft }}>
+                Ends in {promotion.days_left} {promotion.days_left === 1 ? 'day' : 'days'}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={{ marginTop: s(space.sectionY), paddingHorizontal: space.screenX }}>
           <Text style={{ ...typography.section, fontSize: s(22) }}>Add a stamp</Text>

@@ -170,6 +170,7 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonCount(1, 'claimed_history')
             ->assertJsonPath('claimed_history.0.title', 'Free Coffee')
             ->assertJsonPath('claimed_history.0.card_id', $customer->id);
+    }
 
     public function test_customer_can_view_rewards_journey(): void
     {

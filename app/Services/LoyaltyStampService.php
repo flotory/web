@@ -18,15 +18,23 @@ use Throwable;
 
 class LoyaltyStampService
 {
+    public function __construct(private CampaignService $campaigns) {}
+
     public function addStamp(Customer $customer, User $staff, int $stamps = 1): array
     {
-        $result = DB::transaction(function () use ($customer, $staff, $stamps): array {
+        $customer->loadMissing('venue');
+        $requestedStamps = max($stamps, 1);
+        $multiplier = $this->campaigns->multiplierFor($customer, $customer->venue);
+        $stampsToAward = $requestedStamps * $multiplier;
+
+        $result = DB::transaction(function () use ($customer, $staff, $stampsToAward, $requestedStamps, $multiplier): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+            $customer->load('user', 'venue');
             $this->guardAgainstDuplicateScan($customer);
             $rewards = $this->milestonesForVenue($customer);
             $cycle = $this->activeCycle($customer);
             $previousStamps = $customer->stamps;
-            $newStamps = $customer->stamps + max($stamps, 1);
+            $newStamps = $customer->stamps + $stampsToAward;
 
             $maxMilestone = (int) ($rewards->max('required_stamps') ?? 0);
             $completedCycle = false;
@@ -58,7 +66,10 @@ class LoyaltyStampService
                 'customer' => $customer,
                 'visit' => $visit,
                 'previous_stamps' => $previousStamps,
-                'added_stamps' => $stamps,
+                'added_stamps' => $stampsToAward,
+                'requested_stamps' => $requestedStamps,
+                'stamp_multiplier' => $multiplier,
+                'active_campaign' => $this->campaigns->scannerContextFor($customer),
                 'next_reward' => $this->nextRewardFor($customer),
                 'available_rewards' => $this->availableRewardsFor($customer),
                 'milestones' => $journey['milestones'],

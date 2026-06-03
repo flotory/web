@@ -110,7 +110,7 @@ Customer:
 
 ## Phase 4 — Campaigns & Promotions
 
-**Status:** Planned — see [CAMPAIGNS.md](./CAMPAIGNS.md)
+**Status:** MVP shipped (stamp rules + owner UI; push analytics next) — see [CAMPAIGNS.md](./CAMPAIGNS.md)
 
 **Goal:** Actively increase customer retention with simple stamp promotions.
 
@@ -122,7 +122,7 @@ Customer:
 4. Slow day boost (e.g. Monday 2×)
 5. Win-back (2× for inactive 30d+ guests)
 
-**Rules (MVP):** One active stamp campaign per venue; stamp logic + push are separate build slices.
+**Rules (MVP):** Multiple active stamp campaigns per venue; `multiplier = max(matching)` — see [CAMPAIGNS.md](./CAMPAIGNS.md). Push delivery remains a separate slice.
 
 **Success Metric:** Measurable increase in repeat visits during promo windows.
 

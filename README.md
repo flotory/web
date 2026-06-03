@@ -136,6 +136,20 @@ Reset database after schema changes:
 docker compose exec app php artisan migrate:fresh --seed
 ```
 
+**Demo login** (re-applied automatically on every `docker compose up`):
+
+| Email | Password |
+|-------|----------|
+| `owner@example.com` | `password` |
+| `staff@example.com` | `password` |
+| `customer@example.com` | `password` |
+
+If login fails after wiping only MySQL (`docker compose down -v`), restart the app container or run:
+
+```bash
+docker compose exec app php artisan app:ensure-local-demo
+```
+
 Run pending migrations only:
 
 ```bash

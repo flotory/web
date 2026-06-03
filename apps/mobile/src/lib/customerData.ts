@@ -13,6 +13,7 @@ export interface CardDetailPayload {
   next_reward: RewardRef | null
   available_rewards: RewardRef[]
   pending_unlocks?: { unlock_id: number; reward: RewardRef }[]
+  promotion?: import('../types/loyalty').VenuePromotion | null
   journey: RewardJourney | null
   recent_visits?: import('../types/loyalty').VisitRow[]
 }

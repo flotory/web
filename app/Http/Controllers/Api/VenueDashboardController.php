@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use App\Services\CampaignService;
 use App\Services\VenueAnalyticsService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class VenueDashboardController extends Controller
 {
-    public function __construct(private VenueAnalyticsService $analytics) {}
+    public function __construct(
+        private VenueAnalyticsService $analytics,
+        private CampaignService $campaigns,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -188,6 +192,8 @@ class VenueDashboardController extends Controller
                         : 0.0,
                 ]),
             'venue_summaries' => [],
+            'campaign_recommendations' => $this->campaigns->recommendationsFor($venue),
+            'active_campaigns' => $this->campaigns->ownerActiveCampaignsFor($venue),
         ];
     }
 }

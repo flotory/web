@@ -28,6 +28,16 @@ export interface RewardRef {
   required_stamps: number
 }
 
+export interface VenuePromotion {
+  name: string
+  template_id: string
+  multiplier: number
+  headline: string
+  message: string
+  ends_at?: string | null
+  days_left?: number | null
+}
+
 export interface WalletCard {
   id: number
   venue_id: number
@@ -37,6 +47,7 @@ export interface WalletCard {
   venue?: VenueRef | null
   summary?: CardSummary
   recent_visits?: VisitRow[]
+  promotion?: VenuePromotion | null
 }
 
 export interface ApiClaimedReward {

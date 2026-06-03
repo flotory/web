@@ -8,6 +8,7 @@ use App\Models\RedemptionRequest;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
 use App\Models\Reward;
+use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
 use App\Support\AuditLog;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 
 class CustomerLoyaltyController extends Controller
 {
-    public function mine(Request $request, LoyaltyStampService $loyalty): JsonResponse
+    public function mine(Request $request, LoyaltyStampService $loyalty, CampaignService $campaigns): JsonResponse
     {
         $cards = Customer::query()
             ->where('user_id', $request->user()->id)
@@ -56,6 +57,7 @@ class CustomerLoyaltyController extends Controller
                 ...$card->toArray(),
                 'venue' => $card->venue,
                 'summary' => $loyalty->cardListSummary($card),
+                'promotion' => $campaigns->promotionForCustomer($card),
                 ...($isList ? [
                     'recent_visits' => $card->visits->map(fn ($visit): array => [
                         'id' => $visit->id,
@@ -76,6 +78,7 @@ class CustomerLoyaltyController extends Controller
                 : [],
             'journey' => $activeCard ? $loyalty->journeyFor($activeCard) : null,
             'recent_visits' => $activeCard ? $activeCard->visits()->latest()->limit(10)->get() : [],
+            'promotion' => $activeCard ? $campaigns->promotionForCustomer($activeCard) : null,
             'pending_rewards_count' => $cards->sum(
                 fn (Customer $card): int => $loyalty->pendingRewardCountFor($card),
             ),

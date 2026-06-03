@@ -1,135 +1,97 @@
-# Campaigns — product plan (draft)
+# Campaigns — loyalty stamp bonuses
 
-Planning only. No campaign API or owner page is shipped yet. Customer communication is **push via the mobile app**, not email or SMS.
-
----
-
-## Problem
-
-Owners can see inactive customers on `/customers`, but they cannot **act** on that list yet. Campaigns turn retention insight into a simple promotion with optional push when the app supports it.
+Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, bakeries and bars. They only affect loyalty stamps — not email, SMS, coupons, discounts, or segmentation builders.
 
 ---
 
-## Five templates (proposed defaults)
+## Templates (4)
 
 
-| #   | Template           | Who it targets                               | Stamp rule (MVP)                     | Push message idea                            |
-| --- | ------------------ | -------------------------------------------- | ------------------------------------ | -------------------------------------------- |
-| 1   | **Happy hour**     | Everyone visiting in a time window           | 2× stamps, e.g. Mon–Fri 3–6pm        | “Double stamps now until 6pm”                |
-| 2   | **Birthday week**  | Customer with birthday on profile            | 2× stamps for 7 days around birthday | “It’s your birthday week at {venue}”         |
-| 3   | **VIP regulars**   | Guests with ≥5 visits or ≥1 redemption       | 2× stamps while active               | “Thanks for being a regular — double stamps” |
-| 4   | **Slow day boost** | Everyone on a quiet weekday                  | 2× stamps every Monday               | “Double stamps every Monday”                 |
-| 5   | **Win-back**       | Inactive 30+ days (same as Customers filter) | 2× stamps for 14 days after launch   | “We miss you — double stamps for two weeks”  |
+| Template ID            | Owner-facing name        | Rule                                                            |
+| ---------------------- | ------------------------ | --------------------------------------------------------------- |
+| `bring_back_customers` | **Bring Back Customers** | Inactive guests earn bonus stamps for a configurable run period |
+| `quiet_day_promotion`  | **Quiet Day Promotion**  | Bonus stamps on owner-selected days (choose days to boost)      |
+| `happy_hour`           | **Happy Hour**           | Bonus stamps on selected weekdays + time window                 |
+| `vip_rewards`          | **VIP Rewards**          | Bonus stamps when `visits ≥ X` **or** `rewards claimed ≥ Y`     |
 
 
-**Open product questions** (decide before build):
+**Legacy IDs** (migrated automatically): `monday_promotion` → `quiet_day_promotion`, `reward_regulars` → `vip_rewards`.
 
-- Can VIP and win-back overlap for one guest (take highest multiplier vs stack)?
-- Birthday week without birthday on file — skip guest or prompt in app?
-- Happy hour: venue timezone = venue address or owner device?
+**Not in scope:** email/SMS marketing, coupons, discount engines, AI copy, A/B tests, birthday campaigns (future).
 
 ---
 
-## MVP rules (recommended)
+## Engine rules
 
-
-| Rule                                               | Why                                    |
-| -------------------------------------------------- | -------------------------------------- |
-| **One active** stamp-multiplier campaign per venue | Avoid conflicting rules at scanner     |
-| Draft → Activate → Pause / End                     | Owner control without deleting history |
-| Stamp rules in **backend** (`LoyaltyStampService`) | Never trust Vue for multipliers        |
-| Push is **opt-in** in customer app settings        | Compliance + fewer uninstalls          |
-| No email / SMS in v1                               | Mobile app is the customer surface     |
-
+- **Multiple active campaigns** per venue.
+- Campaigns **never stack** — `multiplier = max(all_matching_campaigns)` (never multiply together).
+- Example: VIP 2× + Happy Hour 2× + Win Back 3× eligible → customer gets **3×**.
+- Lifecycle: **draft → active → paused → ended** (no delete; history kept).
+- Stamp math: `**CampaignService`** → `**LoyaltyStampService::addStamp**`.
+- Push: `**CampaignNotificationJob**` logs on activate; Expo delivery = future work.
 
 ---
 
-## Build order (do not skip)
+## Template configuration
 
-### 1. Plan & docs ✓ (this file)
 
-Align templates, push copy, and MVP rules. Update roadmap.
+| Template        | Config fields                                                                        |
+| --------------- | ------------------------------------------------------------------------------------ |
+| **Bring Back**  | `inactive_days`, `duration_days`, `stamp_multiplier` (2 or 3), `push_enabled`        |
+| **Quiet Day**   | `days_of_week` (1–7 ISO), `duration_days`, `stamp_multiplier`, `push_enabled`        |
+| **Happy Hour**  | `days_of_week`, `start_time`, `end_time` (`H:i`), `stamp_multiplier`, `push_enabled` |
+| **VIP Rewards** | `min_visits`, `min_rewards_claimed`, `stamp_multiplier`, `push_enabled`              |
 
-### 2. Owner web — Campaigns page (no stamp math yet)
 
-- Route `/campaigns` in owner nav
-- Grid of 5 templates → creates **draft** campaign
-- List: activate / pause / end
-- Banner: “Push sends when mobile notifications ship”
-
-### 3. Stamp engine
-
-- `CampaignService::multiplierFor(Customer, Venue, at: now)`
-- Hook in `addStamp`; staff scanner shows active promo name
-- Feature tests per template
-
-### 4. Mobile push
-
-- Store Expo push token on user
-- On activate: segment + send (template-specific)
-- Deep link to card / rewards
-- Customer settings: notifications on/off
-
-### 5. Measurement
-
-- Visits during campaign vs prior period on dashboard
-- Later: Phase 6 analytics
+Defaults (examples): Bring Back — 30 days inactive, 14-day run, 2×; Quiet Day — Mon–Wed, 30-day run, 2×; Happy Hour — Mon–Fri 15:00–18:00, 2×; VIP — 5+ visits or 1+ reward claimed, 2×.
 
 ---
 
-## Owner UX sketch
+## Owner UI (`/campaigns`)
 
-```text
-Campaigns
-├── [Live] Happy hour double stamps        [End]
-├── Start from template (5 cards)
-└── Your campaigns
-    ├── Win-back (draft)     [Activate]
-    └── VIP regulars (ended)
-```
+1. **Active campaigns** — 2-column cards: multiplier, schedule chips, audience, Pause / Edit / End.
+2. **Create campaign** — four template tiles → wizard: **Configure → Review → Activate** (< 60 seconds).
+3. **Campaign history** — tabs (All / Active / Paused / Ended), sort, list rows with timeline and quick actions.
 
-Insights on dashboard: “12 inactive — consider Win-back template” → link to Campaigns.
+Copy: *“Run multiple campaigns. Customers receive the highest eligible multiplier.”*
 
----
+**Dashboard** — recommendation cards (inactive guests, VIP count); no “quietest day” analytics.
 
-## Data model (when we build)
-
-```text
-campaigns
-  venue_id, template_id, name, status
-  starts_at, ends_at, config (json), push_enabled
-  activated_at, created_by
-```
-
-`config` examples:
-
-- `happy_hour`: `{ stamp_multiplier: 2, days_of_week: [1-5], start_time, end_time }`
-- `loyal_vip`: `{ stamp_multiplier: 2, min_visits: 5, min_rewards_claimed: 1 }`
-- `win_back`: `{ stamp_multiplier: 2, inactive_days: 30, duration_days: 14 }`
+**Scanner** — `N× Stamps Active` + winning campaign name when eligible.
 
 ---
 
-## What we are not building in v1
+## API
 
-- Email campaigns or CSV export for Mailchimp
-- SMS / WhatsApp
-- A/B tests, coupon codes, or % off bills (stamps only)
-- Multiple simultaneous active campaigns
-- AI-generated copy
+
+| Method | Path                                   | Notes                                                              |
+| ------ | -------------------------------------- | ------------------------------------------------------------------ |
+| GET    | `/campaigns/templates?venue_id=`       | Catalog + recommendations + `active_campaigns`                     |
+| GET    | `/venues/{venue}/campaigns`            | Enriched `campaigns[]` + `active_campaigns[]` + templates          |
+| POST   | `/venues/{venue}/campaigns/preview`    | `{ template_id, name?, config? }` → audience, schedule, multiplier |
+| POST   | `/venues/{venue}/campaigns`            | Create; optional `activate: true`                                  |
+| PATCH  | `/venues/{venue}/campaigns/{campaign}` | `status`, `name`, `config`, `push_enabled`                         |
+| DELETE | `/venues/{venue}/campaigns/{campaign}` | Rejected (end instead)                                             |
+
+
+**Enriched campaign fields** (owner list/cards): `multiplier`, `schedule_chips`, `schedule_summary`, `status_label`, `summary`.
+
+**Dashboard:** `campaign_recommendations`, `active_campaigns` (array).
+
+**Scanner / stamp response:** `stamp_multiplier`, `active_campaign` (winning campaign context).
 
 ---
 
-## Success criteria
+## Tests
 
-1. Owner creates and activates a template in under 2 minutes
-2. Eligible customers earn 2× stamps when rules say so (verified in tests)
-3. After push ships: measurable visit bump during win-back / happy hour windows
+Feature coverage: `tests/Feature/VenueCampaignControllerTest.php` — create/activate, multiple actives, max multiplier, preview, dashboard recommendations, enriched index.
 
 ---
 
-## Related docs
+## Future
 
-- [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) — Phases 4–5
-- [MVP_DECISIONS.md](./MVP_DECISIONS.md) — campaigns still require explicit approval before code
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — stamp/claim flows
+- Expo push delivery
+- Campaign ROI analytics (reached, returned, extra visits)
+- Birthday template (birthday field + GDPR)
 
+See [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md).

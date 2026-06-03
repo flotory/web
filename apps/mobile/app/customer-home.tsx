@@ -75,6 +75,7 @@ export default function CustomerHomeScreen() {
   }, [activeCards, readyItems])
 
   const priorityCard = activeCards[0] ?? null
+  const homePromotion = useMemo(() => cards.find((card) => card.promotion)?.promotion ?? null, [cards])
 
   const activity = useMemo(
     () => buildHomeActivity(cards, readyItems),
@@ -141,6 +142,23 @@ export default function CustomerHomeScreen() {
             {rewardSlides.length > 0 ? (
               <View style={{ marginTop: space.sectionGap, backgroundColor: 'transparent' }}>
                 <HomeRewardCarousel slides={rewardSlides} />
+              </View>
+            ) : null}
+
+            {homePromotion ? (
+              <View
+                style={{
+                  marginTop: space.sectionGap,
+                  marginHorizontal: space.screenX,
+                  backgroundColor: colors.accentSoft,
+                  borderRadius: radius.card,
+                  borderWidth: 1,
+                  borderColor: colors.accentBorder,
+                  padding: space.cardPad,
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.accent }}>🔥 {homePromotion.headline}</Text>
+                <Text style={{ ...typography.body, marginTop: 6, color: colors.inkMuted }}>{homePromotion.message}</Text>
               </View>
             ) : null}
 

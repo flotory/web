@@ -17,16 +17,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(AdminUserSeeder::class);
+        $this->call(DemoAccountsSeeder::class);
 
-        $owner = User::updateOrCreate(
-            ['email' => 'owner@example.com'],
-            [
-                'name' => 'Demo Owner',
-                'password' => 'password',
-                'is_admin' => false,
-            ],
-        );
+        $owner = User::query()->where('email', 'owner@example.com')->firstOrFail();
 
         $venues = collect([
             ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe', 'address' => '12 Market Street, Toruń'],
@@ -46,33 +39,24 @@ class DatabaseSeeder extends Seeder
 
         $owner->forceFill(['active_venue_id' => $venue->id])->save();
 
-        $staff = User::updateOrCreate(
-            ['email' => 'staff@example.com'],
-            [
-                'name' => 'Demo Staff',
-                'password' => 'password',
-                'is_admin' => false,
-                'active_venue_id' => $venue->id,
-            ],
-        );
+        $staff = User::query()->where('email', 'staff@example.com')->firstOrFail();
 
-        VenueUser::updateOrCreate(
-            [
-                'venue_id' => $venue->id,
-                'user_id' => $staff->id,
-            ],
-            [
-                'role' => 'staff',
-            ],
-        );
-
-        $venues->each(function (Venue $venue) use ($owner): void {
+        $venues->each(function (Venue $venue) use ($owner, $staff): void {
             VenueUser::updateOrCreate([
                 'venue_id' => $venue->id,
                 'user_id' => $owner->id,
             ], [
                 'role' => 'owner',
             ]);
+
+            if ($venue->slug === 'demo-cafe') {
+                VenueUser::updateOrCreate([
+                    'venue_id' => $venue->id,
+                    'user_id' => $staff->id,
+                ], [
+                    'role' => 'staff',
+                ]);
+            }
 
             $milestones = match ($venue->category) {
                 'restaurant' => [
