@@ -1,5 +1,7 @@
 # Campaigns — loyalty stamp bonuses
 
+**Business invariants (C1–C12):** [BUSINESS_RULES.md § Campaign rules](./BUSINESS_RULES.md#campaign-rules). This file covers UI, API, and engineering detail.
+
 Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, bakeries and bars. They only affect loyalty stamps — not email, SMS, coupons, discounts, or segmentation builders.
 
 ---
@@ -27,7 +29,7 @@ Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, 
 - Campaigns **never stack** — `multiplier = max(all_matching_campaigns)` (never multiply together).
 - Example: VIP 2× + Happy Hour 2× + Win Back 3× eligible → customer gets **3×**.
 - Lifecycle: **draft → active → paused → ended** (no delete; history kept).
-- Stamp math: `**CampaignService`** → `**LoyaltyStampService::addStamp**`.
+- Stamp math: `**CampaignService`** → `**LoyaltyStampService::addStamp`**.
 - Push: `**CampaignNotificationJob**` logs on activate; Expo delivery = future work.
 
 ---

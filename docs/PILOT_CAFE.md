@@ -19,6 +19,8 @@ Avoid for first pilot: chains with IT procurement, venues without smartphone-fri
 
 ## Pre-outreach checklist
 
+Owner/staff training must match [BUSINESS_RULES.md](./BUSINESS_RULES.md) (stamps vs claim QR, campaigns = stamp multipliers only, FIFO redeem). Exceptions to explain at counter: [§ Documented exceptions](./BUSINESS_RULES.md#documented-exceptions).
+
 Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
 - Owner can sign up, complete onboarding, and create at least one milestone reward

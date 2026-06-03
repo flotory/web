@@ -8,10 +8,10 @@ Flotory is a hospitality loyalty platform in **MVP** stage. This document is the
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Phased SaaS roadmap from loyalty foundation to growth platform |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Stack, domain model, API flows, code layout |
 | [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Approved decisions AI and developers must not undo |
-| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | Product invariants and business expectations (no implementation) |
+| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | **Canonical** product contract (invariants, campaigns, exceptions) |
 | [KNOWN_RISKS.md](./KNOWN_RISKS.md) | Accepted risks, open edge cases, resolved issues |
 | [PILOT_CAFE.md](./PILOT_CAFE.md) | Playbook to onboard the first real pilot venue |
-| [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign templates, push-first comms, build slices (plan) |
+| [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign UI, API, and implementation reference |
 | [ADMIN_ACCESS.md](./ADMIN_ACCESS.md) | Super admin login and activity log |
 
 Operational setup (local dev, deploy, demo accounts) stays in the root [README.md](../README.md).

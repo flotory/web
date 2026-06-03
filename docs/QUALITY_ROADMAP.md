@@ -4,6 +4,7 @@
 |------|--------|-------|
 | 1.1 Demo campaigns seed | Done | `DemoCampaignsSeeder`, Docker `ensure-local-demo` |
 | 1.2 ARCHITECTURE.md | Done | Services list + campaigns link |
+| Business rules 10/10 | Done | `BUSINESS_RULES.md` rewrite (IDs, campaigns, redemption, exceptions) |
 | 1.3 MOBILE.md | Done | Screens ↔ API |
 | 2.1 CampaignServiceTest | Done | 8 unit cases |
 | 2.2 DemoCampaignsSeederTest | Done | Idempotent seed regression |

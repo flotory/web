@@ -4,7 +4,9 @@ Living register of accepted risks, open edge cases, and planned improvements. Up
 
 Purpose: prevent rediscovering the same issues and document intentional trade-offs.
 
-Related: [BUSINESS_RULES.md](./BUSINESS_RULES.md), [MVP_DECISIONS.md](./MVP_DECISIONS.md).
+**Canonical exception list:** [BUSINESS_RULES.md § Documented exceptions](./BUSINESS_RULES.md#documented-exceptions) (IDs E1–E12). Update both files when status changes.
+
+Related: [MVP_DECISIONS.md](./MVP_DECISIONS.md).
 
 ---
 

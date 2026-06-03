@@ -1,6 +1,6 @@
 # MVP Decisions
 
-Approved product and engineering decisions. **Do not undo or contradict these** without explicit owner approval. When in doubt, read the code and match existing patterns.
+Approved product and engineering decisions. **Do not undo or contradict these** without explicit owner approval. **Business invariants are defined in [BUSINESS_RULES.md](./BUSINESS_RULES.md)** — if this file and BUSINESS_RULES conflict, BUSINESS_RULES wins.
 
 Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE.md](./ARCHITECTURE.md) (implementation).
 
