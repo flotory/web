@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Reward;
+use App\Models\RewardUnlock;
 use App\Models\Venue;
+use App\Models\Visit;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -286,6 +289,128 @@ class VenueAnalyticsService
     }
 
     /**
+     * @return list<array{type: string, title: string, occurred_at: string}>
+     */
+    public function recentActivityForVenue(Venue $venue, int $limit = 8): array
+    {
+        $events = collect();
+
+        Visit::query()
+            ->where('venue_id', $venue->id)
+            ->with(['customer.user:id,name'])
+            ->latest('created_at')
+            ->limit(20)
+            ->get()
+            ->each(function (Visit $visit) use ($events): void {
+                $name = $visit->customer?->user?->name ?? 'Guest';
+                $events->push([
+                    'type' => 'stamp',
+                    'occurred_at' => $visit->created_at?->toIso8601String(),
+                    'title' => "Stamp added for {$name}",
+                ]);
+            });
+
+        RewardUnlock::query()
+            ->whereHas('customer', fn ($query) => $query->where('venue_id', $venue->id))
+            ->with(['customer.user:id,name', 'reward:id,title'])
+            ->orderByDesc('unlocked_at')
+            ->limit(20)
+            ->get()
+            ->each(function (RewardUnlock $unlock) use ($events): void {
+                $name = $unlock->customer?->user?->name ?? 'Guest';
+                $rewardTitle = $unlock->reward?->title ?? 'Reward';
+
+                $events->push([
+                    'type' => 'reward_unlocked',
+                    'occurred_at' => $unlock->unlocked_at?->toIso8601String(),
+                    'title' => "Reward unlocked: {$rewardTitle} — {$name}",
+                ]);
+
+                if ($unlock->claimed_at) {
+                    $events->push([
+                        'type' => 'reward_redeemed',
+                        'occurred_at' => $unlock->claimed_at->toIso8601String(),
+                        'title' => "Reward redeemed: {$rewardTitle} — {$name}",
+                    ]);
+                }
+            });
+
+        Customer::query()
+            ->where('venue_id', $venue->id)
+            ->with('user:id,name')
+            ->latest('created_at')
+            ->limit(10)
+            ->get()
+            ->each(function (Customer $customer) use ($events): void {
+                $name = $customer->user?->name ?? 'Guest';
+                $events->push([
+                    'type' => 'customer_joined',
+                    'occurred_at' => $customer->created_at?->toIso8601String(),
+                    'title' => "{$name} joined loyalty",
+                ]);
+            });
+
+        Reward::query()
+            ->where('venue_id', $venue->id)
+            ->latest('created_at')
+            ->limit(10)
+            ->get(['id', 'title', 'created_at'])
+            ->each(function (Reward $reward) use ($events): void {
+                $events->push([
+                    'type' => 'reward_created',
+                    'occurred_at' => $reward->created_at?->toIso8601String(),
+                    'title' => "Reward published: {$reward->title}",
+                ]);
+            });
+
+        Campaign::query()
+            ->where('venue_id', $venue->id)
+            ->whereNotNull('activated_at')
+            ->latest('activated_at')
+            ->limit(10)
+            ->get(['id', 'name', 'activated_at'])
+            ->each(function (Campaign $campaign) use ($events): void {
+                $events->push([
+                    'type' => 'campaign_activated',
+                    'occurred_at' => $campaign->activated_at?->toIso8601String(),
+                    'title' => "Campaign activated: {$campaign->name}",
+                ]);
+            });
+
+        return $events
+            ->filter(fn (array $event): bool => ! empty($event['occurred_at']))
+            ->sortByDesc('occurred_at')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, Venue>  $venues
+     * @return list<array{type: string, title: string, occurred_at: string, venue_name?: string}>
+     */
+    public function aggregateRecentActivity(Collection $venues, int $limit = 8): array
+    {
+        $events = collect();
+
+        foreach ($venues as $venue) {
+            foreach ($this->recentActivityForVenue($venue, $limit * 2) as $event) {
+                $events->push([
+                    ...$event,
+                    'venue_name' => $venue->name,
+                ]);
+            }
+        }
+
+        return $events
+            ->filter(fn (array $event): bool => ! empty($event['occurred_at']))
+            ->sortByDesc('occurred_at')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param  Collection<int, Venue>  $venues
      */
     public function hasAggregateActivity(Collection $venues): bool
@@ -297,5 +422,158 @@ class VenueAnalyticsService
         }
 
         return false;
+    }
+
+    /**
+     * @return array<string, array{previous: float|int, change_pct: float|null}>
+     */
+    public function kpiTrendsForVenue(Venue $venue): array
+    {
+        $activity = $this->monthlyActivityForVenue($venue, 2);
+        $visitsPrevious = $activity[0]['visits'] ?? 0;
+        $visitsCurrent = $activity[1]['visits'] ?? 0;
+
+        $monthStart = now()->startOfMonth();
+        $lastMonthStart = now()->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = now()->copy()->startOfMonth()->subSecond();
+
+        return [
+            'visits_this_month' => $this->trendEntry($visitsPrevious, $visitsCurrent),
+            'returning_guests' => $this->trendEntry(
+                $this->returningVisitorsBetween($venue, $lastMonthStart, $lastMonthEnd),
+                $this->returningVisitorsBetween($venue, $monthStart, now()),
+            ),
+            'rewards_unlocked' => $this->trendEntry(
+                $this->rewardUnlocksCreatedBetween($venue, $lastMonthStart, $lastMonthEnd),
+                $this->rewardUnlocksCreatedBetween($venue, $monthStart, now()),
+            ),
+            'repeat_rate' => $this->trendEntry(
+                $this->claimRateBetween($venue, $lastMonthStart, $lastMonthEnd),
+                $this->claimRateBetween($venue, $monthStart, now()),
+            ),
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Venue>  $venues
+     * @return array<string, array{previous: float|int, change_pct: float|null}>
+     */
+    public function aggregateKpiTrends(Collection $venues): array
+    {
+        $activity = $this->aggregateMonthlyActivity($venues, 2);
+        $visitsPrevious = $activity[0]['visits'] ?? 0;
+        $visitsCurrent = $activity[1]['visits'] ?? 0;
+
+        $monthStart = now()->startOfMonth();
+        $lastMonthStart = now()->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = now()->copy()->startOfMonth()->subSecond();
+
+        $returningPrevious = 0;
+        $returningCurrent = 0;
+        $unlocksPrevious = 0;
+        $unlocksCurrent = 0;
+        $claimedPrevious = 0;
+        $claimedCurrent = 0;
+        $unlockedPrevious = 0;
+        $unlockedCurrent = 0;
+
+        foreach ($venues as $venue) {
+            $returningPrevious += $this->returningVisitorsBetween($venue, $lastMonthStart, $lastMonthEnd);
+            $returningCurrent += $this->returningVisitorsBetween($venue, $monthStart, now());
+            $unlocksPrevious += $this->rewardUnlocksCreatedBetween($venue, $lastMonthStart, $lastMonthEnd);
+            $unlocksCurrent += $this->rewardUnlocksCreatedBetween($venue, $monthStart, now());
+
+            [$claimedPrev, $unlockedPrev] = $this->claimCountsBetween($venue, $lastMonthStart, $lastMonthEnd);
+            [$claimedCurr, $unlockedCurr] = $this->claimCountsBetween($venue, $monthStart, now());
+            $claimedPrevious += $claimedPrev;
+            $claimedCurrent += $claimedCurr;
+            $unlockedPrevious += $unlockedPrev;
+            $unlockedCurrent += $unlockedCurr;
+        }
+
+        $repeatPrevious = $unlockedPrevious > 0
+            ? round(($claimedPrevious / $unlockedPrevious) * 100, 1)
+            : 0.0;
+        $repeatCurrent = $unlockedCurrent > 0
+            ? round(($claimedCurrent / $unlockedCurrent) * 100, 1)
+            : 0.0;
+
+        return [
+            'visits_this_month' => $this->trendEntry($visitsPrevious, $visitsCurrent),
+            'returning_guests' => $this->trendEntry($returningPrevious, $returningCurrent),
+            'rewards_unlocked' => $this->trendEntry($unlocksPrevious, $unlocksCurrent),
+            'repeat_rate' => $this->trendEntry($repeatPrevious, $repeatCurrent),
+        ];
+    }
+
+    /**
+     * @return array{previous: float|int, change_pct: float|null}
+     */
+    private function trendEntry(float|int $previous, float|int $current): array
+    {
+        return [
+            'previous' => $previous,
+            'change_pct' => $this->percentChange($previous, $current),
+        ];
+    }
+
+    private function percentChange(float|int $previous, float|int $current): ?float
+    {
+        if ($previous == 0 && $current == 0) {
+            return null;
+        }
+
+        if ($previous == 0) {
+            return null;
+        }
+
+        return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    private function rewardUnlocksCreatedBetween(Venue $venue, Carbon $start, Carbon $end): int
+    {
+        return (int) DB::table('reward_unlocks')
+            ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+            ->where('rewards.venue_id', $venue->id)
+            ->whereBetween('reward_unlocks.created_at', [$start, $end])
+            ->count();
+    }
+
+    private function returningVisitorsBetween(Venue $venue, Carbon $start, Carbon $end): int
+    {
+        return $venue->customers()
+            ->has('visits', '>=', 2)
+            ->whereHas('visits', fn ($query) => $query->whereBetween('created_at', [$start, $end]))
+            ->count();
+    }
+
+    private function claimRateBetween(Venue $venue, Carbon $start, Carbon $end): float
+    {
+        [$claimed, $unlocked] = $this->claimCountsBetween($venue, $start, $end);
+
+        if ($unlocked === 0) {
+            return 0.0;
+        }
+
+        return round(($claimed / $unlocked) * 100, 1);
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function claimCountsBetween(Venue $venue, Carbon $start, Carbon $end): array
+    {
+        $row = DB::table('reward_unlocks')
+            ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+            ->where('rewards.venue_id', $venue->id)
+            ->whereBetween('reward_unlocks.created_at', [$start, $end])
+            ->selectRaw('COUNT(*) as unlocked_count')
+            ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
+            ->first();
+
+        return [
+            (int) ($row->claimed_count ?? 0),
+            (int) ($row->unlocked_count ?? 0),
+        ];
     }
 }

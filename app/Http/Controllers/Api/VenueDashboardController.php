@@ -57,6 +57,9 @@ class VenueDashboardController extends Controller
                 'venue_summaries' => [],
                 'insights' => [],
                 'has_loyalty_activity' => false,
+                'kpi_trends' => $this->emptyKpiTrends(),
+                'active_campaigns' => [],
+                'recent_activity' => [],
             ]);
         }
 
@@ -126,6 +129,8 @@ class VenueDashboardController extends Controller
             'venue_summaries' => $summaries,
             'insights' => $insights,
             'has_loyalty_activity' => $this->analytics->hasAggregateActivity($venues),
+            'kpi_trends' => $this->analytics->aggregateKpiTrends($venues),
+            'recent_activity' => $this->analytics->aggregateRecentActivity($venues),
         ]);
     }
 
@@ -170,6 +175,8 @@ class VenueDashboardController extends Controller
             'monthly_activity' => $this->analytics->monthlyActivityForVenue($venue),
             'insights' => $this->analytics->insightsForVenue($venue),
             'has_loyalty_activity' => $this->analytics->hasLoyaltyActivity($venue),
+            'kpi_trends' => $this->analytics->kpiTrendsForVenue($venue),
+            'recent_activity' => $this->analytics->recentActivityForVenue($venue),
             'milestone_conversions' => DB::table('reward_unlocks')
                 ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
                 ->where('rewards.venue_id', $venue->id)
@@ -194,6 +201,21 @@ class VenueDashboardController extends Controller
             'venue_summaries' => [],
             'campaign_recommendations' => $this->campaigns->recommendationsFor($venue),
             'active_campaigns' => $this->campaigns->ownerActiveCampaignsFor($venue),
+        ];
+    }
+
+    /**
+     * @return array<string, array{previous: int|float, change_pct: float|null}>
+     */
+    private function emptyKpiTrends(): array
+    {
+        $empty = ['previous' => 0, 'change_pct' => null];
+
+        return [
+            'visits_this_month' => $empty,
+            'returning_guests' => $empty,
+            'rewards_unlocked' => $empty,
+            'repeat_rate' => $empty,
         ];
     }
 }

@@ -107,9 +107,22 @@ export function useCampaignsPage() {
 
   function prefillFromQuery() {
     const templateId = route.query.template as CampaignTemplateId | undefined
-    if (!templateId || !hasVenue.value) return
-    openCreate(templateId)
-    void router.replace({ query: { ...route.query, template: undefined } })
+    if (templateId && hasVenue.value) {
+      openCreate(templateId)
+      void router.replace({ query: { ...route.query, template: undefined } })
+      return
+    }
+
+    const editId = Number(route.query.edit)
+    if (!editId || !hasVenue.value) {
+      return
+    }
+
+    const campaign = campaigns.value.find((row) => row.id === editId)
+    if (campaign) {
+      openEdit(campaign)
+      void router.replace({ query: { ...route.query, edit: undefined } })
+    }
   }
 
   watch(() => workspace.filterVenueId, loadPage)

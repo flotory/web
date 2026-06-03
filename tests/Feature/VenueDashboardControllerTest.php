@@ -56,6 +56,15 @@ class VenueDashboardControllerTest extends TestCase
             ->assertJsonPath('has_loyalty_activity', true)
             ->assertJsonStructure([
                 'insights',
+                'recent_activity' => [
+                    ['type', 'title', 'occurred_at'],
+                ],
+                'kpi_trends' => [
+                    'visits_this_month' => ['previous', 'change_pct'],
+                    'returning_guests' => ['previous', 'change_pct'],
+                    'rewards_unlocked' => ['previous', 'change_pct'],
+                    'repeat_rate' => ['previous', 'change_pct'],
+                ],
                 'monthly_activity' => [
                     ['month', 'label', 'visits'],
                 ],
@@ -190,6 +199,23 @@ class VenueDashboardControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('scope', 'venue')
             ->assertJsonPath('venue.slug', $venue->slug);
+    }
+
+    public function test_dashboard_recent_activity_returns_real_loyalty_events(): void
+    {
+        $owner = $this->createUser();
+        $guest = $this->createUser(['email' => 'activity@example.com', 'name' => 'Activity Guest']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $customer = $this->createCustomer($venue, $guest);
+        $this->createVisit($customer, $owner);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'Stamp added for Activity Guest'])
+            ->assertJsonFragment(['title' => 'Activity Guest joined loyalty']);
     }
 
     public function test_staff_cannot_access_dashboard(): void

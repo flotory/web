@@ -179,3 +179,71 @@ export function toggleDay(days: number[], iso: number): number[] {
   }
   return [...set].sort((a, b) => a - b)
 }
+
+export function campaignTargetLabel(campaign: Campaign): string {
+  if (campaign.template_id === 'quiet_day_promotion' || campaign.template_id === 'happy_hour') {
+    return 'All customers'
+  }
+
+  if (campaign.audience_count === 0) {
+    return 'No customers yet'
+  }
+
+  return `${campaign.audience_count} customer${campaign.audience_count === 1 ? '' : 's'}`
+}
+
+export function campaignCriteriaChips(campaign: Campaign): string[] {
+  const config = campaign.config
+
+  if (campaign.template_id === 'vip_rewards') {
+    const chips: string[] = []
+    if (config.min_visits) {
+      chips.push(`${config.min_visits}+ visits`)
+    }
+    if (config.min_rewards_claimed) {
+      chips.push(`${config.min_rewards_claimed}+ reward claimed`)
+    }
+
+    return chips
+  }
+
+  if (campaign.template_id === 'bring_back_customers') {
+    const chips: string[] = []
+    if (config.inactive_days) {
+      chips.push(`${config.inactive_days}+ days inactive`)
+    }
+    if (config.duration_days) {
+      chips.push(`${config.duration_days} day run`)
+    }
+
+    return chips
+  }
+
+  return []
+}
+
+export function campaignShowsDayRow(campaign: Campaign): boolean {
+  return campaign.template_id === 'quiet_day_promotion' || campaign.template_id === 'happy_hour'
+}
+
+export function campaignActiveDays(campaign: Campaign): number[] {
+  return [...(campaign.config.days_of_week ?? [])].sort((a, b) => a - b)
+}
+
+export function campaignTimeRange(campaign: Campaign): string | null {
+  if (campaign.template_id !== 'happy_hour') {
+    return null
+  }
+
+  const start = campaign.config.start_time
+  const end = campaign.config.end_time
+  if (!start || !end) {
+    return null
+  }
+
+  return `${start} – ${end}`
+}
+
+export function campaignMultiplier(campaign: Campaign): number {
+  return campaign.multiplier ?? campaign.config.stamp_multiplier ?? 2
+}

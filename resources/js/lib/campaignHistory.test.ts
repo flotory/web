@@ -14,6 +14,8 @@ function campaign(overrides: Partial<Campaign> = {}): Campaign {
     template_id: 'quiet_day_promotion',
     name: 'Quiet Day',
     status: 'active',
+    starts_at: null,
+    ends_at: null,
     config: { stamp_multiplier: 2, days_of_week: [1, 2, 3] },
     push_enabled: true,
     audience_count: 10,
