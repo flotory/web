@@ -5,16 +5,21 @@
 ```
 Mac: edit code → git commit → ./deploy/push-prod.sh
                               ↓
-                    local CI (PHPUnit + npm build)
+                    local CI (PHPUnit + npm build + Vitest)
                               ↓
-                         git push → GitHub Actions (Tests)
+                         git push → GitHub Actions (PHPUnit + Frontend build + Vitest + Mobile typecheck)
                               ↓
                     wait until CI is green (GITHUB_TOKEN)
                               ↓
                          Droplet: git pull → deploy.sh
 ```
 
-Production deploy **does not run** if local tests fail or if the GitHub **Tests** workflow fails on the pushed commit.
+Production deploy **does not run** if:
+- local CI fails (backend PHPUnit or frontend build/unit tests), or
+- `GITHUB_TOKEN` is missing from `deploy/config.sh`, or
+- the GitHub **Tests** workflow fails on the pushed commit.
+
+Local CI uses Docker for PHPUnit when PHP is not installed on your Mac.
 
 Emergency bypass (avoid unless prod is down): `SKIP_CI_GATE=1 ./deploy/push-prod.sh`
 
@@ -73,6 +78,8 @@ Run the same checks without deploying:
 ```bash
 ./scripts/ci-local.sh
 ```
+
+This mirrors the web jobs in GitHub Actions: **PHPUnit**, **npm run build**, and **npm run test:unit**.
 
 ### CI status (read this if Actions looks “broken”)
 

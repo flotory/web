@@ -6,7 +6,8 @@ DROPLET_USER="root"
 APP_DIR="/var/www/web"
 GIT_BRANCH="main"
 
-# Required for ./deploy/push-prod.sh to wait for GitHub Actions before SSH deploy.
-# Create: GitHub → Settings → Developer settings → Fine-grained token → repo Actions (read).
+# Required for ./deploy/push-prod.sh — deploy is blocked without this token.
+# Create: GitHub → Settings → Developer settings → Fine-grained token
+#   → Repository access: flotory/web → Permissions: Actions (read), Metadata (read)
 GITHUB_TOKEN=""
 GITHUB_REPO="flotory/web"

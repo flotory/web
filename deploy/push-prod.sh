@@ -26,7 +26,15 @@ fi
 if [[ "${SKIP_CI_GATE:-}" == "1" ]]; then
   echo "WARNING: SKIP_CI_GATE=1 — skipping local and GitHub CI gates (emergency only)."
 else
-  echo "==> Running local CI (PHPUnit + frontend build)..."
+  if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+    echo ""
+    echo "ERROR: GITHUB_TOKEN is not set in deploy/config.sh"
+    echo "Deploy requires GitHub Actions to pass after push. Add a token with Actions read access."
+    echo "See deploy/config.example.sh — or use SKIP_CI_GATE=1 for emergency deploys only."
+    exit 1
+  fi
+
+  echo "==> Running local CI (PHPUnit + frontend build + unit tests)..."
   "${ROOT}/scripts/ci-local.sh"
 fi
 
@@ -34,13 +42,6 @@ echo "==> Pushing to GitHub (origin ${BRANCH})..."
 git push origin "${BRANCH}"
 
 if [[ "${SKIP_CI_GATE:-}" != "1" ]]; then
-  if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-    echo ""
-    echo "ERROR: GITHUB_TOKEN is not set in deploy/config.sh"
-    echo "Deploy is blocked until GitHub Actions passes on the commit you just pushed."
-    echo "Add a token with Actions read access, or use SKIP_CI_GATE=1 for emergency deploys only."
-    exit 1
-  fi
   export GITHUB_TOKEN
   "${ROOT}/scripts/wait-for-github-ci.sh"
 fi

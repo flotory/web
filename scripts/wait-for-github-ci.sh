@@ -21,6 +21,32 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
   exit 1
 fi
 
+json_field() {
+  local json="$1"
+  local field="$2"
+  JSON_INPUT="${json}" FIELD="${field}" python3 - <<'PY'
+import json
+import os
+import sys
+
+payload = os.environ.get("JSON_INPUT", "")
+field = os.environ.get("FIELD", "")
+
+try:
+    data = json.loads(payload)
+except json.JSONDecodeError:
+    print("")
+    sys.exit(0)
+
+runs = data.get("workflow_runs") or []
+if not runs:
+    print("")
+    sys.exit(0)
+
+print(runs[0].get(field, "") or "")
+PY
+}
+
 api() {
   curl -fsS \
     -H "Accept: application/vnd.github+json" \
@@ -40,10 +66,10 @@ while true; do
   fi
 
   RUN_JSON="$(api "https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/tests.yml/runs?head_sha=${SHA}&per_page=1")"
-  RUN_ID="$(echo "${RUN_JSON}" | php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["workflow_runs"][0]["id"] ?? "";')"
-  STATUS="$(echo "${RUN_JSON}" | php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["workflow_runs"][0]["status"] ?? "";')"
-  CONCLUSION="$(echo "${RUN_JSON}" | php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["workflow_runs"][0]["conclusion"] ?? "";')"
-  HTML_URL="$(echo "${RUN_JSON}" | php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["workflow_runs"][0]["html_url"] ?? "";')"
+  RUN_ID="$(json_field "${RUN_JSON}" "id")"
+  STATUS="$(json_field "${RUN_JSON}" "status")"
+  CONCLUSION="$(json_field "${RUN_JSON}" "conclusion")"
+  HTML_URL="$(json_field "${RUN_JSON}" "html_url")"
 
   if [[ -z "${RUN_ID}" ]]; then
     echo "… no workflow run yet (${ELAPSED}s)"
