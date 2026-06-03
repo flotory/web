@@ -10,4 +10,5 @@
 | 3.1 useCampaignsPage | Done | `resources/js/composables/useCampaignsPage.ts` |
 | 3.2 Vitest + CI | Done | `npm run test:unit` in GitHub Actions |
 | 4.x Split CampaignService | Done | `CampaignEngine` + `CampaignOwnerPresenter` |
-| 5.x Playwright E2E | Pending | Login → scan → claim |
+| 5.1 Playwright setup | Done | `e2e/owner-campaigns.spec.ts`, `npm run test:e2e` |
+| 5.2 More E2E flows | Pending | Staff scan, customer claim; CI job optional |
