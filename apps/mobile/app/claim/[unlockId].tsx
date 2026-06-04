@@ -34,7 +34,7 @@ export default function ClaimScreen() {
       router.back()
       return
     }
-    router.replace('/(customer)/rewards')
+    router.replace('/(customer)/wallet')
   }
 
   const insets = useSafeAreaInsets()
@@ -179,10 +179,10 @@ export default function ClaimScreen() {
             <Text style={withAppFont({ fontSize: 18, fontWeight: '800' })}>Reward redeemed</Text>
             <Text style={{ marginTop: 4, color: colors.successText }}>Staff completed the redemption.</Text>
             <Pressable
-              onPress={() => router.replace('/(customer)/rewards')}
+              onPress={() => router.replace('/(customer)/wallet')}
               style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
             >
-              <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>Back to rewards</Text>
+              <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>Back to wallet</Text>
             </Pressable>
           </View>
         ) : null}

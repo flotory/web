@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Animated, Text, View } from 'react-native'
+import { Animated, ScrollView, Text, View } from 'react-native'
 
 import ShadowPulse from '../ui/ShadowPulse'
 import { colors } from '../../theme'
@@ -16,6 +16,9 @@ interface MilestonePathProps {
   highlightStamps?: number[]
   columns?: number
   sizeScale?: number
+  cellShape?: 'rounded' | 'circle'
+  /** Single horizontal row (scrolls when needed). */
+  layout?: 'grid' | 'row'
 }
 
 export default function MilestonePath({
@@ -27,8 +30,10 @@ export default function MilestonePath({
   highlightStamps = [],
   columns,
   sizeScale = 1,
+  cellShape = 'rounded',
+  layout = 'grid',
 }: MilestonePathProps) {
-  const defaultSize = Math.round(44 * sizeScale)
+  const defaultSize = Math.round((cellShape === 'circle' ? 32 : 44) * sizeScale)
   const cellGap = Math.round(8 * sizeScale)
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
   const claimed = new Set(claimedStamps)
@@ -94,24 +99,28 @@ export default function MilestonePath({
     let textColor = '#94A3B8'
 
     if (filled) {
-      backgroundColor = colors.successBg
+      backgroundColor = cellShape === 'circle' ? colors.success : colors.successBg
       borderColor = colors.successBorder
-      textColor = colors.successText
+      textColor = cellShape === 'circle' ? '#FFFFFF' : colors.successText
     } else if (isGift) {
-      backgroundColor = '#F1F5F9'
+      backgroundColor = '#FEF9C3'
+      borderColor = '#FDE68A'
+      textColor = '#A16207'
+    } else if (cellShape === 'circle') {
+      backgroundColor = '#FFFFFF'
       borderColor = '#E2E8F0'
-      textColor = '#94A3B8'
     }
 
     const size = defaultSize
-    const content = filled ? '✓' : isGift ? '🎁' : String(stamp)
+    const content = filled ? '✓' : isGift ? '🎁' : ''
+    const borderRadius = cellShape === 'circle' ? size / 2 : Math.round(14 * sizeScale)
 
     const cell = (
       <View
         style={{
           width: size,
           height: size,
-          borderRadius: Math.round(14 * sizeScale),
+          borderRadius,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor,
@@ -119,9 +128,17 @@ export default function MilestonePath({
           borderColor,
         }}
       >
-        <Text style={withAppFont({ fontSize: Math.round((filled ? 14 : isGift ? 16 : 14) * sizeScale), fontWeight: '800', color: textColor })}>
-          {content}
-        </Text>
+        {content ? (
+          <Text
+            style={withAppFont({
+              fontSize: Math.round((filled ? 13 : isGift ? 14 : 12) * sizeScale),
+              fontWeight: '800',
+              color: textColor,
+            })}
+          >
+            {content}
+          </Text>
+        ) : null}
       </View>
     )
 
@@ -196,6 +213,18 @@ export default function MilestonePath({
   }
 
   const stamps = Array.from({ length: total }, (_, index) => index + 1)
+
+  if (layout === 'row') {
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: cellGap, paddingVertical: 2, paddingRight: 4 }}
+      >
+        {stamps.map((stamp) => renderCell(stamp))}
+      </ScrollView>
+    )
+  }
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: cellGap }}>

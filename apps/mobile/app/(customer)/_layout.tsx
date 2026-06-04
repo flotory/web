@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native'
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { fonts } from '../../src/lib/typography'
-import { colors, shadows, tabBarQr } from '../../src/theme'
+import { colors, screenWallpaperBaseColor, shadows, tabBarQr } from '../../src/theme'
 
 export default function CustomerTabsLayout() {
   const { token, role } = useAuth()
@@ -41,8 +41,8 @@ export default function CustomerTabsLayout() {
           height: 78,
           paddingTop: 8,
           paddingBottom: 10,
-          borderTopColor: colors.border,
-          backgroundColor: colors.bg,
+          borderTopColor: 'rgba(98, 72, 48, 0.14)',
+          backgroundColor: screenWallpaperBaseColor(),
         },
         tabBarLabelStyle: {
           fontFamily: fonts.semiBold,
@@ -106,12 +106,12 @@ export default function CustomerTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="venues"
         options={{
-          title: 'Rewards',
+          title: 'Venues',
           href: role === 'customer' ? undefined : null,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'gift' : 'gift-outline'} color={color} size={size} />
+            <Ionicons name={focused ? 'location' : 'location-outline'} color={color} size={size} />
           ),
         }}
       />
@@ -126,12 +126,12 @@ export default function CustomerTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="venues"
+        name="rewards"
         options={{
-          title: 'Discover',
+          title: 'Rewards',
           href: null,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'compass' : 'compass-outline'} color={color} size={size} />
+            <Ionicons name={focused ? 'gift' : 'gift-outline'} color={color} size={size} />
           ),
         }}
       />

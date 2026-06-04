@@ -1,30 +1,47 @@
-import { Link, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useMemo, useState } from 'react'
 import { Animated, Pressable, Text, TextInput, View } from 'react-native'
 
-import CoverImage from '../src/components/ui/CoverImage'
+import DiscoverCategoryPills, { type DiscoverCategoryFilter } from '../src/components/customer/DiscoverCategoryPills'
+import DiscoverVenueCard from '../src/components/customer/DiscoverVenueCard'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
-import GradientCard from '../src/components/ui/GradientCard'
-import GradientOutlineButton from '../src/components/ui/GradientOutlineButton'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
 import { useDiscoverVenues } from '../src/hooks/useDiscoverVenues'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
-import { joinVenueBySlug } from '../src/lib/customerData'
-import { hapticSuccess } from '../src/lib/haptics'
-import { venueCoverUrl } from '../src/lib/media'
+import type { DiscoverVenue } from '../src/lib/customerData'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
 
+const KNOWN_CATEGORIES = new Set(['cafe', 'restaurant', 'bar', 'bakery'])
+
+function matchesCategoryFilter(venue: DiscoverVenue, filter: DiscoverCategoryFilter): boolean {
+  const category = (venue.category ?? '').toLowerCase()
+  switch (filter) {
+    case 'all':
+      return true
+    case 'coffee':
+      return category === 'cafe'
+    case 'food':
+      return category === 'restaurant' || category === 'bar'
+    case 'desserts':
+      return category === 'bakery'
+    case 'more':
+      return !category || !KNOWN_CATEGORIES.has(category)
+    default:
+      return true
+  }
+}
+
 export default function VenuesScreen() {
   const router = useRouter()
-  const { token, role } = useAuth()
+  const { role } = useAuth()
   const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
-  const [joiningSlug, setJoiningSlug] = useState<string | null>(null)
-  const [joinError, setJoinError] = useState('')
   const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<DiscoverCategoryFilter>('all')
   const fade = useFadeOnReady(!loading)
 
   const venues = data?.venues ?? []
@@ -32,26 +49,25 @@ export default function VenuesScreen() {
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
-    if (!query) return venues
     return venues.filter((venue) => {
+      if (!matchesCategoryFilter(venue, categoryFilter)) return false
+      if (!query) return true
       const haystack = [venue.name, venue.category, venue.slug].filter(Boolean).join(' ').toLowerCase()
       return haystack.includes(query)
     })
-  }, [search, venues])
+  }, [categoryFilter, search, venues])
 
-  async function joinVenue(slug: string) {
-    if (!token) return
-    setJoiningSlug(slug)
-    setJoinError('')
-    try {
-      await joinVenueBySlug(token, slug)
-      hapticSuccess()
-      await reload()
-    } catch {
-      setJoinError('Could not join venue.')
-    } finally {
-      setJoiningSlug(null)
+  function openVenue(venue: DiscoverVenue) {
+    const joined = (venue.joined_count ?? 0) > 0
+    const card = cardsByVenue[venue.id]
+    if (joined && card) {
+      router.push({
+        pathname: '/card/[cardId]',
+        params: { cardId: String(card.id), venueId: String(venue.id) },
+      })
+      return
     }
+    router.push(`/v/${venue.slug}`)
   }
 
   if (role !== 'customer') {
@@ -64,24 +80,59 @@ export default function VenuesScreen() {
 
   const header = (
     <View style={{ paddingHorizontal: space.screenX }}>
-      <ScreenHeader title="Discover" subtitle="Find your next favorite reward spot." />
-      <TextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search venues"
-        placeholderTextColor={colors.inkSoft}
-        style={{
-          marginTop: space.sectionGap,
-          backgroundColor: colors.surface,
-          borderRadius: radius.image,
-          borderWidth: 1,
-          borderColor: colors.border,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          fontSize: 16,
-          color: colors.ink,
-        }}
+      <ScreenHeader
+        title="Discover venues"
+        subtitle="Find places, earn rewards, enjoy more."
       />
+      <View style={{ marginTop: space.sectionGap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.discoverSearchFill,
+            borderRadius: radius.image,
+            borderWidth: 1,
+            borderColor: colors.discoverPillBorder,
+            paddingHorizontal: 12,
+            gap: 8,
+          }}
+        >
+          <Ionicons name="search" size={19} color={colors.inkMuted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search venues or cuisines"
+            placeholderTextColor={colors.inkSoft}
+            style={withAppFont({
+              flex: 1,
+              paddingVertical: 12,
+              fontSize: 15,
+              color: colors.ink,
+            })}
+          />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Filter venues"
+          style={({ pressed }) => ({
+            width: 48,
+            height: 48,
+            borderRadius: radius.image,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.discoverPillBorder,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.9 : 1,
+          })}
+        >
+          <Ionicons name="options-outline" size={21} color={colors.inkMuted} />
+        </Pressable>
+      </View>
+      <View style={{ marginTop: 14 }}>
+        <DiscoverCategoryPills value={categoryFilter} onChange={setCategoryFilter} />
+      </View>
     </View>
   )
 
@@ -94,7 +145,7 @@ export default function VenuesScreen() {
       refreshing={refreshing}
       onRefresh={refresh}
       header={header}
-      skeleton={<ScreenSkeleton topInset={0} withSearch cardCount={3} />}
+      skeleton={<ScreenSkeleton topInset={0} withSearch cardCount={4} listCard />}
       errorState={
         error
           ? {
@@ -116,94 +167,15 @@ export default function VenuesScreen() {
             paddingHorizontal: space.screenX,
           }}
         >
-          {joinError ? (
-            <View style={{ marginBottom: space.sectionGap }}>
-              <StateCard
-                emoji="⚠️"
-                title="Could not join"
-                message={joinError}
-                primaryAction={{ label: 'Try again', onPress: () => setJoinError('') }}
-              />
-            </View>
-          ) : null}
-
           <View style={{ gap: space.listGap }}>
-            {filtered.map((item) => {
-              const joined = (item.joined_count ?? 0) > 0
-              const cover = venueCoverUrl(item)
-              const offer =
-                (item.rewards_count ?? 0) > 0
-                  ? 'Earn visits and unlock your first reward'
-                  : 'Join to start earning rewards'
-
-              return (
-                <GradientCard key={item.id} header={<CoverImage uri={cover} />}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={withAppFont({ fontSize: 20, fontWeight: '800', color: colors.ink })}>{item.name}</Text>
-                      <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
-                        {item.category ? (
-                          <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
-                            <Text style={{ ...typography.caption, color: colors.primary, textTransform: 'capitalize' }}>
-                              {item.category}
-                            </Text>
-                          </View>
-                        ) : null}
-                        <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
-                          <Text style={{ ...typography.caption, color: colors.primary }}>Nearby</Text>
-                        </View>
-                      </View>
-                    </View>
-                    {joined ? (
-                      <View
-                        style={{
-                          backgroundColor: colors.successBg,
-                          borderRadius: radius.button,
-                          paddingHorizontal: 10,
-                          paddingVertical: 5,
-                          borderWidth: 1,
-                          borderColor: colors.successBorder,
-                        }}
-                      >
-                        <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.success })}>Joined</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text style={withAppFont({ ...typography.body, marginTop: 10, color: colors.plum, fontWeight: '600' })}>{offer}</Text>
-                  {joined ? (
-                    <Link
-                      href={
-                        cardsByVenue[item.id]
-                          ? {
-                              pathname: '/card/[cardId]',
-                              params: {
-                                cardId: String(cardsByVenue[item.id].id),
-                                venueId: String(item.id),
-                              },
-                            }
-                          : '/(customer)/wallet'
-                      }
-                      asChild
-                    >
-                      <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.97 : 1 })}>
-                        <GradientOutlineButton label="Continue collecting" />
-                      </Pressable>
-                    </Link>
-                  ) : (
-                    <Pressable
-                      onPress={() => void joinVenue(item.slug)}
-                      disabled={joiningSlug === item.slug}
-                      style={({ pressed }) => ({ opacity: pressed || joiningSlug === item.slug ? 0.97 : 1 })}
-                    >
-                      <GradientOutlineButton
-                        label={joiningSlug === item.slug ? 'Joining…' : 'Join venue'}
-                        style={joiningSlug === item.slug ? { opacity: 0.65 } : undefined}
-                      />
-                    </Pressable>
-                  )}
-                </GradientCard>
-              )
-            })}
+            {filtered.map((item) => (
+              <DiscoverVenueCard
+                key={item.id}
+                venue={item}
+                card={cardsByVenue[item.id] ?? null}
+                onPress={() => openVenue(item)}
+              />
+            ))}
           </View>
 
           {!filtered.length ? (
@@ -211,8 +183,8 @@ export default function VenuesScreen() {
               <StateCard
                 emoji="🔍"
                 title="No venues found"
-                message="Try another search term or browse all nearby spots."
-                primaryAction={{ label: 'Clear search', onPress: () => setSearch('') }}
+                message="Try another search or category, or browse all venues."
+                primaryAction={{ label: 'Clear filters', onPress: () => { setSearch(''); setCategoryFilter('all') } }}
               />
             </View>
           ) : null}

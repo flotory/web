@@ -1,10 +1,18 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import VenueJoinMilestones from '../../src/components/customer/VenueJoinMilestones'
+import PrimaryButton from '../../src/components/ui/PrimaryButton'
+import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
+import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
+import { formatVenueCategoryLabel } from '../../src/lib/format'
+import { venueCoverUrl } from '../../src/lib/media'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors } from '../../src/theme'
+import { colors, radius, space } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
 
 interface LandingPayload {
@@ -13,6 +21,11 @@ interface LandingPayload {
     name: string
     slug: string
     address?: string | null
+    category?: string | null
+    cover_image?: string | null
+    cover_image_thumb?: string | null
+    logo?: string | null
+    logo_thumb?: string | null
   }
   milestones: Array<{
     id: number
@@ -23,6 +36,7 @@ interface LandingPayload {
 
 export default function VenueJoinScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const { slug } = useLocalSearchParams<{ slug: string }>()
   const { token, role } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -46,6 +60,14 @@ export default function VenueJoinScreen() {
     }
     void load()
   }, [slug])
+
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back()
+      return
+    }
+    router.replace('/(customer)/venues')
+  }
 
   async function handleJoin() {
     if (!token || !slug) {
@@ -71,41 +93,138 @@ export default function VenueJoinScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator />
-      </View>
+      <ScreenGradientLoading>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color={colors.ink} />
+        </View>
+      </ScreenGradientLoading>
     )
   }
 
+  if (!landing && error) {
+    return (
+      <ScreenGradientLayout scrollable tabBarInset={false} paddingTop={insets.top + 12}>
+        <View style={{ paddingHorizontal: space.screenX }}>
+          <Pressable onPress={handleBack} style={{ alignSelf: 'flex-start', paddingVertical: 4 }}>
+            <Ionicons name="chevron-back" size={24} color={colors.ink} />
+          </Pressable>
+          <View style={{ marginTop: space.sectionY }}>
+            <StateCard
+              emoji="🔗"
+              title="Venue not found"
+              message={error}
+              primaryAction={{ label: 'Browse venues', onPress: () => router.replace('/(customer)/venues') }}
+            />
+          </View>
+        </View>
+      </ScreenGradientLayout>
+    )
+  }
+
+  const cover = venueCoverUrl(landing?.venue)
+  const categoryLabel = landing?.venue.category ? formatVenueCategoryLabel(landing.venue.category) : null
+  const milestones = landing?.milestones ?? []
+
   return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: colors.bg, gap: 12 }}>
-      <Text style={withAppFont({ marginTop: 24, fontSize: 28, fontWeight: '800' })}>
-        {landing?.venue.name ?? 'Venue'}
-      </Text>
-      {landing?.venue.address ? <Text style={{ color: colors.inkMuted }}>{landing.venue.address}</Text> : null}
-      <Text style={{ color: colors.inkMuted }}>Join this venue to collect stamps and claim rewards in-app.</Text>
+    <ScreenGradientLayout
+      scrollable
+      tabBarInset={false}
+      paddingTop={insets.top + 8}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+    >
+      <View style={{ paddingHorizontal: space.screenX }}>
+        <Pressable
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.discoverCardBorder,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 12,
+          }}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+        </Pressable>
 
-      <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 14 }}>
-        <Text style={withAppFont({ fontWeight: '700' })}>Milestones</Text>
-        {landing?.milestones.slice(0, 4).map((milestone) => (
-          <Text key={milestone.id} style={{ marginTop: 6, color: colors.inkMuted }}>
-            🎁 {milestone.required_stamps} stamps - {milestone.title}
-          </Text>
-        ))}
-      </View>
+        {cover ? (
+          <View
+            style={{
+              height: 168,
+              borderRadius: radius.card,
+              overflow: 'hidden',
+              backgroundColor: colors.surfaceMuted,
+              marginBottom: 16,
+            }}
+          >
+            <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          </View>
+        ) : null}
 
-      {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
-
-      <Pressable
-        onPress={() => void handleJoin()}
-        disabled={joining}
-        style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center', opacity: joining ? 0.6 : 1 }}
-      >
-        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>
-          {joining ? 'Joining...' : token ? 'Join venue' : 'Login to join'}
+        <Text style={withAppFont({ fontSize: 30, fontWeight: '800', color: colors.ink, letterSpacing: -0.6 })}>
+          {landing?.venue.name ?? 'Venue'}
         </Text>
-      </Pressable>
-    </View>
+
+        <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          {landing?.venue.address ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
+              <Ionicons name="location-outline" size={15} color={colors.inkMuted} />
+              <Text style={withAppFont({ fontSize: 14, color: colors.inkMuted })}>{landing.venue.address}</Text>
+            </View>
+          ) : null}
+          {categoryLabel ? (
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 999,
+                backgroundColor: colors.lavender,
+              }}
+            >
+              <Text style={withAppFont({ fontSize: 12, fontWeight: '600', color: colors.primarySoft })}>
+                {categoryLabel}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <Text
+          style={withAppFont({
+            marginTop: 14,
+            fontSize: 15,
+            lineHeight: 22,
+            color: colors.inkMuted,
+          })}
+        >
+          Join to start a digital loyalty card. Show your QR when you visit — stamps and rewards stay in the app.
+        </Text>
+
+        <View style={{ marginTop: space.sectionGap }}>
+          <VenueJoinMilestones milestones={milestones} />
+        </View>
+
+        {error ? (
+          <Text style={withAppFont({ marginTop: 12, fontSize: 14, color: colors.danger })}>{error}</Text>
+        ) : null}
+
+        <PrimaryButton
+          label={joining ? 'Joining…' : token ? 'Join venue' : 'Log in to join'}
+          onPress={() => void handleJoin()}
+          disabled={joining}
+          style={{ marginTop: space.sectionGap }}
+        />
+
+        {!token ? (
+          <Text style={withAppFont({ marginTop: 10, fontSize: 13, textAlign: 'center', color: colors.inkSoft })}>
+            You need a customer account to collect stamps here.
+          </Text>
+        ) : null}
+      </View>
+    </ScreenGradientLayout>
   )
 }
-

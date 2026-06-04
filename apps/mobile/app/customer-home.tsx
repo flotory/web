@@ -18,6 +18,7 @@ import { sortHomeCampaigns } from '../src/lib/homeCampaigns'
 import { useAuth } from '../src/providers/AuthProvider'
 import { hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
+import type { VenueRef } from '../src/types/loyalty'
 import { colors, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
 
@@ -44,6 +45,15 @@ export default function CustomerHomeScreen() {
     () => sortHomeCampaigns(cardsQuery.data?.home_campaigns ?? []),
     [cardsQuery.data?.home_campaigns],
   )
+  const campaignVenueById = useMemo(() => {
+    const map = new Map<number, VenueRef>()
+    for (const card of cards) {
+      if (card.venue) {
+        map.set(card.venue_id, card.venue)
+      }
+    }
+    return map
+  }, [cards])
   const readyItems = walletQuery.data?.items ?? []
   const fade = useFadeOnReady(!loading)
 
@@ -137,12 +147,12 @@ export default function CustomerHomeScreen() {
         onPress: () => router.navigate('/(customer)/qr'),
       },
       {
-        id: 'rewards',
-        label: 'View rewards',
-        subtitle: 'See what you can unlock',
-        icon: 'gift-outline' as const,
+        id: 'wallet',
+        label: 'Open wallet',
+        subtitle: 'Your cards and ready rewards',
+        icon: 'wallet-outline' as const,
         tint: colors.accentSoft,
-        onPress: () => router.navigate('/(customer)/rewards'),
+        onPress: () => router.navigate('/(customer)/wallet'),
       },
       {
         id: 'venues',
@@ -210,7 +220,7 @@ export default function CustomerHomeScreen() {
         <Animated.View style={{ opacity: fade }}>
           {homeCampaigns.length > 0 ? (
             <View style={{ marginTop: space.sectionGap }}>
-              <HomeCampaignCarousel campaigns={homeCampaigns} />
+              <HomeCampaignCarousel campaigns={homeCampaigns} venueById={campaignVenueById} />
             </View>
           ) : null}
 

@@ -48,7 +48,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        subscribedIds.current.forEach((id) => echo.leave(`customer.${id}`))
         subscribedIds.current = []
 
         cards.forEach((card) => {
@@ -71,10 +70,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true
-      if (token) {
-        const echo = getEcho(token)
-        subscribedIds.current.forEach((id) => echo.leave(`customer.${id}`))
-      }
       subscribedIds.current = []
       disconnectEcho()
     }

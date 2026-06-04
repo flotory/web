@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient'
 import { type ReactElement, type ReactNode } from 'react'
 import {
   ScrollView,
@@ -11,17 +10,15 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { colors, gradients, space } from '../../theme'
+import ScreenStickerBackground from './ScreenStickerBackground'
+import { colors, space, screenWallpaperBaseColor } from '../../theme'
 
 /** Customer tab bar height from `(customer)/_layout.tsx` */
 const TAB_BAR_HEIGHT = 78
 
-const gradientStart = { x: 0, y: 0 } as const
-const gradientEnd = { x: 1, y: 1 } as const
-
 interface ScreenGradientLayoutProps {
   children: ReactNode
-  /** Wrap content in ScrollView; gradient grows with scroll height */
+  /** Wrap content in ScrollView; wallpaper grows with scroll height */
   scrollable?: boolean
   /** Pinned above the scroll body — stays put during pull-to-refresh */
   fixedHeader?: ReactNode
@@ -32,17 +29,8 @@ interface ScreenGradientLayoutProps {
   paddingTop?: number
 }
 
-function ScreenGradientBackground({ minHeight }: { minHeight: number }) {
-  return (
-    <LinearGradient
-      colors={[...gradients.screen]}
-      locations={[...gradients.screenLocations]}
-      start={gradientStart}
-      end={gradientEnd}
-      style={[StyleSheet.absoluteFillObject, { minHeight }]}
-      pointerEvents="none"
-    />
-  )
+function ScreenWallpaper({ minHeight }: { minHeight: number }) {
+  return <ScreenStickerBackground minHeight={minHeight} />
 }
 
 export function ScreenGradientLoading({ children }: { children: ReactNode }) {
@@ -51,7 +39,7 @@ export function ScreenGradientLoading({ children }: { children: ReactNode }) {
 
   return (
     <View style={styles.root}>
-      <ScreenGradientBackground minHeight={windowHeight} />
+      <ScreenWallpaper minHeight={windowHeight} />
       <View style={{ flex: 1, paddingTop: insets.top + 12 }}>{children}</View>
     </View>
   )
@@ -73,7 +61,7 @@ export default function ScreenGradientLayout({
   const topPad = paddingTop ?? insets.top + 12
   const bottomPad = insets.bottom + (tabBarInset ? TAB_BAR_HEIGHT : 0) + space.screenX
 
-  const gradientShell: ViewStyle = {
+  const contentShell: ViewStyle = {
     flexGrow: 1,
     minHeight: windowHeight,
     paddingTop: topPad,
@@ -84,7 +72,7 @@ export default function ScreenGradientLayout({
   if (scrollable && fixedHeader) {
     return (
       <View style={styles.root}>
-        <ScreenGradientBackground minHeight={windowHeight} />
+        <ScreenWallpaper minHeight={windowHeight} />
         <View style={{ flex: 1, paddingTop: topPad, backgroundColor: 'transparent' }}>
           {fixedHeader}
           <ScrollView
@@ -103,6 +91,8 @@ export default function ScreenGradientLayout({
   }
 
   if (scrollable) {
+    const wallpaperHeight = Math.max(windowHeight * 2, 1200)
+
     return (
       <View style={styles.root}>
         <ScrollView
@@ -113,15 +103,10 @@ export default function ScreenGradientLayout({
           directionalLockEnabled
           nestedScrollEnabled
         >
-          <LinearGradient
-            colors={[...gradients.screen]}
-            locations={[...gradients.screenLocations]}
-            start={gradientStart}
-            end={gradientEnd}
-            style={gradientShell}
-          >
-            {children}
-          </LinearGradient>
+          <View style={{ flexGrow: 1, minHeight: windowHeight, position: 'relative' }}>
+            <ScreenWallpaper minHeight={wallpaperHeight} />
+            <View style={contentShell}>{children}</View>
+          </View>
         </ScrollView>
       </View>
     )
@@ -129,12 +114,12 @@ export default function ScreenGradientLayout({
 
   return (
     <View style={styles.root}>
-      <ScreenGradientBackground minHeight={windowHeight} />
+      <ScreenWallpaper minHeight={windowHeight} />
       <View
         style={[
           flexContent
             ? { flex: 1, minHeight: windowHeight, paddingTop: topPad, backgroundColor: 'transparent' }
-            : { ...gradientShell },
+            : { ...contentShell },
         ]}
       >
         {children}
@@ -146,7 +131,7 @@ export default function ScreenGradientLayout({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: screenWallpaperBaseColor(),
   },
   transparentScroll: {
     flex: 1,

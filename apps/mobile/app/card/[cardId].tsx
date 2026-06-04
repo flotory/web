@@ -1,36 +1,25 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Animated,
-  Image,
-  Pressable,
-  RefreshControl,
-  Text,
-  View,
-} from 'react-native'
+import { Animated, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import MilestonePath from '../../src/components/customer/MilestonePath'
+import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
+import CardLoyaltyProgressCard from '../../src/components/customer/CardLoyaltyProgressCard'
+import CardPromotionBanner from '../../src/components/customer/CardPromotionBanner'
+import CardShowQrCta from '../../src/components/customer/CardShowQrCta'
 import StampRewardCelebration from '../../src/components/loyalty/StampRewardCelebration'
-import CoverImage from '../../src/components/ui/CoverImage'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
-import ShakeGiftBadge from '../../src/components/ui/ShakeGiftBadge'
 import StateCard from '../../src/components/ui/StateCard'
 import { useCardDetail } from '../../src/hooks/useCardDetail'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
-import { progressCountCopy, progressHintCopy, visitsToRewardCopy } from '../../src/lib/progressCopy'
 import { hapticSuccess } from '../../src/lib/haptics'
-import { rewardImageUrl, venueCoverUrl, venueLogoUrl } from '../../src/lib/media'
-import { colors, radius, space, type as typography } from '../../src/theme'
 import { rewardEarnedThisScan, slotsForStampIncrease, stampUpdateSignature } from '../../src/lib/stampLiveUpdate'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
 import type { StampAddedPayload } from '../../src/types/realtime'
+import { colors, radius, space } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
-
-const SCALE = 0.8
-const s = (value: number) => Math.round(value * SCALE)
 
 export default function CardDetailScreen() {
   const router = useRouter()
@@ -199,222 +188,80 @@ export default function CardDetailScreen() {
 
   const nextReward = payload?.next_reward
   const stamps = displayStamps ?? card.stamps
-  const stampsToNext = nextReward ? Math.max(nextReward.required_stamps - stamps, 0) : Math.max(maxStamps - stamps, 0)
+  const progressTarget = nextReward?.required_stamps ?? maxStamps
   const milestones = [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps)
-  const cover = venueCoverUrl(card.venue ?? undefined)
-  const logo = venueLogoUrl(card.venue ?? undefined)
-  const nextImage = rewardImageUrl(nextReward ?? undefined)
   const promotion = payload?.promotion
 
   return (
     <ScreenGradientLayout
       scrollable
       tabBarInset={false}
-      paddingTop={insets.top + 8}
+      paddingTop={0}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 28 }}
     >
-      <Pressable onPress={handleBack} style={{ paddingHorizontal: space.screenX }}>
-        <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
-      </Pressable>
-
       {error ? (
-        <View style={{ paddingHorizontal: space.screenX, marginTop: 8 }}>
-          <StateCard
-            emoji="⚠️"
-            title="Could not load card"
-            message="Try again or return to your wallet."
-            primaryAction={{ label: 'Try again', onPress: reload }}
-            secondaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
-          />
-        </View>
-      ) : null}
-
-      <Animated.View style={{ opacity: fade, marginTop: s(space.headerBottom) }}>
-        <View style={{ marginTop: s(12), marginHorizontal: space.screenX, borderRadius: radius.card, overflow: 'hidden' }}>
-          <CoverImage uri={cover} height={s(140)} />
-          {readyReward ? (
-            <View style={{ position: 'absolute', top: s(14), right: s(14) }}>
-              <ShakeGiftBadge />
-            </View>
-          ) : null}
-          <View style={{ position: 'absolute', left: s(16), bottom: s(14), flexDirection: 'row', alignItems: 'center', gap: s(10) }}>
-            <View
-              style={{
-                width: s(52),
-                height: s(52),
-                borderRadius: s(14),
-                backgroundColor: colors.surface,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              {logo ? <Image source={{ uri: logo }} style={{ width: s(52), height: s(52) }} /> : <Text style={{ fontSize: s(24) }}>☕</Text>}
-            </View>
-            <Text style={withAppFont({ fontSize: s(26), fontWeight: '800', color: colors.primaryText, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 })}>
-              {card.venue?.name ?? 'Loyalty card'}
-            </Text>
-          </View>
-        </View>
-
-        {promotion ? (
-          <View
-            style={{
-              marginTop: s(space.sectionY),
-              marginHorizontal: space.screenX,
-              backgroundColor: colors.accentSoft,
-              borderRadius: radius.card,
-              borderWidth: 1,
-              borderColor: colors.accentBorder,
-              padding: s(space.cardPad),
-            }}
-          >
-            <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.accent })}>🔥 {promotion.headline}</Text>
-            <Text style={{ ...typography.body, fontSize: s(16), marginTop: s(6), color: colors.inkMuted }}>{promotion.message}</Text>
-            {promotion.days_left != null && promotion.days_left >= 0 ? (
-              <Text style={{ ...typography.caption, fontSize: s(13), marginTop: s(8), color: colors.inkSoft }}>
-                Ends in {promotion.days_left} {promotion.days_left === 1 ? 'day' : 'days'}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
-
-        <View style={{ marginTop: s(space.sectionY), paddingHorizontal: space.screenX }}>
-          <View
-            style={{
-              backgroundColor: colors.accentSoft,
-              borderRadius: radius.card,
-              borderWidth: 1,
-              borderColor: colors.accentBorder,
-              padding: s(space.cardPad),
-            }}
-          >
-            <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.ink })}>One QR for every venue</Text>
-            <Text style={{ ...typography.body, fontSize: s(15), marginTop: s(6), color: colors.inkMuted }}>
-              Use My QR at the counter — staff stamp the card for this visit's venue.
-            </Text>
-            <PrimaryButton
-              label="Show My QR"
-              onPress={() => router.navigate('/(customer)/qr')}
-              style={{ marginTop: s(14) }}
+        <View style={{ paddingHorizontal: space.screenX, paddingTop: insets.top + 12 }}>
+          <Pressable onPress={handleBack}>
+            <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
+          </Pressable>
+          <View style={{ marginTop: 12 }}>
+            <StateCard
+              emoji="⚠️"
+              title="Could not load card"
+              message="Try again or return to your wallet."
+              primaryAction={{ label: 'Try again', onPress: reload }}
+              secondaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
             />
           </View>
         </View>
+      ) : null}
 
-        <View style={{ marginTop: s(space.sectionY), paddingHorizontal: space.screenX }}>
-          <Text style={{ ...typography.section, fontSize: s(22) }}>Your progress</Text>
-          <View
-            style={{
-              marginTop: s(14),
-              backgroundColor: colors.surface,
-              borderRadius: radius.card,
-              padding: s(space.cardPad),
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <Text style={withAppFont({ fontSize: s(28), fontWeight: '800', color: colors.ink })}>
-              {readyReward
-                ? progressHintCopy(0, readyReward.title)
-                : progressHintCopy(stampsToNext, nextReward?.title)}
-            </Text>
-            <View style={{ marginTop: s(14) }}>
-              <MilestonePath
-                collected={stamps}
-                total={maxStamps}
-                milestoneStamps={milestones.map((item) => item.required_stamps)}
-                claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
-                highlightStamps={animatingSlots}
-                columns={5}
-                sizeScale={SCALE}
-              />
-            </View>
-            <Text style={{ ...typography.body, fontSize: s(16), lineHeight: s(22), marginTop: s(12) }}>
-              {progressCountCopy(stamps, nextReward?.required_stamps ?? maxStamps)}
-            </Text>
-            {milestones.length > 1 ? (
-              <View style={{ marginTop: s(12) }}>
-                <Text style={withAppFont({ ...typography.caption, fontSize: s(13), fontWeight: '700' })}>All reward milestones</Text>
-                <View style={{ marginTop: s(8), flexDirection: 'row', flexWrap: 'wrap', gap: s(8) }}>
-                  {milestones.map((milestone) => {
-                    const unlocked = stamps >= milestone.required_stamps
-                    return (
-                      <View
-                        key={milestone.id}
-                        style={{
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: unlocked ? colors.successBorder : colors.border,
-                          backgroundColor: unlocked ? colors.successBg : colors.bg,
-                          paddingHorizontal: s(10),
-                          paddingVertical: s(6),
-                        }}
-                      >
-                        <Text style={withAppFont({ fontSize: s(12), fontWeight: '700', color: unlocked ? colors.successText : '#475569' })}>
-                          {milestone.required_stamps} • {milestone.title}
-                        </Text>
-                      </View>
-                    )
-                  })}
-                </View>
-              </View>
-            ) : null}
-            {nextReward && !readyReward ? (
-              <View
-                style={{
-                  marginTop: s(12),
-                  flexDirection: 'row',
-                  gap: s(12),
-                  alignItems: 'center',
-                  backgroundColor: colors.bg,
-                  borderRadius: s(14),
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  padding: s(10),
-                }}
-              >
-                {nextImage ? (
-                  <Image source={{ uri: nextImage }} style={{ width: s(56), height: s(56), borderRadius: s(12) }} />
-                ) : (
-                  <View style={{ width: s(56), height: s(56), borderRadius: s(12), backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: s(22) }}>🎁</Text>
-                  </View>
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.ink })}>{nextReward.title}</Text>
-                  <Text style={{ ...typography.caption, fontSize: s(13), marginTop: 2 }}>
-                    {visitsToRewardCopy(stampsToNext, nextReward.title)}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-          </View>
-        </View>
+      <Animated.View style={{ opacity: fade }}>
+        <CardDetailHeader venue={card.venue} topInset={insets.top} onBack={handleBack} />
+
+        {promotion ? <CardPromotionBanner promotion={promotion} /> : null}
+
+        <CardLoyaltyProgressCard
+          stamps={stamps}
+          progressTarget={progressTarget}
+          nextReward={nextReward}
+          rewardReady={Boolean(readyReward)}
+          readyRewardTitle={readyReward?.title}
+          milestones={milestones}
+          animatingSlots={animatingSlots}
+        />
+
+        <CardShowQrCta />
 
         {readyReward ? (
           <View
             style={{
-              marginTop: s(space.sectionY),
-              marginBottom: s(16),
+              marginTop: space.sectionGap,
+              marginBottom: 8,
               marginHorizontal: space.screenX,
               backgroundColor: colors.successBg,
               borderRadius: radius.card,
-              padding: s(space.cardPad),
+              padding: space.cardPad,
               borderWidth: 1,
               borderColor: colors.successBorder,
             }}
           >
-            <Text style={{ ...typography.label, fontSize: s(12), color: colors.success }}>REWARD READY</Text>
-            <Text style={withAppFont({ marginTop: s(8), fontSize: s(28), fontWeight: '800', color: colors.ink })}>{readyReward.title}</Text>
+            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.success, letterSpacing: 0.6 })}>
+              REWARD READY
+            </Text>
+            <Text style={withAppFont({ marginTop: 8, fontSize: 24, fontWeight: '800', color: colors.ink })}>
+              {readyReward.title}
+            </Text>
             {readyUnlock ? (
               <Link
                 href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(readyUnlock.unlock_id) } }}
                 asChild
               >
-                <PrimaryButton label="Claim reward" style={{ marginTop: s(16) }} />
+                <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} />
               </Link>
             ) : (
-              <PrimaryButton label="Claim reward" style={{ marginTop: s(16) }} onPress={() => void refresh()} />
+              <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} onPress={() => void refresh()} />
             )}
           </View>
         ) : null}

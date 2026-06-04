@@ -1,15 +1,16 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { Animated, TextInput, View } from 'react-native'
+import { Animated, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import WalletStackedCards from '../src/components/customer/WalletStackedCards'
 import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/CustomerScreen'
-import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
+import { withAppFont } from '../src/lib/typography'
 import { colors, radius, space } from '../src/theme'
 
 export default function WalletScreen() {
@@ -35,25 +36,54 @@ export default function WalletScreen() {
 
   const header = (
     <View style={{ paddingHorizontal: space.screenX }}>
-      <ScreenHeader title="Wallet" subtitle="Your loyalty cards at each venue." />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={withAppFont({ fontSize: 34, fontWeight: '800', color: colors.ink, letterSpacing: -0.8 })}>
+          Wallet
+        </Text>
+        <Pressable
+          onPress={() => router.push('/(customer)/venues')}
+          accessibilityRole="button"
+          accessibilityLabel="Discover venues"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: colors.ink,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="add" size={22} color={colors.bg} />
+        </Pressable>
+      </View>
       {cardList.length > 0 ? (
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search venues"
-          placeholderTextColor={colors.inkSoft}
+        <View
           style={{
             marginTop: space.sectionGap,
+            flexDirection: 'row',
+            alignItems: 'center',
             backgroundColor: colors.surface,
             borderRadius: radius.image,
             borderWidth: 1,
             borderColor: colors.border,
             paddingHorizontal: 14,
-            paddingVertical: 10,
-            color: colors.ink,
-            fontSize: 15,
           }}
-        />
+        >
+          <Ionicons name="search" size={18} color={colors.inkSoft} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search venues"
+            placeholderTextColor={colors.inkSoft}
+            style={{
+              flex: 1,
+              marginLeft: 8,
+              paddingVertical: 12,
+              color: colors.ink,
+              fontSize: 15,
+            }}
+          />
+        </View>
       ) : null}
     </View>
   )

@@ -24,7 +24,46 @@ export const colors = {
   lavenderBorder: '#E0E7FF',
   plum: '#1E293B',
   progressTrack: '#E2E8F0',
+  /** Discover venues — muted surfaces (avoid heavy promo orange) */
+  discoverPillInactive: '#FFFFFF',
+  discoverPillBorder: '#E8EDF3',
+  discoverSearchFill: '#F1F5F9',
+  discoverCardBorder: '#E8ECF4',
+  discoverCategoryFill: '#EEF2FF',
+  discoverCategoryIcon: '#475569',
+  discoverRewardsFill: '#F0FDF4',
+  discoverRewardsText: '#15803D',
+  discoverRewardsBorder: '#DCFCE7',
 } as const
+
+/**
+ * App screen wallpaper behind customer flows.
+ * - stickers: cool white + loyalty icon doodles
+ * - warm: beige + soft doodles (WhatsApp-style) — current default
+ * - dots: minimal dot grid
+ */
+export const screenBackground = {
+  variant: 'warm' as 'stickers' | 'warm' | 'dots',
+  warm: {
+    base: '#E5DDD0',
+    wash: ['#FBF7F0', '#F4EBDC', '#E8DFD0', '#DDD2C2', '#D4C8B6'] as const,
+    iconForest: 'rgba(22, 78, 58, 0.11)',
+    iconClay: 'rgba(98, 62, 36, 0.095)',
+    iconSand: 'rgba(148, 108, 58, 0.085)',
+    iconAmber: 'rgba(180, 120, 42, 0.08)',
+    iconMoss: 'rgba(52, 98, 72, 0.09)',
+    blobLight: 'rgba(255, 252, 245, 0.5)',
+    blobWarm: 'rgba(232, 196, 140, 0.18)',
+    blobMoss: 'rgba(168, 198, 175, 0.22)',
+    vignette: 'rgba(92, 72, 48, 0.06)',
+  },
+} as const
+
+export function screenWallpaperBaseColor(): string {
+  if (screenBackground.variant === 'warm') return screenBackground.warm.base
+  if (screenBackground.variant === 'dots') return colors.bg
+  return colors.bg
+}
 
 export const space = {
   screenX: 18,
@@ -41,9 +80,15 @@ export const carousel = {
   rewardCardGap: 10,
   rewardImageSize: 84,
   cardPad: 14,
-  /** How many campaign cards are visible across the viewport (2 full + half peek). */
-  campaignVisibleCount: 2.5,
-  campaignCardGap: 10,
+  /** Fraction of content width per campaign card (~76% = one card + peek). */
+  campaignCardWidthRatio: 0.76,
+  campaignCardGap: 14,
+} as const
+
+/** Customer bottom tab bar — keep in sync with `(customer)/_layout.tsx` tabBarStyle.height */
+export const tabBar = {
+  height: 78,
+  scrollBottomPad: 20,
 } as const
 
 /** Center tab scan button (My QR). */
@@ -74,10 +119,17 @@ export const media = {
   coverHeight: 140,
 } as const
 
-/** Apple Wallet–style stacked cards on the wallet screen */
+/** Full-bleed venue cards on the wallet screen */
+export const walletCard = {
+  height: 224,
+  radius: 24,
+  gap: 16,
+} as const
+
+/** @deprecated Stacked layout — kept for skeleton sizing */
 export const walletStack = {
   peek: 52,
-  cardHeight: 308,
+  cardHeight: walletCard.height,
 } as const
 
 export const motion = {
