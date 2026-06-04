@@ -40,6 +40,7 @@ interface StampScanResponse {
   available_rewards: Reward[]
   recent_visits?: Visit[]
   pending_claim_warning?: PendingClaimWarning | null
+  joined_on_scan?: boolean
 }
 
 interface RedeemScanResponse {
@@ -236,7 +237,15 @@ async function processScan(scanValue: string) {
       const addedStamps = response.added_stamps ?? selectedStampAmount.value
       const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
       const customerName = response.customer.user?.name ?? 'Customer'
-      message.value = `${addedStamps} ${stampLabel} added for ${customerName}.`
+      const venueName = venue.value?.name ?? 'this venue'
+      const campaignSuffix = response.active_campaign
+        ? ` (${response.stamp_multiplier ?? response.active_campaign.multiplier}× ${response.active_campaign.name})`
+        : ''
+      if (response.joined_on_scan) {
+        message.value = `Joined ${venueName} · +${addedStamps} ${stampLabel} for ${customerName}${campaignSuffix}.`
+      } else {
+        message.value = `+${addedStamps} ${stampLabel} for ${customerName} at ${venueName}${campaignSuffix}.`
+      }
       const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
       scheduleReset(delay)
     }
@@ -251,9 +260,9 @@ async function processScan(scanValue: string) {
 }
 
 async function addStampFromFallback() {
-  const qrToken = selectedCustomer.value?.qr_token
+  const customerId = selectedCustomer.value?.id
 
-  if (!qrToken) {
+  if (!customerId || !venue.value) {
     status.value = 'error'
     scanning.value = false
     message.value = 'Select a customer first.'
@@ -261,7 +270,49 @@ async function addStampFromFallback() {
     return
   }
 
-  await processScan(qrToken)
+  submitting.value = true
+  loading.value = true
+  scanning.value = false
+  status.value = 'processing'
+  message.value = ''
+  pendingClaimWarning.value = null
+  activeCampaign.value = null
+  redeemedReward.value = null
+
+  try {
+    const response = await api<StampScanResponse>(`/venues/${venue.value.id}/scanner/stamps`, {
+      method: 'POST',
+      body: {
+        customer_id: customerId,
+        stamps: selectedStampAmount.value,
+      },
+    })
+
+    applyCustomerResponse(response)
+    selectedCustomer.value = null
+    customerSearch.value = ''
+    status.value = 'success'
+    lastScanKind.value = 'stamp'
+    pendingClaimWarning.value = response.pending_claim_warning ?? null
+    activeCampaign.value = response.active_campaign ?? null
+    const addedStamps = response.added_stamps ?? selectedStampAmount.value
+    const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
+    const customerName = response.customer.user?.name ?? 'Customer'
+    const venueName = venue.value?.name ?? 'this venue'
+    const campaignSuffix = response.active_campaign
+      ? ` (${response.stamp_multiplier ?? response.active_campaign.multiplier}× ${response.active_campaign.name})`
+      : ''
+    message.value = `+${addedStamps} ${stampLabel} for ${customerName} at ${venueName}${campaignSuffix}.`
+    const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
+    scheduleReset(delay)
+  } catch (exception) {
+    status.value = 'error'
+    message.value = exception instanceof ApiError ? exception.message : 'Scan failed.'
+    scheduleReset(3200)
+  } finally {
+    loading.value = false
+    submitting.value = false
+  }
 }
 
 function scheduleReset(delay: number) {

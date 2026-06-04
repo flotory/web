@@ -52,11 +52,12 @@ After login, `AuthProvider` loads `/auth/me` and `/venues`. Role drives the defa
 | Screen | Path | API |
 |--------|------|-----|
 | Home | `app/(customer)/home.tsx` | `GET /customer/cards`, `GET /customer/rewards/wallet` |
-| Wallet list | `app/(customer)/wallet.tsx` | `GET /customer/cards` |
-| Card detail | `app/card/[cardId].tsx` | `GET /customer/cards?venue_id={id}` (includes `promotion`) |
+| **My QR** | `app/(customer)/qr.tsx` | `GET /customer/stamp-qr` |
+| Wallet list | `app/(customer)/wallet.tsx` | `GET /customer/cards` (no `qr_token` in payload) |
+| Card detail | `app/card/[cardId].tsx` | `GET /customer/cards?venue_id={id}` — progress only; CTA to My QR |
 | Rewards | `app/(customer)/rewards.tsx` | Wallet + cards hooks |
-| Venues / discover | `app/(customer)/venues.tsx` | `GET /venues/discover`, `POST /venues/{slug}/join` |
-| Settings | `app/(customer)/settings.tsx` | Profile via auth context |
+| Discover | `app/(customer)/venues.tsx` | `GET /venues/discover`, `POST /venues/{slug}/join` |
+| Profile | `app/(customer)/settings.tsx` | Auth + stats from cards |
 | Claim flow | `app/claim/[unlockId].tsx` | `POST /customer/rewards/unlocks/{id}/claim-session`, poll claim session |
 | Public landing | `app/v/[slug].tsx` | `GET /public/venues/{slug}/landing`, join when logged in |
 

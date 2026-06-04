@@ -11,7 +11,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import MilestonePath from '../../src/components/customer/MilestonePath'
-import QrImage from '../../src/components/QrImage'
 import CoverImage from '../../src/components/ui/CoverImage'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
@@ -201,22 +200,24 @@ export default function CardDetailScreen() {
         ) : null}
 
         <View style={{ marginTop: s(space.sectionY), paddingHorizontal: space.screenX }}>
-          <Text style={{ ...typography.section, fontSize: s(22) }}>Add a stamp</Text>
           <View
             style={{
-              marginTop: s(14),
-              backgroundColor: colors.surface,
+              backgroundColor: colors.accentSoft,
               borderRadius: radius.card,
-              padding: s(16),
               borderWidth: 1,
-              borderColor: colors.border,
-              alignItems: 'center',
+              borderColor: colors.accentBorder,
+              padding: s(space.cardPad),
             }}
           >
-            <Text style={{ fontSize: s(16), fontWeight: '700', color: colors.ink }}>Show this QR when staff scans</Text>
-            <View style={{ marginTop: s(12), backgroundColor: colors.surface, borderRadius: s(16), borderWidth: 1, borderColor: colors.border, padding: s(10) }}>
-              <QrImage value={card.qr_token} size={s(220)} />
-            </View>
+            <Text style={{ fontSize: s(16), fontWeight: '800', color: colors.ink }}>One QR for every venue</Text>
+            <Text style={{ ...typography.body, fontSize: s(15), marginTop: s(6), color: colors.inkMuted }}>
+              Use My QR at the counter — staff stamp the card for this visit's venue.
+            </Text>
+            <PrimaryButton
+              label="Show My QR"
+              onPress={() => router.push('/(customer)/qr')}
+              style={{ marginTop: s(14) }}
+            />
           </View>
         </View>
 

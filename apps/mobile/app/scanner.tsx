@@ -14,7 +14,6 @@ interface VenueSummary {
 
 interface VenueCustomer {
   id: number
-  qr_token: string
   stamps: number
   user?: {
     name?: string | null
@@ -30,6 +29,7 @@ interface StampScanResponse {
     user?: { name?: string | null } | null
   }
   added_stamps?: number
+  joined_on_scan?: boolean
 }
 
 interface RedeemScanResponse {
@@ -150,8 +150,13 @@ export default function ScannerScreen() {
       } else {
         const added = response.added_stamps ?? stamps
         const customerName = response.customer.user?.name ?? 'Customer'
+        const venueLabel = selectedVenue?.name ?? 'this venue'
         setStatus('success')
-        setMessage(`Added ${added} ${added === 1 ? 'stamp' : 'stamps'} for ${customerName}.`)
+        setMessage(
+          response.joined_on_scan
+            ? `Joined ${venueLabel} · +${added} ${added === 1 ? 'stamp' : 'stamps'} for ${customerName}.`
+            : `+${added} ${added === 1 ? 'stamp' : 'stamps'} for ${customerName} at ${venueLabel}.`,
+        )
       }
       setSelectedCustomer(null)
       setSearch('')
@@ -169,7 +174,27 @@ export default function ScannerScreen() {
       setMessage('Select a customer first.')
       return
     }
-    await handleScan({ data: selectedCustomer.qr_token } as BarcodeScanningResult)
+    if (!selectedVenueId || !token) return
+    setSubmitting(true)
+    setStatus('idle')
+    try {
+      await apiRequest<StampScanResponse>(`/venues/${selectedVenueId}/scanner/stamps`, {
+        method: 'POST',
+        token,
+        body: { customer_id: selectedCustomer.id, stamps },
+      })
+      const customerName = selectedCustomer.user?.name ?? 'Customer'
+      const venueLabel = selectedVenue?.name ?? 'this venue'
+      setStatus('success')
+      setMessage(`+${stamps} ${stamps === 1 ? 'stamp' : 'stamps'} for ${customerName} at ${venueLabel}.`)
+      setSelectedCustomer(null)
+      setSearch('')
+    } catch (exception) {
+      setStatus('error')
+      setMessage(exception instanceof ApiError ? exception.message : 'Could not add stamp.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!permission) {

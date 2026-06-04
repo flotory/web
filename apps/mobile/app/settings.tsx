@@ -1,6 +1,10 @@
+import { useRouter } from 'expo-router'
+import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
+import PrimaryButton from '../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
+import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 
@@ -13,7 +17,16 @@ function ProfileRow({ label }: { label: string }) {
 }
 
 export default function SettingsScreen() {
+  const router = useRouter()
   const { user, signOut } = useAuth()
+  const cardsQuery = useCustomerCards()
+  const stats = useMemo(() => {
+    const cards = cardsQuery.data ?? []
+    const venues = cards.length
+    const stamps = cards.reduce((sum, card) => sum + (card.summary?.stamps ?? card.stamps), 0)
+    const rewards = cards.reduce((sum, card) => sum + (card.summary?.pending_rewards_count ?? 0), 0)
+    return { venues, stamps, rewards }
+  }, [cardsQuery.data])
 
   const initials = (user?.name ?? '?')
     .split(/\s+/)
@@ -43,6 +56,42 @@ export default function SettingsScreen() {
           <Text style={{ marginTop: 14, fontSize: 22, fontWeight: '700', color: colors.ink }}>{user?.name ?? 'Guest'}</Text>
           <Text style={{ ...typography.body, marginTop: 4 }}>{user?.email}</Text>
         </View>
+
+        <View
+          style={{
+            marginTop: space.sectionY,
+            flexDirection: 'row',
+            gap: 10,
+          }}
+        >
+          {[
+            { label: 'Venues', value: String(stats.venues) },
+            { label: 'Stamps', value: String(stats.stamps) },
+            { label: 'Ready', value: String(stats.rewards) },
+          ].map((item) => (
+            <View
+              key={item.label}
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface,
+                borderRadius: radius.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+                paddingVertical: 14,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink }}>{item.value}</Text>
+              <Text style={{ ...typography.caption, marginTop: 4 }}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        <PrimaryButton
+          label="Show My QR"
+          onPress={() => router.push('/(customer)/qr')}
+          style={{ marginTop: space.sectionY }}
+        />
 
         <View
           style={{

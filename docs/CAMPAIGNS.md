@@ -30,7 +30,7 @@ Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, 
 - Example: VIP 2× + Happy Hour 2× + Win Back 3× eligible → customer gets **3×**.
 - Lifecycle: **draft → active → paused → ended** (no delete; history kept).
 - Stamp math: `**CampaignService`** → `**LoyaltyStampService::addStamp`**.
-- Push: `**CampaignNotificationJob**` logs on activate; Expo delivery = future work.
+- Push: `**CampaignNotificationJob`** logs on activate; Expo delivery = future work.
 
 ---
 

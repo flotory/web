@@ -88,7 +88,6 @@ class CustomerRetentionService
             'id' => $customer->id,
             'venue_id' => $customer->venue_id,
             'user_id' => $customer->user_id,
-            'qr_token' => $customer->qr_token,
             'stamps' => $customer->stamps,
             'joined_at' => $joinedAt?->toIso8601String(),
             'last_visit_at' => $lastVisitAt?->toIso8601String(),

@@ -44,4 +44,26 @@ class LoyaltyQrTest extends TestCase
 
         $this->assertSame("flotory:redeem:{$token}", LoyaltyQr::redeemQrPayload($token));
     }
+
+    public function test_parses_member_qr_payload_as_stamp(): void
+    {
+        $token = '550e8400-e29b-41d4-a716-446655440000';
+        $payload = LoyaltyQr::memberQrPayload($token);
+
+        $this->assertSame("flotory:member:{$token}", $payload);
+        $this->assertSame(
+            ['type' => 'stamp', 'token' => $token],
+            LoyaltyQr::parse($payload),
+        );
+    }
+
+    public function test_member_qr_payload_is_not_parsed_as_redeem(): void
+    {
+        $token = '550e8400-e29b-41d4-a716-446655440000';
+
+        $this->assertSame(
+            ['type' => 'stamp', 'token' => $token],
+            LoyaltyQr::parse(LoyaltyQr::memberQrPayload($token)),
+        );
+    }
 }

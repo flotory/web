@@ -37,7 +37,8 @@ export interface Customer {
   id: number
   venue_id: number
   user_id: number
-  qr_token: string
+  /** @deprecated v2 — not exposed in API; use GET /customer/stamp-qr */
+  qr_token?: string | null
   stamps: number
   venue?: Venue
   user?: User & { birthday?: string | null }

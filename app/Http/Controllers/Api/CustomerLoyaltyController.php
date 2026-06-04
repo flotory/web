@@ -11,13 +11,23 @@ use App\Models\Reward;
 use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
+use App\Services\UniversalCustomerQrService;
 use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-
 class CustomerLoyaltyController extends Controller
 {
+    public function stampQr(Request $request, UniversalCustomerQrService $universalQr): JsonResponse
+    {
+        if (! $universalQr->isEnabled()) {
+            return response()->json([
+                'message' => 'Universal customer QR is not enabled.',
+            ], 404);
+        }
+
+        return response()->json($universalQr->ensureForUser($request->user()));
+    }
+
     public function mine(Request $request, LoyaltyStampService $loyalty, CampaignService $campaigns): JsonResponse
     {
         $cards = Customer::query()
@@ -125,7 +135,6 @@ class CustomerLoyaltyController extends Controller
                 'user_id' => $request->user()->id,
             ],
             [
-                'qr_token' => (string) Str::uuid(),
                 'stamps' => 0,
             ],
         );

@@ -84,7 +84,10 @@ onMounted(() => {
     <div class="mx-auto w-full max-w-md px-4 pb-8 pt-4">
       <header class="mb-5">
         <h1 class="text-2xl font-black tracking-tight text-slate-950">Wallet</h1>
-        <p class="mt-1 text-sm text-slate-500">Your loyalty cards at every venue you have joined.</p>
+        <p class="mt-1 text-sm text-slate-500">Progress at each venue — use My QR when you order.</p>
+        <RouterLink to="/my-qr" class="mt-4 block">
+          <AppButton class="w-full">Show My QR</AppButton>
+        </RouterLink>
       </header>
 
       <div v-if="loading" class="py-8">
@@ -102,7 +105,7 @@ onMounted(() => {
           description="Join a venue to collect stamps and unlock rewards."
         >
           <RouterLink to="/venues">
-            <AppButton>Browse venues</AppButton>
+            <AppButton>Discover venues</AppButton>
           </RouterLink>
         </EmptyState>
       </div>

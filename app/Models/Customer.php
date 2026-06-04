@@ -18,6 +18,15 @@ class Customer extends Model
         'stamps',
     ];
 
+    /**
+     * Per-card qr_token is deprecated (v2 My QR). Kept in DB for migration/audit only.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'qr_token',
+    ];
+
     protected function casts(): array
     {
         return [

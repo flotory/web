@@ -15,6 +15,16 @@ class VenueCampaignControllerTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'loyalty.universal_qr_enabled' => true,
+            'loyalty.legacy_card_qr_enabled' => false,
+        ]);
+    }
+
     public function test_owner_can_create_and_activate_bring_back_campaign(): void
     {
         $owner = $this->createUser();
@@ -163,7 +173,7 @@ class VenueCampaignControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($guest),
             'stamps' => 1,
         ])
             ->assertCreated()
@@ -197,7 +207,7 @@ class VenueCampaignControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($guest),
             'stamps' => 1,
         ])
             ->assertCreated()

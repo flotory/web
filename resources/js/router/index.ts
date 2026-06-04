@@ -5,6 +5,7 @@ import CampaignsPage from '@/pages/CampaignsPage.vue'
 import CustomerRewardsPage from '@/pages/CustomerRewardsPage.vue'
 import CustomerSettingsPage from '@/pages/CustomerSettingsPage.vue'
 import CustomerVenuesPage from '@/pages/CustomerVenuesPage.vue'
+import CustomerMyQrPage from '@/pages/customer/CustomerMyQrPage.vue'
 import CustomerWalletPage from '@/pages/customer/CustomerWalletPage.vue'
 import VenueLandingPage from '@/pages/VenueLandingPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
@@ -63,6 +64,7 @@ const router = createRouter({
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
+    { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/card', redirect: (to) => ({ path: '/wallet', query: to.query }) },
     { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/venues', name: 'customer-venues', component: CustomerVenuesPage, meta: { requiresAuth: true, workspace: false } },

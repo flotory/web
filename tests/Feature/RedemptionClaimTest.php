@@ -15,6 +15,16 @@ class RedemptionClaimTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'loyalty.universal_qr_enabled' => true,
+            'loyalty.legacy_card_qr_enabled' => false,
+        ]);
+    }
+
     public function test_customer_can_create_claim_session_and_staff_can_redeem(): void
     {
         $staff = $this->createUser(['email' => 'staff@example.com']);
@@ -80,7 +90,7 @@ class RedemptionClaimTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 1,
         ])
             ->assertCreated()

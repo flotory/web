@@ -1,4 +1,5 @@
 const REDEEM_PREFIX = 'flotory:redeem:'
+const MEMBER_PREFIX = 'flotory:member:'
 const REDEEM_PATH = '/r/'
 
 export type ParsedLoyaltyQr =
@@ -12,6 +13,11 @@ export function buildRedeemQrValue(token: string): string {
   return `${REDEEM_PREFIX}${token.toLowerCase()}`
 }
 
+/** Universal customer stamp QR (v2) — one token per user. */
+export function buildMemberQrValue(token: string): string {
+  return `${MEMBER_PREFIX}${token.toLowerCase()}`
+}
+
 export function parseLoyaltyQr(raw: string): ParsedLoyaltyQr | null {
   const value = raw.trim()
 
@@ -19,10 +25,16 @@ export function parseLoyaltyQr(raw: string): ParsedLoyaltyQr | null {
     return null
   }
 
-  const flotoryMatch = value.match(/flotory:redeem:([0-9a-f-]{36})/i)
+  const redeemMatch = value.match(/flotory:redeem:([0-9a-f-]{36})/i)
 
-  if (flotoryMatch?.[1]) {
-    return { type: 'redeem', token: flotoryMatch[1].toLowerCase() }
+  if (redeemMatch?.[1]) {
+    return { type: 'redeem', token: redeemMatch[1].toLowerCase() }
+  }
+
+  const memberMatch = value.match(/flotory:member:([0-9a-f-]{36})/i)
+
+  if (memberMatch?.[1]) {
+    return { type: 'stamp', token: memberMatch[1].toLowerCase() }
   }
 
   const pathMatch = value.match(/\/r\/([0-9a-f-]{36})/i)

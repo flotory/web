@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { Pressable, View } from 'react-native'
 
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
@@ -69,6 +70,37 @@ export default function CustomerTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="qr"
+        options={{
+          title: 'My QR',
+          href: role === 'customer' ? undefined : null,
+          tabBarIcon: () => (
+            <View
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: colors.ink,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 18,
+              }}
+            >
+              <Ionicons name="qr-code" size={26} color={colors.bg} />
+            </View>
+          ),
+          tabBarLabel: () => null,
+          tabBarButton: (props) => (
+            <Pressable
+              {...props}
+              style={[props.style, { top: -8 }]}
+              accessibilityRole="button"
+              accessibilityLabel="My QR"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="rewards"
         options={{
           title: 'Rewards',
@@ -81,7 +113,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="venues"
         options={{
-          title: 'Venues',
+          title: 'Discover',
           href: role === 'customer' ? undefined : null,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'compass' : 'compass-outline'} color={color} size={size} />

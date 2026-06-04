@@ -42,7 +42,7 @@ export interface WalletCard {
   id: number
   venue_id: number
   stamps: number
-  qr_token: string
+  qr_token?: string | null
   created_at?: string
   venue?: VenueRef | null
   summary?: CardSummary

@@ -37,7 +37,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 1. **Discover** — Guest scans venue QR or opens `/v/{slug}` landing page.
 2. **Join** — Register or sign in (email or Google); auto-joins the venue.
-3. **Collect** — Staff scan the customer QR and award stamps (typically 1 per purchase; venue may award more).
+3. **Collect** — Guest opens **My QR**; staff scan and award stamps at that venue (typically 1 per purchase; venue may award more).
 4. **Progress** — Customer sees all venue cards on `/wallet` (stamp progress per venue); tap a card for QR and milestone journey; pending earned rewards live on `/customer/rewards` (tab badge).
 5. **Redeem** — Customer taps **Claim** in Rewards, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
 6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.

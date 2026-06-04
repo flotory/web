@@ -30,6 +30,12 @@ export interface CustomerCardsListResponse {
   pending_rewards_count?: number
 }
 
+export interface StampQrResponse {
+  public_token: string
+  qr_value: string
+  version: number
+}
+
 export interface RewardsOverviewData {
   readyItems: RewardWalletItem[]
   inProgress: WalletCard[]
@@ -106,6 +112,11 @@ export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletI
   }
 
   return [...unique.values()].slice(0, 3)
+}
+
+export async function fetchStampQr(token: string, fresh = false): Promise<StampQrResponse> {
+  const key = `${cacheKey('customer', token)}:stamp-qr`
+  return fetchWithCache(key, () => apiRequest<StampQrResponse>('/customer/stamp-qr', { token }), fresh)
 }
 
 export async function fetchCustomerCardsList(token: string, fresh = false): Promise<CustomerCardsListResponse> {

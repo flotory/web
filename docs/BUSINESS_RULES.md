@@ -2,13 +2,15 @@
 
 **Canonical product contract for Flotory.** These rules describe what the system must guarantee for owners, staff, and customers. Implementation lives in Laravel services and API tests; this document does not prescribe code structure.
 
-| Document | Role |
-|----------|------|
-| **This file** | **Source of truth** for business invariants, exceptions, and out-of-scope |
-| [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked engineering choices (must not contradict this file) |
-| [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign UI, API paths, and test references |
-| [KNOWN_RISKS.md](./KNOWN_RISKS.md) | Living risk register (status updates; rules are defined here first) |
-| [PRODUCT.md](./PRODUCT.md) | Journeys and positioning |
+
+| Document                               | Role                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| **This file**                          | **Source of truth** for business invariants, exceptions, and out-of-scope |
+| [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked engineering choices (must not contradict this file)                |
+| [CAMPAIGNS.md](./CAMPAIGNS.md)         | Campaign UI, API paths, and test references                               |
+| [KNOWN_RISKS.md](./KNOWN_RISKS.md)     | Living risk register (status updates; rules are defined here first)       |
+| [PRODUCT.md](./PRODUCT.md)             | Journeys and positioning                                                  |
+
 
 When code, UI, or support docs disagree with this file, **fix the product or update this file explicitly** — do not let drift accumulate silently.
 
@@ -16,20 +18,22 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 ## Rule index
 
-| ID | Topic | Section |
-|----|--------|---------|
-| L1–L9 | Loyalty & cycles | [Loyalty](#loyalty-rules) |
-| S1–S8 | Stamps & visits | [Stamps](#stamp-rules) |
-| R1–R9 | Rewards & milestones | [Rewards](#reward-rules) |
-| X1–X8 | Redemption & claim QR | [Redemption](#redemption-rules) |
-| C1–C12 | Stamp campaigns | [Campaigns](#campaign-rules) |
-| I1–I9 | Staff invitations | [Invitations](#invitation-rules) |
-| U1–U7 | Customers | [Customers](#customer-rules) |
-| O1–O8 | Ownership & roles | [Ownership](#ownership-rules) |
-| Z1–Z8 | Security & authorization | [Security](#security-rules) |
-| Y1–Y10 | UX & language | [UX](#ux-rules) |
-| E1–E12 | Accepted / open exceptions | [Exceptions](#documented-exceptions) |
-| N1–N8 | Not in MVP (business) | [Out of scope](#explicitly-out-of-scope) |
+
+| ID     | Topic                      | Section                                  |
+| ------ | -------------------------- | ---------------------------------------- |
+| L1–L9  | Loyalty & cycles           | [Loyalty](#loyalty-rules)                |
+| S1–S8  | Stamps & visits            | [Stamps](#stamp-rules)                   |
+| R1–R9  | Rewards & milestones       | [Rewards](#reward-rules)                 |
+| X1–X8  | Redemption & claim QR      | [Redemption](#redemption-rules)          |
+| C1–C12 | Stamp campaigns            | [Campaigns](#campaign-rules)             |
+| I1–I9  | Staff invitations          | [Invitations](#invitation-rules)         |
+| U1–U7  | Customers                  | [Customers](#customer-rules)             |
+| O1–O8  | Ownership & roles          | [Ownership](#ownership-rules)            |
+| Z1–Z8  | Security & authorization   | [Security](#security-rules)              |
+| Y1–Y10 | UX & language              | [UX](#ux-rules)                          |
+| E1–E12 | Accepted / open exceptions | [Exceptions](#documented-exceptions)     |
+| N1–N8  | Not in MVP (business)      | [Out of scope](#explicitly-out-of-scope) |
+
 
 ---
 
@@ -101,7 +105,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **X1.** Customers redeem **at the venue** only: **Rewards → Claim** → show **claim QR** → staff scan on the **same scanner** used for stamps.
 
-**X2.** The **stamp card QR** (customer `qr_token` UUID) must **only** add stamps. It must **never** redeem a reward.
+**X2.** The **stamp QR** (`flotory:member:{token}` from `user_stamp_tokens`) must **only** add stamps. It must **never** redeem a reward. Per-card `customers.qr_token` is **deprecated** (not shown in apps; scanner rejects unless `LOYALTY_LEGACY_CARD_QR=true`).
 
 **X3.** The **claim QR** encodes a **single-use redemption session** (not the stamp card UUID). Format: `flotory:redeem:{token}` or `/r/{token}`.
 
@@ -132,6 +136,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 **C5.** `added_stamps = base_stamps × multiplier` where `base_stamps` is what staff selected (1–100) and `multiplier` is from [C3].
 
 **C6.** Matching rules by template:
+
 - **Bring Back:** customer inactive for at least `inactive_days` since last visit (or since join if no visits).
 - **Quiet Day:** current weekday (ISO 1–7) in `days_of_week`, and campaign within `starts_at` / `ends_at` when set.
 - **Happy Hour:** weekday in `days_of_week`, local time within `start_time`–`end_time`, and within campaign dates when set.
@@ -185,7 +190,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **U5.** Customers interact only with venues where they are enrolled.
 
-**U6.** Primary surfaces: **Wallet** (stamp QR, progress), **Rewards** (claim QR only), **Venues** (discover/join), **Settings**.
+**U6.** Primary surfaces: **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Discover** (find/join venues), **Profile/Settings**.
 
 **U7.** Unclaimed rewards stay visible in **Rewards** until staff scans the claim QR.
 
@@ -259,20 +264,22 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 These are **known behaviors**, not bugs, until a rule change is approved and shipped.
 
-| ID | Rule area | Status | Behavior | Target fix |
-|----|-----------|--------|----------|------------|
-| **E1** | L8 / S4 | Accepted | Stamp overflow lost on cycle reset if scan pushes balance past max milestone in one action | Carry overflow, cap UI, or staff warning |
-| **E2** | R9 | Accepted | New lower milestone does not retro-unlock for existing stamp totals | Backfill on create or owner communication |
-| **E3** | X5 | Accepted | Wallet row tapped may not be the unlock consumed (FIFO) | UI explain FIFO, collapse rows, or bind redeem to `unlock_id` in UI |
-| **E4** | U7 / journey | Accepted | Card journey shows current cycle; older-cycle unlocks mainly in Rewards | Cross-cycle indicators on card |
-| **E5** | R3 / U7 | **Open** | Archived reward may still show in wallet; redeem may fail | Allow redeem of earned unlocks or clear “retired” state |
-| **E6** | L8 | Accepted | All milestones archived → stamps accumulate, no cycle completion | Owner warning; optional freeze |
-| **E7** | R2 | Accepted | Archived threshold still blocks reusing same stamp count until purge | Uniqueness on active only or clearer purge UX |
-| **E8** | U1 | Accepted | Soft-deleted venue: no new stamps; redeem may still work | Read-only card, messaging on landing |
-| **E9** | O5 | Accepted | Removed staff keep session until logout; API returns 403 | Revoke token on removal |
-| **E10** | Analytics | Accepted | Multi-venue owner may see empty customers without venue filter | Default workspace venue |
-| **E11** | O7 | Accepted | `is_admin` broad access by design | Audit, few accounts |
-| **E12** | U6 | Accepted | Background card refresh may fail silently | Reconnect / retry indicator |
+
+| ID      | Rule area    | Status   | Behavior                                                                                   | Target fix                                                          |
+| ------- | ------------ | -------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **E1**  | L8 / S4      | Accepted | Stamp overflow lost on cycle reset if scan pushes balance past max milestone in one action | Carry overflow, cap UI, or staff warning                            |
+| **E2**  | R9           | Accepted | New lower milestone does not retro-unlock for existing stamp totals                        | Backfill on create or owner communication                           |
+| **E3**  | X5           | Accepted | Wallet row tapped may not be the unlock consumed (FIFO)                                    | UI explain FIFO, collapse rows, or bind redeem to `unlock_id` in UI |
+| **E4**  | U7 / journey | Accepted | Card journey shows current cycle; older-cycle unlocks mainly in Rewards                    | Cross-cycle indicators on card                                      |
+| **E5**  | R3 / U7      | **Open** | Archived reward may still show in wallet; redeem may fail                                  | Allow redeem of earned unlocks or clear “retired” state             |
+| **E6**  | L8           | Accepted | All milestones archived → stamps accumulate, no cycle completion                           | Owner warning; optional freeze                                      |
+| **E7**  | R2           | Accepted | Archived threshold still blocks reusing same stamp count until purge                       | Uniqueness on active only or clearer purge UX                       |
+| **E8**  | U1           | Accepted | Soft-deleted venue: no new stamps; redeem may still work                                   | Read-only card, messaging on landing                                |
+| **E9**  | O5           | Accepted | Removed staff keep session until logout; API returns 403                                   | Revoke token on removal                                             |
+| **E10** | Analytics    | Accepted | Multi-venue owner may see empty customers without venue filter                             | Default workspace venue                                             |
+| **E11** | O7           | Accepted | `is_admin` broad access by design                                                          | Audit, few accounts                                                 |
+| **E12** | U6           | Accepted | Background card refresh may fail silently                                                  | Reconnect / retry indicator                                         |
+
 
 Detail and history: [KNOWN_RISKS.md](./KNOWN_RISKS.md). Resolving an exception requires updating **this table** and the risk doc together.
 
@@ -282,16 +289,18 @@ Detail and history: [KNOWN_RISKS.md](./KNOWN_RISKS.md). Resolving an exception r
 
 Business capabilities **not** offered in MVP unless this section is updated:
 
-| ID | Capability |
-|----|------------|
-| **N1** | Subscriptions / billing |
-| **N2** | Visit-based or spend-based milestones (stamps only) |
-| **N3** | POS / payment integrations |
+
+| ID     | Capability                                                                |
+| ------ | ------------------------------------------------------------------------- |
+| **N1** | Subscriptions / billing                                                   |
+| **N2** | Visit-based or spend-based milestones (stamps only)                       |
+| **N3** | POS / payment integrations                                                |
 | **N4** | Campaign **push** delivery (toggle may exist; delivery is not guaranteed) |
-| **N5** | Email/SMS **marketing** campaigns (stamp multipliers only) |
-| **N6** | Coupons, discount engines, A/B tests |
-| **N7** | Co-owner invitations (staff only) |
-| **N8** | Global `owner` / `staff` role on user accounts |
+| **N5** | Email/SMS **marketing** campaigns (stamp multipliers only)                |
+| **N6** | Coupons, discount engines, A/B tests                                      |
+| **N7** | Co-owner invitations (staff only)                                         |
+| **N8** | Global `owner` / `staff` role on user accounts                            |
+
 
 Engineering-only exclusions: [MVP_DECISIONS.md](./MVP_DECISIONS.md).
 
@@ -301,13 +310,15 @@ Engineering-only exclusions: [MVP_DECISIONS.md](./MVP_DECISIONS.md).
 
 Rules are enforced by:
 
-| Layer | Responsibility |
-|-------|----------------|
-| `LoyaltyStampService` | L1–L9, S4–S8, R1–R2 unlocks, X5–X8 redeem path |
-| `CampaignEngine` / `CampaignService` | C1–C7, C11 |
-| `VenueStaffInvitationService` | I1–I9 |
-| `VenueAccess` + policies | O1–O8, Z1–Z6 |
-| Feature tests | `tests/Feature/*`, `tests/Unit/CampaignServiceTest.php` |
+
+| Layer                                | Responsibility                                          |
+| ------------------------------------ | ------------------------------------------------------- |
+| `LoyaltyStampService`                | L1–L9, S4–S8, R1–R2 unlocks, X5–X8 redeem path          |
+| `CampaignEngine` / `CampaignService` | C1–C7, C11                                              |
+| `VenueStaffInvitationService`        | I1–I9                                                   |
+| `VenueAccess` + policies             | O1–O8, Z1–Z6                                            |
+| Feature tests                        | `tests/Feature/`*, `tests/Unit/CampaignServiceTest.php` |
+
 
 When adding a feature, add or update a rule here **before** merge, then add a test that proves the invariant.
 
@@ -315,6 +326,9 @@ When adding a feature, add or update a rule here **before** merge, then add a te
 
 ## Changelog
 
-| Date | Change |
-|------|--------|
+
+| Date       | Change                                                                            |
+| ---------- | --------------------------------------------------------------------------------- |
 | 2026-06-03 | Full rewrite: campaigns, redemption, exceptions table, rule IDs, canonical status |
+
+

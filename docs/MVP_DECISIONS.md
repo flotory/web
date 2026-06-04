@@ -11,7 +11,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | No global owner/staff/customer on `users` | `users` has only `is_admin` (boolean). Default `false` for all sign-ups. |
 | Venue ownership in pivot | `venue_users.role`: `owner` or `staff`. Creating a venue adds an `owner` row. |
 | No `owner_user_id` on `venues` | Owners are derived from `venue_users`, not a column on `venues`. |
-| Loyalty via `customers` | One row per `(user_id, venue_id)` with `qr_token` and `stamps`. Joining a venue creates/fetches this row. |
+| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. Joining creates/fetches this row. Stamp QR is **user-level** (`user_stamp_tokens`) — see [V2.md](./V2.md). |
 | Multi-hat users | Same user can be owner at A, staff at B, customer at C. |
 | Platform admin | `users.is_admin` bypasses `VenueAccess` membership checks. |
 
@@ -37,7 +37,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Redeem FIFO | Staff scanner redeem (and legacy `POST .../rewards/{reward}/redeem`) claims the **oldest unclaimed** unlock for that reward (`orderBy cycle_number`). Claim QR is created per `unlock_id` via `claim-session`. |
 | Claim QR | `redemption_requests` table: 10 min TTL, single-use token; QR encodes `/r/{token}`. Scanner auto-detects stamp UUID vs redeem URL. |
 | Stamp-scan warning | `pending_claim_warning` on stamp API when customer has unclaimed unlocks — reduces wrong-QR mistakes at counter. |
-| QR venue scoping | Scanner rejects QR tokens for customers not enrolled at the active venue. |
+| Scanner venue scoping | Stamp scans apply to the **scanner’s venue** (user resolved from My QR; card auto-created if needed). Legacy per-card `qr_token` optional via `LOYALTY_LEGACY_CARD_QR`. Staff fallback may use `customer_id`. |
 | Archive before purge | Rewards must be archived (`active = false`) before permanent delete. |
 
 ## Team and Staff
@@ -74,7 +74,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Venue location (MVP) | Single optional `venues.address` string; shown on public `/v/:slug` with **Open in Maps** (`google.com/maps/search?api=1&query=…`). No geocoding, Maps API, or coordinates. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | Stamp QR on `/wallet` (list all venues, tap for detail); claim QR only in **Rewards → Claim** modal. Customer bottom nav: **Wallet**, **Rewards** (wallet + Claim), **Venues**, **Settings**. Staff scanner auto-detects QR type (green stamp / indigo redeem success). Unlocked rewards stay in wallet until staff scans claim QR. Owner milestone CRUD on `/rewards` uses the same 5-column stamp grid as guests; click a reward card, then **Edit** / **Archive** in the fixed toolbar below (toasts for feedback). |
+| Customer primary surface | **My QR** for stamps (mobile center tab, web `/my-qr`); **Wallet** for per-venue progress only; claim QR only in **Rewards → Claim**. Nav: Wallet, My QR, Rewards, Discover, Profile. Staff scanner: My QR / claim QR, or `customer_id` fallback. |
 | Customer retention CRM | `/customers` lists joined date, last visit, visit count, rewards claimed, activity status (active / at-risk / inactive / new) with filters. `/customers/:id` profile adds visit history, reward history, unified timeline, team notes, and optional birthday on the user. |
 
 ## Data and Infrastructure

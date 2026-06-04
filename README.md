@@ -360,14 +360,17 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flo
 
 These files are the source of truth for product, architecture, and MVP decisions (for developers and AI tools):
 
-- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) — MVP stage, goals, terminology
-- [docs/PRODUCT.md](docs/PRODUCT.md) — product overview, journeys, scope
-- [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) — phased SaaS roadmap
-- [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) — product invariants and business expectations
-- [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — accepted risks and resolved issues
-- [docs/PILOT_CAFE.md](docs/PILOT_CAFE.md) — first pilot venue playbook
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API summary
-- [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions not to undo
+- [docs/README.md](docs/README.md) — **documentation index** (start here)
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) — MVP stage, terminology
+- [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) — canonical product rules
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API
+- [docs/V2.md](docs/V2.md) — universal My QR (config & rollout)
+- [docs/PRODUCT.md](docs/PRODUCT.md) — product overview
+- [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) — long-term SaaS roadmap
+- [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions
+- [docs/MOBILE.md](docs/MOBILE.md) — Expo app ↔ API
+- [docs/PILOT_CAFE.md](docs/PILOT_CAFE.md) — first pilot playbook
+- [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — risks and resolved issues
 
 ## Roadmap
 

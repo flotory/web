@@ -8,6 +8,7 @@ import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/Cust
 import CoverImage from '../src/components/ui/CoverImage'
 import GradientCard from '../src/components/ui/GradientCard'
 import GradientOutlineButton from '../src/components/ui/GradientOutlineButton'
+import PrimaryButton from '../src/components/ui/PrimaryButton'
 import PressableCard from '../src/components/ui/PressableCard'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
@@ -44,7 +45,12 @@ export default function WalletScreen() {
 
   const header = (
     <View style={{ paddingHorizontal: space.screenX }}>
-      <ScreenHeader title="Wallet" subtitle="Your loyalty cards at joined venues." />
+      <ScreenHeader title="Wallet" subtitle="Progress at each venue — show My QR when you order." />
+      <PrimaryButton
+        label="Show My QR"
+        onPress={() => router.push('/(customer)/qr')}
+        style={{ marginTop: 12 }}
+      />
       {cardList.length > 0 ? (
         <TextInput
           value={search}

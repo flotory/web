@@ -6,34 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AddStampRequest;
 use App\Http\Requests\RedeemScanRequest;
 use App\Http\Requests\StaffScanRequest;
-use App\Support\LoyaltyQr;
 use App\Models\Customer;
+use App\Models\User;
 use App\Models\Venue;
 use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
+use App\Services\ScannerService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 
 class StaffScanController extends Controller
 {
-    public function lookup(AddStampRequest $request, Venue $venue, LoyaltyStampService $loyalty): JsonResponse
-    {
+    public function lookup(
+        AddStampRequest $request,
+        Venue $venue,
+        LoyaltyStampService $loyalty,
+        ScannerService $scanner,
+    ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
-        $customer = Customer::query()
-            ->where('venue_id', $venue->id)
-            ->where('qr_token', $request->string('qr_token')->toString())
-            ->with('user', 'venue')
-            ->first();
+        $customer = $this->resolveCustomerForStamp($request, $venue, $scanner, $request->user());
+        $joinedOnScan = (bool) ($customer->wasRecentlyCreated ?? false);
 
-        if (! $customer) {
-            throw ValidationException::withMessages([
-                'qr_token' => "This QR belongs to another venue or is not enrolled at {$venue->name}.",
-            ]);
-        }
-
-        $customer->load('venue');
+        $customer->load('user', 'venue');
 
         return response()->json([
             'customer' => $customer,
@@ -42,6 +37,7 @@ class StaffScanController extends Controller
             'journey' => $loyalty->journeyFor($customer),
             'recent_visits' => $customer->visits()->latest()->limit(5)->get(),
             'active_campaign' => app(\App\Services\CampaignService::class)->scannerContextFor($customer),
+            'joined_on_scan' => $joinedOnScan,
         ]);
     }
 
@@ -50,25 +46,19 @@ class StaffScanController extends Controller
         Venue $venue,
         LoyaltyStampService $loyalty,
         RedemptionClaimService $claims,
+        ScannerService $scanner,
     ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
-        $customer = Customer::query()
-            ->where('venue_id', $venue->id)
-            ->where('qr_token', $request->string('qr_token')->toString())
-            ->first();
-
-        if (! $customer) {
-            throw ValidationException::withMessages([
-                'qr_token' => "This QR belongs to another venue or is not enrolled at {$venue->name}.",
-            ]);
-        }
+        $customer = $this->resolveCustomerForStamp($request, $venue, $scanner, $request->user());
+        $joinedOnScan = (bool) ($customer->wasRecentlyCreated ?? false);
 
         $customer->load('user');
 
         $payload = $loyalty->addStamp($customer, $request->user(), $request->integer('stamps', 1));
         $payload['scan_type'] = 'stamp';
         $payload['pending_claim_warning'] = $claims->pendingClaimWarningFor($customer->fresh());
+        $payload['joined_on_scan'] = $joinedOnScan;
 
         return response()->json($payload, 201);
     }
@@ -95,16 +85,11 @@ class StaffScanController extends Controller
         Venue $venue,
         LoyaltyStampService $loyalty,
         RedemptionClaimService $claims,
+        ScannerService $scanner,
     ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
-        $parsed = LoyaltyQr::parse($request->string('scan')->toString());
-
-        if ($parsed === null) {
-            throw ValidationException::withMessages([
-                'scan' => 'Unrecognized QR. Use the customer stamp card or their Rewards claim screen.',
-            ]);
-        }
+        $parsed = $scanner->parseScan($request->string('scan')->toString());
 
         if ($parsed['type'] === 'redeem') {
             return response()->json(
@@ -113,23 +98,37 @@ class StaffScanController extends Controller
             );
         }
 
-        $customer = Customer::query()
-            ->where('venue_id', $venue->id)
-            ->where('qr_token', $parsed['token'])
-            ->first();
-
-        if (! $customer) {
-            throw ValidationException::withMessages([
-                'scan' => "This QR belongs to another venue or is not enrolled at {$venue->name}.",
-            ]);
-        }
+        $customer = $scanner->resolveCustomerForStampToken(
+            $parsed['token'],
+            $venue,
+            $request->user(),
+        );
+        $joinedOnScan = (bool) ($customer->wasRecentlyCreated ?? false);
 
         $customer->load('user');
 
         $payload = $loyalty->addStamp($customer, $request->user(), $request->integer('stamps', 1));
         $payload['scan_type'] = 'stamp';
         $payload['pending_claim_warning'] = $claims->pendingClaimWarningFor($customer->fresh());
+        $payload['joined_on_scan'] = $joinedOnScan;
 
         return response()->json($payload, 201);
+    }
+
+    private function resolveCustomerForStamp(
+        AddStampRequest $request,
+        Venue $venue,
+        ScannerService $scanner,
+        User $staff,
+    ): Customer {
+        if ($request->filled('customer_id')) {
+            return $scanner->resolveCustomerById($request->integer('customer_id'), $venue);
+        }
+
+        return $scanner->resolveCustomerForStampToken(
+            $request->string('qr_token')->toString(),
+            $venue,
+            $staff,
+        );
     }
 }

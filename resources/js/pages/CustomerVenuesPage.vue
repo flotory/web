@@ -91,8 +91,8 @@ onMounted(loadVenues)
 <template>
   <AppShell>
     <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-slate-950">Venues</h1>
-      <p class="mt-1 text-sm text-slate-500">Browse venues, join new ones, or open your loyalty card.</p>
+      <h1 class="text-2xl font-black tracking-tight text-slate-950">Discover</h1>
+      <p class="mt-1 text-sm text-slate-500">Find venues to join — show My QR on your first visit to collect stamps.</p>
 
       <label class="mt-5 block">
         <span class="sr-only">Search venues</span>

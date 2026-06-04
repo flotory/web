@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Check, ChevronLeft, Gift, Wallet } from '@lucide/vue'
-import QrcodeVue from 'qrcode.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -401,20 +400,14 @@ watch(
         </header>
 
         <section class="relative z-10 -mt-4 flex flex-col px-4 pb-8">
-          <AppCard wrapper-class="w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">
-            <h2 class="text-center text-lg font-black text-slate-950">Add a stamp</h2>
-            <p class="mt-1 text-center text-sm text-slate-500">Show this QR when staff is ready to scan.</p>
-            <div class="mt-4 flex justify-center rounded-2xl bg-slate-50 p-4">
-              <div class="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-                <QrcodeVue
-                  :value="card.qr_token"
-                  :size="184"
-                  level="M"
-                  render-as="canvas"
-                  :margin="2"
-                />
-              </div>
-            </div>
+          <AppCard wrapper-class="w-full rounded-3xl border border-amber-200/80 bg-amber-50/60 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.12)] sm:p-6">
+            <h2 class="text-center text-lg font-black text-slate-950">One QR for every venue</h2>
+            <p class="mt-1 text-center text-sm text-slate-600">
+              Open <span class="font-bold text-slate-950">My QR</span> at the counter — stamps apply to {{ card.venue?.name ?? 'this venue' }}.
+            </p>
+            <RouterLink to="/my-qr" class="mt-4 block">
+              <AppButton class="w-full">Show My QR</AppButton>
+            </RouterLink>
           </AppCard>
 
           <AppCard wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">

@@ -18,6 +18,16 @@ class StaffScanControllerTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'loyalty.universal_qr_enabled' => true,
+            'loyalty.legacy_card_qr_enabled' => false,
+        ]);
+    }
+
     public function test_staff_can_add_a_stamp_and_unlock_a_reward(): void
     {
         $staff = $this->createUser(['email' => 'staff@example.com']);
@@ -35,7 +45,7 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $response = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 1,
         ]);
 
@@ -82,14 +92,14 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $firstResponse = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 1,
         ]);
 
         $firstResponse->assertCreated();
 
         $secondResponse = $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 1,
         ]);
 
@@ -111,7 +121,7 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($owner);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 2,
         ])
             ->assertCreated()
@@ -139,7 +149,7 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/lookup", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
         ])
             ->assertOk()
             ->assertJsonPath('customer.id', $customer->id)
@@ -160,7 +170,7 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 3,
         ])
             ->assertCreated()
@@ -174,22 +184,41 @@ class StaffScanControllerTest extends TestCase
         ]);
     }
 
-    public function test_lookup_rejects_qr_token_from_another_venue(): void
+    public function test_lookup_rejects_legacy_card_qr_when_disabled(): void
     {
         $staff = $this->createUser();
         $customerUser = $this->createUser(['email' => 'guest@example.com']);
-        $venueA = $this->createVenue(['name' => 'Venue A']);
-        $venueB = $this->createVenue(['name' => 'Venue B']);
-        $this->attachMember($venueA, $staff, 'staff');
-        $customer = $this->createCustomer($venueB, $customerUser);
+        $venue = $this->createVenue(['name' => 'Venue A']);
+        $this->attachMember($venue, $staff, 'staff');
+        $legacyToken = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+        $this->createCustomer($venue, $customerUser, ['qr_token' => $legacyToken]);
 
         Sanctum::actingAs($staff);
 
-        $this->postJson("/api/venues/{$venueA->id}/scanner/lookup", [
-            'qr_token' => $customer->qr_token,
+        $this->postJson("/api/venues/{$venue->id}/scanner/lookup", [
+            'qr_token' => $legacyToken,
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('qr_token');
+    }
+
+    public function test_staff_can_stamp_via_customer_id_fallback(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 1]);
+        $this->createReward($venue);
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'customer_id' => $customer->id,
+            'stamps' => 1,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('customer.stamps', 2);
     }
 
     public function test_add_stamp_succeeds_when_realtime_broadcast_fails(): void
@@ -213,7 +242,7 @@ class StaffScanControllerTest extends TestCase
         Sanctum::actingAs($staff);
 
         $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+            'qr_token' => $this->stampQrForUser($customerUser),
             'stamps' => 1,
         ])
             ->assertCreated()
@@ -225,22 +254,25 @@ class StaffScanControllerTest extends TestCase
         ]);
     }
 
-    public function test_add_stamp_rejects_qr_token_from_another_venue(): void
+    public function test_legacy_card_qr_works_when_explicitly_enabled(): void
     {
+        config(['loyalty.legacy_card_qr_enabled' => true]);
+
         $staff = $this->createUser();
         $customerUser = $this->createUser(['email' => 'guest@example.com']);
-        $venueA = $this->createVenue(['name' => 'Venue A']);
-        $venueB = $this->createVenue(['name' => 'Venue B']);
-        $this->attachMember($venueA, $staff, 'staff');
-        $customer = $this->createCustomer($venueB, $customerUser);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $staff, 'staff');
+        $legacyToken = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+        $customer = $this->createCustomer($venue, $customerUser, ['qr_token' => $legacyToken, 'stamps' => 0]);
+        $this->createReward($venue);
 
         Sanctum::actingAs($staff);
 
-        $this->postJson("/api/venues/{$venueA->id}/scanner/stamps", [
-            'qr_token' => $customer->qr_token,
+        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
+            'qr_token' => $legacyToken,
             'stamps' => 1,
         ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('qr_token');
+            ->assertCreated()
+            ->assertJsonPath('customer.stamps', 1);
     }
 }

@@ -80,7 +80,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 | `User` | `users` | Login identity. `is_admin` for platform admin only. `active_venue_id` for workspace selection. Optional `google_id`, `google_avatar`. |
 | `Venue` | `venues` | Workspace. Slug, category, branding, soft deletes. **No** `owner_user_id`. |
 | `VenueUser` | `venue_users` | Team membership pivot: `role` = `owner` \| `staff`. |
-| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `qr_token`, `stamps`. |
+| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `stamps`. `qr_token` deprecated (nullable, hidden from API). |
 | `Reward` | `rewards` | Milestone definition: `required_stamps`, optional image, `active`, `reward_type` (= `milestone`). |
 | `Visit` | `visits` | Audit row when staff award stamps via `addStamp`. `created_by` = staff user. |
 | `CustomerRewardCycle` | `customer_reward_cycles` | Cycle counter; `completed_at` when top milestone reached. |
@@ -166,21 +166,23 @@ One `/scanner` page; camera payload determines the action:
 
 | QR type | Payload | API |
 |---------|---------|-----|
-| **Stamp card** | Customer `qr_token` (UUID) | `POST /api/venues/{venue}/scanner/stamps` |
-| **Reward claim** | `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
+| **Stamp (My QR)** | `flotory:member:{user_stamp_token}` | `POST /api/venues/{venue}/scanner/scan` or `.../stamps` |
+| **Reward claim** | `flotory:redeem:{token}` or `/r/{token}` | `POST /api/venues/{venue}/scanner/redeem` or unified `scan` |
 
-Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
+Parsed via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`. `ScannerService` resolves user → customer at scanner venue (auto-join). Legacy per-card `customers.qr_token` only if `LOYALTY_LEGACY_CARD_QR=true` (Phase 3 default: off). Staff manual fallback: `customer_id` on `.../stamps`.
 
-After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an info banner: ask the customer to open **Rewards → Claim**, not the stamp card).
+Customer stamp QR: `GET /api/customer/stamp-qr`. **`qr_token` is not exposed** on customer API responses.
+
+After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI: ask guest to open **Rewards → Claim**, not My QR).
 
 ### Customer reward claim (QR)
 
 1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
 2. Tap **Claim** → `POST /api/customer/rewards/unlocks/{unlock}/claim-session` → short-lived `redemption_requests` row (10 min TTL)
-3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
+3. Modal shows claim QR (`flotory:redeem:…`); customer polls claim session until `status: claimed`
 4. Staff scans claim QR on the same scanner → redeem flow above
 
-`/wallet` detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
+Claim QRs never appear on wallet/My QR — stamps only there.
 
 ### Staff claim (manual fallback)
 

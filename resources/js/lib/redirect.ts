@@ -1,4 +1,4 @@
-const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/wallet', '/venues', '/customer/', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
+const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/wallet', '/my-qr', '/venues', '/customer/', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
 
 const OWNER_WORKSPACE_PREFIXES = [
   '/dashboard',

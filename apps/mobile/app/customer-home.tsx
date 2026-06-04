@@ -8,6 +8,7 @@ import CustomerScreen from '../src/components/ui/CustomerScreen'
 import PressableCard from '../src/components/ui/PressableCard'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import ShakeGiftBadge from '../src/components/ui/ShakeGiftBadge'
+import PrimaryButton from '../src/components/ui/PrimaryButton'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
@@ -110,6 +111,12 @@ export default function CustomerHomeScreen() {
           pretitle={`Hi, ${firstName}`}
           title={heroProgressTitle(headerStampsLeft, headerRewardTitle)}
           subtitle={heroProgressSubtitle(headerStampsLeft, headerRewardTitle)}
+        />
+        <PrimaryButton
+          label="Show My QR"
+          onPress={() => router.push('/(customer)/qr')}
+          pulse
+          style={{ marginTop: 16 }}
         />
       </View>
     </Animated.View>
@@ -245,7 +252,7 @@ export default function CustomerHomeScreen() {
               emoji="☕"
               title="Start your first card"
               message="Discover a venue nearby and begin collecting visits toward your first reward."
-              primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+              primaryAction={{ label: 'Discover venues', onPress: () => router.push('/(customer)/venues') }}
             />
           </AnimatedSection>
         )}

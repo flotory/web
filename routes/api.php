@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue}/customers/{customer}/notes', [VenueCustomerController::class, 'storeNote']);
     Route::post('/venues/{venue:slug}/join', [CustomerLoyaltyController::class, 'join']);
 
+    Route::get('/customer/stamp-qr', [CustomerLoyaltyController::class, 'stampQr']);
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);
     Route::get('/customer/rewards/wallet', [CustomerLoyaltyController::class, 'wallet']);
     Route::post('/customer/rewards/unlocks/{unlock}/claim-session', [CustomerLoyaltyController::class, 'createClaimSession']);

@@ -1,5 +1,7 @@
 # Flotory Product Roadmap
 
+> **v2 (shipped):** Universal My QR — see [V2.md](./V2.md). Migration phases 1–3 complete (API, customer UI, legacy card QR off by default).
+
 ## Vision
 
 Flotory helps local hospitality businesses increase customer retention and build stronger customer relationships through loyalty, rewards, communication, and customer insights.
