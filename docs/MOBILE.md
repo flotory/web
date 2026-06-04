@@ -2,7 +2,7 @@
 
 Customer and staff loyalty flows on iOS/Android via **Expo Router** (`apps/mobile`). The app uses the same Laravel JSON API as the Vue owner SPA, with bearer tokens from Sanctum.
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for backend layers and [CAMPAIGNS.md](./CAMPAIGNS.md) for stamp campaigns (owner web only; customers see `promotion` on wallet APIs).
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for backend layers and [CAMPAIGNS.md](./CAMPAIGNS.md) for stamp campaigns (owner web only; customers see `home_campaigns` on `GET /customer/cards`).
 
 ## Stack
 
@@ -37,6 +37,22 @@ After login, `AuthProvider` loads `/auth/me` and `/venues`. Role drives the defa
 
 **Campaigns** are managed in the **Vue owner app** (`/campaigns`), not in mobile.
 
+## Customer tab bar
+
+Custom bottom bar (`CustomerTabBar` + `TabBarQrButton`) with a center scoop for **My QR**.
+
+| Tab | Route | Visible in bar |
+|-----|-------|----------------|
+| Home | `/(customer)/home` | Yes |
+| Wallet | `/(customer)/wallet` | Yes |
+| My QR | `/(customer)/qr` | Center button (no label) |
+| Venues | `/(customer)/venues` | Yes |
+| Profile | `/(customer)/settings` | Yes |
+| Rewards | `/(customer)/rewards` | Hidden (`href: null`) — opened from home/wallet CTAs |
+| Notifications | `/(customer)/notifications` | Hidden — opened from home header bell |
+
+Home shows reward **ticket cards** for ready-to-claim items, a **campaign carousel** (`home_campaigns`), and quick actions. The notifications bell shows an unread dot only when `unreadCount > 0` (inbox API is future work).
+
 ## Screens ↔ API
 
 ### Auth
@@ -51,11 +67,12 @@ After login, `AuthProvider` loads `/auth/me` and `/venues`. Role drives the defa
 
 | Screen | Path | API |
 |--------|------|-----|
-| Home | `app/(customer)/home.tsx` | `GET /customer/cards`, `GET /customer/rewards/wallet` |
+| Home | `app/(customer)/home.tsx` | `GET /customer/cards` (`home_campaigns`), `GET /customer/rewards/wallet` |
 | **My QR** | `app/(customer)/qr.tsx` | `GET /customer/stamp-qr` |
-| Wallet list | `app/(customer)/wallet.tsx` | `GET /customer/cards` (no `qr_token` in payload) |
-| Card detail | `app/card/[cardId].tsx` | `GET /customer/cards?venue_id={id}` — progress only; CTA to My QR |
+| Wallet list | `app/(customer)/wallet.tsx` | `GET /customer/cards` |
+| Card detail | `app/card/[cardId].tsx` | `GET /customer/cards?venue_id={id}` — progress, reward-ready section; stamps via My QR |
 | Rewards | `app/(customer)/rewards.tsx` | Wallet + cards hooks |
+| Notifications | `app/(customer)/notifications.tsx` | Placeholder (push inbox not implemented) |
 | Discover | `app/(customer)/venues.tsx` | `GET /venues/discover`, `POST /venues/{slug}/join` |
 | Profile | `app/(customer)/settings.tsx` | Auth + stats from cards |
 | Claim flow | `app/claim/[unlockId].tsx` | `POST /customer/rewards/unlocks/{id}/claim-session`, poll claim session |
@@ -72,9 +89,10 @@ Scanner responses may include `active_campaign` when a stamp multiplier applies 
 
 ## Conventions
 
-1. Screens call **hooks** (`useCustomerCards`, `useCardDetail`, …), not `apiRequest` directly.
-2. Invalidate caches via `invalidateCustomerCaches` after stamp/claim/join.
-3. Types live in `src/types/` (`loyalty.ts`, `auth.ts`).
+1. Screens call **hooks** (`useCustomerCards`, `useCardDetail`, `useStampQr`, …), not `apiRequest` directly.
+2. Use `useCallback` for `useScreenResource` loaders to avoid refetch loops.
+3. Invalidate caches via `invalidateCustomerCaches` after stamp/claim/join.
+4. Types live in `src/types/` (`loyalty.ts`, `auth.ts`).
 
 ## CI
 

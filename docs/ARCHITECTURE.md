@@ -208,7 +208,8 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings |
 | Staff workspace | staff-only membership | Scanner, Customers, Account |
-| Customer | No team membership (or `workspace: false` routes) | Card, **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
+| Customer (web) | No team membership (or `workspace: false` routes) | Wallet, **My QR** (`/my-qr`), **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
+| Customer (mobile) | Same API, Expo app | Home, Wallet, **My QR** (center), Venues, Profile; Rewards and Notifications off-tab |
 
 Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\RewardRedeemed;
 use App\Events\StampAdded;
 use App\Models\CustomerRewardCycle;
 use App\Models\Customer;
@@ -18,15 +19,23 @@ use Throwable;
 
 class LoyaltyStampService
 {
+    public function __construct(private CampaignService $campaigns) {}
+
     public function addStamp(Customer $customer, User $staff, int $stamps = 1): array
     {
-        $result = DB::transaction(function () use ($customer, $staff, $stamps): array {
+        $customer->loadMissing('venue');
+        $requestedStamps = max($stamps, 1);
+        $multiplier = $this->campaigns->multiplierFor($customer, $customer->venue);
+        $stampsToAward = $requestedStamps * $multiplier;
+
+        $result = DB::transaction(function () use ($customer, $staff, $stampsToAward, $requestedStamps, $multiplier): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+            $customer->load('user', 'venue');
             $this->guardAgainstDuplicateScan($customer);
             $rewards = $this->milestonesForVenue($customer);
             $cycle = $this->activeCycle($customer);
             $previousStamps = $customer->stamps;
-            $newStamps = $customer->stamps + max($stamps, 1);
+            $newStamps = $customer->stamps + $stampsToAward;
 
             $maxMilestone = (int) ($rewards->max('required_stamps') ?? 0);
             $completedCycle = false;
@@ -58,7 +67,10 @@ class LoyaltyStampService
                 'customer' => $customer,
                 'visit' => $visit,
                 'previous_stamps' => $previousStamps,
-                'added_stamps' => $stamps,
+                'added_stamps' => $stampsToAward,
+                'requested_stamps' => $requestedStamps,
+                'stamp_multiplier' => $multiplier,
+                'active_campaign' => $this->campaigns->scannerContextFor($customer),
                 'next_reward' => $this->nextRewardFor($customer),
                 'available_rewards' => $this->availableRewardsFor($customer),
                 'milestones' => $journey['milestones'],
@@ -102,15 +114,19 @@ class LoyaltyStampService
         return $result;
     }
 
-    public function redeemReward(Customer $customer, Reward $reward, User $redeemer): RewardUnlock
-    {
+    public function redeemReward(
+        Customer $customer,
+        Reward $reward,
+        User $redeemer,
+        ?string $claimSessionToken = null,
+    ): RewardUnlock {
         if ($reward->venue_id !== $customer->venue_id || ! $reward->active) {
             throw ValidationException::withMessages([
                 'reward' => 'This reward is not available for the scanned customer.',
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
+        $unlock = DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $unlock = RewardUnlock::query()
                 ->where('customer_id', $customer->id)
@@ -147,6 +163,22 @@ class LoyaltyStampService
 
             return $unlock;
         });
+
+        try {
+            RewardRedeemed::dispatch(
+                $customer->fresh()->load('venue', 'user'),
+                $unlock,
+                $claimSessionToken,
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Reward redeemed but realtime broadcast failed.', [
+                'customer_id' => $customer->id,
+                'unlock_id' => $unlock->id,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
+
+        return $unlock;
     }
 
     /**

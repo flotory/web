@@ -263,7 +263,7 @@ All seeded accounts use password: **`password`**
 |--------|--------|----------------|
 | **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
-| **Customer** | `customer@example.com` | Wallet (`/wallet`), Rewards claim flow, milestone journey |
+| **Customer** | `customer@example.com` | Web: Wallet, Rewards claim, My QR. Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues |
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 
@@ -290,12 +290,18 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 3. Scan or search for `customer@example.com` and add stamps
 4. Download QR from dashboard (**Download QR**) or venue settings
 
-**Customer**
+**Customer (web)**
 
 1. Log in as `customer@example.com`
 2. Open **Wallet** (`/wallet`) or scan the venue QR → `/v/demo-cafe`
 3. Earned rewards appear on **Rewards** (`/customer/rewards`); tap **Claim** and show the claim QR to staff
 4. Staff scan the claim QR on **Scanner**; your phone updates when the reward is used
+
+**Customer (mobile Expo)**
+
+1. `npm --prefix apps/mobile run start` with `EXPO_PUBLIC_API_BASE_URL` pointing at your API
+2. Log in as `customer@example.com` — tabs: **Home** (ready reward tickets + campaigns), **Wallet**, center **My QR**, **Venues**, **Profile**
+3. Tap a ready ticket or open **Rewards** (from quick actions) → **Claim** → show claim QR to staff
 
 **Team (staff invitation)**
 
@@ -332,7 +338,8 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Owner `/rewards`: 5-column customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
 - Owner/staff **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
 - Customer loyalty wallet (`/wallet`) with per-venue stamp QR and journey
-- Customer bottom nav: **Wallet**, **Rewards**, Venues, Settings (account + logout)
+- Customer bottom nav (web): **Wallet**, **My QR**, **Rewards**, Venues, Settings
+- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Profile** — see [docs/MOBILE.md](docs/MOBILE.md)
 - Stamp and reward-unlock animations on the wallet detail view (no persistent banner)
 - Customer rewards wallet (`/customer/rewards`) with tab badge for pending unlocks
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards

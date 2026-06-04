@@ -31,10 +31,11 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile ru
 
 ## Architecture (customer app)
 
+- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center My QR (`TabBarQrButton`), Venues, Profile; Rewards and Notifications are hidden stack routes
 - **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
-- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useDiscoverVenues`, `useCardDetail`, `useScreenResource`
+- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useDiscoverVenues`, `useCardDetail`, `useStampQr`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
-- **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`
+- **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`, `HomeRewardTicketCard`, `HomeScreenHeader` (bell → notifications; unread dot when `unreadCount > 0`)
 
 ### Conventions
 
@@ -62,7 +63,8 @@ Use theme tokens instead of hardcoded values in screens.
 
 Reusable building blocks are in `src/components/ui`:
 
-- `ScreenHeader`: standard title/subtitle/pretitle block
+- `ScreenHeader` / `HomeScreenHeader`: standard title blocks; home header includes notifications bell
+- `StickyBackButton`: floating back control on scrollable detail screens
 - `PrimaryButton`: default CTA (optional `pulse`, `haptic`)
 - `GradientCard`: soft gradient card with optional cover overlap (`overlap` slot for wallet avatars)
 - `GradientOutlineButton`: white pill CTA used on reward cards

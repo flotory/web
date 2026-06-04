@@ -74,7 +74,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | Venue location (MVP) | Single optional `venues.address` string; shown on public `/v/:slug` with **Open in Maps** (`google.com/maps/search?api=1&query=…`). No geocoding, Maps API, or coordinates. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
 | Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | **My QR** for stamps (mobile center tab, web `/my-qr`); **Wallet** for per-venue progress only; claim QR only in **Rewards → Claim**. Nav: Wallet, My QR, Rewards, Discover, Profile. Staff scanner: My QR / claim QR, or `customer_id` fallback. |
+| Customer primary surface | **My QR** for stamps (mobile center tab, web `/my-qr`); **Home** for ready rewards, campaigns, and quick actions; **Wallet** for per-venue cards. Claim QR in **Rewards → Claim** (mobile: hidden tab + home tickets). Mobile nav: Home, Wallet, My QR, Venues, Profile; Rewards and Notifications are stack routes off the tab bar. Staff scanner: My QR / claim QR, or `customer_id` fallback. |
 | Customer retention CRM | `/customers` lists joined date, last visit, visit count, rewards claimed, activity status (active / at-risk / inactive / new) with filters. `/customers/:id` profile adds visit history, reward history, unified timeline, team notes, and optional birthday on the user. |
 
 ## Data and Infrastructure

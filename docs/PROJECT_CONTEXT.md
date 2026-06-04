@@ -27,7 +27,9 @@ Operational setup (local dev, deploy, demo accounts) stays in the root [README.m
 - Measure retention signals (repeat visits, milestone claims, cycle completion)
 - Keep the monolith simple enough to ship weekly
 
-**Not in scope yet:** billing, POS integrations, push notifications, advanced segmentation, multi-owner venues.
+**Not in scope yet:** billing, POS integrations, push notification delivery (mobile inbox UI exists; Expo push is future work), advanced segmentation, multi-owner venues.
+
+**Mobile (Expo):** Customer app in `apps/mobile` — see [MOBILE.md](./MOBILE.md). Owner/staff can use mobile scanner and a lightweight dashboard; full owner workspace remains the Vue SPA.
 
 ## What Flotory Does (One Paragraph)
 
