@@ -114,13 +114,24 @@ const isBusy = computed(() =>
   status.value === 'success',
 )
 
-const showStampControls = computed(() => lastScanKind.value !== 'redeem')
+const showStampControls = computed(
+  () => status.value === 'idle' || status.value === 'error' || lastScanKind.value !== 'redeem',
+)
+
+const canUseFallback = computed(
+  () => Boolean(selectedCustomer.value?.id && venue.value && !submitting.value && !loading.value),
+)
 
 const scannerVenueId = computed(() => {
   const venueId = route.query.venue_id
 
   return typeof venueId === 'string' ? Number(venueId) : null
 })
+
+/** Left-menu venue filter wins over a stale `?venue_id=` in the URL. */
+const activeScannerVenueId = computed(
+  () => workspace.effectiveVenueId ?? scannerVenueId.value,
+)
 
 function applyCustomerResponse(response: ScanResponse) {
   customer.value = response.customer
@@ -129,9 +140,22 @@ function applyCustomerResponse(response: ScanResponse) {
   )
 }
 
+function isPlausibleScan(value: string): boolean {
+  const trimmed = value.trim()
+
+  return trimmed.startsWith('flotory:') || trimmed.length >= 12
+}
+
 function handleDetect(codes: Array<{ rawValue: string }>) {
-  const value = codes[0]?.rawValue
-  if (!value || isBusy.value || status.value !== 'idle') return
+  const value = codes[0]?.rawValue?.trim()
+  if (!value || !isPlausibleScan(value) || isBusy.value || status.value !== 'idle') {
+    return
+  }
+
+  if (!venue.value) {
+    showLocalScanError('Choose a venue in the sidebar, then try again.')
+    return
+  }
 
   selectedCustomer.value = null
   customerSearch.value = ''
@@ -144,10 +168,18 @@ function selectPresetAmount(amount: number) {
   useCustomStamps.value = false
 }
 
+async function syncScannerVenueQuery(venueId: number) {
+  if (scannerVenueId.value === venueId) {
+    return
+  }
+
+  await router.replace({ name: 'scanner', query: { venue_id: String(venueId) } })
+}
+
 async function loadRestaurant() {
   await workspace.bootstrap()
   const venues = (await api<{ venues: Venue[] }>('/venues')).venues
-  const venueId = scannerVenueId.value ?? workspace.effectiveVenueId
+  const venueId = activeScannerVenueId.value
   venue.value = venueId ? (venues.find((item) => item.id === venueId) ?? null) : null
 
   if (!venue.value) {
@@ -183,11 +215,33 @@ function clearSelectedCustomer() {
   selectedCustomer.value = null
 }
 
-async function processScan(scanValue: string) {
-  if (submitting.value || !venue.value) {
+function finishScanResponse(response: ScanResponse) {
+  applyCustomerResponse(response)
+  selectedCustomer.value = null
+  customerSearch.value = ''
+  rawScan.value = ''
+  status.value = 'success'
+
+  if (response.scan_type === 'redeem') {
+    lastScanKind.value = 'redeem'
+    redeemedReward.value = response.reward
+    const customerName = response.customer.user?.name ?? 'Customer'
+    message.value = `Reward redeemed for ${customerName}: ${response.reward.title}.`
+    scheduleReset(2800)
     return
   }
 
+  lastScanKind.value = 'stamp'
+  pendingClaimWarning.value = response.pending_claim_warning ?? null
+  const addedStamps = response.added_stamps ?? selectedStampAmount.value
+  const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
+  const customerName = response.customer.user?.name ?? 'Customer'
+  message.value = `${addedStamps} ${stampLabel} added for ${customerName}.`
+  const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
+  scheduleReset(delay)
+}
+
+function beginScanRequest() {
   submitting.value = true
   loading.value = true
   scanning.value = false
@@ -195,6 +249,35 @@ async function processScan(scanValue: string) {
   message.value = ''
   pendingClaimWarning.value = null
   redeemedReward.value = null
+}
+
+function showLocalScanError(text: string, autoResetMs = 3200) {
+  window.clearTimeout(resetTimer)
+  status.value = 'error'
+  scanning.value = false
+  submitting.value = false
+  loading.value = false
+  message.value = text
+  if (autoResetMs > 0) {
+    scheduleReset(autoResetMs)
+  }
+}
+
+function failScanRequest(exception: unknown) {
+  showLocalScanError(exception instanceof ApiError ? exception.message : 'Scan failed.')
+}
+
+async function processScan(scanValue: string) {
+  if (submitting.value) {
+    return
+  }
+
+  if (!venue.value) {
+    showLocalScanError('Choose a venue in the sidebar, then scan again.')
+    return
+  }
+
+  beginScanRequest()
 
   try {
     const response = await api<ScanResponse>(`/venues/${venue.value.id}/scanner/scan`, {
@@ -205,32 +288,9 @@ async function processScan(scanValue: string) {
       },
     })
 
-    applyCustomerResponse(response)
-    selectedCustomer.value = null
-    customerSearch.value = ''
-    rawScan.value = ''
-    status.value = 'success'
-
-    if (response.scan_type === 'redeem') {
-      lastScanKind.value = 'redeem'
-      redeemedReward.value = response.reward
-      const customerName = response.customer.user?.name ?? 'Customer'
-      message.value = `Reward redeemed for ${customerName}: ${response.reward.title}.`
-      scheduleReset(2800)
-    } else {
-      lastScanKind.value = 'stamp'
-      pendingClaimWarning.value = response.pending_claim_warning ?? null
-      const addedStamps = response.added_stamps ?? selectedStampAmount.value
-      const stampLabel = addedStamps === 1 ? 'stamp' : 'stamps'
-      const customerName = response.customer.user?.name ?? 'Customer'
-      message.value = `${addedStamps} ${stampLabel} added for ${customerName}.`
-      const delay = pendingClaimWarning.value ? 4500 : response.available_rewards.length ? 2300 : 1700
-      scheduleReset(delay)
-    }
+    finishScanResponse(response)
   } catch (exception) {
-    status.value = 'error'
-    message.value = exception instanceof ApiError ? exception.message : 'Scan failed.'
-    scheduleReset(3200)
+    failScanRequest(exception)
   } finally {
     loading.value = false
     submitting.value = false
@@ -238,17 +298,39 @@ async function processScan(scanValue: string) {
 }
 
 async function addStampFromFallback() {
-  const qrToken = selectedCustomer.value?.qr_token
-
-  if (!qrToken) {
-    status.value = 'error'
-    scanning.value = false
-    message.value = 'Select a customer first.'
-
+  if (submitting.value) {
     return
   }
 
-  await processScan(qrToken)
+  if (!venue.value) {
+    showLocalScanError('Choose a venue in the sidebar first.')
+    return
+  }
+
+  const customerId = selectedCustomer.value?.id
+  if (!customerId) {
+    showLocalScanError('Tap a customer in the list below, then add stamps.')
+    return
+  }
+
+  beginScanRequest()
+
+  try {
+    const response = await api<StampScanResponse>(`/venues/${venue.value.id}/scanner/stamps`, {
+      method: 'POST',
+      body: {
+        customer_id: customerId,
+        stamps: selectedStampAmount.value,
+      },
+    })
+
+    finishScanResponse(response)
+  } catch (exception) {
+    failScanRequest(exception)
+  } finally {
+    loading.value = false
+    submitting.value = false
+  }
 }
 
 function scheduleReset(delay: number) {
@@ -277,11 +359,43 @@ function dismissWarningAndReset() {
   resetScanner()
 }
 
-onMounted(loadRestaurant)
+async function reloadScannerForVenue(venueId: number | null) {
+  if (venueId == null) {
+    return
+  }
 
-watch(scannerVenueId, () => {
+  await syncScannerVenueQuery(venueId)
   resetScanner()
-  loadRestaurant()
+  await loadRestaurant()
+}
+
+async function ensureScannerVenueLoaded() {
+  await workspace.bootstrap()
+  const venueId = activeScannerVenueId.value
+
+  if (venueId == null) {
+    showLocalScanError('Choose a venue in the sidebar first.', 0)
+    return
+  }
+
+  await reloadScannerForVenue(venueId)
+}
+
+onMounted(() => {
+  void ensureScannerVenueLoaded()
+})
+
+watch(activeScannerVenueId, (venueId, previous) => {
+  if (venueId == null) {
+    showLocalScanError('Choose a venue in the sidebar first.', 0)
+    return
+  }
+
+  if (venueId === previous) {
+    return
+  }
+
+  void reloadScannerForVenue(venueId)
 })
 </script>
 
@@ -305,7 +419,20 @@ watch(scannerVenueId, () => {
 
       <AppCard wrapper-class="overflow-hidden p-0">
         <div class="relative aspect-square bg-slate-950">
-          <QrcodeStream v-if="scanning" class="h-full w-full object-cover" @detect="handleDetect" />
+          <QrcodeStream
+            v-if="scanning && !selectedCustomer"
+            class="h-full w-full object-cover"
+            @detect="handleDetect"
+          />
+          <div
+            v-else-if="scanning && selectedCustomer"
+            class="grid h-full place-items-center bg-slate-900 px-6 text-center text-white"
+          >
+            <p class="text-lg font-black">Guest selected</p>
+            <p class="mt-2 text-sm font-semibold text-white/75">
+              {{ selectedCustomer.user?.name ?? 'Customer' }} — use the button below to add stamps.
+            </p>
+          </div>
           <div
             v-else-if="status === 'processing'"
             class="grid h-full place-items-center text-white"
@@ -322,9 +449,15 @@ watch(scannerVenueId, () => {
           <div v-else-if="status === 'error'" class="grid h-full place-items-center bg-gradient-to-br from-red-500 to-slate-950 text-white">
             <div class="px-6 text-center">
               <div class="mx-auto grid size-20 place-items-center rounded-full bg-white/20 text-5xl font-black">!</div>
-              <p class="mt-5 text-2xl font-black">Scan failed</p>
+              <p class="mt-5 text-2xl font-black">Could not complete scan</p>
               <p class="mt-2 text-sm font-semibold text-red-50">{{ message }}</p>
-              <p class="mt-3 text-xs font-bold uppercase tracking-wide text-white/60">Resetting scanner…</p>
+              <button
+                type="button"
+                class="mt-5 rounded-2xl bg-white px-5 py-3 text-sm font-black text-red-600 shadow-lg"
+                @click="resetScanner"
+              >
+                Try again
+              </button>
             </div>
           </div>
           <div
@@ -403,7 +536,7 @@ watch(scannerVenueId, () => {
             <div class="flex items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-black text-slate-950">Customer fallback</p>
-                <p class="text-xs font-semibold text-slate-500">Use this if camera scanning fails.</p>
+                <p class="text-xs font-semibold text-slate-500">Pick a guest if the camera cannot read their My QR.</p>
               </div>
               <AppBadge>{{ customerLoading ? 'Loading' : `${customers.length} cards` }}</AppBadge>
             </div>
@@ -456,11 +589,16 @@ watch(scannerVenueId, () => {
             </div>
           </div>
 
-          <AppButton class="w-full" size="lg" :disabled="isBusy || !selectedCustomer" @click="addStampFromFallback">
-            {{ isBusy ? 'Adding stamps...' : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'}` }}
-          </AppButton>
-          <AppButton v-if="status === 'error'" class="w-full" variant="secondary" @click="resetScanner">
-            Scan another QR
+          <AppButton class="w-full" size="lg" :disabled="!canUseFallback" @click="addStampFromFallback">
+            {{
+              submitting
+                ? 'Adding stamps...'
+                : !venue
+                  ? 'Choose a venue in the sidebar'
+                  : !selectedCustomer
+                    ? 'Select a customer below'
+                    : `Add ${selectedStampAmount} ${selectedStampAmount === 1 ? 'stamp' : 'stamps'} for ${selectedCustomer.user?.name ?? 'guest'}`
+            }}
           </AppButton>
         </div>
 

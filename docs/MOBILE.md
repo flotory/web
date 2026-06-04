@@ -87,6 +87,16 @@ Home shows reward **ticket cards** for ready-to-claim items, a **campaign carous
 
 Scanner responses may include `active_campaign` when a stamp multiplier applies (same engine as web scanner).
 
+## Stamp scan feedback (customer)
+
+When staff scans **My QR**, the customer app should haptic, navigate to the venue **card** screen, and animate new stamps (and reward celebration when applicable).
+
+- **WebSocket:** `RealtimeProvider` listens on `private-customer.{cardId}` for `.stamp.added` (Reverb via `/app` on production).
+- **Fallback:** `useStampWatchdog` polls `GET /customer/cards` every ~4s while the app is active.
+- **Routing:** `CustomerStampOrchestrator` in `(customer)/_layout` pushes `/card/[cardId]` when a stamp arrives on another tab (e.g. My QR).
+
+Production Expo builds must set `EXPO_PUBLIC_REVERB_APP_KEY` (and host/port/scheme) to match server `.env`, or rely on polling only.
+
 ## Conventions
 
 1. Screens call **hooks** (`useCustomerCards`, `useCardDetail`, `useStampQr`, …), not `apiRequest` directly.

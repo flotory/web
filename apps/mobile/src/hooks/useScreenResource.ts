@@ -6,6 +6,8 @@ type LoadMode = 'initial' | 'refresh' | 'silent'
 interface UseScreenResourceOptions<T> {
   enabled?: boolean
   refetchOnFocus?: boolean
+  /** Show cached data immediately on mount, then refresh in the background */
+  hydrate?: () => T | null
   errorMessage: string
   load: (fresh: boolean) => Promise<T>
 }
@@ -13,6 +15,7 @@ interface UseScreenResourceOptions<T> {
 export function useScreenResource<T>({
   enabled = true,
   refetchOnFocus = false,
+  hydrate,
   errorMessage,
   load,
 }: UseScreenResourceOptions<T>) {
@@ -47,9 +50,30 @@ export function useScreenResource<T>({
     [enabled, errorMessage],
   )
 
+  const hydrateRef = useRef(hydrate)
   useEffect(() => {
+    hydrateRef.current = hydrate
+  }, [hydrate])
+
+  useEffect(() => {
+    if (!enabled) {
+      setData(null)
+      setLoading(false)
+      setError('')
+      return
+    }
+
+    const seeded = hydrateRef.current?.() ?? null
+    if (seeded) {
+      setData(seeded)
+      setLoading(false)
+      setError('')
+      void run(true, 'silent')
+      return
+    }
+
     void run(false, 'initial')
-  }, [run])
+  }, [enabled, run])
 
   useFocusEffect(
     useCallback(() => {
@@ -59,6 +83,7 @@ export function useScreenResource<T>({
   )
 
   const refresh = useCallback(() => run(true, 'refresh'), [run])
+  const silentRefresh = useCallback(() => run(true, 'silent'), [run])
   const reload = useCallback(() => run(true, 'initial'), [run])
 
   return {
@@ -67,6 +92,7 @@ export function useScreenResource<T>({
     refreshing,
     error,
     refresh,
+    silentRefresh,
     reload,
   }
 }

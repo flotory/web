@@ -1,6 +1,8 @@
 import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { View } from 'react-native'
 
+import CustomerStampOrchestrator from '../../src/components/customer/CustomerStampOrchestrator'
 import CustomerTabBar from '../../src/components/navigation/CustomerTabBar'
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
@@ -26,7 +28,8 @@ export default function CustomerTabsLayout() {
   }
 
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <Tabs
       tabBar={(props) => <CustomerTabBar {...props} />}
       screenListeners={{
         tabPress: () => {
@@ -105,5 +108,7 @@ export default function CustomerTabsLayout() {
         }}
       />
     </Tabs>
+      <CustomerStampOrchestrator />
+    </View>
   )
 }

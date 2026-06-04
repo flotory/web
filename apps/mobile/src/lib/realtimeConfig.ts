@@ -12,15 +12,32 @@ function defaultReverbHost(): string {
   }
 }
 
-function defaultReverbPort(): number {
-  const scheme = process.env.EXPO_PUBLIC_REVERB_SCHEME ?? 'https'
-  return Number(process.env.EXPO_PUBLIC_REVERB_PORT || (scheme === 'https' ? 443 : 8080))
+function defaultReverbScheme(): 'http' | 'https' {
+  if (process.env.EXPO_PUBLIC_REVERB_SCHEME === 'http' || process.env.EXPO_PUBLIC_REVERB_SCHEME === 'https') {
+    return process.env.EXPO_PUBLIC_REVERB_SCHEME
+  }
+
+  try {
+    return new URL(apiOrigin()).protocol === 'http:' ? 'http' : 'https'
+  } catch {
+    return 'https'
+  }
 }
+
+function defaultReverbPort(scheme: 'http' | 'https'): number {
+  if (process.env.EXPO_PUBLIC_REVERB_PORT) {
+    return Number(process.env.EXPO_PUBLIC_REVERB_PORT)
+  }
+
+  return scheme === 'https' ? 443 : 8080
+}
+
+const scheme = defaultReverbScheme()
 
 export const reverbConfig = {
   key: process.env.EXPO_PUBLIC_REVERB_APP_KEY ?? 'flotory-local-key',
   host: process.env.EXPO_PUBLIC_REVERB_HOST ?? defaultReverbHost(),
-  port: defaultReverbPort(),
-  scheme: process.env.EXPO_PUBLIC_REVERB_SCHEME ?? 'https',
+  port: defaultReverbPort(scheme),
+  scheme,
   authEndpoint: `${API_BASE_URL}/broadcasting/auth`,
 }

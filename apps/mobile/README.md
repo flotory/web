@@ -29,6 +29,19 @@ For local backend:
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile run start
 ```
 
+For production realtime (stamp animations after staff scan), set Reverb env to match the server (see `deploy/env.production.example`):
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=https://flotory.com/api \
+EXPO_PUBLIC_REVERB_APP_KEY=your-prod-reverb-key \
+EXPO_PUBLIC_REVERB_HOST=flotory.com \
+EXPO_PUBLIC_REVERB_PORT=443 \
+EXPO_PUBLIC_REVERB_SCHEME=https \
+npm --prefix apps/mobile run start
+```
+
+Without matching keys, the app still detects new stamps via polling (~4s) and opens your venue card with animation.
+
 ## Architecture (customer app)
 
 - **Tabs:** custom `CustomerTabBar` — Home, Wallet, center My QR (`TabBarQrButton`), Venues, Profile; Rewards and Notifications are hidden stack routes

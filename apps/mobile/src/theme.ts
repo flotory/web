@@ -157,6 +157,14 @@ export const motion = {
   pressScale: 0.985,
   ctaPulseMax: 1.02,
   ctaPulseMs: 900,
+  /** Customer stamp scan feedback — keep noticeable but calm */
+  stampBannerShowMs: 3200,
+  /** Delay on card after navigation before +1 toast, then slot highlight */
+  stampCardRevealMs: 480,
+  stampBannerBeforeSlotsMs: 260,
+  stampSlotHighlightMs: 1100,
+  /** Inline gift unlock pulse on the progress path */
+  stampGiftUnlockMs: 1500,
   shadowPulseMin: 0.06,
   shadowPulseMax: 0.14,
   shadowPulseMs: 1400,

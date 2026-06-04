@@ -37,7 +37,8 @@ export interface Customer {
   id: number
   venue_id: number
   user_id: number
-  qr_token: string
+  /** Deprecated — staff fallback uses customer_id; universal My QR uses user stamp token. */
+  qr_token?: string | null
   stamps: number
   venue?: Venue
   user?: User & { birthday?: string | null }

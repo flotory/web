@@ -6,34 +6,40 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
 import CardLoyaltyProgressCard from '../../src/components/customer/CardLoyaltyProgressCard'
 import CardPromotionBanner from '../../src/components/customer/CardPromotionBanner'
-import CardRewardReadySection from '../../src/components/customer/CardRewardReadySection'
-import StampRewardCelebration from '../../src/components/loyalty/StampRewardCelebration'
+import CardVenueRewardsCarousel, { cardVenueRewardSlidesFromProps } from '../../src/components/customer/CardVenueRewardsCarousel'
+import StampScannedBanner from '../../src/components/customer/StampScannedBanner'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { useCardDetail } from '../../src/hooks/useCardDetail'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
-import { hapticSuccess } from '../../src/lib/haptics'
-import { rewardEarnedThisScan, slotsForStampIncrease, stampUpdateSignature } from '../../src/lib/stampLiveUpdate'
+import { hapticLightTap, hapticSuccess } from '../../src/lib/haptics'
+import {
+  rewardEarnedThisScan,
+  slotsForStampIncrease,
+  stampBannerCopy,
+  stampUpdateSignature,
+} from '../../src/lib/stampLiveUpdate'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
 import type { StampAddedPayload } from '../../src/types/realtime'
-import { colors, space } from '../../src/theme'
+import { colors, motion, space } from '../../src/theme'
 
 export default function CardDetailScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const venueId = params.venueId ? String(params.venueId) : undefined
-  const { data: payload, loading, refreshing, error, refresh, reload } = useCardDetail(venueId)
+  const { data: payload, loading, refreshing, error, refresh, silentRefresh, reload } = useCardDetail(venueId)
   const { latestStamp, clearLatestStamp } = useRealtime()
-  const fade = useFadeOnReady(!loading)
+  const fade = useFadeOnReady(Boolean(payload))
   const readyHapticDone = useRef(false)
   const lastAnimatedStampSignature = useRef('')
   const [displayStamps, setDisplayStamps] = useState<number | null>(null)
   const [animatingSlots, setAnimatingSlots] = useState<number[]>([])
-  const [showCelebration, setShowCelebration] = useState(false)
-  const [celebrationTitle, setCelebrationTitle] = useState('')
+  const [celebrateGiftStamp, setCelebrateGiftStamp] = useState<number | null>(null)
+  const [scanBanner, setScanBanner] = useState<StampAddedPayload | null>(null)
+  const stampFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -48,7 +54,7 @@ export default function CardDetailScreen() {
     return Math.max(10, ...required, payload?.next_reward?.required_stamps ?? 0)
   }, [payload])
 
-  const { readyUnlock, readyReward } = useMemo(() => {
+  const { readyReward } = useMemo(() => {
     const unlocks = payload?.pending_unlocks ?? []
     const preferredRewardId = payload?.available_rewards[0]?.id
     const unlock = preferredRewardId
@@ -56,17 +62,16 @@ export default function CardDetailScreen() {
       : unlocks[0] ?? null
 
     const fromApi = unlock?.reward ?? payload?.available_rewards[0] ?? null
-    if (fromApi) return { readyUnlock: unlock, readyReward: fromApi }
+    if (fromApi) return { readyReward: fromApi }
 
     const stamps = payload?.active_card?.stamps ?? 0
     const milestone = [...(payload?.journey?.milestones ?? [])]
       .filter((item) => !item.claimed && stamps >= item.required_stamps)
       .sort((a, b) => a.required_stamps - b.required_stamps)[0]
 
-    if (!milestone) return { readyUnlock: unlock, readyReward: null }
+    if (!milestone) return { readyReward: null }
 
     return {
-      readyUnlock: unlock,
       readyReward: {
         id: milestone.id,
         title: milestone.title,
@@ -76,17 +81,6 @@ export default function CardDetailScreen() {
       },
     }
   }, [payload])
-
-  useEffect(() => {
-    if (!readyReward) {
-      readyHapticDone.current = false
-      return
-    }
-    if (!readyHapticDone.current) {
-      readyHapticDone.current = true
-      hapticSuccess()
-    }
-  }, [readyReward])
 
   useEffect(() => {
     if (!latestStamp || !payload?.active_card) {
@@ -112,19 +106,56 @@ export default function CardDetailScreen() {
     clearLatestStamp()
   }, [latestStamp, payload?.active_card?.id, venueId, maxStamps])
 
+  useEffect(() => {
+    return () => {
+      if (stampFeedbackTimer.current) {
+        clearTimeout(stampFeedbackTimer.current)
+      }
+    }
+  }, [])
+
+  const sortedMilestones = useMemo(
+    () => [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps),
+    [payload?.journey?.milestones],
+  )
+  const stampCount = displayStamps ?? payload?.active_card?.stamps ?? 0
+
+  const venueRewardSlides = useMemo(() => {
+    const active = payload?.active_card
+    if (!active) return []
+    return cardVenueRewardSlidesFromProps({
+      venue: active.venue,
+      milestones: sortedMilestones,
+      stamps: stampCount,
+      cardId: active.id,
+      venueId: active.venue_id,
+      pendingUnlocks: payload?.pending_unlocks,
+    })
+  }, [payload?.active_card, payload?.pending_unlocks, sortedMilestones, stampCount])
+
+  useEffect(() => {
+    const hasReady = venueRewardSlides.some((slide) => slide.kind === 'ready')
+    if (!hasReady) {
+      readyHapticDone.current = false
+      return
+    }
+    if (!readyHapticDone.current) {
+      readyHapticDone.current = true
+      hapticSuccess()
+    }
+  }, [venueRewardSlides])
+
   function applyLiveStampUpdate(stampPayload: StampAddedPayload) {
     if (!payload?.active_card) {
       return
     }
 
+    if (stampFeedbackTimer.current) {
+      clearTimeout(stampFeedbackTimer.current)
+    }
+
     const previousAvailableIds = new Set(payload.available_rewards.map((reward) => reward.id))
     const max = maxStamps
-
-    if (stampPayload.cycle_completed) {
-      setDisplayStamps(max)
-    } else {
-      setDisplayStamps(null)
-    }
 
     const slots = slotsForStampIncrease(
       stampPayload.previous_stamps,
@@ -132,32 +163,55 @@ export default function CardDetailScreen() {
       stampPayload.cycle_completed,
       max,
     )
-    setAnimatingSlots(slots)
-    setTimeout(() => setAnimatingSlots([]), 1400)
 
-    hapticSuccess()
+    stampFeedbackTimer.current = setTimeout(() => {
+      stampFeedbackTimer.current = null
 
-    const unlocked = rewardEarnedThisScan(stampPayload, previousAvailableIds, max)
-    if (unlocked) {
-      setCelebrationTitle(unlocked.title)
-      setShowCelebration(true)
+      setScanBanner(stampPayload)
+      hapticLightTap()
+
       setTimeout(() => {
-        setShowCelebration(false)
         if (stampPayload.cycle_completed) {
+          setDisplayStamps(max)
+        } else {
           setDisplayStamps(stampPayload.stamps)
         }
-        void refresh()
-      }, 2400)
-      return
-    }
 
-    void refresh()
-    if (stampPayload.cycle_completed) {
-      setTimeout(() => setDisplayStamps(stampPayload.stamps), 900)
-    }
+        setAnimatingSlots(slots)
+        hapticSuccess()
+
+        const unlocked = rewardEarnedThisScan(stampPayload, previousAvailableIds, max)
+
+        setTimeout(() => {
+          setAnimatingSlots([])
+
+          if (unlocked) {
+            const giftStamp = Math.min(unlocked.required_stamps, max)
+            setCelebrateGiftStamp(giftStamp)
+            setTimeout(() => {
+              setCelebrateGiftStamp(null)
+              if (stampPayload.cycle_completed) {
+                setDisplayStamps(stampPayload.stamps)
+              }
+            }, motion.stampGiftUnlockMs)
+          } else if (stampPayload.cycle_completed) {
+            setTimeout(() => setDisplayStamps(stampPayload.stamps), 300)
+          }
+
+          scheduleSilentRefresh()
+        }, motion.stampSlotHighlightMs)
+      }, motion.stampBannerBeforeSlotsMs)
+    }, motion.stampCardRevealMs)
   }
 
-  if (loading) {
+  function scheduleSilentRefresh() {
+    const refreshDelay = motion.stampGiftUnlockMs + 600
+    setTimeout(() => {
+      void silentRefresh()
+    }, refreshDelay)
+  }
+
+  if (loading && !payload) {
     return <CustomerScreen loading tabBarInset={false} header={null} children={null} />
   }
 
@@ -184,8 +238,8 @@ export default function CardDetailScreen() {
     )
   }
 
-  const stamps = displayStamps ?? card.stamps
-  const milestones = [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps)
+  const stamps = stampCount
+  const milestones = sortedMilestones
   const apiNext = payload?.next_reward ?? null
 
   let progressNextReward = apiNext
@@ -219,8 +273,16 @@ export default function CardDetailScreen() {
     }
   }
   const promotion = payload?.promotion
+  const bannerCopy = scanBanner ? stampBannerCopy(scanBanner) : null
 
   return (
+    <>
+      <StampScannedBanner
+        visible={Boolean(scanBanner && bannerCopy)}
+        title={bannerCopy?.title ?? ''}
+        subtitle={bannerCopy?.subtitle}
+        onDismiss={() => setScanBanner(null)}
+      />
     <ScreenGradientLayout
       scrollable
       tabBarInset={false}
@@ -254,23 +316,20 @@ export default function CardDetailScreen() {
           nextReward={progressNextReward}
           milestones={milestones}
           animatingSlots={animatingSlots}
+          celebrateGiftStamp={celebrateGiftStamp}
         />
 
-        {readyReward ? (
-          <CardRewardReadySection
-            reward={readyReward}
-            venue={card.venue}
-            unlockId={readyUnlock?.unlock_id}
-            onRefresh={() => void refresh()}
-          />
-        ) : null}
+        <CardVenueRewardsCarousel
+          venue={card.venue}
+          milestones={milestones}
+          stamps={stamps}
+          cardId={card.id}
+          venueId={card.venue_id}
+          pendingUnlocks={payload?.pending_unlocks}
+        />
       </Animated.View>
 
-      <StampRewardCelebration
-        visible={showCelebration}
-        title={celebrationTitle}
-        subtitle="Saved to Rewards — redeem when you are ready."
-      />
     </ScreenGradientLayout>
+    </>
   )
 }

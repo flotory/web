@@ -1,7 +1,7 @@
 import type { ActivityRow, ApiClaimedReward, RewardJourney, RewardRef, RewardWalletItem, WalletCard } from '../types/loyalty'
 import { apiRequest } from './api'
 import { formatRelativeTime } from './format'
-import { fetchWithCache, invalidateCache } from './resourceCache'
+import { fetchWithCache, invalidateCache, readCache } from './resourceCache'
 
 export interface RewardsWalletResponse {
   items: RewardWalletItem[]
@@ -65,6 +65,14 @@ function cacheKey(scope: string, token: string) {
 
 export function invalidateCustomerCaches(token: string) {
   invalidateCache(cacheKey('customer', token))
+}
+
+export function invalidateCustomerCardsList(token: string) {
+  invalidateCache(`${cacheKey('customer', token)}:cards`)
+}
+
+export function readCachedCardDetail(token: string, venueId: string): CardDetailPayload | null {
+  return readCache<CardDetailPayload>(`${cacheKey('customer', token)}:card:${venueId}`)
 }
 
 export function mapClaimedHistory(rows: ApiClaimedReward[]): ClaimedRewardRow[] {

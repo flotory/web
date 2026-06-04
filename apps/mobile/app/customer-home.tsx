@@ -16,7 +16,9 @@ import { useScreenResource } from '../src/hooks/useScreenResource'
 import { buildHomeActivity, fetchCustomerCardsList } from '../src/lib/customerData'
 import { sortHomeCampaigns } from '../src/lib/homeCampaigns'
 import { rewardImageUrl } from '../src/lib/media'
+import { stampUpdateSignature } from '../src/lib/stampLiveUpdate'
 import { useAuth } from '../src/providers/AuthProvider'
+import { useRealtime } from '../src/providers/RealtimeProvider'
 import { hapticLightTap, hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
 import type { VenueRef } from '../src/types/loyalty'
@@ -41,7 +43,9 @@ export default function CustomerHomeScreen() {
     load: loadHomeCards,
   })
   const walletQuery = useRewardsWallet({ refetchOnFocus: true })
+  const { latestStamp } = useRealtime()
   const lastUnlockHaptic = useRef<number | null>(null)
+  const lastHomeStampSignature = useRef('')
 
   const loading = cardsQuery.loading || walletQuery.loading
   const refreshing = cardsQuery.refreshing || walletQuery.refreshing
@@ -161,6 +165,22 @@ export default function CustomerHomeScreen() {
     lastUnlockHaptic.current = newest.unlock_id
     hapticSuccess()
   }, [readyItems])
+
+  useEffect(() => {
+    if (!latestStamp) {
+      lastHomeStampSignature.current = ''
+      return
+    }
+
+    const signature = stampUpdateSignature(latestStamp)
+    if (signature === lastHomeStampSignature.current) {
+      return
+    }
+    lastHomeStampSignature.current = signature
+
+    void refreshCards()
+    void refreshWallet()
+  }, [latestStamp, refreshCards, refreshWallet])
 
   if (role !== 'customer') {
     return (

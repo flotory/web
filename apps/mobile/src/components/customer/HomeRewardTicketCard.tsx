@@ -41,6 +41,8 @@ export interface HomeRewardTicketCardProps {
   venueId?: number
   width?: number
   style?: StyleProp<ViewStyle>
+  /** When false, in-progress tickets are not wrapped in a navigation link */
+  linkable?: boolean
 }
 
 function TicketPattern({ cardWidth }: { cardWidth: number }) {
@@ -226,6 +228,7 @@ export default function HomeRewardTicketCard({
   venueId,
   width,
   style,
+  linkable = true,
 }: HomeRewardTicketCardProps) {
   const isReady = variant === 'ready'
   const venueName = venue?.name ?? 'Venue'
@@ -336,7 +339,7 @@ export default function HomeRewardTicketCard({
 
   const pressedStyle = ({ pressed }: { pressed: boolean }) => [{ opacity: pressed ? 0.97 : 1 }]
 
-  if (isReady && unlockId) {
+  if (linkable && isReady && unlockId) {
     return (
       <Link href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(unlockId) } }} asChild>
         <Pressable style={pressedStyle}>{body}</Pressable>
@@ -344,7 +347,7 @@ export default function HomeRewardTicketCard({
     )
   }
 
-  if (!isReady && cardId && venueId) {
+  if (linkable && !isReady && cardId && venueId) {
     return (
       <Link
         href={{

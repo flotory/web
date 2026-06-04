@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { Animated, ScrollView, Text, View } from 'react-native'
+import { Animated, Easing, ScrollView, Text, View } from 'react-native'
 
 import ShadowPulse from '../ui/ShadowPulse'
-import { colors } from '../../theme'
+import { colors, motion, rewardReady } from '../../theme'
 import { withAppFont } from '../../lib/typography'
 
 interface MilestonePathProps {
@@ -14,6 +15,8 @@ interface MilestonePathProps {
   claimedStamps?: number[]
   /** Stamp slots animating after a live scan */
   highlightStamps?: number[]
+  /** Milestone stamp position playing a one-shot gift unlock pulse */
+  celebrateGiftStamp?: number | null
   columns?: number
   sizeScale?: number
   cellShape?: 'rounded' | 'circle'
@@ -32,6 +35,7 @@ export default function MilestonePath({
   milestoneStamps,
   claimedStamps = [],
   highlightStamps = [],
+  celebrateGiftStamp = null,
   columns,
   sizeScale = 1,
   cellShape = 'rounded',
@@ -48,6 +52,9 @@ export default function MilestonePath({
   const giftPulse = useRef(new Animated.Value(1)).current
   const giftGlow = useRef(new Animated.Value(0.18)).current
   const giftLift = useRef(new Animated.Value(0)).current
+  const celebrateScale = useRef(new Animated.Value(1)).current
+  const celebrateRotate = useRef(new Animated.Value(0)).current
+  const celebrateGlow = useRef(new Animated.Value(0)).current
 
   const hasUpcomingGift = [...gifts].some((stamp) => stamp > collected && !claimed.has(stamp))
   const hasHighlight = highlightStamps.length > 0
@@ -60,12 +67,15 @@ export default function MilestonePath({
 
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(stampPulse, { toValue: 1.12, duration: 280, useNativeDriver: true }),
-        Animated.timing(stampPulse, { toValue: 1, duration: 280, useNativeDriver: true }),
+        Animated.timing(stampPulse, { toValue: 1.1, duration: 320, useNativeDriver: true }),
+        Animated.timing(stampPulse, { toValue: 1, duration: 320, useNativeDriver: true }),
       ]),
     )
     loop.start()
-    return () => loop.stop()
+    return () => {
+      loop.stop()
+      stampPulse.setValue(1)
+    }
   }, [hasHighlight, stampPulse])
 
   useEffect(() => {
@@ -95,11 +105,68 @@ export default function MilestonePath({
     }
   }, [giftGlow, giftLift, giftPulse, hasUpcomingGift])
 
+  useEffect(() => {
+    if (celebrateGiftStamp == null) {
+      celebrateScale.setValue(1)
+      celebrateRotate.setValue(0)
+      celebrateGlow.setValue(0)
+      return
+    }
+
+    celebrateScale.setValue(0.9)
+    celebrateRotate.setValue(0)
+    celebrateGlow.setValue(0)
+
+    const wiggle = Animated.sequence([
+      Animated.timing(celebrateRotate, { toValue: 1, duration: 80, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(celebrateRotate, { toValue: -1, duration: 80, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(celebrateRotate, { toValue: 0.6, duration: 70, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(celebrateRotate, { toValue: -0.6, duration: 70, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(celebrateRotate, { toValue: 0, duration: 60, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+    ])
+
+    Animated.parallel([
+      Animated.spring(celebrateScale, { toValue: 1.1, friction: 5, tension: 120, useNativeDriver: true }),
+      Animated.timing(celebrateGlow, { toValue: 0.42, duration: 260, useNativeDriver: true }),
+      wiggle,
+    ]).start(() => {
+      Animated.parallel([
+        Animated.spring(celebrateScale, { toValue: 1, friction: 8, tension: 90, useNativeDriver: true }),
+        Animated.timing(celebrateGlow, { toValue: 0, duration: 480, useNativeDriver: true }),
+      ]).start()
+    })
+  }, [celebrateGiftStamp, celebrateGlow, celebrateRotate, celebrateScale])
+
+  const celebrateRotateDeg = celebrateRotate.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [`-${motion.giftBellRotateDeg}deg`, '0deg', `${motion.giftBellRotateDeg}deg`],
+  })
+
+  function wrapCelebrate(stamp: number, node: ReactNode) {
+    if (celebrateGiftStamp !== stamp) {
+      return node
+    }
+
+    return (
+      <Animated.View
+        style={{
+          transform: [{ scale: celebrateScale }, { rotate: celebrateRotateDeg }],
+          shadowColor: '#F59E0B',
+          shadowOpacity: celebrateGlow,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        }}
+      >
+        {node}
+      </Animated.View>
+    )
+  }
+
   function renderCell(stamp: number) {
     if (endSlot && stamp === total) {
       return (
         <View key={stamp} style={{ alignItems: 'center', justifyContent: 'center' }}>
-          {endSlot}
+          {wrapCelebrate(stamp, endSlot)}
         </View>
       )
     }
@@ -107,6 +174,7 @@ export default function MilestonePath({
     const filled = stamp <= collected
     const isGift = gifts.has(stamp)
     const isClaimed = isGift && claimed.has(stamp)
+    const isCelebrating = celebrateGiftStamp === stamp
 
     let backgroundColor = '#FFFFFF'
     let borderColor = '#E2E8F0'
@@ -126,8 +194,10 @@ export default function MilestonePath({
     }
 
     const size = defaultSize
-    const content = filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
+    const content = isCelebrating ? null : filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
     const borderRadius = cellShape === 'circle' ? size / 2 : Math.round(14 * sizeScale)
+    const celebrateBackground = '#FEF9C3'
+    const celebrateBorder = '#FCD34D'
 
     const cell = (
       <View
@@ -137,12 +207,14 @@ export default function MilestonePath({
           borderRadius,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor,
-          borderWidth: 1,
-          borderColor,
+          backgroundColor: isCelebrating ? celebrateBackground : backgroundColor,
+          borderWidth: isCelebrating ? 1.5 : 1,
+          borderColor: isCelebrating ? celebrateBorder : borderColor,
         }}
       >
-        {content ? (
+        {isCelebrating ? (
+          <Ionicons name={rewardReady.iconName} size={Math.round(rewardReady.iconSize * sizeScale)} color={rewardReady.iconColor} />
+        ) : content ? (
           <Text
             style={withAppFont({
               fontSize: Math.round((filled ? 13 : isGift ? 14 : 12) * sizeScale),
@@ -155,6 +227,10 @@ export default function MilestonePath({
         ) : null}
       </View>
     )
+
+    if (isCelebrating) {
+      return <View key={stamp}>{wrapCelebrate(stamp, cell)}</View>
+    }
 
     if (isClaimed) {
       return (
@@ -188,8 +264,8 @@ export default function MilestonePath({
           style={{
             transform: [{ scale: stampPulse }],
             shadowColor: colors.success,
-            shadowOpacity: 0.35,
-            shadowRadius: 8,
+            shadowOpacity: 0.28,
+            shadowRadius: 6,
             shadowOffset: { width: 0, height: 2 },
           }}
         >

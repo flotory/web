@@ -19,6 +19,7 @@ interface CardLoyaltyProgressCardProps {
   nextReward: RewardRef | null
   milestones: MilestoneProgress[]
   animatingSlots?: number[]
+  celebrateGiftStamp?: number | null
 }
 
 export default function CardLoyaltyProgressCard({
@@ -27,6 +28,7 @@ export default function CardLoyaltyProgressCard({
   nextReward,
   milestones,
   animatingSlots = [],
+  celebrateGiftStamp = null,
 }: CardLoyaltyProgressCardProps) {
   const slotCount = Math.max(progressTarget, 1)
   const goalTitle = nextReward?.title ?? 'Your next reward'
@@ -93,6 +95,7 @@ export default function CardLoyaltyProgressCard({
           milestoneStamps={milestoneStamps}
           claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
           highlightStamps={animatingSlots}
+          celebrateGiftStamp={celebrateGiftStamp}
           cellShape="circle"
           columns={gridColumns}
           showStampNumbers
