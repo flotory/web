@@ -15,14 +15,14 @@ const trustPoints = [
 
 const flowSteps = [
   {
-    title: 'Place QR in venue',
-    copy: 'Add table stands, posters, or counter cards once and start collecting stamps.',
+    title: 'Place QR in your venue',
+    copy: 'Add table stands, posters, or counter cards once — then start collecting stamps.',
     image:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
   },
   {
-    title: 'Customers scan and join instantly',
-    copy: 'Guests open a digital loyalty card in seconds and start collecting stamps immediately.',
+    title: 'Guests scan and join instantly',
+    copy: 'They open a digital loyalty card in the browser — no app download required.',
     image:
       'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
   },
@@ -41,13 +41,13 @@ const flowSteps = [
 ]
 
 const analyticsMetrics = [
-  { label: 'Repeat stamps', value: '+34%' },
-  { label: 'Active customers', value: '1,248' },
-  { label: 'Redemption rate', value: '22%' },
-  { label: 'Top reward', value: 'Free latte' },
+  { label: 'Visits this month', value: '↑ trend' },
+  { label: 'Returning guests', value: 'Insights' },
+  { label: 'Rewards redeemed', value: 'Track rate' },
+  { label: 'Top milestone', value: 'Your pick' },
 ]
 
-const socialProof = ['North Roast', 'Sora Bar', 'Olive Kitchen', 'Mira Bakery', 'Harbor Lounge']
+const venueTypes = ['Neighborhood café', 'Wine bar', 'Bistro', 'Bakery', 'Cocktail bar']
 
 let revealObserver: IntersectionObserver | null = null
 
@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
             Turn first-time visitors into regulars.
           </h1>
           <p class="max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
-            Digital loyalty cards, QR rewards, and customer retention tools designed for cafes, bars, and restaurants.
+            Digital stamp cards and QR rewards guests scan at the table — simple for your team, built for repeat visits.
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -138,16 +138,16 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Customer progress</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Guest progress</p>
               <p class="mt-3 text-lg font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">2 stamps until free cocktail</p>
+              <p class="text-sm text-emerald-300">One stamp away from a free coffee</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10 sm:col-span-2">
               <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Scanner success</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">At the counter</p>
                 <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 soft-pulse" />
               </div>
-              <p class="mt-2 text-sm text-slate-200">Open scanner. Scan QR. Done in seconds.</p>
+              <p class="mt-2 text-sm text-slate-200">Staff scan once — stamp added, guest notified.</p>
             </div>
           </div>
         </AppCard>
@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
       <AppCard wrapper-class="overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/80 p-0">
         <div class="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div class="space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Reward Psychology</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Rewards guests notice</p>
             <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Progress that guests want to complete.</h2>
             <p class="max-w-xl text-sm leading-8 text-slate-300 sm:text-base">
               Flotory turns stamps into visible progress, milestones, and celebration moments that keep guests coming back.
@@ -193,12 +193,12 @@ onBeforeUnmount(() => {
             <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-slate-200">Progress toward next reward</p>
               <p class="mt-2 text-2xl font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">2 stamps until free cocktail</p>
+              <p class="text-sm text-emerald-300">Clear countdown to the next milestone</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-slate-200">Milestone unlocked</p>
               <p class="mt-2 text-lg font-black text-amber-300">Reward unlocked: House dessert</p>
-              <p class="text-sm text-slate-300">A satisfying moment customers remember.</p>
+              <p class="text-sm text-slate-300">A moment guests remember — and talk about.</p>
             </div>
           </div>
         </div>
@@ -210,13 +210,13 @@ onBeforeUnmount(() => {
         <AppCard wrapper-class="border-white/10 bg-white/[0.04]">
           <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Staff Experience</p>
           <h2 class="mt-4 text-3xl font-black tracking-tight">Built for busy staff.</h2>
-          <p class="mt-3 text-sm leading-8 text-slate-300 sm:text-base">Open scanner. Scan QR. Done in seconds.</p>
+          <p class="mt-3 text-sm leading-8 text-slate-300 sm:text-base">One tap to open the scanner — built for rush-hour lines.</p>
           <div class="mt-6 space-y-3">
             <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-slate-200">1) Open scanner</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-slate-200">2) Scan customer QR</p>
+              <p class="text-sm font-semibold text-slate-200">2) Scan the guest’s QR</p>
             </div>
             <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
               <p class="text-sm font-semibold text-emerald-300">3) Stamp added instantly</p>
@@ -238,12 +238,13 @@ onBeforeUnmount(() => {
         <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Analytics</p>
-            <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">See what keeps customers returning.</h2>
+            <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">See what brings guests back.</h2>
             <p class="mt-4 max-w-xl text-sm leading-8 text-slate-300 sm:text-base">
-              Track repeat behavior, reward performance, and operational trends from one elegant dashboard.
+              Visits, returning guests, and reward redemptions in one dashboard — so you know what’s working.
             </p>
           </div>
           <div class="rounded-3xl bg-gradient-to-b from-slate-950/80 to-slate-900/70 p-4 ring-1 ring-white/10">
+            <p class="mb-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">Example dashboard</p>
             <div class="mb-4 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
               <div class="flex items-end gap-2">
                 <div class="h-8 w-2 rounded-full bg-indigo-300/80" />
@@ -280,9 +281,9 @@ onBeforeUnmount(() => {
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-14 sm:pb-16">
       <div class="rounded-3xl border border-white/10 bg-white/[0.03] px-5 py-6 sm:px-8">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">Used by modern hospitality teams</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">Made for independent hospitality</p>
         <div class="mt-4 grid grid-cols-2 gap-3 text-sm font-semibold text-slate-300 sm:grid-cols-5">
-          <div v-for="name in socialProof" :key="name" class="rounded-xl bg-white/[0.04] px-3 py-2 text-center ring-1 ring-white/10">
+          <div v-for="name in venueTypes" :key="name" class="rounded-xl bg-white/[0.04] px-3 py-2 text-center ring-1 ring-white/10">
             {{ name }}
           </div>
         </div>
@@ -291,14 +292,16 @@ onBeforeUnmount(() => {
 
     <section class="reveal relative mx-auto max-w-5xl px-4 pb-20 sm:pb-24">
       <AppCard wrapper-class="border-white/10 bg-gradient-to-r from-slate-900/95 to-indigo-950/60 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Final CTA</p>
-        <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Launch your loyalty program in minutes.</h2>
+        <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Launch your loyalty program in minutes.</h2>
+        <p class="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-300">
+          Create your venue, add rewards, print a QR — most owners are live the same day.
+        </p>
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <RouterLink to="/register?intent=owner">
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
-          <RouterLink to="/login?intent=owner">
-            <AppButton size="lg" variant="ghost" class="text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white">Book demo</AppButton>
+          <RouterLink to="/login">
+            <AppButton size="lg" variant="ghost" class="text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white">Log in</AppButton>
           </RouterLink>
         </div>
       </AppCard>

@@ -1,21 +1,59 @@
 # Super admin access
 
-Flotory super admins (`users.is_admin = true`) can access all venues without membership and use internal tools such as the **Activity log** at `/admin/activity`.
+Flotory super admins (`users.is_admin = true`) can access **all venues** without `venue_users` membership and use internal tools such as the **Activity log**.
 
-## Local / demo login
+There is no separate admin URL or login form — use `/login` with an admin account.
 
-After `php artisan migrate:fresh --seed` (or Docker equivalent):
+## Demo accounts (local)
 
-| Field | Value |
-|-------|--------|
-| Email | `admin@flotory.com` |
-| Password | `password` |
+After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords are **`password`**:
 
-Sign in at `/login` like any other user. You will see **Activity log** in the sidebar.
+| Account | Email | `is_admin` | What you get |
+|---------|--------|------------|----------------|
+| **Super admin** | `admin@flotory.com` | yes | Owner-style UI for every venue + **Activity log** in the sidebar |
+| **Venue owner** | `owner@example.com` | no | Normal owner (dashboard, rewards, team, scanner) — **no** activity log |
+| **Staff** | `staff@example.com` | no | Scanner + customers for Demo Cafe |
+| **Customer** | `customer@example.com` | no | Wallet / guest flows |
 
-## Production
+**Common mistake:** logging in as `owner@example.com` and expecting the activity log. That user is intentionally not an admin.
 
-Promote a user to admin (one-time):
+### Activity log in the UI
+
+- Sidebar nav: **Activity log** (second item, admins only)
+- Direct URL: `/admin/activity`
+- Same owner workspace layout as dashboard (left sidebar on desktop)
+
+### Verify you are admin
+
+After login, open DevTools → **Network** → `auth/me` or `auth/login` → response must include `"is_admin": true`.
+
+Or in tinker:
+
+```bash
+docker compose exec app php artisan tinker --execute="echo App\Models\User::where('email','admin@flotory.com')->value('is_admin') ? 'ok' : 'missing';"
+```
+
+## Create or refresh the admin user
+
+**Local / any environment** (safe, idempotent):
+
+```bash
+docker compose exec app php artisan db:seed --class=AdminUserSeeder --force
+```
+
+Defaults (override in `.env`):
+
+| Variable | Default |
+|----------|---------|
+| `ADMIN_EMAIL` | `admin@flotory.com` |
+| `ADMIN_PASSWORD` | `password` |
+| `ADMIN_NAME` | `Flotory Admin` |
+
+Production deploy runs this seeder after migrations (`deploy/deploy.sh`).
+
+## Promote your own user
+
+**Production** (or local) — one-time, use a dedicated ops account:
 
 ```bash
 docker compose exec app php artisan tinker
@@ -26,7 +64,9 @@ $user = \App\Models\User::where('email', 'you@yourdomain.com')->first();
 $user->forceFill(['is_admin' => true])->save();
 ```
 
-Use a strong password and a dedicated ops account — not a venue owner login shared with staff.
+Log out and log back in so the session picks up `is_admin`.
+
+Set a strong `ADMIN_PASSWORD` in production `.env` — do not share the admin login with venue owners or staff.
 
 ## Debugging production issues
 
@@ -37,3 +77,14 @@ Use a strong password and a dedicated ops account — not a venue owner login sh
 | **Customer profile** | Per-guest timeline (visits, unlocks, redemptions) for owner-facing context. |
 
 When someone reports a problem, ask for the time, venue, and (if possible) the request ID from the browser network tab on the failing call.
+
+## What gets logged
+
+Written to Spatie `activity_log` (log name `audit`) from loyalty services and API validation failures, including:
+
+- `stamp.added`, `reward.redeemed`, `claim.session_created`, `claim.redeemed`
+- `reward.created` / `updated` / `archived` / `reactivated` / `purged`
+- `customer.joined`
+- `validation.failed` (422 responses on `/api/*`)
+
+See `app/Support/AuditLog.php` and `config/activitylog.php`.
