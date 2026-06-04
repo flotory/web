@@ -168,3 +168,13 @@ export interface StampAddedPayload {
   message: string
   occurred_at: string
 }
+
+export interface RewardRedeemedPayload {
+  customer: Customer
+  venue: Venue
+  unlock_id: number
+  reward: Reward
+  claim_session_token: string | null
+  message: string
+  occurred_at: string
+}

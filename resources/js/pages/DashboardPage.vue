@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Gift, ScanLine, ShieldCheck, UsersRound } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -39,6 +40,12 @@ interface DashboardResponse {
     cycles_completed: number
   }
   insights?: DashboardInsight[]
+  kpi_trends?: {
+    visits_this_month?: { change_pct: number | null }
+    returning_guests?: { change_pct: number | null }
+    rewards_unlocked?: { change_pct: number | null }
+    repeat_rate?: { change_pct: number | null }
+  }
   most_loyal_customers: Customer[]
   monthly_activity: Array<{ month: string; visits: number }>
   milestone_conversions: Array<{
@@ -81,19 +88,47 @@ const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue
 
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
 
-const stats = computed(() => [
-  { label: 'Visits this month', value: dashboard.value?.stats.visits_this_month ?? 0 },
-  { label: 'Returning guests', value: dashboard.value?.stats.returning_customers ?? dashboard.value?.stats.active_progressors ?? 0 },
-  { label: 'Rewards unlocked', value: dashboard.value?.stats.milestones_unlocked ?? 0 },
-  { label: 'Repeat rate', value: `${conversionOverview.value.rate}%` },
-])
-
 const conversionOverview = computed(() => {
   const rows = dashboard.value?.milestone_conversions ?? []
   const unlocked = rows.reduce((sum, row) => sum + row.unlocked_count, 0)
   const claimed = rows.reduce((sum, row) => sum + row.claimed_count, 0)
   const rate = unlocked > 0 ? Math.round((claimed / unlocked) * 1000) / 10 : 0
   return { unlocked, claimed, rate }
+})
+
+const stats = computed(() => {
+  const trends = dashboard.value?.kpi_trends
+
+  return [
+    {
+      label: 'Visits this month',
+      value: dashboard.value?.stats.visits_this_month ?? 0,
+      trend: trends?.visits_this_month?.change_pct ?? null,
+      icon: ScanLine,
+      tone: 'purple' as const,
+    },
+    {
+      label: 'Returning guests',
+      value: dashboard.value?.stats.returning_customers ?? dashboard.value?.stats.active_progressors ?? 0,
+      trend: trends?.returning_guests?.change_pct ?? null,
+      icon: UsersRound,
+      tone: 'amber' as const,
+    },
+    {
+      label: 'Rewards unlocked',
+      value: dashboard.value?.stats.milestones_unlocked ?? 0,
+      trend: trends?.rewards_unlocked?.change_pct ?? null,
+      icon: Gift,
+      tone: 'green' as const,
+    },
+    {
+      label: 'Repeat rate',
+      value: `${conversionOverview.value.rate}%`,
+      trend: trends?.repeat_rate?.change_pct ?? null,
+      icon: ShieldCheck,
+      tone: 'blue' as const,
+    },
+  ]
 })
 
 const hasCustomers = computed(() => (dashboard.value?.stats.total_customers ?? 0) > 0)
