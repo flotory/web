@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Animated, Image, Text, View } from 'react-native'
+import { Animated, Image, Pressable, Text, View } from 'react-native'
 import HomeRewardCarousel, { type HomeRewardSlide } from '../src/components/customer/HomeRewardCarousel'
 import RewardJourneyRibbon from '../src/components/customer/RewardJourneyRibbon'
 import AnimatedSection from '../src/components/ui/AnimatedSection'
@@ -114,10 +114,18 @@ export default function CustomerHomeScreen() {
         />
         <PrimaryButton
           label="Show My QR"
-          onPress={() => router.push('/(customer)/qr')}
+          onPress={() => router.navigate('/(customer)/qr')}
           pulse
           style={{ marginTop: 16 }}
         />
+        <Pressable
+          onPress={() => router.push('/(customer)/venues')}
+          style={{ marginTop: 12, alignSelf: 'center', paddingVertical: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Discover venues"
+        >
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.ink }}>Discover venues</Text>
+        </Pressable>
       </View>
     </Animated.View>
   )

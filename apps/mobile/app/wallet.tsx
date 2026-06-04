@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { Animated, FlatList, Image, Text, TextInput, View } from 'react-native'
+import { Animated, FlatList, Image, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
@@ -48,9 +48,17 @@ export default function WalletScreen() {
       <ScreenHeader title="Wallet" subtitle="Progress at each venue — show My QR when you order." />
       <PrimaryButton
         label="Show My QR"
-        onPress={() => router.push('/(customer)/qr')}
+        onPress={() => router.navigate('/(customer)/qr')}
         style={{ marginTop: 12 }}
       />
+      <Pressable
+        onPress={() => router.push('/(customer)/venues')}
+        style={{ marginTop: 10, alignSelf: 'center', paddingVertical: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="Discover venues"
+      >
+        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.ink }}>Discover venues</Text>
+      </Pressable>
       {cardList.length > 0 ? (
         <TextInput
           value={search}

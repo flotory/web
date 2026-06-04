@@ -215,7 +215,7 @@ export default function CardDetailScreen() {
             </Text>
             <PrimaryButton
               label="Show My QR"
-              onPress={() => router.push('/(customer)/qr')}
+              onPress={() => router.navigate('/(customer)/qr')}
               style={{ marginTop: s(14) }}
             />
           </View>

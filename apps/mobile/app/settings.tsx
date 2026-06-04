@@ -8,9 +8,9 @@ import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 
-function ProfileRow({ label }: { label: string }) {
+function ProfileRow({ label, onPress }: { label: string; onPress?: () => void }) {
   return (
-    <Pressable style={{ paddingVertical: 12 }}>
+    <Pressable style={{ paddingVertical: 12 }} onPress={onPress}>
       <Text style={{ fontSize: 16, color: colors.ink, fontWeight: '500' }}>{label}</Text>
     </Pressable>
   )
@@ -89,9 +89,18 @@ export default function SettingsScreen() {
 
         <PrimaryButton
           label="Show My QR"
-          onPress={() => router.push('/(customer)/qr')}
+          onPress={() => router.navigate('/(customer)/qr')}
           style={{ marginTop: space.sectionY }}
         />
+
+        <Pressable
+          onPress={() => router.push('/(customer)/venues')}
+          style={{ marginTop: 10, alignItems: 'center', paddingVertical: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Discover venues"
+        >
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.ink }}>Discover venues</Text>
+        </Pressable>
 
         <View
           style={{
@@ -104,6 +113,8 @@ export default function SettingsScreen() {
           }}
         >
           <Text style={{ ...typography.label, marginTop: 14, marginBottom: 4 }}>ACCOUNT</Text>
+          <ProfileRow label="Discover venues" onPress={() => router.push('/(customer)/venues')} />
+          <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileRow label="Notifications" />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileRow label="Help" />
