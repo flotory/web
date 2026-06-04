@@ -202,6 +202,44 @@ class RedemptionClaimTest extends TestCase
             ->assertJsonValidationErrors('unlock');
     }
 
+    public function test_redeem_rejects_claim_from_another_venue(): void
+    {
+        $staff = $this->createUser(['email' => 'staff-wrong-venue@example.com']);
+        $customerUser = $this->createUser(['email' => 'guest-wrong-venue@example.com']);
+        $demoCafe = $this->createVenue(['name' => 'Demo Cafe']);
+        $otherVenue = $this->createVenue(['name' => 'Other Place']);
+        $this->attachMember($demoCafe, $staff, 'staff');
+        $this->attachMember($otherVenue, $staff, 'staff');
+
+        $customer = $this->createCustomer($demoCafe, $customerUser);
+        $reward = $this->createReward($demoCafe);
+        $unlock = RewardUnlock::query()->create([
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+            'unlocked_at' => now(),
+        ]);
+
+        Sanctum::actingAs($customerUser);
+
+        $token = $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/claim-session")
+            ->assertCreated()
+            ->json('token');
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$otherVenue->id}/scanner/redeem", [
+            'redemption_token' => $token,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('redemption_token')
+            ->assertJsonFragment([
+                'redemption_token' => [
+                    'This claim belongs to Demo Cafe. You are at Other Place — switch to Demo Cafe in the sidebar, then scan again.',
+                ],
+            ]);
+    }
+
     public function test_double_redeem_of_same_token_is_rejected(): void
     {
         $staff = $this->createUser(['email' => 'staff@example.com']);

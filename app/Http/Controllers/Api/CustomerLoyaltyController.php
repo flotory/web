@@ -45,6 +45,10 @@ class CustomerLoyaltyController extends Controller
             ? $cards->firstWhere('venue_id', $request->integer('venue_id'))
             : $cards->first();
 
+        if ($activeCard) {
+            $loyalty->syncEligibleUnlocks($activeCard);
+        }
+
         $isList = ! $request->integer('venue_id');
 
         $claimedHistory = $isList
@@ -159,11 +163,19 @@ class CustomerLoyaltyController extends Controller
         abort_unless($customer->user_id === $request->user()->id, 403);
 
         $customer->load('venue');
+        $loyalty->syncEligibleUnlocks($customer);
 
         return response()->json([
+            'active_card' => $customer,
             'customer' => $customer,
             'next_reward' => $loyalty->nextRewardFor($customer),
             'available_rewards' => $loyalty->availableRewardsFor($customer),
+            'pending_unlocks' => $loyalty->pendingUnlocksFor($customer)
+                ->map(fn (RewardUnlock $unlock): array => [
+                    'unlock_id' => $unlock->id,
+                    'reward' => $unlock->reward,
+                ])
+                ->values(),
             'journey' => $loyalty->journeyFor($customer),
             'recent_visits' => $customer->visits()->latest()->limit(10)->get(),
         ]);
@@ -195,10 +207,14 @@ class CustomerLoyaltyController extends Controller
         Request $request,
         RewardUnlock $unlock,
         RedemptionClaimService $claims,
+        LoyaltyStampService $loyalty,
     ): JsonResponse {
         $unlock->load('customer', 'reward');
 
         abort_unless($unlock->customer->user_id === $request->user()->id, 403);
+
+        $loyalty->syncEligibleUnlocks($unlock->customer);
+        $unlock = $unlock->fresh(['customer', 'reward']);
 
         $session = $claims->createClaimSession($unlock);
 

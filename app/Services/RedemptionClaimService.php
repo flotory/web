@@ -135,8 +135,10 @@ class RedemptionClaimService
             $reward = $unlock->reward;
 
             if ($customer->venue_id !== $venue->id) {
+                $claimVenue = $customer->venue?->name ?? 'another café';
+
                 throw ValidationException::withMessages([
-                    'redemption_token' => "This code is for another venue. Switch to {$customer->venue?->name} or ask the customer to open the correct reward.",
+                    'redemption_token' => "This claim belongs to {$claimVenue}. You are at {$venue->name} — switch to {$claimVenue} in the sidebar, then scan again.",
                 ]);
             }
 

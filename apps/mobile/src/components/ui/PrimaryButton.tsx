@@ -1,5 +1,6 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
-import { Animated, Pressable, Text, type ViewStyle } from 'react-native'
+import { Animated, Pressable, Text, View, type ViewStyle } from 'react-native'
 
 import { hapticLightTap } from '../../lib/haptics'
 import { withAppFont } from '../../lib/typography'
@@ -12,9 +13,18 @@ interface PrimaryButtonProps {
   style?: ViewStyle
   pulse?: boolean
   haptic?: boolean
+  icon?: keyof typeof Ionicons.glyphMap
 }
 
-export default function PrimaryButton({ label, onPress, disabled, style, pulse = false, haptic = true }: PrimaryButtonProps) {
+export default function PrimaryButton({
+  label,
+  onPress,
+  disabled,
+  style,
+  pulse = false,
+  haptic = true,
+  icon,
+}: PrimaryButtonProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current
 
   useEffect(() => {
@@ -52,7 +62,10 @@ export default function PrimaryButton({ label, onPress, disabled, style, pulse =
           ...shadows.button,
         }}
       >
-        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 16 })}>{label}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {icon ? <Ionicons name={icon} size={20} color={colors.primaryText} /> : null}
+          <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 16 })}>{label}</Text>
+        </View>
       </Animated.View>
     </Pressable>
   )

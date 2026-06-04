@@ -18,6 +18,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public errors: Record<string, string[]> = {},
+    public requestId?: string,
   ) {
     super(message)
   }
@@ -78,10 +79,9 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
       ? Object.values(fieldErrors).flat().find((message) => typeof message === 'string' && message.length > 0)
       : undefined
 
-    const baseMessage = firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`
-    const message = responseRequestId ? `${baseMessage} (request ${responseRequestId})` : baseMessage
+    const message = firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`
 
-    throw new ApiError(message, response.status, fieldErrors ?? {})
+    throw new ApiError(message, response.status, fieldErrors ?? {}, responseRequestId ?? undefined)
   }
 
   return payload as T

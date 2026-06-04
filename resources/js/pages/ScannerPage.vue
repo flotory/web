@@ -10,7 +10,8 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError, apiErrorMessage } from '@/lib/api'
+import { api, apiErrorMessage } from '@/lib/api'
+import { scanErrorView, type ScanErrorView } from '@/lib/scanError'
 import { rewardThumbUrl } from '@/lib/rewardMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Reward, Venue, Visit } from '@/types'
@@ -58,6 +59,7 @@ const customers = ref<CustomerWithVisits[]>([])
 const customerSearch = ref('')
 const selectedCustomer = ref<CustomerWithVisits | null>(null)
 const message = ref('')
+const scanError = ref<ScanErrorView | null>(null)
 const loading = ref(false)
 const submitting = ref(false)
 const customerLoading = ref(false)
@@ -101,7 +103,7 @@ const statusLabel = computed(() => {
   }
 
   if (status.value === 'error') {
-    return message.value || 'Scan failed. Try again.'
+    return scanError.value?.detail || message.value || 'Scan failed. Try again.'
   }
 
   return 'Point camera at stamp card or reward claim QR'
@@ -247,16 +249,18 @@ function beginScanRequest() {
   scanning.value = false
   status.value = 'processing'
   message.value = ''
+  scanError.value = null
   pendingClaimWarning.value = null
   redeemedReward.value = null
 }
 
-function showLocalScanError(text: string, autoResetMs = 3200) {
+function showLocalScanError(text: string, autoResetMs = 3200, title = 'Scan failed') {
   window.clearTimeout(resetTimer)
   status.value = 'error'
   scanning.value = false
   submitting.value = false
   loading.value = false
+  scanError.value = { title, detail: text }
   message.value = text
   if (autoResetMs > 0) {
     scheduleReset(autoResetMs)
@@ -264,7 +268,15 @@ function showLocalScanError(text: string, autoResetMs = 3200) {
 }
 
 function failScanRequest(exception: unknown) {
-  showLocalScanError(exception instanceof ApiError ? exception.message : 'Scan failed.')
+  const view = scanErrorView(exception, { lastScanKind: lastScanKind.value })
+  window.clearTimeout(resetTimer)
+  status.value = 'error'
+  scanning.value = false
+  submitting.value = false
+  loading.value = false
+  scanError.value = view
+  message.value = view.detail
+  scheduleReset(4200)
 }
 
 async function processScan(scanValue: string) {
@@ -277,6 +289,7 @@ async function processScan(scanValue: string) {
     return
   }
 
+  lastScanKind.value = scanValue.includes('flotory:redeem') ? 'redeem' : 'stamp'
   beginScanRequest()
 
   try {
@@ -346,6 +359,7 @@ function resetScanner() {
   selectedCustomer.value = null
   customerSearch.value = ''
   message.value = ''
+  scanError.value = null
   pendingClaimWarning.value = null
   lastScanKind.value = null
   status.value = 'idle'
@@ -447,10 +461,16 @@ watch(activeScannerVenueId, (venueId, previous) => {
             </div>
           </div>
           <div v-else-if="status === 'error'" class="grid h-full place-items-center bg-gradient-to-br from-red-500 to-slate-950 text-white">
-            <div class="px-6 text-center">
+            <div class="max-w-sm px-6 text-center">
               <div class="mx-auto grid size-20 place-items-center rounded-full bg-white/20 text-5xl font-black">!</div>
-              <p class="mt-5 text-2xl font-black">Could not complete scan</p>
-              <p class="mt-2 text-sm font-semibold text-red-50">{{ message }}</p>
+              <p class="mt-5 text-2xl font-black">{{ scanError?.title ?? 'Scan failed' }}</p>
+              <p class="mt-2 text-sm font-semibold leading-relaxed text-red-50">{{ scanError?.detail ?? message }}</p>
+              <p v-if="scanError?.hint" class="mt-3 text-xs font-medium leading-relaxed text-red-100/90">
+                {{ scanError.hint }}
+              </p>
+              <p v-if="scanError?.requestId" class="mt-4 font-mono text-[10px] text-red-100/50">
+                Ref {{ scanError.requestId }}
+              </p>
               <button
                 type="button"
                 class="mt-5 rounded-2xl bg-white px-5 py-3 text-sm font-black text-red-600 shadow-lg"

@@ -1,7 +1,7 @@
 import type { MilestoneProgress, RewardRef } from '../types/loyalty'
 
 export type CardVenueRewardSlide =
-  | { id: string; kind: 'ready'; milestone: MilestoneProgress; unlockId?: number }
+  | { id: string; kind: 'ready'; milestone: MilestoneProgress; unlockId: number }
   | { id: string; kind: 'next'; milestone: MilestoneProgress; stampsToGo: number }
 
 export function buildCardVenueRewardSlides(
@@ -15,14 +15,14 @@ export function buildCardVenueRewardSlides(
     .filter((milestone) => !milestone.claimed)
     .sort((a, b) => a.required_stamps - b.required_stamps)
     .map((milestone) => {
-      const reached = stamps >= milestone.required_stamps
+      const unlockId = unlockByRewardId.get(milestone.id)
 
-      if (reached) {
+      if (unlockId != null) {
         return {
           id: `reward-${milestone.id}`,
           kind: 'ready' as const,
           milestone,
-          unlockId: unlockByRewardId.get(milestone.id),
+          unlockId,
         }
       }
 

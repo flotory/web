@@ -1,13 +1,17 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import QrImage from '../../src/components/QrImage'
-import RewardRedeemedCelebration from '../../src/components/loyalty/RewardRedeemedCelebration'
-import { apiRequest } from '../../src/lib/api'
+import RewardRedeemedSuccessCard from '../../src/components/loyalty/RewardRedeemedSuccessCard'
+import PrimaryButton from '../../src/components/ui/PrimaryButton'
+import StateCard from '../../src/components/ui/StateCard'
+import { ApiError, apiRequest } from '../../src/lib/api'
+import { invalidateCustomerCaches, invalidateCustomerCardsList } from '../../src/lib/customerData'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
@@ -29,6 +33,15 @@ interface ClaimSessionPayload {
   } | null
 }
 
+function parseUnlockId(value: string | undefined): number | null {
+  if (!value || value === 'undefined' || value === 'null') {
+    return null
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
 export default function ClaimScreen() {
   function handleBack() {
     if (router.canGoBack()) {
@@ -38,16 +51,21 @@ export default function ClaimScreen() {
     router.replace('/(customer)/wallet')
   }
 
+  function goToWallet() {
+    router.replace('/(customer)/wallet')
+  }
+
   const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
   const router = useRouter()
   const { token } = useAuth()
   const { latestRedeem, clearLatestRedeem } = useRealtime()
-  const { unlockId } = useLocalSearchParams<{ unlockId: string }>()
+  const { unlockId: unlockIdParam } = useLocalSearchParams<{ unlockId: string }>()
+  const unlockId = useMemo(() => parseUnlockId(unlockIdParam), [unlockIdParam])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [session, setSession] = useState<ClaimSessionPayload | null>(null)
   const [now, setNow] = useState(Date.now())
-  const [showCelebration, setShowCelebration] = useState(false)
   const ticketHapticDone = useRef(false)
   const redeemHapticDone = useRef(false)
 
@@ -59,26 +77,53 @@ export default function ClaimScreen() {
     return `${minutes}:${String(seconds).padStart(2, '0')}`
   }, [now, session])
 
-  async function createSession() {
-    if (!token || !unlockId) return
+  const createSession = useCallback(async () => {
+    if (!token) {
+      setError('Sign in again to claim this reward.')
+      setLoading(false)
+      return
+    }
+
+    if (unlockId == null) {
+      setError('This reward is not ready to claim yet. Open your card, pull to refresh, then try again.')
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError('')
+
     try {
-      const response = await apiRequest<ClaimSessionPayload>(`/customer/rewards/unlocks/${unlockId}/claim-session`, {
-        method: 'POST',
-        token,
-      })
+      const response = await apiRequest<ClaimSessionPayload>(
+        `/customer/rewards/unlocks/${unlockId}/claim-session`,
+        { method: 'POST', token },
+      )
       setSession(response)
-    } catch {
-      setError('Could not create claim QR session.')
+    } catch (exception) {
+      if (exception instanceof ApiError) {
+        setError(exception.message)
+      } else {
+        setError('Could not load your claim ticket. Check your connection and try again.')
+      }
     } finally {
       setLoading(false)
     }
-  }
+  }, [token, unlockId])
+
+  const refreshAndRetry = useCallback(async () => {
+    if (!token) {
+      await createSession()
+      return
+    }
+
+    invalidateCustomerCaches(token)
+    invalidateCustomerCardsList(token)
+    await createSession()
+  }, [createSession, token])
 
   useEffect(() => {
     void createSession()
-  }, [unlockId, token])
+  }, [createSession])
 
   useEffect(() => {
     if (session?.status === 'pending' && !ticketHapticDone.current) {
@@ -93,8 +138,6 @@ export default function ClaimScreen() {
       redeemHapticDone.current = true
       hapticSuccess()
     }
-    setShowCelebration(true)
-    setTimeout(() => setShowCelebration(false), 2200)
   }
 
   useEffect(() => {
@@ -104,7 +147,7 @@ export default function ClaimScreen() {
 
     const tokenMatches =
       latestRedeem.claim_session_token != null && latestRedeem.claim_session_token === session.token
-    const unlockMatches = unlockId != null && String(latestRedeem.unlock_id) === String(unlockId)
+    const unlockMatches = unlockId != null && latestRedeem.unlock_id === unlockId
 
     if (tokenMatches || unlockMatches) {
       markClaimed()
@@ -133,6 +176,9 @@ export default function ClaimScreen() {
     }
   }, [session?.token, session?.status, token])
 
+  const isClaimed = session?.status === 'claimed'
+  const showError = Boolean(error) && !session
+
   if (loading) {
     return (
       <ScreenGradientLoading>
@@ -143,15 +189,58 @@ export default function ClaimScreen() {
     )
   }
 
+  const useCenteredLayout = isClaimed || showError
+
   return (
     <ScreenGradientLayout
-      scrollable
+      scrollable={!useCenteredLayout}
+      flexContent={useCenteredLayout}
       tabBarInset={false}
-      paddingTop={0}
-      fixedHeader={<StickyBackHeader onPress={handleBack} topInset={insets.top} />}
+      paddingTop={useCenteredLayout ? 0 : 0}
+      fixedHeader={
+        useCenteredLayout ? null : <StickyBackHeader onPress={handleBack} topInset={insets.top} />
+      }
     >
-      <View style={{ paddingHorizontal: space.screenX, gap: 12 }}>
-        {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
+      {isClaimed && session ? (
+        <View
+          style={{
+            flex: 1,
+            minHeight: windowHeight - insets.top - insets.bottom,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: space.screenX,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <View style={{ width: '100%', maxWidth: 380 }}>
+            <RewardRedeemedSuccessCard
+              centered
+              rewardTitle={session.reward.title}
+              venueName={session.venue?.name}
+              onBackToWallet={goToWallet}
+            />
+          </View>
+        </View>
+      ) : (
+      <View style={{ paddingHorizontal: space.screenX, gap: 12, flex: showError ? 1 : undefined, justifyContent: showError ? 'center' : undefined }}>
+        {showError ? (
+          <View>
+            <StateCard
+              emoji="🎫"
+              title="Can't open claim ticket"
+              message={error}
+              primaryAction={{ label: 'Try again', onPress: () => void refreshAndRetry() }}
+              secondaryAction={{ label: 'Back to wallet', onPress: goToWallet }}
+            />
+            <View style={{ marginTop: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
+              <Ionicons name="information-circle-outline" size={22} color={colors.inkMuted} />
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.inkMuted }}>
+                Only rewards listed under Ready in Rewards or on your card can be claimed. If you just earned stamps, refresh your card first.
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {session?.status === 'pending' ? (
           <>
@@ -177,31 +266,11 @@ export default function ClaimScreen() {
           </>
         ) : null}
 
-        {session?.status === 'claimed' ? (
-          <View style={{ backgroundColor: colors.successBg, borderRadius: 14, borderWidth: 1, borderColor: colors.successBorder, padding: 14, marginTop: 18 }}>
-            <Text style={withAppFont({ fontSize: 18, fontWeight: '800' })}>Reward redeemed</Text>
-            <Text style={{ marginTop: 4, color: colors.successText }}>Staff completed the redemption.</Text>
-            <Pressable
-              onPress={() => router.replace('/(customer)/wallet')}
-              style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 10, alignItems: 'center' }}
-            >
-              <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>Back to wallet</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
         {session?.status === 'expired' ? (
-          <Pressable onPress={() => void createSession()} style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center' }}>
-            <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>Generate new code</Text>
-          </Pressable>
+          <PrimaryButton label="Generate new code" onPress={() => void createSession()} style={{ marginTop: 12 }} />
         ) : null}
       </View>
-
-      <RewardRedeemedCelebration
-        visible={showCelebration}
-        title={session?.reward.title}
-        subtitle="Staff completed the redemption."
-      />
+      )}
     </ScreenGradientLayout>
   )
 }

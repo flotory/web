@@ -10,11 +10,35 @@ interface RequestOptions {
 
 export class ApiError extends Error {
   status: number
+  fieldErrors: Record<string, string[]>
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, fieldErrors: Record<string, string[]> = {}) {
     super(message)
     this.status = status
+    this.fieldErrors = fieldErrors
   }
+}
+
+function firstValidationMessage(errors?: Record<string, string[]>): string | undefined {
+  if (!errors) {
+    return undefined
+  }
+
+  for (const messages of Object.values(errors)) {
+    const first = messages?.find((item) => typeof item === 'string' && item.length > 0)
+    if (first) {
+      return first
+    }
+  }
+
+  return undefined
+}
+
+export function messageFromApiPayload(
+  payload: { message?: string; errors?: Record<string, string[]> },
+  fallback: string,
+): string {
+  return firstValidationMessage(payload.errors) ?? payload.message ?? fallback
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -29,18 +53,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   })
 
   if (!response.ok) {
-    let message = `Request failed (${response.status})`
+    let payload: { message?: string; errors?: Record<string, string[]> } = {}
     try {
-      const payload = (await response.json()) as { message?: string }
-      if (payload.message) {
-        message = payload.message
-      }
+      payload = (await response.json()) as { message?: string; errors?: Record<string, string[]> }
     } catch {
       // Ignore JSON parse failures and keep fallback message.
     }
-    throw new ApiError(message, response.status)
+
+    const message = messageFromApiPayload(payload, `Request failed (${response.status})`)
+    throw new ApiError(message, response.status, payload.errors ?? {})
   }
 
   return response.json() as Promise<T>
 }
-

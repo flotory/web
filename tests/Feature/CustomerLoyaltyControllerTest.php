@@ -52,6 +52,29 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('journey.current_stamps', 3);
     }
 
+    public function test_card_syncs_pending_unlocks_when_stamps_qualify_but_unlock_row_missing(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/customers/{$customer->id}/card")
+            ->assertOk()
+            ->assertJsonCount(1, 'pending_unlocks')
+            ->assertJsonPath('pending_unlocks.0.reward.id', $reward->id);
+
+        $unlockId = $this->getJson("/api/customers/{$customer->id}/card")->json('pending_unlocks.0.unlock_id');
+
+        $this->postJson("/api/customer/rewards/unlocks/{$unlockId}/claim-session")
+            ->assertCreated()
+            ->assertJsonPath('reward.id', $reward->id)
+            ->assertJsonPath('status', 'pending');
+    }
+
     public function test_customer_cannot_view_another_users_card(): void
     {
         $owner = $this->createUser();

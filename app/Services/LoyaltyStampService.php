@@ -277,6 +277,15 @@ class LoyaltyStampService
             ->get();
     }
 
+    /** Ensures RewardUnlock rows exist for every milestone the customer has already earned. */
+    public function syncEligibleUnlocks(Customer $customer): void
+    {
+        $customer = $customer->fresh() ?? $customer;
+        $cycle = $this->activeCycle($customer);
+        $rewards = $this->milestonesForVenue($customer);
+        $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $customer->stamps);
+    }
+
     public function journeyFor(Customer $customer): array
     {
         $customer = $customer->fresh();
