@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import QrImage from '../../src/components/QrImage'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
-import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import StateCard from '../../src/components/ui/StateCard'
 import { useStampQr } from '../../src/hooks/useStampQr'
 import { hapticSuccess } from '../../src/lib/haptics'
@@ -21,12 +20,9 @@ export default function CustomerQrScreen() {
     hapticSuccess()
   }, [data?.qr_value])
 
-  if (loading && !data) {
-    return <ScreenGradientLayout loading />
-  }
-
   return (
     <CustomerScreen
+      loading={loading && !data}
       scrollable={false}
       tabBarInset
       header={

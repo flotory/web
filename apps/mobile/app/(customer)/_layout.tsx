@@ -90,7 +90,7 @@ export default function CustomerTabsLayout() {
             </View>
           ),
           tabBarLabel: () => null,
-          tabBarButton: (props) => (
+          tabBarButton: ({ ref: _ref, ...props }) => (
             <Pressable
               {...props}
               style={[props.style, { top: -8 }]}
