@@ -38,6 +38,22 @@ export interface VenuePromotion {
   days_left?: number | null
 }
 
+/** Active venue campaigns for the customer home carousel. */
+export interface HomeCampaign {
+  campaign_id: number
+  card_id: number
+  venue_id: number
+  venue_name: string
+  name: string
+  template_id: string
+  multiplier: number
+  headline: string
+  message: string
+  applies_now: boolean
+  ends_at?: string | null
+  days_left?: number | null
+}
+
 export interface WalletCard {
   id: number
   venue_id: number

@@ -106,15 +106,109 @@ class CampaignService
             return null;
         }
 
+        return $this->presentCustomerCampaign($venue, $campaign, $multiplier, $now, appliesNow: true);
+    }
+
+    /**
+     * Active campaigns at venues where the customer has a card (for home carousel).
+     *
+     * @param  Collection<int, Customer>  $cards
+     * @return array<int, array<string, mixed>>
+     */
+    public function homeCampaignsForCards(Collection $cards, ?Carbon $now = null, int $limit = 10): array
+    {
+        $now ??= Carbon::now();
+        $items = [];
+        $seen = [];
+
+        foreach ($cards as $card) {
+            $venue = $card->venue ?? Venue::query()->find($card->venue_id);
+            if (! $venue) {
+                continue;
+            }
+
+            foreach ($this->visibleCampaignsForVenue($venue, $now) as $campaign) {
+                $key = $venue->id.'-'.$campaign->id;
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+
+                $multiplier = $this->engine->multiplierValue($campaign);
+                $appliesNow = $this->engine->matchingCampaignsFor($card, $venue, $now)
+                    ->contains(fn (Campaign $match): bool => $match->id === $campaign->id);
+
+                $items[] = array_merge(
+                    $this->presentCustomerCampaign($venue, $campaign, $multiplier, $now, $appliesNow),
+                    [
+                        'campaign_id' => $campaign->id,
+                        'card_id' => $card->id,
+                        'venue_id' => $venue->id,
+                        'venue_name' => $venue->name,
+                    ],
+                );
+
+                if (count($items) >= $limit) {
+                    return $items;
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return Collection<int, Campaign>
+     */
+    private function visibleCampaignsForVenue(Venue $venue, Carbon $now): Collection
+    {
+        return Campaign::query()
+            ->where('venue_id', $venue->id)
+            ->where('status', Campaign::STATUS_ACTIVE)
+            ->orderByDesc('activated_at')
+            ->get()
+            ->filter(fn (Campaign $campaign): bool => $this->isCampaignVisible($campaign, $now))
+            ->values();
+    }
+
+    private function isCampaignVisible(Campaign $campaign, Carbon $now): bool
+    {
+        if ($campaign->starts_at && $now->lt($campaign->starts_at)) {
+            return false;
+        }
+
+        if ($campaign->ends_at && $now->gt($campaign->ends_at)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function presentCustomerCampaign(
+        Venue $venue,
+        Campaign $campaign,
+        int $multiplier,
+        Carbon $now,
+        bool $appliesNow,
+    ): array {
         $endsAt = $campaign->ends_at;
         $daysLeft = $endsAt ? max(0, (int) $now->diffInDays($endsAt, false)) : null;
+        $display = $this->presenter->displayFields($campaign);
 
         return [
             'name' => $campaign->name,
             'template_id' => $campaign->template_id,
             'multiplier' => $multiplier,
-            'headline' => $multiplier.'× stamps active',
-            'message' => $this->presenter->promotionMessage($campaign, $venue, $multiplier),
+            'headline' => $appliesNow
+                ? $multiplier.'× stamps active'
+                : $campaign->name,
+            'message' => $appliesNow
+                ? $this->presenter->promotionMessage($campaign, $venue, $multiplier)
+                : ($display['schedule_summary'] ?? $display['summary'] ?? 'See details at '.$venue->name),
+            'applies_now' => $appliesNow,
             'ends_at' => $endsAt?->toIso8601String(),
             'days_left' => $daysLeft,
         ];

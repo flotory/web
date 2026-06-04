@@ -172,6 +172,51 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('claimed_history.0.card_id', $customer->id);
     }
 
+    public function test_customer_card_list_includes_home_campaigns_for_active_venue_campaigns(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 2]);
+        $owner = $this->createUser(['email' => 'owner-home-campaigns@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        \App\Models\Campaign::query()->create([
+            'venue_id' => $venue->id,
+            'template_id' => \App\Support\CampaignTemplates::QUIET_DAY,
+            'name' => 'Tuesday boost',
+            'status' => \App\Models\Campaign::STATUS_ACTIVE,
+            'config' => [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [1, 2, 3, 4, 5, 6, 7],
+            ],
+            'created_by' => $owner->id,
+            'activated_at' => now(),
+        ]);
+
+        \App\Models\Campaign::query()->create([
+            'venue_id' => $venue->id,
+            'template_id' => \App\Support\CampaignTemplates::VIP,
+            'name' => 'VIP bonus',
+            'status' => \App\Models\Campaign::STATUS_ACTIVE,
+            'config' => [
+                'stamp_multiplier' => 3,
+                'min_visits' => 99,
+                'min_rewards_claimed' => 99,
+            ],
+            'created_by' => $owner->id,
+            'activated_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonCount(2, 'home_campaigns')
+            ->assertJsonPath('home_campaigns.0.venue_name', $venue->name)
+            ->assertJsonPath('home_campaigns.0.headline', '2× stamps active')
+            ->assertJsonPath('home_campaigns.1.applies_now', false);
+    }
+
     public function test_customer_can_view_rewards_journey(): void
     {
         $user = $this->createUser();

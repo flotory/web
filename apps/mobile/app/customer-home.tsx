@@ -2,35 +2,42 @@ import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Animated, Text, View } from 'react-native'
 
-import HomeCampaignCarousel, { type HomeCampaignSlide } from '../src/components/customer/HomeCampaignCarousel'
+import HomeCampaignCarousel from '../src/components/customer/HomeCampaignCarousel'
 import HomeNearestRewardCard, { type NearestRewardFocus } from '../src/components/customer/HomeNearestRewardCard'
 import HomeQuickActions from '../src/components/customer/HomeQuickActions'
 import AnimatedSection from '../src/components/ui/AnimatedSection'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
 import StateCard from '../src/components/ui/StateCard'
-import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsWallet } from '../src/hooks/useRewardsWallet'
-import { buildHomeActivity } from '../src/lib/customerData'
+import { useScreenResource } from '../src/hooks/useScreenResource'
+import { buildHomeActivity, fetchCustomerCardsList } from '../src/lib/customerData'
+import { useAuth } from '../src/providers/AuthProvider'
 import { hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
-import { useAuth } from '../src/providers/AuthProvider'
 import { colors, space, type as typography } from '../src/theme'
-
-const MAX_HOME_CAMPAIGNS = 10
 
 export default function CustomerHomeScreen() {
   const router = useRouter()
-  const { role, user } = useAuth()
-  const cardsQuery = useCustomerCards({ refetchOnFocus: true })
+  const { role, user, token } = useAuth()
+  const cardsQuery = useScreenResource({
+    enabled: Boolean(token),
+    refetchOnFocus: true,
+    errorMessage: 'Could not load your wallet.',
+    load: (fresh) => {
+      if (!token) return Promise.reject(new Error('missing token'))
+      return fetchCustomerCardsList(token, fresh)
+    },
+  })
   const walletQuery = useRewardsWallet({ refetchOnFocus: true })
   const lastUnlockHaptic = useRef<number | null>(null)
 
   const loading = cardsQuery.loading || walletQuery.loading
   const refreshing = cardsQuery.refreshing || walletQuery.refreshing
   const error = cardsQuery.error || walletQuery.error
-  const cards = cardsQuery.data ?? []
+  const cards = cardsQuery.data?.cards ?? []
+  const homeCampaigns = cardsQuery.data?.home_campaigns ?? []
   const readyItems = walletQuery.data?.items ?? []
   const fade = useFadeOnReady(!loading)
 
@@ -69,28 +76,6 @@ export default function CustomerHomeScreen() {
 
     return null
   }, [cards, readyItems])
-
-  const campaignSlides = useMemo((): HomeCampaignSlide[] => {
-    const seenVenues = new Set<number>()
-    const slides: HomeCampaignSlide[] = []
-
-    for (const card of cards) {
-      if (!card.promotion || !card.venue || seenVenues.has(card.venue_id)) {
-        continue
-      }
-      seenVenues.add(card.venue_id)
-      slides.push({
-        id: String(card.venue_id),
-        card,
-        promotion: card.promotion,
-      })
-      if (slides.length >= MAX_HOME_CAMPAIGNS) {
-        break
-      }
-    }
-
-    return slides
-  }, [cards])
 
   const activity = useMemo(
     () => buildHomeActivity(cards, readyItems),
@@ -208,9 +193,9 @@ export default function CustomerHomeScreen() {
             </AnimatedSection>
           )}
 
-          {campaignSlides.length > 0 ? (
+          {homeCampaigns.length > 0 ? (
             <View style={{ marginTop: space.sectionY }}>
-              <HomeCampaignCarousel slides={campaignSlides} />
+              <HomeCampaignCarousel campaigns={homeCampaigns} />
             </View>
           ) : null}
 

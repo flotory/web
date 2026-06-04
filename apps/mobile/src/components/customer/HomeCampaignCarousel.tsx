@@ -3,33 +3,25 @@ import { Link } from 'expo-router'
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
 
 import { colors, carousel, radius, space, type as typography } from '../../theme'
-import type { VenuePromotion, WalletCard } from '../../types/loyalty'
-
-export interface HomeCampaignSlide {
-  id: string
-  card: WalletCard
-  promotion: VenuePromotion
-}
+import type { HomeCampaign } from '../../types/loyalty'
 
 interface HomeCampaignCarouselProps {
-  slides: HomeCampaignSlide[]
+  campaigns: HomeCampaign[]
 }
 
 const transparent = { backgroundColor: 'transparent' as const }
 
-function CampaignCard({ slide, width }: { slide: HomeCampaignSlide; width: number }) {
-  const { promotion, card } = slide
-  const venueName = card.venue?.name ?? 'Venue'
+function CampaignCard({ campaign, width }: { campaign: HomeCampaign; width: number }) {
   const daysLabel =
-    promotion.days_left != null && promotion.days_left >= 0
-      ? `${promotion.days_left} day${promotion.days_left === 1 ? '' : 's'} left`
+    campaign.days_left != null && campaign.days_left >= 0
+      ? `${campaign.days_left} day${campaign.days_left === 1 ? '' : 's'} left`
       : null
 
   return (
     <Link
       href={{
         pathname: '/card/[cardId]',
-        params: { cardId: String(card.id), venueId: String(card.venue_id) },
+        params: { cardId: String(campaign.card_id), venueId: String(campaign.venue_id) },
       }}
       asChild
     >
@@ -42,17 +34,17 @@ function CampaignCard({ slide, width }: { slide: HomeCampaignSlide; width: numbe
             borderRadius: radius.card,
             padding: space.cardPad,
             borderWidth: 1,
-            borderColor: colors.primarySoft,
+            borderColor: campaign.applies_now ? colors.lavenderBorder : colors.primarySoft,
           },
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: colors.lavenderBorder, letterSpacing: 0.4 }}>
-              {venueName}
+              {campaign.venue_name}
             </Text>
             <Text style={{ marginTop: 6, fontSize: 20, fontWeight: '900', color: colors.primaryText, lineHeight: 26 }}>
-              {promotion.headline}
+              {campaign.headline}
             </Text>
           </View>
           <View
@@ -65,15 +57,17 @@ function CampaignCard({ slide, width }: { slide: HomeCampaignSlide; width: numbe
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.primaryText }}>{promotion.multiplier}×</Text>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.primaryText }}>{campaign.multiplier}×</Text>
           </View>
         </View>
         <Text style={{ marginTop: 10, fontSize: 14, lineHeight: 20, color: 'rgba(248,250,252,0.88)' }} numberOfLines={3}>
-          {promotion.message}
+          {campaign.message}
         </Text>
         <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primaryText }}>View details</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primaryText }}>
+              {campaign.applies_now ? 'Active for you' : 'View details'}
+            </Text>
             <Ionicons name="chevron-forward" size={14} color={colors.primaryText} />
           </View>
           {daysLabel ? (
@@ -85,10 +79,10 @@ function CampaignCard({ slide, width }: { slide: HomeCampaignSlide; width: numbe
   )
 }
 
-export default function HomeCampaignCarousel({ slides }: HomeCampaignCarouselProps) {
+export default function HomeCampaignCarousel({ campaigns }: HomeCampaignCarouselProps) {
   const { width: screenWidth } = useWindowDimensions()
 
-  if (!slides.length) return null
+  if (!campaigns.length) return null
 
   const cardWidth = Math.floor((screenWidth - space.screenX) / carousel.campaignVisibleCount)
   const snapInterval = cardWidth + carousel.campaignCardGap
@@ -112,15 +106,15 @@ export default function HomeCampaignCarousel({ slides }: HomeCampaignCarouselPro
           paddingRight: space.screenX,
         }}
       >
-        {slides.map((slide, index) => (
+        {campaigns.map((campaign, index) => (
           <View
-            key={slide.id}
+            key={`${campaign.venue_id}-${campaign.campaign_id}`}
             style={{
               width: cardWidth,
-              marginRight: index < slides.length - 1 ? carousel.campaignCardGap : 0,
+              marginRight: index < campaigns.length - 1 ? carousel.campaignCardGap : 0,
             }}
           >
-            <CampaignCard slide={slide} width={cardWidth} />
+            <CampaignCard campaign={campaign} width={cardWidth} />
           </View>
         ))}
       </ScrollView>

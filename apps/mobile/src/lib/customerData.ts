@@ -28,6 +28,7 @@ export interface CustomerCardsListResponse {
   cards: WalletCard[]
   claimed_history: ApiClaimedReward[]
   pending_rewards_count?: number
+  home_campaigns?: import('../types/loyalty').HomeCampaign[]
 }
 
 export interface StampQrResponse {
@@ -131,6 +132,11 @@ export async function fetchCustomerCardsList(token: string, fresh = false): Prom
 export async function fetchCustomerCards(token: string, fresh = false): Promise<WalletCard[]> {
   const response = await fetchCustomerCardsList(token, fresh)
   return response.cards
+}
+
+export async function fetchCustomerHomeCampaigns(token: string, fresh = false): Promise<import('../types/loyalty').HomeCampaign[]> {
+  const response = await fetchCustomerCardsList(token, fresh)
+  return response.home_campaigns ?? []
 }
 
 export async function fetchRewardsWallet(token: string, fresh = false): Promise<RewardsWalletResponse> {

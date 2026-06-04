@@ -76,8 +76,10 @@ class CampaignEngine
         };
     }
 
-    private function isScheduleOpen(Campaign $campaign, Carbon $now): bool
+    public function isScheduleOpen(Campaign $campaign, ?Carbon $now = null): bool
     {
+        $now ??= Carbon::now();
+
         if ($campaign->starts_at && $now->lt($campaign->starts_at)) {
             return false;
         }

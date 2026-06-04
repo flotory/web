@@ -96,6 +96,7 @@ class CustomerLoyaltyController extends Controller
 
         if ($isList) {
             $payload['claimed_history'] = $claimedHistory;
+            $payload['home_campaigns'] = $campaigns->homeCampaignsForCards($cards);
         }
 
         return response()->json($payload);
