@@ -316,7 +316,7 @@ onMounted(() => {
 
         <div class="mt-4 flex flex-1 flex-col items-center justify-center">
           <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-slate-50 p-3 ring-1 ring-slate-200">
-            <div id="dashboard-qr" class="qr-pulse mx-auto rounded-2xl bg-white p-2 ring-1 ring-slate-200">
+            <div id="dashboard-qr" class="qr-pulse mx-auto w-fit rounded-2xl bg-white p-2 ring-1 ring-slate-200">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="132" level="M" render-as="canvas" :margin="2" />
             </div>
             <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
@@ -501,6 +501,10 @@ onMounted(() => {
 
 .qr-pulse {
   animation: qrPulse 2.4s ease-in-out infinite;
+}
+
+#dashboard-qr :deep(canvas) {
+  display: block;
 }
 
 @keyframes scannerPulse {

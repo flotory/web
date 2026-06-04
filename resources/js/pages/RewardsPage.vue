@@ -10,12 +10,13 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import ImageCropUpload from '@/components/ui/ImageCropUpload.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { rewardImageUrl } from '@/lib/rewardMedia'
 import { toast } from '@/lib/toast'
-﻿import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
 
@@ -79,7 +80,6 @@ const description = ref('')
 const requiredStamps = ref(5)
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
-const imageInput = ref<HTMLInputElement | null>(null)
 const titleInput = ref<HTMLInputElement | null>(null)
 const removeImage = ref(false)
 const editingReward = ref<Reward | null>(null)
@@ -89,6 +89,8 @@ let refreshTimer: number | undefined
 const needsVenuePick = computed(
   () => workspace.activeVenues.length > 1 && workspace.effectiveVenueId === null,
 )
+const imageCropDisabled = computed(() => saving.value || saveRewardAction.loading.value)
+
 const canEditRewards = computed(() => {
   if (auth.user?.is_admin) {
     return true
@@ -213,9 +215,6 @@ function resetForm() {
   editingReward.value = null
   showTemplatePicker.value = false
   fieldErrors.value = {}
-  if (imageInput.value) {
-    imageInput.value.value = ''
-  }
 }
 
 function suggestedNextStamp(): number {
@@ -227,17 +226,17 @@ function suggestedNextStamp(): number {
   return candidate
 }
 
-function openImagePicker() {
-  imageInput.value?.click()
+function onRewardImageCrop(file: File) {
+  revokeImagePreview()
+  imageFile.value = file
+  removeImage.value = false
+  imagePreviewUrl.value = URL.createObjectURL(file)
 }
 
 function clearImage() {
   imageFile.value = null
   revokeImagePreview()
   removeImage.value = true
-  if (imageInput.value) {
-    imageInput.value.value = ''
-  }
   toast.info('Image will be removed when you save.')
 }
 
@@ -251,9 +250,6 @@ function startEditing(reward: Reward) {
   requiredStamps.value = reward.required_stamps
   imageFile.value = null
   removeImage.value = false
-  if (imageInput.value) {
-    imageInput.value.value = ''
-  }
   error.value = ''
   nextTick(() => {
     titleInput.value?.focus()
@@ -503,16 +499,6 @@ function refreshIfVisible() {
   }
 }
 
-function onImageChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  revokeImagePreview()
-  imageFile.value = input.files?.[0] ?? null
-  if (imageFile.value) {
-    removeImage.value = false
-    imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
-  }
-}
-
 onMounted(() => {
   loadRewards()
   window.addEventListener('focus', refreshIfVisible)
@@ -537,14 +523,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
 <template>
   <AppShell>
-    <input
-      ref="imageInput"
-      type="file"
-      accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-      class="hidden"
-      @change="onImageChange"
-    >
-
     <!-- Owner milestone builder -->
     <section class="journey-hero relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
         <div class="journey-hero-glow pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -699,7 +677,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
           <section class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
             <p class="text-xs font-bold uppercase tracking-wide text-slate-400">2. Reward visual</p>
-            <p class="mt-1 text-sm text-slate-500">Guests see this on their loyalty card. JPG or PNG, max 5 MB.</p>
+            <p class="mt-1 text-sm text-slate-500">Square crop for the loyalty card. JPG or PNG, max 5 MB.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
               <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
                 <img
@@ -717,9 +695,18 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                   {{ imageFile?.name ?? (removeImage ? 'Image will be removed on save' : (editingReward?.image ? 'Current milestone image' : 'No image yet — fallback will be used')) }}
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  <AppButton type="button" variant="secondary" size="sm" @click="openImagePicker">
-                    {{ imageFile ? 'Replace image' : 'Upload image' }}
-                  </AppButton>
+                  <ImageCropUpload
+                    preset="square"
+                    modal-title="Crop reward image"
+                    :disabled="imageCropDisabled"
+                    @crop="onRewardImageCrop"
+                  >
+                    <template #default="{ open }">
+                      <AppButton type="button" variant="secondary" size="sm" @click="open">
+                        {{ imageFile ? 'Replace image' : 'Upload image' }}
+                      </AppButton>
+                    </template>
+                  </ImageCropUpload>
                   <AppButton
                     v-if="imageFile || (editingReward?.image && !removeImage)"
                     type="button"
@@ -862,7 +849,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 .reward-media-frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background-color: #f1f5f9;
 }

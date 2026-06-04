@@ -53,8 +53,8 @@ const nav = computed(() => {
   if (!isWorkspace.value) {
     return [
       { label: 'Wallet', to: '/wallet', icon: '◍' },
-      { label: 'My QR', to: '/my-qr', icon: '▣' },
       { label: 'Rewards', to: '/customer/rewards', icon: '★', badge: customerRewards.pendingCount },
+      { label: 'My QR', to: '/my-qr', icon: '▣' },
       { label: 'Discover', to: '/venues', icon: '⌂' },
       { label: 'Profile', to: '/customer/settings', icon: '⚙' },
     ]

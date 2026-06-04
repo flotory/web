@@ -188,18 +188,16 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
       <div
         v-for="slot in slots"
         :key="slot.position"
-        class="flex min-h-0 items-stretch justify-center"
+        class="flex min-h-0 justify-center"
+        :class="slot.isReward ? 'items-stretch' : 'items-center'"
       >
         <!-- Reward milestone -->
         <div
           v-if="slot.isReward && slot.milestone"
           :title="`${slot.milestone.required_stamps} stamps → ${slot.milestone.title}`"
           :tabindex="canManageMilestone(slot.milestone) ? 0 : undefined"
-          class="group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border transition duration-200"
+          class="reward-milestone-card group relative mx-auto flex w-full min-w-0 max-w-[6.75rem] flex-col overflow-hidden rounded-xl border transition duration-200 sm:max-w-none"
           :class="[
-            isProminent
-              ? 'min-h-[5.75rem] sm:min-h-[6.75rem] md:min-h-[7.5rem]'
-              : 'h-[4.75rem] sm:h-[5.25rem]',
             rewardCardClass(slot),
             editable && canManageMilestone(slot.milestone) && 'cursor-pointer',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
@@ -209,14 +207,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           @keydown.enter.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
           @keydown.space.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
         >
-          <div
-            class="relative min-h-0 overflow-hidden bg-slate-100"
-            :class="isProminent ? 'flex-[1.35]' : 'flex-[1.15]'"
-          >
+          <div class="reward-milestone-image relative aspect-square w-full shrink-0 overflow-hidden bg-slate-100">
             <img
               :src="rewardThumbUrl(slot.milestone)"
               :alt="slot.milestone.title"
-              class="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+              class="size-full object-cover object-center transition duration-300 group-hover:scale-[1.02]"
             >
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
 
@@ -246,13 +241,13 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           </div>
 
           <div
-            class="flex shrink-0 items-center border-t border-slate-100/90 bg-white"
-            :class="isProminent ? 'px-2.5 py-2' : 'px-1.5 py-1'"
+            class="reward-milestone-caption flex h-9 shrink-0 items-center border-t border-slate-100/90 bg-white sm:h-10"
+            :class="isProminent ? 'px-2 py-1.5' : 'px-1.5 py-1'"
           >
             <p
               class="min-w-0 flex-1 font-semibold leading-snug text-slate-900"
               :class="[
-                isProminent ? 'line-clamp-2 text-xs sm:text-sm' : 'line-clamp-1 text-[10px] sm:text-[11px]',
+                isProminent ? 'line-clamp-2 text-[11px] sm:text-xs' : 'line-clamp-1 text-[10px]',
               ]"
             >
               {{ slot.milestone.title }}
@@ -265,7 +260,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           v-else
           class="flex shrink-0 items-center justify-center self-center rounded-lg border transition"
           :class="[
-            isProminent ? 'size-10 sm:size-11' : 'size-9 sm:size-10',
+            isProminent ? 'size-[2.75rem] sm:size-[3.25rem]' : 'size-10 sm:size-11',
             slot.filled
               ? 'border-amber-300 bg-amber-100 text-amber-700 shadow-sm ring-1 ring-amber-200/60'
               : 'border-dashed border-slate-300 bg-slate-100/90 text-slate-500 ring-1 ring-slate-200/50',
@@ -274,7 +269,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           :aria-label="`Stamp ${slot.position}`"
         >
           <span v-if="slot.filled" class="font-bold" :class="isProminent ? 'text-sm' : 'text-xs'" aria-hidden="true">★</span>
-          <span v-else class="font-semibold tabular-nums" :class="isProminent ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-xs'">{{ slot.position }}</span>
+          <span v-else class="font-semibold tabular-nums" :class="isProminent ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'">{{ slot.position }}</span>
         </div>
       </div>
     </div>

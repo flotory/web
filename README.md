@@ -144,11 +144,17 @@ docker compose exec app php artisan migrate:fresh --seed
 | `staff@example.com` | `password` |
 | `customer@example.com` | `password` |
 
-If login fails after wiping only MySQL (`docker compose down -v`), restart the app container or run:
+If you see **“The provided credentials are incorrect”** on local:
+
+1. Use **http://localhost:8000** (not the Vite port `:5173`).
+2. Use demo email **`owner@example.com`** and password **`password`** (not your production password).
+3. After `migrate:fresh` or `docker compose down -v`, demo users are removed until you re-seed:
 
 ```bash
 docker compose exec app php artisan app:ensure-local-demo
 ```
+
+Or restart the app container (entrypoint runs the same command on boot). `migrate:fresh` in local also re-runs demo accounts automatically.
 
 **E2E tests** (Playwright, app must be running on port 8000 with demo seed):
 

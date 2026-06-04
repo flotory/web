@@ -173,7 +173,7 @@ watch(
 
           <div class="relative mx-auto mt-6 w-fit">
             <div class="absolute -inset-3 rounded-[1.35rem] bg-gradient-to-br from-indigo-500/15 to-violet-500/10 blur-md" aria-hidden="true" />
-            <div class="relative rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200">
+            <div class="relative mx-auto w-fit rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200 [&_canvas]:block">
               <QrcodeVue v-if="qrValue" :value="qrValue" :size="216" level="M" render-as="canvas" :margin="2" />
             </div>
           </div>

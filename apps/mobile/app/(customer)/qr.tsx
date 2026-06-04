@@ -24,11 +24,18 @@ export default function CustomerQrScreen() {
     <CustomerScreen
       loading={loading && !data}
       scrollable={false}
+      flexContent
       tabBarInset
       header={
-        <View style={{ paddingHorizontal: space.screenX, paddingTop: insets.top > 0 ? 0 : 8 }}>
-          <Text style={typography.section}>My QR</Text>
-          <Text style={{ ...typography.body, marginTop: 6, color: colors.inkMuted }}>
+        <View
+          style={{
+            paddingHorizontal: space.screenX,
+            paddingTop: insets.top > 0 ? 0 : 8,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ ...typography.section, textAlign: 'center' }}>My QR</Text>
+          <Text style={{ ...typography.body, marginTop: 6, color: colors.inkMuted, textAlign: 'center' }}>
             Show this at the counter — staff will stamp your card for this visit.
           </Text>
         </View>
@@ -45,25 +52,42 @@ export default function CustomerQrScreen() {
       }
     >
       {!error && data ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.screenX }}>
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: space.screenX,
+          }}
+        >
           <View
             style={{
-              backgroundColor: colors.surface,
-              borderRadius: radius.card,
-              padding: space.cardPad,
-              borderWidth: 1,
-              borderColor: colors.border,
+              width: '100%',
+              maxWidth: 320,
               alignItems: 'center',
             }}
           >
-            <QrImage value={data.qr_value} size={260} />
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: radius.card,
+                padding: space.cardPad,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                alignSelf: 'center',
+              }}
+            >
+              <QrImage value={data.qr_value} size={260} />
+            </View>
+            <Text style={{ marginTop: 20, textAlign: 'center', fontSize: 17, fontWeight: '800', color: colors.ink }}>
+              One QR for all your venues
+            </Text>
+            <Text style={{ ...typography.caption, marginTop: 8, textAlign: 'center', color: colors.inkMuted }}>
+              Staff scan here — stamps go to this visit's venue. New venues join automatically on first scan.
+            </Text>
           </View>
-          <Text style={{ marginTop: 20, textAlign: 'center', fontSize: 17, fontWeight: '800', color: colors.ink }}>
-            One QR for all your venues
-          </Text>
-          <Text style={{ ...typography.caption, marginTop: 8, textAlign: 'center', color: colors.inkMuted }}>
-            Staff scan here — stamps go to this visit's venue. New venues join automatically on first scan.
-          </Text>
         </View>
       ) : !error && !loading ? (
         <View style={{ padding: space.screenX }}>

@@ -7,6 +7,7 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import ImageCropUpload from '@/components/ui/ImageCropUpload.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
@@ -25,8 +26,9 @@ const saveVenueAction = useAsyncAction()
 const logoUploading = ref(false)
 const coverUploading = ref(false)
 const error = ref('')
-const logoInput = ref<HTMLInputElement | null>(null)
 const coverInput = ref<HTMLInputElement | null>(null)
+
+const logoCropDisabled = computed(() => logoUploading.value)
 const name = ref('')
 const slug = ref('')
 const address = ref('')
@@ -108,27 +110,8 @@ async function saveVenue() {
   }
 }
 
-function openLogoPicker() {
-  logoInput.value?.click()
-}
-
-async function uploadLogo(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-
-  if (!file || !venue.value) return
-
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  if (!allowedTypes.includes(file.type)) {
-    error.value = 'Use a JPG, PNG, WebP, or GIF image. iPhone HEIC photos must be converted first (e.g. save to Photos as Most Compatible).'
-    return
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    error.value = 'Image must be 5 MB or smaller.'
-    return
-  }
+async function uploadLogo(file: File) {
+  if (!venue.value) return
 
   logoUploading.value = true
   error.value = ''
@@ -331,14 +314,21 @@ onMounted(loadVenue)
               </div>
 
               <h2 class="mt-5 text-2xl font-black text-slate-950">Venue logo</h2>
-              <p class="mt-2 text-sm font-semibold text-slate-500">Upload a square PNG, JPG, or WebP image.</p>
-
-              <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
+              <p class="mt-2 text-sm font-semibold text-slate-500">Square crop — shown on cards, scanner, and landing page.</p>
 
               <div class="mt-5 flex flex-wrap justify-center gap-2">
-                <AppButton variant="secondary" :disabled="logoUploading" @click="openLogoPicker">
-                  {{ logoUploading ? 'Uploading...' : (venueHasCustomLogo(venue) ? 'Replace logo' : 'Upload logo') }}
-                </AppButton>
+                <ImageCropUpload
+                  preset="square"
+                  modal-title="Crop venue logo"
+                  :disabled="logoCropDisabled"
+                  @crop="uploadLogo"
+                >
+                  <template #default="{ open }">
+                    <AppButton variant="secondary" :disabled="logoUploading" @click="open">
+                      {{ logoUploading ? 'Uploading...' : (venueHasCustomLogo(venue) ? 'Replace logo' : 'Upload logo') }}
+                    </AppButton>
+                  </template>
+                </ImageCropUpload>
                 <AppButton v-if="venueHasCustomLogo(venue)" variant="ghost" :disabled="logoUploading" @click="deleteLogo">
                   Delete logo
                 </AppButton>

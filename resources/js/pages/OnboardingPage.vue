@@ -16,12 +16,11 @@ import {
 } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { clearOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
-import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Reward, Venue } from '@/types'
 
-type OnboardingStep = 1 | 2 | 3 | 4 | 5
+type OnboardingStep = 1 | 2 | 3 | 4
 const categories: Array<{ id: VenueCategory; label: string; emoji: string }> = [
   { id: 'cafe', label: 'Cafe', emoji: '☕' },
   { id: 'bar', label: 'Bar', emoji: '🍸' },
@@ -38,7 +37,6 @@ const ONBOARDING_DRAFT_STEP_KEY = 'owner_onboarding_draft_step'
 
 const step = ref<OnboardingStep>(1)
 const loading = ref(false)
-const logoUploading = ref(false)
 const error = ref('')
 const success = ref('')
 
@@ -46,15 +44,25 @@ const venue = ref<Venue | null>(null)
 const venueName = ref('My Venue')
 const venueSlug = ref('')
 const category = ref<VenueCategory | null>(null)
-const logoInput = ref<HTMLInputElement | null>(null)
 const selectedRewards = ref<string[]>([])
 
 const activeCategory = computed(() => normalizeVenueCategory(category.value ?? venue.value?.category))
 const rewardPresets = computed(() => rewardPresetsForCategory(activeCategory.value))
-const completionPercent = computed(() => Math.round((step.value / 5) * 100))
+const completionPercent = computed(() => Math.round((step.value / 4) * 100))
 const landingUrl = computed(() => (venue.value ? buildVenueLandingUrl(venue.value.slug) : ''))
-const previewLogoUrl = computed(() => venueLogoUrl(venue.value, activeCategory.value))
-const previewCoverUrl = computed(() => venueCoverUrl(venue.value, activeCategory.value))
+
+function mapDraftStep(saved: number): OnboardingStep {
+  if (saved <= 2) {
+    return saved as OnboardingStep
+  }
+  if (saved === 3) {
+    return 3
+  }
+  if (saved >= 4) {
+    return Math.min(4, saved - 1) as OnboardingStep
+  }
+  return 1
+}
 
 function syncRewardSelection() {
   selectedRewards.value = rewardPresets.value.map((preset) => preset.id)
@@ -144,37 +152,6 @@ async function saveCategoryAndContinue() {
   }
 }
 
-function openLogoPicker() {
-  logoInput.value?.click()
-}
-
-async function uploadLogo(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-
-  if (!file || !venue.value) return
-
-  logoUploading.value = true
-  error.value = ''
-
-  try {
-    const body = new FormData()
-    body.append('logo', file)
-    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}/logo`, {
-      method: 'POST',
-      body,
-    })
-    venue.value = response.venue
-    persistOnboardingDraft()
-    success.value = 'Logo uploaded.'
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not upload logo.'
-  } finally {
-    logoUploading.value = false
-  }
-}
-
 async function createRewardsAndContinue() {
   if (!venue.value) {
     error.value = 'Venue is missing. Please restart onboarding.'
@@ -202,7 +179,7 @@ async function createRewardsAndContinue() {
         body,
       })
     }
-    setStep(5)
+    setStep(4)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not create starter rewards.'
   } finally {
@@ -261,7 +238,7 @@ onMounted(async () => {
       category.value = normalizeVenueCategory(draftVenue.category)
       syncRewardSelection()
       if (draftStep >= 1 && draftStep <= 5) {
-        step.value = draftStep as OnboardingStep
+        step.value = mapDraftStep(draftStep)
       }
       return
     }
@@ -283,7 +260,7 @@ onMounted(async () => {
             <AppBadge tone="blue">Owner onboarding</AppBadge>
             <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Launch your loyalty system</h1>
           </div>
-          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step {{ step }} / 5</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step {{ step }} / 4</p>
         </div>
 
         <div class="mb-6 h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -334,33 +311,6 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="step === 3" class="space-y-4">
-          <h2 class="text-2xl font-black text-slate-950">Venue branding</h2>
-          <p class="text-sm text-slate-500">
-            We start with a {{ categoryLabel(activeCategory).toLowerCase() }}-style look. Upload your own logo anytime.
-          </p>
-          <div class="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 ring-1 ring-slate-200">
-            <div class="relative z-0 h-28 overflow-hidden">
-              <img :src="previewCoverUrl" alt="" class="h-full w-full object-cover">
-              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-            </div>
-            <div class="relative z-10 grid place-items-center px-5 pb-5 -mt-10">
-              <div class="grid size-24 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg ring-2 ring-white">
-                <img :src="previewLogoUrl" :alt="venue?.name ?? 'Venue'" class="size-full object-cover">
-              </div>
-              <p class="mt-3 text-center text-xs font-semibold text-slate-500">Default preview for {{ categoryLabel(activeCategory) }}</p>
-            </div>
-          </div>
-          <input ref="logoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadLogo">
-          <AppButton class="w-full" variant="secondary" :disabled="logoUploading" @click="openLogoPicker">
-            {{ logoUploading ? 'Uploading...' : (venue?.logo ? 'Replace with your logo' : 'Upload your own logo') }}
-          </AppButton>
-          <div class="flex gap-2">
-            <AppButton variant="ghost" class="w-full" @click="setStep(2)">Back</AppButton>
-            <AppButton class="w-full" @click="setStep(4)">Continue</AppButton>
-          </div>
-        </div>
-
-        <div v-else-if="step === 4" class="space-y-4">
           <h2 class="text-2xl font-black text-slate-950">Create your first rewards</h2>
           <p class="text-sm text-slate-500">Starter rewards tailored for {{ categoryLabel(activeCategory).toLowerCase() }}s.</p>
           <div class="space-y-3">
@@ -380,18 +330,18 @@ onMounted(async () => {
             </button>
           </div>
           <div class="flex gap-2">
-            <AppButton variant="ghost" class="w-full" @click="setStep(3)">Back</AppButton>
+            <AppButton variant="ghost" class="w-full" @click="setStep(2)">Back</AppButton>
             <AppButton class="w-full" :disabled="loading" @click="createRewardsAndContinue">
               {{ loading ? 'Saving rewards...' : 'Continue' }}
             </AppButton>
           </div>
         </div>
 
-        <div v-else-if="step === 5" class="space-y-4">
+        <div v-else-if="step === 4" class="space-y-4">
           <h2 class="text-2xl font-black text-slate-950">Your venue is live. Print your QR.</h2>
           <p class="text-sm text-slate-500">Place this on tables and counters so customers can join instantly.</p>
           <div class="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
-            <div class="mx-auto rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+            <div class="mx-auto w-fit rounded-2xl bg-white p-3 ring-1 ring-slate-200 [&_canvas]:block">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="170" level="M" render-as="canvas" :margin="2" />
             </div>
             <div class="text-center sm:text-left">
@@ -401,7 +351,7 @@ onMounted(async () => {
             </div>
           </div>
           <div class="flex gap-2">
-            <AppButton variant="ghost" class="w-full" @click="setStep(4)">Back</AppButton>
+            <AppButton variant="ghost" class="w-full" @click="setStep(3)">Back</AppButton>
             <AppButton class="w-full" @click="openDashboard">Open dashboard</AppButton>
           </div>
         </div>

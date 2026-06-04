@@ -111,16 +111,6 @@ export default function CustomerTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="venues"
-        options={{
-          title: 'Discover',
-          href: role === 'customer' ? undefined : null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'compass' : 'compass-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="settings"
         options={{
           title: 'Profile',
@@ -130,7 +120,16 @@ export default function CustomerTabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="venues"
+        options={{
+          title: 'Discover',
+          href: null,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'compass' : 'compass-outline'} color={color} size={size} />
+          ),
+        }}
+      />
     </Tabs>
   )
 }
-
