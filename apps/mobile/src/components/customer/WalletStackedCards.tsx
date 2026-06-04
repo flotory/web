@@ -2,7 +2,7 @@ import { RefreshControl, ScrollView, View } from 'react-native'
 
 import WalletHeroCard from './WalletHeroCard'
 import StateCard from '../ui/StateCard'
-import { colors, space, tabBar, walletCard } from '../../theme'
+import { colors, space, walletCard } from '../../theme'
 import type { WalletCard } from '../../types/loyalty'
 
 interface WalletStackedCardsProps {
@@ -41,7 +41,7 @@ export default function WalletStackedCards({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       contentContainerStyle={{
         paddingHorizontal: space.screenX,
-        paddingBottom: bottomInset + tabBar.height + tabBar.scrollBottomPad,
+        paddingBottom: bottomInset + 24,
         paddingTop: 4,
         gap: walletCard.gap,
       }}

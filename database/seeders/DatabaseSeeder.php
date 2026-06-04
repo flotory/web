@@ -17,9 +17,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(DemoAccountsSeeder::class);
+        $this->call(AdminUserSeeder::class);
 
-        $owner = User::query()->where('email', 'owner@example.com')->firstOrFail();
+        $owner = User::updateOrCreate(
+            ['email' => 'owner@example.com'],
+            [
+                'name' => 'Demo Owner',
+                'password' => 'password',
+                'is_admin' => false,
+            ],
+        );
 
         $venues = collect([
             ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe', 'address' => '12 Market Street, Toruń'],
@@ -39,24 +46,33 @@ class DatabaseSeeder extends Seeder
 
         $owner->forceFill(['active_venue_id' => $venue->id])->save();
 
-        $staff = User::query()->where('email', 'staff@example.com')->firstOrFail();
+        $staff = User::updateOrCreate(
+            ['email' => 'staff@example.com'],
+            [
+                'name' => 'Demo Staff',
+                'password' => 'password',
+                'is_admin' => false,
+                'active_venue_id' => $venue->id,
+            ],
+        );
 
-        $venues->each(function (Venue $venue) use ($owner, $staff): void {
+        VenueUser::updateOrCreate(
+            [
+                'venue_id' => $venue->id,
+                'user_id' => $staff->id,
+            ],
+            [
+                'role' => 'staff',
+            ],
+        );
+
+        $venues->each(function (Venue $venue) use ($owner): void {
             VenueUser::updateOrCreate([
                 'venue_id' => $venue->id,
                 'user_id' => $owner->id,
             ], [
                 'role' => 'owner',
             ]);
-
-            if ($venue->slug === 'demo-cafe') {
-                VenueUser::updateOrCreate([
-                    'venue_id' => $venue->id,
-                    'user_id' => $staff->id,
-                ], [
-                    'role' => 'staff',
-                ]);
-            }
 
             $milestones = match ($venue->category) {
                 'restaurant' => [
@@ -203,8 +219,6 @@ class DatabaseSeeder extends Seeder
                     });
             });
         });
-
-        $this->call(DemoCampaignsSeeder::class);
 
         if (filter_var(env('SEED_DEMO_SCALE', false), FILTER_VALIDATE_BOOLEAN)) {
             $this->call(DemoScaleSeeder::class);

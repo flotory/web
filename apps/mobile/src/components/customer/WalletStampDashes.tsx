@@ -11,13 +11,12 @@ export default function WalletStampDashes({ filled, total, maxVisible = 10 }: Wa
   const filledCount = Math.min(Math.max(filled, 0), slots)
 
   return (
-    <View style={{ flexDirection: 'row', gap: 4, marginTop: 8, width: '100%' }}>
+    <View style={{ flexDirection: 'row', gap: 5, marginTop: 10 }}>
       {Array.from({ length: slots }).map((_, index) => (
         <View
           key={index}
           style={{
-            flex: 1,
-            maxWidth: 18,
+            width: 22,
             height: 5,
             borderRadius: 3,
             backgroundColor: index < filledCount ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)',

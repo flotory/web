@@ -3,20 +3,21 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Animated, Text, View } from 'react-native'
 
 import HomeCampaignCarousel from '../src/components/customer/HomeCampaignCarousel'
-import HomeNearestRewardCard, { type NearestRewardFocus } from '../src/components/customer/HomeNearestRewardCard'
 import HomeQuickActions from '../src/components/customer/HomeQuickActions'
 import HomeRewardCarousel, { type HomeRewardSlide } from '../src/components/customer/HomeRewardCarousel'
+import HomeRewardTicketCard from '../src/components/customer/HomeRewardTicketCard'
 import AnimatedSection from '../src/components/ui/AnimatedSection'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
-import ScreenHeader from '../src/components/ui/ScreenHeader'
+import HomeScreenHeader from '../src/components/ui/HomeScreenHeader'
 import StateCard from '../src/components/ui/StateCard'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsWallet } from '../src/hooks/useRewardsWallet'
 import { useScreenResource } from '../src/hooks/useScreenResource'
 import { buildHomeActivity, fetchCustomerCardsList } from '../src/lib/customerData'
 import { sortHomeCampaigns } from '../src/lib/homeCampaigns'
+import { rewardImageUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
-import { hapticSuccess } from '../src/lib/haptics'
+import { hapticLightTap, hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
 import type { VenueRef } from '../src/types/loyalty'
 import { colors, space, type as typography } from '../src/theme'
@@ -25,14 +26,19 @@ import { withAppFont } from '../src/lib/typography'
 export default function CustomerHomeScreen() {
   const router = useRouter()
   const { role, user, token } = useAuth()
+  const loadHomeCards = useCallback(
+    (fresh: boolean) => {
+      if (!token) return Promise.reject(new Error('missing token'))
+      return fetchCustomerCardsList(token, fresh)
+    },
+    [token],
+  )
+
   const cardsQuery = useScreenResource({
     enabled: Boolean(token),
     refetchOnFocus: true,
     errorMessage: 'Could not load your wallet.',
-    load: (fresh) => {
-      if (!token) return Promise.reject(new Error('missing token'))
-      return fetchCustomerCardsList(token, fresh)
-    },
+    load: loadHomeCards,
   })
   const walletQuery = useRewardsWallet({ refetchOnFocus: true })
   const lastUnlockHaptic = useRef<number | null>(null)
@@ -57,10 +63,12 @@ export default function CustomerHomeScreen() {
   const readyItems = walletQuery.data?.items ?? []
   const fade = useFadeOnReady(!loading)
 
+  const refreshCards = cardsQuery.refresh
+  const refreshWallet = walletQuery.refresh
   const refresh = useCallback(() => {
-    cardsQuery.refresh()
-    walletQuery.refresh()
-  }, [cardsQuery, walletQuery])
+    void refreshCards()
+    void refreshWallet()
+  }, [refreshCards, refreshWallet])
 
   const reload = useCallback(() => {
     cardsQuery.reload()
@@ -81,9 +89,12 @@ export default function CustomerHomeScreen() {
     [cards],
   )
 
+  const primaryReady = readyItems[0] ?? null
+
   const rewardSlides = useMemo((): HomeRewardSlide[] => {
     if (readyItems.length > 0) {
-      return readyItems.map((item) => ({
+      const rest = readyItems.length > 1 ? readyItems.slice(1) : []
+      return rest.map((item) => ({
         id: `ready-${item.unlock_id}`,
         kind: 'ready' as const,
         item,
@@ -96,45 +107,17 @@ export default function CustomerHomeScreen() {
     }))
   }, [activeCards, readyItems])
 
-  const nearestReward = useMemo((): NearestRewardFocus | null => {
-    if (readyItems[0]) {
-      return { kind: 'ready', item: readyItems[0] }
-    }
-
-    const nextCards = [...cards]
-      .filter((card) => card.venue)
-      .sort((a, b) => {
-        const aLeft = a.summary?.stamps_to_next ?? 999
-        const bLeft = b.summary?.stamps_to_next ?? 999
-        if (aLeft !== bLeft) return aLeft - bLeft
-        return (b.summary?.pending_rewards_count ?? 0) - (a.summary?.pending_rewards_count ?? 0)
-      })
-
-    if (nextCards[0]) {
-      return { kind: 'next', card: nextCards[0] }
-    }
-
-    return null
-  }, [cards, readyItems])
-
-  const activity = useMemo(
-    () => buildHomeActivity(cards, readyItems),
-    [cards, readyItems],
-  )
-
   const headerStampsLeft = useMemo(() => {
     if (readyItems.length > 0) return 0
-    if (nearestReward?.kind === 'next') {
-      return nearestReward.card.summary?.stamps_to_next ?? 0
-    }
-    return 0
-  }, [nearestReward, readyItems.length])
+    const nextCards = [...cards].filter((card) => card.venue).sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999))
+    return nextCards[0]?.summary?.stamps_to_next ?? 0
+  }, [cards, readyItems.length])
 
   const headerRewardTitle = useMemo(() => {
-    if (nearestReward?.kind === 'ready') return nearestReward.item.reward.title
-    if (nearestReward?.kind === 'next') return nearestReward.card.summary?.next_reward_title ?? 'your next reward'
-    return 'your next reward'
-  }, [nearestReward])
+    if (primaryReady) return primaryReady.reward.title
+    const nextCards = [...cards].filter((card) => card.venue).sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999))
+    return nextCards[0]?.summary?.next_reward_title ?? 'your next reward'
+  }, [cards, primaryReady])
 
   const quickActions = useMemo(
     () => [
@@ -149,7 +132,7 @@ export default function CustomerHomeScreen() {
       {
         id: 'wallet',
         label: 'Open wallet',
-        subtitle: 'Your cards and ready rewards',
+        subtitle: 'Your cards and rewards',
         icon: 'wallet-outline' as const,
         tint: colors.accentSoft,
         onPress: () => router.navigate('/(customer)/wallet'),
@@ -164,6 +147,11 @@ export default function CustomerHomeScreen() {
       },
     ],
     [router],
+  )
+
+  const activity = useMemo(
+    () => buildHomeActivity(cards, readyItems),
+    [cards, readyItems],
   )
 
   useEffect(() => {
@@ -185,14 +173,21 @@ export default function CustomerHomeScreen() {
   const header = (
     <Animated.View style={{ opacity: fade }}>
       <View style={{ paddingHorizontal: space.screenX }}>
-        <ScreenHeader
+        <HomeScreenHeader
           pretitle={`Hi, ${firstName}`}
           title={heroProgressTitle(headerStampsLeft, headerRewardTitle)}
           subtitle={heroProgressSubtitle(headerStampsLeft, headerRewardTitle)}
+          onNotificationsPress={() => {
+            hapticLightTap()
+            router.push('/(customer)/notifications')
+          }}
         />
       </View>
     </Animated.View>
   )
+
+  const hasHeroReady = Boolean(primaryReady)
+  const hasCarousel = rewardSlides.length > 0
 
   return (
     <CustomerScreen
@@ -218,28 +213,18 @@ export default function CustomerHomeScreen() {
     >
       {!error ? (
         <Animated.View style={{ opacity: fade }}>
-          {homeCampaigns.length > 0 ? (
-            <View style={{ marginTop: space.sectionGap }}>
-              <HomeCampaignCarousel campaigns={homeCampaigns} venueById={campaignVenueById} />
-            </View>
-          ) : null}
-
-          {nearestReward ? (
-            <View
-              style={{
-                marginTop: homeCampaigns.length > 0 ? space.sectionY : space.sectionGap,
-                paddingHorizontal: space.screenX,
-              }}
-            >
-              <HomeNearestRewardCard focus={nearestReward} />
+          {hasHeroReady ? (
+            <View style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
+              <HomeRewardTicketCard
+                variant="ready"
+                title={primaryReady!.reward.title}
+                venue={primaryReady!.customer.venue}
+                imageUri={rewardImageUrl(primaryReady!.reward)}
+                unlockId={primaryReady!.unlock_id}
+              />
             </View>
           ) : cards.length === 0 ? (
-            <AnimatedSection
-              style={{
-                marginTop: homeCampaigns.length > 0 ? space.sectionY : space.sectionGap,
-                paddingHorizontal: space.screenX,
-              }}
-            >
+            <AnimatedSection style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
               <StateCard
                 emoji="☕"
                 title="Start your first card"
@@ -249,21 +234,29 @@ export default function CustomerHomeScreen() {
             </AnimatedSection>
           ) : null}
 
+          {homeCampaigns.length > 0 ? (
+            <View
+              style={{
+                marginTop: hasHeroReady || cards.length === 0 ? space.sectionY : space.sectionGap,
+              }}
+            >
+              <HomeCampaignCarousel campaigns={homeCampaigns} venueById={campaignVenueById} />
+            </View>
+          ) : null}
+
           <View
             style={{
               marginTop:
-                homeCampaigns.length > 0 || nearestReward || cards.length === 0
-                  ? space.sectionY
-                  : space.sectionGap,
+                homeCampaigns.length > 0 || hasHeroReady || cards.length === 0 ? space.sectionY : space.sectionGap,
             }}
           >
             <HomeQuickActions actions={quickActions} />
           </View>
 
-          {rewardSlides.length > 0 ? (
+          {hasCarousel ? (
             <View style={{ marginTop: space.sectionY }}>
               <Text style={{ ...typography.section, paddingHorizontal: space.screenX, marginBottom: 12 }}>
-                {readyItems.length > 0 ? 'Ready to claim' : 'Keep collecting'}
+                {readyItems.length > 0 ? 'More ready to claim' : 'Keep collecting'}
               </Text>
               <HomeRewardCarousel slides={rewardSlides} />
             </View>

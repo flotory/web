@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import VenueJoinMilestones from '../../src/components/customer/VenueJoinMilestones'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
+import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
 import { formatVenueCategoryLabel } from '../../src/lib/format'
@@ -101,13 +102,12 @@ export default function VenueJoinScreen() {
     )
   }
 
+  const stickyBack = <StickyBackHeader onPress={handleBack} topInset={insets.top} />
+
   if (!landing && error) {
     return (
-      <ScreenGradientLayout scrollable tabBarInset={false} paddingTop={insets.top + 12}>
+      <ScreenGradientLayout scrollable tabBarInset={false} paddingTop={0} fixedHeader={stickyBack}>
         <View style={{ paddingHorizontal: space.screenX }}>
-          <Pressable onPress={handleBack} style={{ alignSelf: 'flex-start', paddingVertical: 4 }}>
-            <Ionicons name="chevron-back" size={24} color={colors.ink} />
-          </Pressable>
           <View style={{ marginTop: space.sectionY }}>
             <StateCard
               emoji="🔗"
@@ -129,29 +129,11 @@ export default function VenueJoinScreen() {
     <ScreenGradientLayout
       scrollable
       tabBarInset={false}
-      paddingTop={insets.top + 8}
+      paddingTop={0}
+      fixedHeader={stickyBack}
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
     >
       <View style={{ paddingHorizontal: space.screenX }}>
-        <Pressable
-          onPress={handleBack}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.discoverCardBorder,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 12,
-          }}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
-        </Pressable>
-
         {cover ? (
           <View
             style={{

@@ -16,7 +16,7 @@ export function fontFamilyForWeight(weight?: TextStyle['fontWeight']): string {
 
   if (value === '800' || value === '900') return fonts.extraBold
   if (value === '700' || value === 'bold') return fonts.bold
-  if (value === '600') return fonts.semiBold
+  if (value === '600') return fonts.semiBold ?? 'PlusJakartaSans_600SemiBold'
   if (value === '500') return fonts.medium
 
   return fonts.regular

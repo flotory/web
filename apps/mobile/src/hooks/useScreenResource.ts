@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type LoadMode = 'initial' | 'refresh' | 'silent'
 
@@ -20,6 +20,11 @@ export function useScreenResource<T>({
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const loadRef = useRef(load)
+
+  useEffect(() => {
+    loadRef.current = load
+  }, [load])
 
   const run = useCallback(
     async (fresh: boolean, mode: LoadMode) => {
@@ -29,7 +34,7 @@ export function useScreenResource<T>({
       if (mode === 'initial') setLoading(true)
 
       try {
-        const result = await load(fresh)
+        const result = await loadRef.current(fresh)
         setData(result)
         setError('')
       } catch {
@@ -39,7 +44,7 @@ export function useScreenResource<T>({
         if (mode === 'initial') setLoading(false)
       }
     },
-    [enabled, errorMessage, load],
+    [enabled, errorMessage],
   )
 
   useEffect(() => {

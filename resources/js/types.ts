@@ -37,8 +37,7 @@ export interface Customer {
   id: number
   venue_id: number
   user_id: number
-  /** @deprecated v2 — not exposed in API; use GET /customer/stamp-qr */
-  qr_token?: string | null
+  qr_token: string
   stamps: number
   venue?: Venue
   user?: User & { birthday?: string | null }
@@ -166,16 +165,6 @@ export interface StampAddedPayload {
   milestones: MilestoneProgress[]
   current_cycle: number
   cycle_completed: boolean
-  message: string
-  occurred_at: string
-}
-
-export interface RewardRedeemedPayload {
-  customer: Customer
-  venue: Venue
-  unlock_id: number
-  reward: Reward
-  claim_session_token: string | null
   message: string
   occurred_at: string
 }

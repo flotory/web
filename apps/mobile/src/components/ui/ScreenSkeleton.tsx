@@ -31,7 +31,7 @@ export default function ScreenSkeleton({ topInset, withSearch = false, cardCount
       <View style={{ marginTop: 20, gap: 14 }}>
         {Array.from({ length: cardCount }).map((_, index) => (
           <View key={index}>
-            <SkeletonBlock height={listCard ? 124 : 224} borderRadius={radius.card} />
+            <SkeletonBlock height={listCard ? 124 : 200} borderRadius={radius.card} />
           </View>
         ))}
       </View>

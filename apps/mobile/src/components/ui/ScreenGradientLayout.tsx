@@ -11,10 +11,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScreenStickerBackground from './ScreenStickerBackground'
-import { colors, space, screenWallpaperBaseColor } from '../../theme'
+import { colors, space, screenWallpaperBaseColor, tabBar } from '../../theme'
 
 /** Customer tab bar height from `(customer)/_layout.tsx` */
-const TAB_BAR_HEIGHT = 78
+const TAB_BAR_HEIGHT = tabBar.height
 
 interface ScreenGradientLayoutProps {
   children: ReactNode
@@ -69,22 +69,34 @@ export default function ScreenGradientLayout({
     backgroundColor: 'transparent',
   }
 
-  if (scrollable && fixedHeader) {
+  if (fixedHeader && (scrollable || flexContent)) {
+    const body = scrollable ? (
+      <ScrollView
+        style={styles.transparentScroll}
+        contentContainerStyle={[{ flexGrow: 1, paddingBottom: bottomPad }, contentContainerStyle]}
+        refreshControl={refreshControl}
+        showsVerticalScrollIndicator={false}
+        directionalLockEnabled
+        nestedScrollEnabled
+      >
+        {children}
+      </ScrollView>
+    ) : (
+      <View style={{ flex: 1, paddingBottom: bottomPad }}>{children}</View>
+    )
+
     return (
       <View style={styles.root}>
         <ScreenWallpaper minHeight={windowHeight} />
-        <View style={{ flex: 1, paddingTop: topPad, backgroundColor: 'transparent' }}>
+        <View
+          style={{
+            flex: 1,
+            paddingTop: topPad,
+            backgroundColor: 'transparent',
+          }}
+        >
           {fixedHeader}
-          <ScrollView
-            style={styles.transparentScroll}
-            contentContainerStyle={[{ flexGrow: 1, paddingBottom: bottomPad }, contentContainerStyle]}
-            refreshControl={refreshControl}
-            showsVerticalScrollIndicator={false}
-            directionalLockEnabled
-            nestedScrollEnabled
-          >
-            {children}
-          </ScrollView>
+          {body}
         </View>
       </View>
     )

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { Animated, ScrollView, Text, View } from 'react-native'
 
 import ShadowPulse from '../ui/ShadowPulse'
@@ -19,6 +19,10 @@ interface MilestonePathProps {
   cellShape?: 'rounded' | 'circle'
   /** Single horizontal row (scrolls when needed). */
   layout?: 'grid' | 'row'
+  /** Replaces the cell at `total` (goal slot at end of journey). */
+  endSlot?: ReactNode
+  /** Show stamp index on empty slots (clearer grids). */
+  showStampNumbers?: boolean
 }
 
 export default function MilestonePath({
@@ -32,6 +36,8 @@ export default function MilestonePath({
   sizeScale = 1,
   cellShape = 'rounded',
   layout = 'grid',
+  endSlot,
+  showStampNumbers = false,
 }: MilestonePathProps) {
   const defaultSize = Math.round((cellShape === 'circle' ? 32 : 44) * sizeScale)
   const cellGap = Math.round(8 * sizeScale)
@@ -90,13 +96,21 @@ export default function MilestonePath({
   }, [giftGlow, giftLift, giftPulse, hasUpcomingGift])
 
   function renderCell(stamp: number) {
+    if (endSlot && stamp === total) {
+      return (
+        <View key={stamp} style={{ alignItems: 'center', justifyContent: 'center' }}>
+          {endSlot}
+        </View>
+      )
+    }
+
     const filled = stamp <= collected
     const isGift = gifts.has(stamp)
     const isClaimed = isGift && claimed.has(stamp)
 
     let backgroundColor = '#FFFFFF'
     let borderColor = '#E2E8F0'
-    let textColor = '#94A3B8'
+    let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : '#94A3B8'
 
     if (filled) {
       backgroundColor = cellShape === 'circle' ? colors.success : colors.successBg
@@ -112,7 +126,7 @@ export default function MilestonePath({
     }
 
     const size = defaultSize
-    const content = filled ? '✓' : isGift ? '🎁' : ''
+    const content = filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
     const borderRadius = cellShape === 'circle' ? size / 2 : Math.round(14 * sizeScale)
 
     const cell = (

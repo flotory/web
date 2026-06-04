@@ -55,11 +55,6 @@ class Venue extends Model
         return $this->hasMany(Reward::class);
     }
 
-    public function campaigns(): HasMany
-    {
-        return $this->hasMany(Campaign::class);
-    }
-
     public function visits(): HasMany
     {
         return $this->hasMany(Visit::class);

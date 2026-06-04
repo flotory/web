@@ -261,8 +261,7 @@ All seeded accounts use password: **`password`**
 
 | Account | Email | What to test |
 |--------|--------|----------------|
-| **Super admin** | `admin@flotory.com` | All venues + **Activity log** (`/admin/activity`) — see [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md) |
-| **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics (not an admin) |
+| **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
 | **Customer** | `customer@example.com` | Wallet (`/wallet`), Rewards claim flow, milestone journey |
 
@@ -298,12 +297,6 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 3. Earned rewards appear on **Rewards** (`/customer/rewards`); tap **Claim** and show the claim QR to staff
 4. Staff scan the claim QR on **Scanner**; your phone updates when the reward is used
 
-**Super admin / activity log**
-
-1. Log in as `admin@flotory.com` (not `owner@example.com`)
-2. Open **Activity log** in the sidebar or go to `/admin/activity`
-3. If missing, run `php artisan db:seed --class=AdminUserSeeder --force` and log out/in — details in [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)
-
 **Team (staff invitation)**
 
 1. Log in as `owner@example.com`
@@ -321,8 +314,8 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 
 ### Platform (`users.is_admin`)
 
-- **true** — platform administrator; seeded as `admin@flotory.com` — [ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)
-- **false** — default for sign-ups and demo owner/staff/customer accounts
+- **true** — platform administrator (not seeded by default)
+- **false** — default for all sign-ups (owners, staff, and loyalty guests)
 
 ### Per venue (`venue_users.role`)
 

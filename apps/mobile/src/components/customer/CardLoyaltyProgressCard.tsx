@@ -2,16 +2,21 @@ import { Platform, Text, View } from 'react-native'
 
 import MilestonePath from './MilestonePath'
 import CardMilestoneChips from './CardMilestoneChips'
+import ShakeGiftBadge from '../ui/ShakeGiftBadge'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows, space } from '../../theme'
 import type { MilestoneProgress, RewardRef } from '../../types/loyalty'
+
+function pathGridColumns(total: number): number {
+  if (total <= 5) return 5
+  if (total <= 10) return 5
+  return 6
+}
 
 interface CardLoyaltyProgressCardProps {
   stamps: number
   progressTarget: number
   nextReward: RewardRef | null
-  rewardReady?: boolean
-  readyRewardTitle?: string | null
   milestones: MilestoneProgress[]
   animatingSlots?: number[]
 }
@@ -20,19 +25,19 @@ export default function CardLoyaltyProgressCard({
   stamps,
   progressTarget,
   nextReward,
-  rewardReady = false,
-  readyRewardTitle,
   milestones,
   animatingSlots = [],
 }: CardLoyaltyProgressCardProps) {
   const slotCount = Math.max(progressTarget, 1)
-  const goalTitle = (rewardReady ? readyRewardTitle : nextReward?.title) ?? 'Your next reward'
+  const goalTitle = nextReward?.title ?? 'Your next reward'
   const collected = Math.min(stamps, slotCount)
   const toGo = Math.max(progressTarget - collected, 0)
   const progressRatio = progressTarget > 0 ? Math.min(collected / progressTarget, 1) : 0
   const milestoneStamps = milestones
     .map((item) => item.required_stamps)
-    .filter((value) => value <= slotCount)
+    .filter((value) => value > 0 && value < progressTarget && value <= slotCount)
+  const gridColumns = pathGridColumns(slotCount)
+  const sizeScale = slotCount > 10 ? 0.9 : 1
 
   return (
     <View
@@ -50,14 +55,9 @@ export default function CardLoyaltyProgressCard({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
         <View style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
           <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted })}>Your progress</Text>
-          {rewardReady ? (
-            <Text style={withAppFont({ marginTop: 4, fontSize: 12, fontWeight: '700', color: colors.successText })}>
-              Ready to claim
-            </Text>
-          ) : null}
           <Text
             style={withAppFont({
-              marginTop: rewardReady ? 4 : 6,
+              marginTop: 6,
               fontSize: 21,
               fontWeight: '800',
               color: colors.ink,
@@ -94,9 +94,25 @@ export default function CardLoyaltyProgressCard({
           claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
           highlightStamps={animatingSlots}
           cellShape="circle"
-          layout="row"
-          sizeScale={slotCount > 12 ? 0.88 : 1}
+          columns={gridColumns}
+          showStampNumbers
+          sizeScale={sizeScale}
+          endSlot={<ShakeGiftBadge />}
         />
+        <Text
+          style={withAppFont({
+            marginTop: 12,
+            fontSize: 13,
+            fontWeight: '600',
+            color: colors.inkMuted,
+            textAlign: 'center',
+            lineHeight: 18,
+          })}
+        >
+          {toGo > 0
+            ? `${toGo} ${toGo === 1 ? 'stamp' : 'stamps'} until “${goalTitle}”`
+            : 'You have unlocked this reward'}
+        </Text>
       </View>
 
       <View style={{ marginTop: 18 }}>
@@ -122,7 +138,7 @@ export default function CardLoyaltyProgressCard({
             {collected} collected
           </Text>
           <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted })}>
-            {toGo > 0 ? `${toGo} more to go` : 'Unlocked'}
+            {toGo > 0 ? `${toGo} to unlock` : 'Unlocked'}
           </Text>
         </View>
       </View>

@@ -1,5 +1,7 @@
 import { fonts } from './lib/typography'
 
+export { fonts }
+
 export const colors = {
   bg: '#F8FAFC',
   surface: '#FFFFFF',
@@ -24,7 +26,7 @@ export const colors = {
   lavenderBorder: '#E0E7FF',
   plum: '#1E293B',
   progressTrack: '#E2E8F0',
-  /** Discover venues — muted surfaces (avoid heavy promo orange) */
+  /** Discover venues — muted surfaces */
   discoverPillInactive: '#FFFFFF',
   discoverPillBorder: '#E8EDF3',
   discoverSearchFill: '#F1F5F9',
@@ -39,7 +41,7 @@ export const colors = {
 /**
  * App screen wallpaper behind customer flows.
  * - stickers: cool white + loyalty icon doodles
- * - warm: beige + soft doodles (WhatsApp-style) — current default
+ * - warm: beige + soft doodles (default)
  * - dots: minimal dot grid
  */
 export const screenBackground = {
@@ -80,22 +82,24 @@ export const carousel = {
   rewardCardGap: 10,
   rewardImageSize: 84,
   cardPad: 14,
-  /** Fraction of content width per campaign card (~76% = one card + peek). */
-  campaignCardWidthRatio: 0.76,
-  campaignCardGap: 14,
+  /** How many campaign cards are visible across the viewport (2 full + half peek). */
+  campaignVisibleCount: 2.5,
+  campaignCardGap: 10,
 } as const
 
-/** Customer bottom tab bar — keep in sync with `(customer)/_layout.tsx` tabBarStyle.height */
+/** Customer bottom tab bar — keep in sync with `(customer)/_layout.tsx` */
 export const tabBar = {
-  height: 78,
-  scrollBottomPad: 20,
+  height: 56,
+  scrollBottomPad: 10,
+  iconSize: 22,
+  labelSize: 11,
 } as const
 
 /** Center tab scan button (My QR). */
 export const tabBarQr = {
-  size: 57,
-  iconSize: 29,
-  lift: 8,
+  size: 50,
+  iconSize: 24,
+  lift: 3,
 } as const
 
 export const gradients = {
@@ -121,7 +125,7 @@ export const media = {
 
 /** Full-bleed venue cards on the wallet screen */
 export const walletCard = {
-  height: 224,
+  height: 200,
   radius: 24,
   gap: 16,
 } as const

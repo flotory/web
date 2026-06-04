@@ -8,34 +8,20 @@ use App\Models\RedemptionRequest;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
 use App\Models\Reward;
-use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
-use App\Services\UniversalCustomerQrService;
 use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
 class CustomerLoyaltyController extends Controller
 {
-    public function stampQr(Request $request, UniversalCustomerQrService $universalQr): JsonResponse
-    {
-        if (! $universalQr->isEnabled()) {
-            return response()->json([
-                'message' => 'Universal customer QR is not enabled.',
-            ], 404);
-        }
-
-        return response()->json($universalQr->ensureForUser($request->user()));
-    }
-
-    public function mine(Request $request, LoyaltyStampService $loyalty, CampaignService $campaigns): JsonResponse
+    public function mine(Request $request, LoyaltyStampService $loyalty): JsonResponse
     {
         $cards = Customer::query()
             ->where('user_id', $request->user()->id)
-            ->with([
-                'venue',
-                'visits' => fn ($query) => $query->latest()->limit(2),
-            ])
+            ->with('venue')
             ->orderBy('venue_id')
             ->get();
 
@@ -43,63 +29,21 @@ class CustomerLoyaltyController extends Controller
             ? $cards->firstWhere('venue_id', $request->integer('venue_id'))
             : $cards->first();
 
-        $isList = ! $request->integer('venue_id');
-
-        $claimedHistory = $isList
-            ? RewardUnlock::query()
-                ->whereIn('customer_id', $cards->pluck('id'))
-                ->whereNotNull('claimed_at')
-                ->with('reward:id,title')
-                ->orderByDesc('claimed_at')
-                ->limit(12)
-                ->get()
-                ->map(fn (RewardUnlock $unlock): array => [
-                    'id' => "{$unlock->customer_id}-{$unlock->reward_id}-{$unlock->cycle_number}",
-                    'card_id' => $unlock->customer_id,
-                    'title' => $unlock->reward->title,
-                    'claimed_at' => $unlock->claimed_at,
-                ])
-                ->values()
-            : collect();
-
-        $payload = [
+        return response()->json([
             'cards' => $cards->map(fn (Customer $card): array => [
                 ...$card->toArray(),
                 'venue' => $card->venue,
                 'summary' => $loyalty->cardListSummary($card),
-                'promotion' => $campaigns->promotionForCustomer($card),
-                ...($isList ? [
-                    'recent_visits' => $card->visits->map(fn ($visit): array => [
-                        'id' => $visit->id,
-                        'created_at' => $visit->created_at,
-                    ])->values(),
-                ] : []),
             ])->values(),
             'active_card' => $activeCard,
             'next_reward' => $activeCard ? $loyalty->nextRewardFor($activeCard) : null,
             'available_rewards' => $activeCard ? $loyalty->availableRewardsFor($activeCard) : [],
-            'pending_unlocks' => $activeCard
-                ? $loyalty->pendingUnlocksFor($activeCard)
-                    ->map(fn (RewardUnlock $unlock): array => [
-                        'unlock_id' => $unlock->id,
-                        'reward' => $unlock->reward,
-                    ])
-                    ->values()
-                : [],
             'journey' => $activeCard ? $loyalty->journeyFor($activeCard) : null,
             'recent_visits' => $activeCard ? $activeCard->visits()->latest()->limit(10)->get() : [],
-            'promotion' => $activeCard ? $campaigns->promotionForCustomer($activeCard) : null,
             'pending_rewards_count' => $cards->sum(
                 fn (Customer $card): int => $loyalty->pendingRewardCountFor($card),
             ),
-        ];
-
-        if ($isList) {
-            $payload['claimed_history'] = $claimedHistory;
-            $payload['home_campaigns'] = $campaigns->homeCampaignsForCards($cards);
-        }
-
-        return response()->json($payload);
+        ]);
     }
 
     public function wallet(Request $request, LoyaltyStampService $loyalty): JsonResponse
@@ -136,6 +80,7 @@ class CustomerLoyaltyController extends Controller
                 'user_id' => $request->user()->id,
             ],
             [
+                'qr_token' => (string) Str::uuid(),
                 'stamps' => 0,
             ],
         );

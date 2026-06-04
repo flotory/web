@@ -25,13 +25,11 @@ app/
   Http/Controllers/Auth/       Google OAuth
   Http/Requests/               Form validation
   Models/                    Eloquent domain models
-  Services/                  CampaignService (facade), CampaignEngine, CampaignOwnerPresenter,
-                             CustomerRetentionService, LoyaltyStampService, RedemptionClaimService,
-                             VenueAnalyticsService, VenueStaffInvitationService, ImageThumbnailService
-  Support/                   VenueAccess, CampaignTemplates
+  Services/                  LoyaltyStampService, VenueStaffInvitationService
+  Support/                   VenueAccess authorization
 
 resources/js/
-  components/                UI + loyalty (ClaimRewardModal, VenueFilter, …)
+  components/                UI + loyalty (SwipeToRedeem, VenueFilter, …)
   composables/               useAsyncAction, useVenueTeam
   layouts/                   AppShell (owner vs staff vs customer nav)
   lib/                       api, onboarding, redirect, toast, realtime
@@ -59,7 +57,7 @@ Request → Route → Controller → (VenueAccess) → Service → Model/DB → 
 |-------|----------------|
 | Routes | HTTP mapping, middleware (`auth:sanctum`) |
 | Controllers | Authorize, validate, delegate, respond — no loyalty math |
-| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle; campaign multipliers (see [CAMPAIGNS.md](./CAMPAIGNS.md)) |
+| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle |
 | Models | Relationships, casts, accessors — no multi-step workflows |
 | Vue | Fetch, display, forms — **no business logic** |
 
@@ -80,7 +78,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 | `User` | `users` | Login identity. `is_admin` for platform admin only. `active_venue_id` for workspace selection. Optional `google_id`, `google_avatar`. |
 | `Venue` | `venues` | Workspace. Slug, category, branding, soft deletes. **No** `owner_user_id`. |
 | `VenueUser` | `venue_users` | Team membership pivot: `role` = `owner` \| `staff`. |
-| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `stamps`. `qr_token` deprecated (nullable, hidden from API). |
+| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `qr_token`, `stamps`. |
 | `Reward` | `rewards` | Milestone definition: `required_stamps`, optional image, `active`, `reward_type` (= `milestone`). |
 | `Visit` | `visits` | Audit row when staff award stamps via `addStamp`. `created_by` = staff user. |
 | `CustomerRewardCycle` | `customer_reward_cycles` | Cycle counter; `completed_at` when top milestone reached. |
@@ -166,23 +164,21 @@ One `/scanner` page; camera payload determines the action:
 
 | QR type | Payload | API |
 |---------|---------|-----|
-| **Stamp (My QR)** | `flotory:member:{user_stamp_token}` | `POST /api/venues/{venue}/scanner/scan` or `.../stamps` |
-| **Reward claim** | `flotory:redeem:{token}` or `/r/{token}` | `POST /api/venues/{venue}/scanner/redeem` or unified `scan` |
+| **Stamp card** | Customer `qr_token` (UUID) | `POST /api/venues/{venue}/scanner/stamps` |
+| **Reward claim** | `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
 
-Parsed via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`. `ScannerService` resolves user → customer at scanner venue (auto-join). Legacy per-card `customers.qr_token` only if `LOYALTY_LEGACY_CARD_QR=true` (Phase 3 default: off). Staff manual fallback: `customer_id` on `.../stamps`.
+Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
 
-Customer stamp QR: `GET /api/customer/stamp-qr`. **`qr_token` is not exposed** on customer API responses.
-
-After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI: ask guest to open **Rewards → Claim**, not My QR).
+After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an info banner: ask the customer to open **Rewards → Claim**, not the stamp card).
 
 ### Customer reward claim (QR)
 
 1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
 2. Tap **Claim** → `POST /api/customer/rewards/unlocks/{unlock}/claim-session` → short-lived `redemption_requests` row (10 min TTL)
-3. Modal shows claim QR (`flotory:redeem:…`); customer polls claim session until `status: claimed`
+3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
 4. Staff scans claim QR on the same scanner → redeem flow above
 
-Claim QRs never appear on wallet/My QR — stamps only there.
+`/wallet` detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
 
 ### Staff claim (manual fallback)
 
@@ -201,7 +197,7 @@ Claim QRs never appear on wallet/My QR — stamps only there.
 ### Realtime (optional)
 
 - Channel: `customer.{customerId}` (authorized via `customers.user_id`)
-- Events: `.stamp.added`, `.reward.redeemed`
+- Event: `.stamp.added`
 - Auth: `POST /api/broadcasting/auth`
 
 ## Frontend Structure

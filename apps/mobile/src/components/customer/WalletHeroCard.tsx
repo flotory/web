@@ -6,7 +6,6 @@ import WalletStampDashes from './WalletStampDashes'
 import PressableCard from '../ui/PressableCard'
 import { formatVenueCategoryLabel } from '../../lib/format'
 import { venueCoverUrl } from '../../lib/media'
-import { walletMilestoneProgress } from '../../lib/walletMilestoneProgress'
 import { withAppFont } from '../../lib/typography'
 import { walletCard } from '../../theme'
 import type { WalletCard } from '../../types/loyalty'
@@ -30,7 +29,10 @@ interface WalletHeroCardProps {
 }
 
 export default function WalletHeroCard({ item }: WalletHeroCardProps) {
-  const { current, target, toNext } = walletMilestoneProgress(item.summary, item.stamps)
+  const summary = item.summary
+  const max = Math.max(summary?.max_stamps ?? 10, 1)
+  const stamps = Math.min(summary?.stamps ?? item.stamps, max)
+  const toNext = summary?.stamps_to_next ?? Math.max(max - stamps, 0)
   const cover = venueCoverUrl(item.venue ?? undefined)
   const categoryLabel = formatVenueCategoryLabel(item.venue?.category)
   const gradient = overlayColors(item.venue?.category)
@@ -74,10 +76,10 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
           />
 
           <View style={{ flex: 1, padding: 18, justifyContent: 'space-between' }}>
-            <View style={{ flexShrink: 0 }}>
+            <View>
               <Text
                 style={withAppFont({
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: '800',
                   color: '#FFFFFF',
                   letterSpacing: -0.5,
@@ -93,67 +95,43 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                   fontWeight: '600',
                   color: 'rgba(255,255,255,0.82)',
                 })}
-                numberOfLines={1}
               >
                 {categoryLabel}
               </Text>
             </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                gap: 12,
-                marginTop: 12,
-              }}
-            >
-              <View style={{ flex: 1, flexShrink: 1, minWidth: 0, paddingRight: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'nowrap' }}>
-                  <Text
-                    style={withAppFont({
-                      fontSize: 22,
-                      fontWeight: '800',
-                      color: '#FFFFFF',
-                      lineHeight: 26,
-                    })}
-                  >
-                    {current}
-                  </Text>
-                  <Text
-                    style={withAppFont({
-                      marginLeft: 4,
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: 'rgba(255,255,255,0.9)',
-                      lineHeight: 20,
-                    })}
-                  >
-                    {` / ${target} stamps`}
-                  </Text>
-                </View>
-                <WalletStampDashes filled={current} total={target} />
-              </View>
-              <View style={{ width: 92, flexShrink: 0, alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
                 <Text
                   style={withAppFont({
-                    fontSize: 36,
+                    fontSize: 15,
+                    fontWeight: '700',
+                    color: 'rgba(255,255,255,0.9)',
+                  })}
+                >
+                  <Text style={{ fontSize: 22, fontWeight: '800' }}>{stamps}</Text>
+                  {` / ${max} stamps`}
+                </Text>
+                <WalletStampDashes filled={stamps} total={max} />
+              </View>
+              <View style={{ alignItems: 'flex-end', minWidth: 88 }}>
+                <Text
+                  style={withAppFont({
+                    fontSize: 40,
                     fontWeight: '800',
                     color: '#FFFFFF',
-                    lineHeight: 38,
+                    lineHeight: 42,
                   })}
                 >
                   {toNext}
                 </Text>
                 <Text
                   style={withAppFont({
-                    marginTop: 2,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: '600',
                     color: 'rgba(255,255,255,0.75)',
                     textAlign: 'right',
                   })}
-                  numberOfLines={2}
                 >
                   {toNext === 1 ? 'stamp to go' : 'stamps to go'}
                 </Text>

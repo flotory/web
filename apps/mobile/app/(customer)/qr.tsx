@@ -7,11 +7,11 @@ import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import StateCard from '../../src/components/ui/StateCard'
 import { useStampQr } from '../../src/hooks/useStampQr'
 import { hapticSuccess } from '../../src/lib/haptics'
-import { colors, radius, space, type as typography } from '../../src/theme'
+import { colors, radius, space, tabBar, type as typography } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
 
 /** Matches `(customer)/_layout.tsx` tab bar height */
-const TAB_BAR_HEIGHT = 78
+const TAB_BAR_HEIGHT = tabBar.height
 
 export default function CustomerQrScreen() {
   const insets = useSafeAreaInsets()

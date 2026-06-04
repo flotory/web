@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
+import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import QrImage from '../../src/components/QrImage'
 import RewardRedeemedCelebration from '../../src/components/loyalty/RewardRedeemedCelebration'
 import { apiRequest } from '../../src/lib/api'
@@ -143,11 +144,13 @@ export default function ClaimScreen() {
   }
 
   return (
-    <ScreenGradientLayout scrollable tabBarInset={false} paddingTop={insets.top + 8}>
+    <ScreenGradientLayout
+      scrollable
+      tabBarInset={false}
+      paddingTop={0}
+      fixedHeader={<StickyBackHeader onPress={handleBack} topInset={insets.top} />}
+    >
       <View style={{ paddingHorizontal: space.screenX, gap: 12 }}>
-        <Pressable onPress={handleBack} style={{ marginTop: 2 }}>
-          <Text style={withAppFont({ color: colors.ink, fontWeight: '700' })}>← Back</Text>
-        </Pressable>
         {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
         {session?.status === 'pending' ? (

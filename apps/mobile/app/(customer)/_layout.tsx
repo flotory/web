@@ -1,11 +1,10 @@
 import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Pressable, View } from 'react-native'
 
+import CustomerTabBar from '../../src/components/navigation/CustomerTabBar'
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { fonts } from '../../src/lib/typography'
-import { colors, screenWallpaperBaseColor, shadows, tabBarQr } from '../../src/theme'
+import { colors } from '../../src/theme'
 
 export default function CustomerTabsLayout() {
   const { token, role } = useAuth()
@@ -28,6 +27,7 @@ export default function CustomerTabsLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <CustomerTabBar {...props} />}
       screenListeners={{
         tabPress: () => {
           hapticTabChange()
@@ -37,18 +37,6 @@ export default function CustomerTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
-        tabBarStyle: {
-          height: 78,
-          paddingTop: 8,
-          paddingBottom: 10,
-          borderTopColor: 'rgba(98, 72, 48, 0.14)',
-          backgroundColor: screenWallpaperBaseColor(),
-        },
-        tabBarLabelStyle: {
-          fontFamily: fonts.semiBold,
-          fontSize: 12,
-          fontWeight: '600',
-        },
       }}
     >
       <Tabs.Screen
@@ -76,33 +64,7 @@ export default function CustomerTabsLayout() {
         options={{
           title: 'My QR',
           href: role === 'customer' ? undefined : null,
-          tabBarIcon: () => (
-            <View
-              style={{
-                width: tabBarQr.size,
-                height: tabBarQr.size,
-                borderRadius: tabBarQr.size / 2,
-                backgroundColor: colors.ink,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 18,
-                borderWidth: 3,
-                borderColor: colors.bg,
-                ...shadows.md,
-              }}
-            >
-              <Ionicons name="qr-code" size={tabBarQr.iconSize} color={colors.bg} />
-            </View>
-          ),
           tabBarLabel: () => null,
-          tabBarButton: ({ ref: _ref, ...props }) => (
-            <Pressable
-              {...props}
-              style={[props.style, { top: -tabBarQr.lift }]}
-              accessibilityRole="button"
-              accessibilityLabel="My QR"
-            />
-          ),
         }}
       />
       <Tabs.Screen
@@ -133,6 +95,13 @@ export default function CustomerTabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'gift' : 'gift-outline'} color={color} size={size} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          href: null,
         }}
       />
     </Tabs>

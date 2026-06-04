@@ -36,9 +36,6 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate
 echo "==> Running migrations..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
-echo "==> Backfilling universal stamp tokens (v2)..."
-docker compose -f docker-compose.prod.yml exec -T app php artisan app:backfill-user-stamp-tokens || true
-
 echo "==> Ensuring super admin account..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --class=AdminUserSeeder --force
 

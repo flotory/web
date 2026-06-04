@@ -1,16 +1,16 @@
-import { Link, useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Pressable, RefreshControl, Text, View } from 'react-native'
+import { Animated, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
 import CardLoyaltyProgressCard from '../../src/components/customer/CardLoyaltyProgressCard'
 import CardPromotionBanner from '../../src/components/customer/CardPromotionBanner'
-import CardShowQrCta from '../../src/components/customer/CardShowQrCta'
+import CardRewardReadySection from '../../src/components/customer/CardRewardReadySection'
 import StampRewardCelebration from '../../src/components/loyalty/StampRewardCelebration'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
-import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
+import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { useCardDetail } from '../../src/hooks/useCardDetail'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
@@ -18,8 +18,7 @@ import { hapticSuccess } from '../../src/lib/haptics'
 import { rewardEarnedThisScan, slotsForStampIncrease, stampUpdateSignature } from '../../src/lib/stampLiveUpdate'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
 import type { StampAddedPayload } from '../../src/types/realtime'
-import { colors, radius, space } from '../../src/theme'
-import { withAppFont } from '../../src/lib/typography'
+import { colors, space } from '../../src/theme'
 
 export default function CardDetailScreen() {
   const router = useRouter()
@@ -165,13 +164,12 @@ export default function CardDetailScreen() {
   const card = payload?.active_card
   const cardMismatch = Boolean(params.cardId && card && String(card.id) !== String(params.cardId))
 
+  const stickyBack = <StickyBackHeader onPress={handleBack} topInset={insets.top} />
+
   if (!venueId || !card || cardMismatch) {
     return (
-      <ScreenGradientLayout flexContent tabBarInset={false} paddingTop={insets.top + 8}>
+      <ScreenGradientLayout flexContent tabBarInset={false} paddingTop={0} fixedHeader={stickyBack}>
         <View style={{ paddingHorizontal: space.screenX }}>
-          <Pressable onPress={handleBack}>
-            <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
-          </Pressable>
           <View style={{ marginTop: space.sectionY }}>
             <StateCard
               emoji="🎫"
@@ -186,10 +184,40 @@ export default function CardDetailScreen() {
     )
   }
 
-  const nextReward = payload?.next_reward
   const stamps = displayStamps ?? card.stamps
-  const progressTarget = nextReward?.required_stamps ?? maxStamps
   const milestones = [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps)
+  const apiNext = payload?.next_reward ?? null
+
+  let progressNextReward = apiNext
+  let progressTarget = apiNext?.required_stamps ?? maxStamps
+
+  if (readyReward) {
+    if (apiNext && stamps < apiNext.required_stamps) {
+      progressNextReward = apiNext
+      progressTarget = apiNext.required_stamps
+    } else {
+      const upcoming = milestones.find(
+        (m) =>
+          !m.claimed &&
+          m.id !== readyReward.id &&
+          m.required_stamps > (readyReward.required_stamps ?? 0) &&
+          stamps < m.required_stamps,
+      )
+      if (upcoming) {
+        progressNextReward = {
+          id: upcoming.id,
+          title: upcoming.title,
+          required_stamps: upcoming.required_stamps,
+          image: upcoming.image,
+          image_thumb: upcoming.image_thumb,
+        }
+        progressTarget = upcoming.required_stamps
+      } else {
+        progressNextReward = apiNext
+        progressTarget = maxStamps
+      }
+    }
+  }
   const promotion = payload?.promotion
 
   return (
@@ -197,14 +225,12 @@ export default function CardDetailScreen() {
       scrollable
       tabBarInset={false}
       paddingTop={0}
+      fixedHeader={stickyBack}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
       contentContainerStyle={{ paddingBottom: insets.bottom + 28 }}
     >
       {error ? (
-        <View style={{ paddingHorizontal: space.screenX, paddingTop: insets.top + 12 }}>
-          <Pressable onPress={handleBack}>
-            <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
-          </Pressable>
+        <View style={{ paddingHorizontal: space.screenX }}>
           <View style={{ marginTop: 12 }}>
             <StateCard
               emoji="⚠️"
@@ -218,52 +244,25 @@ export default function CardDetailScreen() {
       ) : null}
 
       <Animated.View style={{ opacity: fade }}>
-        <CardDetailHeader venue={card.venue} topInset={insets.top} onBack={handleBack} />
+        <CardDetailHeader venue={card.venue} />
 
         {promotion ? <CardPromotionBanner promotion={promotion} /> : null}
 
         <CardLoyaltyProgressCard
           stamps={stamps}
           progressTarget={progressTarget}
-          nextReward={nextReward}
-          rewardReady={Boolean(readyReward)}
-          readyRewardTitle={readyReward?.title}
+          nextReward={progressNextReward}
           milestones={milestones}
           animatingSlots={animatingSlots}
         />
 
-        <CardShowQrCta />
-
         {readyReward ? (
-          <View
-            style={{
-              marginTop: space.sectionGap,
-              marginBottom: 8,
-              marginHorizontal: space.screenX,
-              backgroundColor: colors.successBg,
-              borderRadius: radius.card,
-              padding: space.cardPad,
-              borderWidth: 1,
-              borderColor: colors.successBorder,
-            }}
-          >
-            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.success, letterSpacing: 0.6 })}>
-              REWARD READY
-            </Text>
-            <Text style={withAppFont({ marginTop: 8, fontSize: 24, fontWeight: '800', color: colors.ink })}>
-              {readyReward.title}
-            </Text>
-            {readyUnlock ? (
-              <Link
-                href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(readyUnlock.unlock_id) } }}
-                asChild
-              >
-                <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} />
-              </Link>
-            ) : (
-              <PrimaryButton label="Claim reward" style={{ marginTop: 16 }} onPress={() => void refresh()} />
-            )}
-          </View>
+          <CardRewardReadySection
+            reward={readyReward}
+            venue={card.venue}
+            unlockId={readyUnlock?.unlock_id}
+            onRefresh={() => void refresh()}
+          />
         ) : null}
       </Animated.View>
 
