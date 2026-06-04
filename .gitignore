@@ -17,6 +17,7 @@
 /.env.secrets
 /.env.local
 /deploy/config.sh
+/deploy/config.secrets.sh
 /.phpunit.result.cache
 /.phpunit.cache
 /test-results/

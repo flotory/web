@@ -16,7 +16,7 @@ Mac: edit code → git commit → ./deploy/push-prod.sh
 
 Production deploy **does not run** if:
 - local CI fails (backend PHPUnit or frontend build/unit tests), or
-- `GITHUB_TOKEN` is missing from `deploy/config.sh`, or
+- `GITHUB_TOKEN` is missing (`deploy/config.secrets.sh` or env), or
 - the GitHub **Tests** workflow fails on the pushed commit.
 
 Local CI uses Docker for PHPUnit when PHP is not installed on your Mac.
@@ -62,7 +62,7 @@ git push origin main
 
 ## Every release
 
-1. Add `GITHUB_TOKEN` to `deploy/config.sh` (see `deploy/config.example.sh`).
+1. One-time: `cp deploy/config.secrets.example.sh deploy/config.secrets.sh` and set `GITHUB_TOKEN` (see comments in that file). `config.secrets.sh` is gitignored.
 2. Commit and deploy:
 
 ```bash

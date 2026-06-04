@@ -64,7 +64,7 @@ That script:
 
 1. Runs local PHPUnit + frontend build (same as CI)  
 2. Pushes `main` to GitHub  
-3. Waits for GitHub Actions **Tests** to pass (`GITHUB_TOKEN` in `deploy/config.sh`)  
+3. Waits for GitHub Actions **Tests** to pass (`GITHUB_TOKEN` in `deploy/config.secrets.sh`)  
 4. SSHs to the droplet and runs `git pull` + `deploy/deploy.sh`
 
 Broken tests no longer reach production unless you explicitly use `SKIP_CI_GATE=1`.

@@ -13,6 +13,17 @@ fi
 # shellcheck source=/dev/null
 source "${CONFIG}"
 
+SECRETS="${ROOT}/deploy/config.secrets.sh"
+if [[ -f "${SECRETS}" ]]; then
+  # shellcheck source=/dev/null
+  source "${SECRETS}"
+fi
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+
+if [[ -z "${GITHUB_TOKEN}" ]] && command -v gh >/dev/null 2>&1; then
+  GITHUB_TOKEN="$(gh auth token 2>/dev/null || true)"
+fi
+
 BRANCH="${GIT_BRANCH:-main}"
 SSH_TARGET="${DROPLET_USER}@${DROPLET_HOST}"
 export GITHUB_REPO="${GITHUB_REPO:-flotory/web}"
@@ -28,9 +39,12 @@ if [[ "${SKIP_CI_GATE:-}" == "1" ]]; then
 else
   if [[ -z "${GITHUB_TOKEN:-}" ]]; then
     echo ""
-    echo "ERROR: GITHUB_TOKEN is not set in deploy/config.sh"
-    echo "Deploy requires GitHub Actions to pass after push. Add a token with Actions read access."
-    echo "See deploy/config.example.sh — or use SKIP_CI_GATE=1 for emergency deploys only."
+    echo "ERROR: GITHUB_TOKEN is not set."
+    echo "Deploy requires GitHub Actions to pass after push."
+    echo "  cp deploy/config.secrets.example.sh deploy/config.secrets.sh"
+    echo "  # edit config.secrets.sh — fine-grained token: flotory/web, Actions (read)"
+    echo "Or: export GITHUB_TOKEN=... / install gh and gh auth login"
+    echo "Emergency only: SKIP_CI_GATE=1 ./deploy/push-prod.sh"
     exit 1
   fi
 
