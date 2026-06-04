@@ -4,6 +4,7 @@ import { Pressable, Text, TextInput, View } from 'react-native'
 
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../src/lib/api'
+import { withAppFont } from '../src/lib/typography'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors } from '../src/theme'
 
@@ -43,7 +44,7 @@ export default function LoginScreen() {
   return (
     <ScreenGradientLayout scrollable tabBarInset={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
     <View style={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 28, fontWeight: '800' }}>Flotory Mobile</Text>
+      <Text style={withAppFont({ fontSize: 28, fontWeight: '800' })}>Flotory Mobile</Text>
       <Text style={{ color: colors.inkMuted }}>
         {isRegisterMode ? 'Create your account' : 'Sign in'}
       </Text>
@@ -72,7 +73,7 @@ export default function LoginScreen() {
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
 
-      {error ? <Text style={{ color: colors.danger, fontWeight: '600' }}>{error}</Text> : null}
+      {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
       <Pressable
         onPress={handleAuth}
@@ -85,13 +86,13 @@ export default function LoginScreen() {
           opacity: submitting ? 0.6 : 1,
         }}
       >
-        <Text style={{ color: colors.primaryText, fontWeight: '700' }}>
+        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '700' })}>
           {submitting ? 'Please wait...' : isRegisterMode ? 'Create account' : 'Sign in'}
         </Text>
       </Pressable>
 
       <Pressable onPress={() => setIsRegisterMode((value) => !value)} style={{ alignItems: 'center', paddingTop: 2 }}>
-        <Text style={{ color: colors.inkMuted, fontWeight: '600' }}>
+        <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '600' })}>
           {isRegisterMode ? 'Already have an account? Sign in' : 'New customer? Create account'}
         </Text>
       </Pressable>

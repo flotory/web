@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native'
 
 import { colors } from '../../theme'
+import { withAppFont } from '../../lib/typography'
 
 interface RewardJourneyRibbonProps {
   value: number
@@ -51,11 +52,11 @@ export default function RewardJourneyRibbon({ value, target, checkpoints = [] }:
               }}
             >
               <Text
-                style={{
+                style={withAppFont({
                   fontSize: 11,
                   fontWeight: '700',
                   color: unlocked ? colors.accent : colors.inkMuted,
-                }}
+                })}
               >
                 {isNext ? `Next ${checkpoint}` : unlocked ? `Unlocked ${checkpoint}` : `${checkpoint}`}
               </Text>

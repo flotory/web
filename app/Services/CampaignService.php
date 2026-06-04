@@ -147,14 +147,25 @@ class CampaignService
                         'venue_name' => $venue->name,
                     ],
                 );
-
-                if (count($items) >= $limit) {
-                    return $items;
-                }
             }
         }
 
-        return $items;
+        usort($items, function (array $a, array $b): int {
+            if ($a['applies_now'] !== $b['applies_now']) {
+                return $b['applies_now'] <=> $a['applies_now'];
+            }
+
+            if ($a['multiplier'] !== $b['multiplier']) {
+                return $b['multiplier'] <=> $a['multiplier'];
+            }
+
+            $daysA = $a['days_left'] ?? 9999;
+            $daysB = $b['days_left'] ?? 9999;
+
+            return $daysA <=> $daysB;
+        });
+
+        return array_slice($items, 0, $limit);
     }
 
     /**

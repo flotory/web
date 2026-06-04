@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native'
 
 import { ApiError, apiRequest } from '../src/lib/api'
+import { hapticSuccess } from '../src/lib/haptics'
 import { useAuth } from '../src/providers/AuthProvider'
+import { withAppFont } from '../src/lib/typography'
 
 interface VenueSummary {
   id: number
@@ -145,12 +147,14 @@ export default function ScannerScreen() {
 
       if (response.scan_type === 'redeem') {
         const customerName = response.customer.user?.name ?? 'Customer'
+        hapticSuccess()
         setStatus('success')
         setMessage(`Redeemed ${response.reward.title} for ${customerName}.`)
       } else {
         const added = response.added_stamps ?? stamps
         const customerName = response.customer.user?.name ?? 'Customer'
         const venueLabel = selectedVenue?.name ?? 'this venue'
+        hapticSuccess()
         setStatus('success')
         setMessage(
           response.joined_on_scan
@@ -185,6 +189,7 @@ export default function ScannerScreen() {
       })
       const customerName = selectedCustomer.user?.name ?? 'Customer'
       const venueLabel = selectedVenue?.name ?? 'this venue'
+      hapticSuccess()
       setStatus('success')
       setMessage(`+${stamps} ${stamps === 1 ? 'stamp' : 'stamps'} for ${customerName} at ${venueLabel}.`)
       setSelectedCustomer(null)
@@ -204,13 +209,13 @@ export default function ScannerScreen() {
   if (!permission.granted) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', padding: 20, gap: 10, backgroundColor: '#f8fafc' }}>
-        <Text style={{ fontSize: 22, fontWeight: '800' }}>Scanner permission needed</Text>
+        <Text style={withAppFont({ fontSize: 22, fontWeight: '800' })}>Scanner permission needed</Text>
         <Text style={{ color: '#475569' }}>Allow camera to scan customer and claim QR codes.</Text>
         <Pressable
           onPress={requestPermission}
           style={{ backgroundColor: '#0f172a', borderRadius: 999, padding: 12, alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>Grant camera access</Text>
+          <Text style={withAppFont({ color: '#fff', fontWeight: '700' })}>Grant camera access</Text>
         </Pressable>
       </View>
     )
@@ -219,7 +224,7 @@ export default function ScannerScreen() {
   if (role !== 'owner' && role !== 'staff') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', padding: 20, gap: 10, backgroundColor: '#f8fafc' }}>
-        <Text style={{ fontSize: 22, fontWeight: '800' }}>Staff scanner only</Text>
+        <Text style={withAppFont({ fontSize: 22, fontWeight: '800' })}>Staff scanner only</Text>
         <Text style={{ color: '#475569' }}>
           Your account does not have staff/owner scanner access for any venue.
         </Text>
@@ -236,7 +241,7 @@ export default function ScannerScreen() {
         onBarcodeScanned={loadingVenues || !selectedVenueId || submitting ? undefined : handleScan}
       />
       <View style={{ position: 'absolute', top: 18, left: 16, right: 16, backgroundColor: 'rgba(15,23,42,0.82)', borderRadius: 14, padding: 12 }}>
-        <Text style={{ color: '#fff', fontWeight: '700' }}>
+        <Text style={withAppFont({ color: '#fff', fontWeight: '700' })}>
           {selectedVenue ? `Scanner · ${selectedVenue.name}` : 'Scanner'}
         </Text>
         <Text style={{ color: '#cbd5e1', marginTop: 3 }}>
@@ -257,13 +262,13 @@ export default function ScannerScreen() {
                 paddingHorizontal: 10,
               }}
             >
-              <Text style={{ color: selectedVenueId === venue.id ? '#0f172a' : '#fff', fontWeight: '700', fontSize: 12 }}>
+              <Text style={withAppFont({ color: selectedVenueId === venue.id ? '#0f172a' : '#fff', fontWeight: '700', fontSize: 12 })}>
                 {venue.name}
               </Text>
             </Pressable>
           ))}
         </View>
-        <Text style={{ color: '#e2e8f0', fontWeight: '700' }}>Stamps per scan</Text>
+        <Text style={withAppFont({ color: '#e2e8f0', fontWeight: '700' })}>Stamps per scan</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {[1, 2, 3, 4, 5].map((value) => (
             <Pressable
@@ -276,11 +281,11 @@ export default function ScannerScreen() {
                 paddingHorizontal: 12,
               }}
             >
-              <Text style={{ color: stamps === value ? '#0f172a' : '#fff', fontWeight: '800' }}>{value}</Text>
+              <Text style={withAppFont({ color: stamps === value ? '#0f172a' : '#fff', fontWeight: '800' })}>{value}</Text>
             </Pressable>
           ))}
         </View>
-        <Text style={{ color: status === 'error' ? '#fecaca' : '#cbd5e1', fontWeight: '600' }}>
+        <Text style={withAppFont({ color: status === 'error' ? '#fecaca' : '#cbd5e1', fontWeight: '600' })}>
           {submitting ? 'Processing scan...' : message}
         </Text>
 
@@ -322,7 +327,7 @@ export default function ScannerScreen() {
                 minWidth: 150,
               }}
             >
-              <Text style={{ color: selectedCustomer?.id === item.id ? '#0f172a' : '#fff', fontWeight: '700' }}>
+              <Text style={withAppFont({ color: selectedCustomer?.id === item.id ? '#0f172a' : '#fff', fontWeight: '700' })}>
                 {item.user?.name ?? 'Customer'}
               </Text>
               <Text style={{ color: selectedCustomer?.id === item.id ? '#334155' : '#cbd5e1', fontSize: 12 }}>
@@ -341,7 +346,7 @@ export default function ScannerScreen() {
             backgroundColor: !selectedCustomer || submitting ? 'rgba(148,163,184,0.3)' : '#fff',
           }}
         >
-          <Text style={{ color: !selectedCustomer || submitting ? '#cbd5e1' : '#0f172a', fontWeight: '800' }}>
+          <Text style={withAppFont({ color: !selectedCustomer || submitting ? '#cbd5e1' : '#0f172a', fontWeight: '800' })}>
             Add stamp to selected customer
           </Text>
         </Pressable>

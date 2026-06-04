@@ -7,11 +7,12 @@ import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
+import { withAppFont } from '../src/lib/typography'
 
 function ProfileRow({ label, onPress }: { label: string; onPress?: () => void }) {
   return (
     <Pressable style={{ paddingVertical: 12 }} onPress={onPress}>
-      <Text style={{ fontSize: 16, color: colors.ink, fontWeight: '500' }}>{label}</Text>
+      <Text style={withAppFont({ fontSize: 16, color: colors.ink, fontWeight: '500' })}>{label}</Text>
     </Pressable>
   )
 }
@@ -51,9 +52,9 @@ export default function SettingsScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: colors.primaryText, fontSize: 28, fontWeight: '800' }}>{initials}</Text>
+            <Text style={withAppFont({ color: colors.primaryText, fontSize: 28, fontWeight: '800' })}>{initials}</Text>
           </View>
-          <Text style={{ marginTop: 14, fontSize: 22, fontWeight: '700', color: colors.ink }}>{user?.name ?? 'Guest'}</Text>
+          <Text style={withAppFont({ marginTop: 14, fontSize: 22, fontWeight: '700', color: colors.ink })}>{user?.name ?? 'Guest'}</Text>
           <Text style={{ ...typography.body, marginTop: 4 }}>{user?.email}</Text>
         </View>
 
@@ -81,7 +82,7 @@ export default function SettingsScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink }}>{item.value}</Text>
+              <Text style={withAppFont({ fontSize: 22, fontWeight: '800', color: colors.ink })}>{item.value}</Text>
               <Text style={{ ...typography.caption, marginTop: 4 }}>{item.label}</Text>
             </View>
           ))}
@@ -99,7 +100,7 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityLabel="Discover venues"
         >
-          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.ink }}>Discover venues</Text>
+          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>Discover venues</Text>
         </Pressable>
 
         <View
@@ -137,7 +138,7 @@ export default function SettingsScreen() {
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: colors.danger, fontWeight: '800', fontSize: 16 }}>Sign out</Text>
+            <Text style={withAppFont({ color: colors.danger, fontWeight: '800', fontSize: 16 })}>Sign out</Text>
           </Pressable>
         </View>
       </View>

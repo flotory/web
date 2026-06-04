@@ -1,3 +1,5 @@
+import { fonts } from './lib/typography'
+
 export const colors = {
   bg: '#F8FAFC',
   surface: '#FFFFFF',
@@ -72,6 +74,12 @@ export const media = {
   coverHeight: 140,
 } as const
 
+/** Apple Wallet–style stacked cards on the wallet screen */
+export const walletStack = {
+  peek: 52,
+  cardHeight: 308,
+} as const
+
 export const motion = {
   fadeInMs: 300,
   pressScale: 0.985,
@@ -127,9 +135,45 @@ export const shadows = {
 } as const
 
 export const type = {
-  hero: { fontSize: 34, fontWeight: '800' as const, color: colors.ink, letterSpacing: -0.5 },
-  section: { fontSize: 22, fontWeight: '600' as const, color: colors.ink },
-  body: { fontSize: 16, color: colors.inkMuted, lineHeight: 22 },
-  caption: { fontSize: 13, color: colors.inkSoft },
-  label: { fontSize: 12, fontWeight: '700' as const, letterSpacing: 0.6, color: colors.inkSoft },
+  hero: {
+    fontFamily: fonts.extraBold,
+    fontSize: 34,
+    fontWeight: '800' as const,
+    color: colors.ink,
+    letterSpacing: -0.35,
+    lineHeight: 40,
+  },
+  section: {
+    fontFamily: fonts.semiBold,
+    fontSize: 22,
+    fontWeight: '600' as const,
+    color: colors.ink,
+    letterSpacing: -0.2,
+    lineHeight: 28,
+  },
+  body: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    fontWeight: '400' as const,
+    color: colors.inkMuted,
+    lineHeight: 24,
+  },
+  caption: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.inkSoft,
+    lineHeight: 18,
+  },
+  label: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    fontWeight: '700' as const,
+    letterSpacing: 0.45,
+    color: colors.inkSoft,
+    textTransform: 'uppercase' as const,
+  },
 }
+
+/** Default for screens that set Text defaultProps in root layout. */
+export const defaultFontFamily = fonts.regular

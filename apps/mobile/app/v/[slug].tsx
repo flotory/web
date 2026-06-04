@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { ApiError, apiRequest } from '../../src/lib/api'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors } from '../../src/theme'
+import { withAppFont } from '../../src/lib/typography'
 
 interface LandingPayload {
   venue: {
@@ -78,14 +79,14 @@ export default function VenueJoinScreen() {
 
   return (
     <View style={{ flex: 1, padding: 20, backgroundColor: colors.bg, gap: 12 }}>
-      <Text style={{ marginTop: 24, fontSize: 28, fontWeight: '800' }}>
+      <Text style={withAppFont({ marginTop: 24, fontSize: 28, fontWeight: '800' })}>
         {landing?.venue.name ?? 'Venue'}
       </Text>
       {landing?.venue.address ? <Text style={{ color: colors.inkMuted }}>{landing.venue.address}</Text> : null}
       <Text style={{ color: colors.inkMuted }}>Join this venue to collect stamps and claim rewards in-app.</Text>
 
       <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 14 }}>
-        <Text style={{ fontWeight: '700' }}>Milestones</Text>
+        <Text style={withAppFont({ fontWeight: '700' })}>Milestones</Text>
         {landing?.milestones.slice(0, 4).map((milestone) => (
           <Text key={milestone.id} style={{ marginTop: 6, color: colors.inkMuted }}>
             🎁 {milestone.required_stamps} stamps - {milestone.title}
@@ -100,7 +101,7 @@ export default function VenueJoinScreen() {
         disabled={joining}
         style={{ backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: 'center', opacity: joining ? 0.6 : 1 }}
       >
-        <Text style={{ color: colors.primaryText, fontWeight: '800' }}>
+        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800' })}>
           {joining ? 'Joining...' : token ? 'Join venue' : 'Login to join'}
         </Text>
       </Pressable>

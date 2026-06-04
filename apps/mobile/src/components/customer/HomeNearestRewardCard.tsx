@@ -9,6 +9,7 @@ import ShakeGiftBadge from '../ui/ShakeGiftBadge'
 import { colors, radius, shadows, space, type as typography } from '../../theme'
 import type { RewardWalletItem, WalletCard } from '../../types/loyalty'
 import ProgressRing from './ProgressRing'
+import { withAppFont } from '../../lib/typography'
 
 export type NearestRewardFocus =
   | { kind: 'ready'; item: RewardWalletItem }
@@ -69,7 +70,7 @@ export default function HomeNearestRewardCard({ focus }: HomeNearestRewardCardPr
         {!isReady ? (
           <View style={{ alignItems: 'center', justifyContent: 'center' }}>
             <ProgressRing value={currentToNext} max={nextTarget} size={58} />
-            <Text style={{ ...typography.caption, marginTop: 4, fontWeight: '700' }}>
+            <Text style={withAppFont({ ...typography.caption, marginTop: 4, fontWeight: '700' })}>
               {currentToNext}/{nextTarget}
             </Text>
           </View>
@@ -77,18 +78,18 @@ export default function HomeNearestRewardCard({ focus }: HomeNearestRewardCardPr
           <ShakeGiftBadge />
         )}
         <View style={{ flex: 1 }}>
-          <Text style={{ ...typography.caption, color: colors.inkSoft, fontWeight: '600' }}>
+          <Text style={withAppFont({ ...typography.caption, color: colors.inkSoft, fontWeight: '600' })}>
             {isReady ? 'Ready to claim' : `You're ${toNext} ${toNext === 1 ? 'stamp' : 'stamps'} away`}
           </Text>
-          <Text style={{ marginTop: 4, fontSize: 20, fontWeight: '800', color: colors.ink, lineHeight: 26 }}>
+          <Text style={withAppFont({ marginTop: 4, fontSize: 20, fontWeight: '800', color: colors.ink, lineHeight: 26 })}>
             {isReady ? title : `Your next reward`}
           </Text>
           {!isReady ? (
-            <Text style={{ marginTop: 4, fontSize: 15, fontWeight: '700', color: colors.inkMuted }}>{title}</Text>
+            <Text style={withAppFont({ marginTop: 4, fontSize: 15, fontWeight: '700', color: colors.inkMuted })}>{title}</Text>
           ) : null}
           <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Ionicons name="location-outline" size={14} color={colors.inkMuted} />
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.inkMuted }}>{venue?.name ?? 'Venue'}</Text>
+            <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: colors.inkMuted })}>{venue?.name ?? 'Venue'}</Text>
           </View>
         </View>
       </View>
@@ -136,7 +137,7 @@ export default function HomeNearestRewardCard({ focus }: HomeNearestRewardCardPr
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ ...typography.caption, color: colors.inkSoft }}>{isReady ? 'Claim in store' : 'Up next'}</Text>
-          <Text style={{ marginTop: 2, fontSize: 16, fontWeight: '800', color: colors.ink }}>{title}</Text>
+          <Text style={withAppFont({ marginTop: 2, fontSize: 16, fontWeight: '800', color: colors.ink })}>{title}</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
       </View>

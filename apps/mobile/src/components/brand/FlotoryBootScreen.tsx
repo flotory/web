@@ -1,6 +1,7 @@
 import { ActivityIndicator, Image, Text, View } from 'react-native'
 
 import { colors } from '../../theme'
+import { withAppFont } from '../../lib/typography'
 
 const flotoryIcon = require('../../../assets/flotory-icon.png')
 
@@ -20,7 +21,7 @@ export default function FlotoryBootScreen({ message }: FlotoryBootScreenProps) {
       }}
     >
       <Image source={flotoryIcon} style={{ width: 96, height: 96, borderRadius: 22 }} resizeMode="contain" />
-      <Text style={{ marginTop: 16, fontSize: 28, fontWeight: '800', color: colors.ink, letterSpacing: -0.5 }}>
+      <Text style={withAppFont({ marginTop: 16, fontSize: 28, fontWeight: '800', color: colors.ink, letterSpacing: -0.5 })}>
         Flotory
       </Text>
       {message ? <Text style={{ marginTop: 8, fontSize: 15, color: colors.inkMuted, textAlign: 'center' }}>{message}</Text> : null}

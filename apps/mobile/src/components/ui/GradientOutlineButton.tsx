@@ -1,6 +1,7 @@
 import { Text, View, type ViewStyle } from 'react-native'
 
 import { colors, radius, shadows } from '../../theme'
+import { withAppFont } from '../../lib/typography'
 
 interface GradientOutlineButtonProps {
   label: string
@@ -20,7 +21,7 @@ export default function GradientOutlineButton({ label, style }: GradientOutlineB
         ...style,
       }}
     >
-      <Text style={{ fontSize: 15, fontWeight: '800', color: colors.ink }}>{label}</Text>
+      <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.ink })}>{label}</Text>
     </View>
   )
 }

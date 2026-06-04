@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Animated, Pressable, Text, type ViewStyle } from 'react-native'
 
 import { hapticLightTap } from '../../lib/haptics'
+import { withAppFont } from '../../lib/typography'
 import { colors, motion, radius, shadows } from '../../theme'
 
 interface PrimaryButtonProps {
@@ -51,7 +52,7 @@ export default function PrimaryButton({ label, onPress, disabled, style, pulse =
           ...shadows.button,
         }}
       >
-        <Text style={{ color: colors.primaryText, fontWeight: '800', fontSize: 16 }}>{label}</Text>
+        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 16 })}>{label}</Text>
       </Animated.View>
     </Pressable>
   )

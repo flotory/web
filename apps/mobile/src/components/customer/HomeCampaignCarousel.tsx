@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-na
 
 import { colors, carousel, radius, space, type as typography } from '../../theme'
 import type { HomeCampaign } from '../../types/loyalty'
+import { withAppFont } from '../../lib/typography'
 
 interface HomeCampaignCarouselProps {
   campaigns: HomeCampaign[]
@@ -17,6 +18,59 @@ function CampaignCard({ campaign, width }: { campaign: HomeCampaign; width: numb
       ? `${campaign.days_left} day${campaign.days_left === 1 ? '' : 's'} left`
       : null
 
+  const card = (
+    <View
+      style={{
+        width,
+        backgroundColor: colors.plum,
+        borderRadius: radius.card,
+        padding: space.cardPad,
+        borderWidth: 1,
+        borderColor: campaign.applies_now ? colors.accentBorder : colors.primarySoft,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.lavenderBorder, letterSpacing: 0.4 })}>
+            {campaign.venue_name}
+          </Text>
+          <Text style={withAppFont({ marginTop: 6, fontSize: 20, fontWeight: '900', color: colors.primaryText, lineHeight: 26 })}>
+            {campaign.headline}
+          </Text>
+        </View>
+        <View
+          style={{
+            minWidth: 52,
+            height: 52,
+            borderRadius: 16,
+            backgroundColor: 'rgba(255,255,255,0.12)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={withAppFont({ fontSize: 22, fontWeight: '900', color: colors.primaryText })}>{campaign.multiplier}×</Text>
+        </View>
+      </View>
+      <Text
+        style={withAppFont({ marginTop: 10, fontSize: 14, fontWeight: '500', lineHeight: 20, color: 'rgba(248,250,252,0.88)' })}
+        numberOfLines={3}
+      >
+        {campaign.message}
+      </Text>
+      <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.primaryText })}>
+            {campaign.applies_now ? 'Active for you' : 'View details'}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.primaryText} />
+        </View>
+        {daysLabel ? (
+          <Text style={withAppFont({ fontSize: 12, fontWeight: '600', color: 'rgba(248,250,252,0.7)' })}>{daysLabel}</Text>
+        ) : null}
+      </View>
+    </View>
+  )
+
   return (
     <Link
       href={{
@@ -25,55 +79,8 @@ function CampaignCard({ campaign, width }: { campaign: HomeCampaign; width: numb
       }}
       asChild
     >
-      <Pressable
-        style={({ pressed }) => [
-          {
-            width,
-            opacity: pressed ? 0.94 : 1,
-            backgroundColor: colors.plum,
-            borderRadius: radius.card,
-            padding: space.cardPad,
-            borderWidth: 1,
-            borderColor: campaign.applies_now ? colors.lavenderBorder : colors.primarySoft,
-          },
-        ]}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.lavenderBorder, letterSpacing: 0.4 }}>
-              {campaign.venue_name}
-            </Text>
-            <Text style={{ marginTop: 6, fontSize: 20, fontWeight: '900', color: colors.primaryText, lineHeight: 26 }}>
-              {campaign.headline}
-            </Text>
-          </View>
-          <View
-            style={{
-              minWidth: 52,
-              height: 52,
-              borderRadius: 16,
-              backgroundColor: 'rgba(255,255,255,0.12)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.primaryText }}>{campaign.multiplier}×</Text>
-          </View>
-        </View>
-        <Text style={{ marginTop: 10, fontSize: 14, lineHeight: 20, color: 'rgba(248,250,252,0.88)' }} numberOfLines={3}>
-          {campaign.message}
-        </Text>
-        <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primaryText }}>
-              {campaign.applies_now ? 'Active for you' : 'View details'}
-            </Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.primaryText} />
-          </View>
-          {daysLabel ? (
-            <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(248,250,252,0.7)' }}>{daysLabel}</Text>
-          ) : null}
-        </View>
+      <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.94 : 1 }]} android_ripple={{ color: 'rgba(255,255,255,0.12)' }}>
+        {card}
       </Pressable>
     </Link>
   )
@@ -84,7 +91,7 @@ export default function HomeCampaignCarousel({ campaigns }: HomeCampaignCarousel
 
   if (!campaigns.length) return null
 
-  const cardWidth = Math.floor((screenWidth - space.screenX) / carousel.campaignVisibleCount)
+  const cardWidth = Math.floor((screenWidth - space.screenX * 2) / carousel.campaignVisibleCount)
   const snapInterval = cardWidth + carousel.campaignCardGap
 
   return (

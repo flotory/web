@@ -151,7 +151,7 @@ class RedemptionClaimService
                 ]);
             }
 
-            $claimedUnlock = $this->loyalty->redeemReward($customer, $reward, $staff);
+            $claimedUnlock = $this->loyalty->redeemReward($customer, $reward, $staff, $request->token);
 
             $request->forceFill([
                 'claimed_at' => now(),

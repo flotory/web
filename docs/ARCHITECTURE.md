@@ -201,7 +201,7 @@ Claim QRs never appear on wallet/My QR — stamps only there.
 ### Realtime (optional)
 
 - Channel: `customer.{customerId}` (authorized via `customers.user_id`)
-- Event: `.stamp.added`
+- Events: `.stamp.added`, `.reward.redeemed`
 - Auth: `POST /api/broadcasting/auth`
 
 ## Frontend Structure

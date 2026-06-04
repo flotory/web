@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import QrcodeVue from 'qrcode.vue'
 
 import RewardRedeemedCelebration from '@/components/loyalty/RewardRedeemedCelebration.vue'
@@ -7,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { buildRedeemQrValue } from '@/lib/loyaltyQr'
 import type { CustomerRewardWalletItem } from '@/stores/customerRewards'
+import { useRealtimeStore } from '@/stores/realtime'
 import type { Reward, Venue } from '@/types'
 
 interface ClaimSessionPayload {
@@ -27,6 +29,9 @@ const emit = defineEmits<{
   redeemed: []
 }>()
 
+const realtime = useRealtimeStore()
+const { latestRedeem } = storeToRefs(realtime)
+
 const loading = ref(true)
 const error = ref('')
 const session = ref<ClaimSessionPayload | null>(null)
@@ -34,6 +39,23 @@ const showCelebration = ref(false)
 const nowMs = ref(Date.now())
 let pollTimer: number | undefined
 let clockTimer: number | undefined
+
+function celebrateRedeemed() {
+  if (showCelebration.value) {
+    return
+  }
+
+  stopPolling()
+  if (session.value) {
+    session.value = { ...session.value, status: 'claimed' }
+  }
+  showCelebration.value = true
+  window.setTimeout(() => {
+    showCelebration.value = false
+    realtime.clearLatestRedeem()
+    emit('redeemed')
+  }, 2200)
+}
 
 const qrValue = computed(() => {
   if (!session.value) {
@@ -91,12 +113,7 @@ async function refreshSession() {
     session.value = response
 
     if (response.status === 'claimed') {
-      stopPolling()
-      showCelebration.value = true
-      window.setTimeout(() => {
-        showCelebration.value = false
-        emit('redeemed')
-      }, 2200)
+      celebrateRedeemed()
     }
 
     if (response.status === 'expired') {
@@ -142,6 +159,20 @@ watch(
     void startSession()
   },
 )
+
+watch(latestRedeem, (payload) => {
+  if (!payload || !session.value?.token) {
+    return
+  }
+
+  const tokenMatches =
+    payload.claim_session_token != null && payload.claim_session_token === session.value.token
+  const unlockMatches = payload.unlock_id === props.item.unlock_id
+
+  if (tokenMatches || unlockMatches) {
+    celebrateRedeemed()
+  }
+})
 </script>
 
 <template>

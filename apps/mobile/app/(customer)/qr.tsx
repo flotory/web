@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Text, View } from 'react-native'
+import { Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import QrImage from '../../src/components/QrImage'
@@ -8,10 +8,18 @@ import StateCard from '../../src/components/ui/StateCard'
 import { useStampQr } from '../../src/hooks/useStampQr'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { colors, radius, space, type as typography } from '../../src/theme'
+import { withAppFont } from '../../src/lib/typography'
+
+/** Matches `(customer)/_layout.tsx` tab bar height */
+const TAB_BAR_HEIGHT = 78
 
 export default function CustomerQrScreen() {
   const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
   const { data, loading, error, reload } = useStampQr({ refetchOnFocus: true })
+
+  /** Lift QR above geometric center — tab bar makes true center feel too low */
+  const qrLift = Math.round(Math.min(72, Math.max(28, windowHeight * 0.06)))
   const readyHapticDone = useRef(false)
 
   useEffect(() => {
@@ -59,6 +67,8 @@ export default function CustomerQrScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: space.screenX,
+            paddingBottom: TAB_BAR_HEIGHT + insets.bottom,
+            marginTop: -qrLift,
           }}
         >
           <View
@@ -81,7 +91,7 @@ export default function CustomerQrScreen() {
             >
               <QrImage value={data.qr_value} size={260} />
             </View>
-            <Text style={{ marginTop: 20, textAlign: 'center', fontSize: 17, fontWeight: '800', color: colors.ink }}>
+            <Text style={withAppFont({ marginTop: 20, textAlign: 'center', fontSize: 17, fontWeight: '800', color: colors.ink })}>
               One QR for all your venues
             </Text>
             <Text style={{ ...typography.caption, marginTop: 8, textAlign: 'center', color: colors.inkMuted }}>

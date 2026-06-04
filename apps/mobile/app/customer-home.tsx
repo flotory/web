@@ -5,6 +5,7 @@ import { Animated, Text, View } from 'react-native'
 import HomeCampaignCarousel from '../src/components/customer/HomeCampaignCarousel'
 import HomeNearestRewardCard, { type NearestRewardFocus } from '../src/components/customer/HomeNearestRewardCard'
 import HomeQuickActions from '../src/components/customer/HomeQuickActions'
+import HomeRewardCarousel, { type HomeRewardSlide } from '../src/components/customer/HomeRewardCarousel'
 import AnimatedSection from '../src/components/ui/AnimatedSection'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
 import ScreenHeader from '../src/components/ui/ScreenHeader'
@@ -13,10 +14,12 @@ import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsWallet } from '../src/hooks/useRewardsWallet'
 import { useScreenResource } from '../src/hooks/useScreenResource'
 import { buildHomeActivity, fetchCustomerCardsList } from '../src/lib/customerData'
+import { sortHomeCampaigns } from '../src/lib/homeCampaigns'
 import { useAuth } from '../src/providers/AuthProvider'
 import { hapticSuccess } from '../src/lib/haptics'
 import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
 import { colors, space, type as typography } from '../src/theme'
+import { withAppFont } from '../src/lib/typography'
 
 export default function CustomerHomeScreen() {
   const router = useRouter()
@@ -37,7 +40,10 @@ export default function CustomerHomeScreen() {
   const refreshing = cardsQuery.refreshing || walletQuery.refreshing
   const error = cardsQuery.error || walletQuery.error
   const cards = cardsQuery.data?.cards ?? []
-  const homeCampaigns = cardsQuery.data?.home_campaigns ?? []
+  const homeCampaigns = useMemo(
+    () => sortHomeCampaigns(cardsQuery.data?.home_campaigns ?? []),
+    [cardsQuery.data?.home_campaigns],
+  )
   const readyItems = walletQuery.data?.items ?? []
   const fade = useFadeOnReady(!loading)
 
@@ -55,6 +61,30 @@ export default function CustomerHomeScreen() {
     const name = user?.name?.trim() ?? 'there'
     return name.split(/\s+/)[0] ?? name
   }, [user?.name])
+
+  const activeCards = useMemo(
+    () =>
+      [...cards]
+        .filter((card) => card.venue)
+        .sort((a, b) => (b.summary?.pending_rewards_count ?? 0) - (a.summary?.pending_rewards_count ?? 0))
+        .slice(0, 3),
+    [cards],
+  )
+
+  const rewardSlides = useMemo((): HomeRewardSlide[] => {
+    if (readyItems.length > 0) {
+      return readyItems.map((item) => ({
+        id: `ready-${item.unlock_id}`,
+        kind: 'ready' as const,
+        item,
+      }))
+    }
+    return activeCards.map((card) => ({
+      id: `next-${card.id}`,
+      kind: 'next' as const,
+      card,
+    }))
+  }, [activeCards, readyItems])
 
   const nearestReward = useMemo((): NearestRewardFocus | null => {
     if (readyItems[0]) {
@@ -178,12 +208,28 @@ export default function CustomerHomeScreen() {
     >
       {!error ? (
         <Animated.View style={{ opacity: fade }}>
+          {homeCampaigns.length > 0 ? (
+            <View style={{ marginTop: space.sectionGap }}>
+              <HomeCampaignCarousel campaigns={homeCampaigns} />
+            </View>
+          ) : null}
+
           {nearestReward ? (
-            <View style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
+            <View
+              style={{
+                marginTop: homeCampaigns.length > 0 ? space.sectionY : space.sectionGap,
+                paddingHorizontal: space.screenX,
+              }}
+            >
               <HomeNearestRewardCard focus={nearestReward} />
             </View>
-          ) : (
-            <AnimatedSection style={{ marginTop: space.sectionY, paddingHorizontal: space.screenX }}>
+          ) : cards.length === 0 ? (
+            <AnimatedSection
+              style={{
+                marginTop: homeCampaigns.length > 0 ? space.sectionY : space.sectionGap,
+                paddingHorizontal: space.screenX,
+              }}
+            >
               <StateCard
                 emoji="☕"
                 title="Start your first card"
@@ -191,17 +237,27 @@ export default function CustomerHomeScreen() {
                 primaryAction={{ label: 'Find a venue', onPress: () => router.push('/(customer)/venues') }}
               />
             </AnimatedSection>
-          )}
-
-          {homeCampaigns.length > 0 ? (
-            <View style={{ marginTop: space.sectionY }}>
-              <HomeCampaignCarousel campaigns={homeCampaigns} />
-            </View>
           ) : null}
 
-          <View style={{ marginTop: space.sectionY }}>
+          <View
+            style={{
+              marginTop:
+                homeCampaigns.length > 0 || nearestReward || cards.length === 0
+                  ? space.sectionY
+                  : space.sectionGap,
+            }}
+          >
             <HomeQuickActions actions={quickActions} />
           </View>
+
+          {rewardSlides.length > 0 ? (
+            <View style={{ marginTop: space.sectionY }}>
+              <Text style={{ ...typography.section, paddingHorizontal: space.screenX, marginBottom: 12 }}>
+                {readyItems.length > 0 ? 'Ready to claim' : 'Keep collecting'}
+              </Text>
+              <HomeRewardCarousel slides={rewardSlides} />
+            </View>
+          ) : null}
 
           {activity.length > 0 ? (
             <View style={{ marginTop: space.sectionY, paddingHorizontal: space.screenX }}>
@@ -209,7 +265,7 @@ export default function CustomerHomeScreen() {
               <View style={{ marginTop: 14, gap: 12 }}>
                 {activity.map((row) => (
                   <View key={row.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-                    <Text style={{ flex: 1, fontSize: 16, color: colors.ink, fontWeight: '500' }}>{row.label}</Text>
+                    <Text style={withAppFont({ flex: 1, fontSize: 16, color: colors.ink, fontWeight: '500' })}>{row.label}</Text>
                     <Text style={typography.caption}>{row.time}</Text>
                   </View>
                 ))}

@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 
 import { apiRequest } from '../src/lib/api'
 import { useAuth } from '../src/providers/AuthProvider'
+import { withAppFont } from '../src/lib/typography'
 
 interface DashboardPayload {
   venue?: {
@@ -54,7 +55,7 @@ export default function OwnerDashboardScreen() {
   if (role !== 'owner') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#f8fafc' }}>
-        <Text style={{ fontWeight: '700' }}>Owner dashboard unavailable.</Text>
+        <Text style={withAppFont({ fontWeight: '700' })}>Owner dashboard unavailable.</Text>
       </View>
     )
   }
@@ -69,7 +70,7 @@ export default function OwnerDashboardScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#f8fafc' }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 28, fontWeight: '800', marginTop: 12 }}>
+      <Text style={withAppFont({ fontSize: 28, fontWeight: '800', marginTop: 12 })}>
         {dashboard?.venue?.name ?? 'Owner Dashboard'}
       </Text>
       {error ? <Text style={{ color: '#b91c1c' }}>{error}</Text> : null}
@@ -77,14 +78,14 @@ export default function OwnerDashboardScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {kpis.map((kpi) => (
           <View key={kpi.label} style={{ width: '47%', backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
-            <Text style={{ color: '#64748b', fontWeight: '700', fontSize: 12 }}>{kpi.label}</Text>
-            <Text style={{ marginTop: 6, fontSize: 28, fontWeight: '800' }}>{kpi.value}</Text>
+            <Text style={withAppFont({ color: '#64748b', fontWeight: '700', fontSize: 12 })}>{kpi.label}</Text>
+            <Text style={withAppFont({ marginTop: 6, fontSize: 28, fontWeight: '800' })}>{kpi.value}</Text>
           </View>
         ))}
       </View>
 
       <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
-        <Text style={{ fontSize: 16, fontWeight: '800' }}>Insights</Text>
+        <Text style={withAppFont({ fontSize: 16, fontWeight: '800' })}>Insights</Text>
         {(dashboard?.insights ?? []).slice(0, 5).map((insight, index) => (
           <Text key={`${insight.text}-${index}`} style={{ marginTop: 8, color: '#334155' }}>
             • {insight.text}

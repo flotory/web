@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { colors, radius, shadows, space, type as typography } from '../../theme'
+import { withAppFont } from '../../lib/typography'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
 
@@ -58,7 +59,7 @@ export default function HomeQuickActions({ actions }: HomeQuickActionsProps) {
               <Ionicons name={action.icon} size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: colors.ink }}>{action.label}</Text>
+              <Text style={withAppFont({ fontSize: 16, fontWeight: '800', color: colors.ink })}>{action.label}</Text>
               <Text style={{ marginTop: 2, fontSize: 13, color: colors.inkMuted }}>{action.subtitle}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />

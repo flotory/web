@@ -16,6 +16,7 @@ import { hapticSuccess } from '../src/lib/haptics'
 import { venueCoverUrl } from '../src/lib/media'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
+import { withAppFont } from '../src/lib/typography'
 
 export default function VenuesScreen() {
   const router = useRouter()
@@ -139,7 +140,7 @@ export default function VenuesScreen() {
                 <GradientCard key={item.id} header={<CoverImage uri={cover} />}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{item.name}</Text>
+                      <Text style={withAppFont({ fontSize: 20, fontWeight: '800', color: colors.ink })}>{item.name}</Text>
                       <View style={{ marginTop: 6, flexDirection: 'row', gap: 8 }}>
                         {item.category ? (
                           <View style={{ backgroundColor: colors.surfaceMuted, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border }}>
@@ -164,11 +165,11 @@ export default function VenuesScreen() {
                           borderColor: colors.successBorder,
                         }}
                       >
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.success }}>Joined</Text>
+                        <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.success })}>Joined</Text>
                       </View>
                     ) : null}
                   </View>
-                  <Text style={{ ...typography.body, marginTop: 10, color: colors.plum, fontWeight: '600' }}>{offer}</Text>
+                  <Text style={withAppFont({ ...typography.body, marginTop: 10, color: colors.plum, fontWeight: '600' })}>{offer}</Text>
                   {joined ? (
                     <Link
                       href={

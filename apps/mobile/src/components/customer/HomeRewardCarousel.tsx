@@ -15,6 +15,7 @@ import GradientCard from '../ui/GradientCard'
 import GradientOutlineButton from '../ui/GradientOutlineButton'
 import { colors, carousel, radius, space, type as typography } from '../../theme'
 import type { RewardWalletItem, WalletCard } from '../../types/loyalty'
+import { withAppFont } from '../../lib/typography'
 
 export type HomeRewardSlide =
   | { id: string; kind: 'ready'; item: RewardWalletItem }
@@ -59,10 +60,10 @@ function RewardCarouselCard({ slide, width }: { slide: HomeRewardSlide; width: n
           )}
         </View>
         <View style={[transparent, { flex: 1, paddingTop: 2 }]}>
-          <Text style={{ ...typography.caption, color: colors.inkSoft, fontWeight: '600', fontSize: 12 }}>
+          <Text style={withAppFont({ ...typography.caption, color: colors.inkSoft, fontWeight: '600', fontSize: 12 })}>
             {isReady ? 'Reward unlocked' : 'Your next reward'}
           </Text>
-          <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '800', color: colors.ink, lineHeight: 21 }} numberOfLines={3}>
+          <Text style={withAppFont({ marginTop: 4, fontSize: 16, fontWeight: '800', color: colors.ink, lineHeight: 21 })} numberOfLines={3}>
             {title}
           </Text>
         </View>
@@ -70,7 +71,7 @@ function RewardCarouselCard({ slide, width }: { slide: HomeRewardSlide; width: n
 
       <View style={[transparent, { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }]}>
         <Ionicons name="location-outline" size={15} color={colors.inkMuted} />
-        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.inkMuted }}>{venue?.name ?? 'Venue'}</Text>
+        <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: colors.inkMuted })}>{venue?.name ?? 'Venue'}</Text>
       </View>
 
       {!isReady && stampsLeft != null ? (

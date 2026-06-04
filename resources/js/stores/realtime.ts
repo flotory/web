@@ -4,11 +4,12 @@ import type { Router } from 'vue-router'
 import { api } from '@/lib/api'
 import { disconnectEcho, getEcho } from '@/lib/realtime'
 import { useAuthStore } from '@/stores/auth'
-import type { Customer, StampAddedPayload } from '@/types'
+import type { Customer, RewardRedeemedPayload, StampAddedPayload } from '@/types'
 
 export const useRealtimeStore = defineStore('realtime', {
   state: () => ({
     latestStamp: null as StampAddedPayload | null,
+    latestRedeem: null as RewardRedeemedPayload | null,
     subscribedCustomerIds: [] as number[],
     startedForToken: null as string | null,
   }),
@@ -50,6 +51,10 @@ export const useRealtimeStore = defineStore('realtime', {
             })
           }
         })
+
+        echo.private(`customer.${card.id}`).listen('.reward.redeemed', (payload: RewardRedeemedPayload) => {
+          this.latestRedeem = payload
+        })
       })
     },
     stop() {
@@ -61,10 +66,14 @@ export const useRealtimeStore = defineStore('realtime', {
       this.subscribedCustomerIds = []
       this.startedForToken = null
       this.latestStamp = null
+      this.latestRedeem = null
       disconnectEcho()
     },
     clearLatestStamp() {
       this.latestStamp = null
+    },
+    clearLatestRedeem() {
+      this.latestRedeem = null
     },
   },
 })

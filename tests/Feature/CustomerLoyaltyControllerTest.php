@@ -214,6 +214,7 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonCount(2, 'home_campaigns')
             ->assertJsonPath('home_campaigns.0.venue_name', $venue->name)
             ->assertJsonPath('home_campaigns.0.headline', '2× stamps active')
+            ->assertJsonPath('home_campaigns.0.applies_now', true)
             ->assertJsonPath('home_campaigns.1.applies_now', false);
     }
 

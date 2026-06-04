@@ -16,6 +16,7 @@ import { progressCountCopy, progressHintCopy } from '../src/lib/progressCopy'
 import { formatShortDate } from '../src/lib/format'
 import { rewardImageUrl } from '../src/lib/media'
 import { colors, space, type as typography } from '../src/theme'
+import { withAppFont } from '../src/lib/typography'
 
 export default function RewardsScreen() {
   const router = useRouter()
@@ -90,7 +91,7 @@ export default function RewardsScreen() {
                       <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.97 : 1 })}>
                         <GradientCard header={<CoverImage uri={image} />}>
                           <Text style={{ ...typography.label, color: colors.accent }}>🎉 Reward unlocked</Text>
-                          <Text style={{ fontSize: 26, fontWeight: '800', color: colors.plum, marginTop: 6 }}>
+                          <Text style={withAppFont({ fontSize: 26, fontWeight: '800', color: colors.plum, marginTop: 6 })}>
                             {item.reward.title}
                           </Text>
                           <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>
@@ -128,12 +129,12 @@ export default function RewardsScreen() {
                     >
                       <PressableCard style={{ backgroundColor: 'transparent' }}>
                         <GradientCard>
-                          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.ink }}>{title}</Text>
+                          <Text style={withAppFont({ fontSize: 17, fontWeight: '700', color: colors.ink })}>{title}</Text>
                           <Text style={{ ...typography.caption, marginTop: 2 }}>{card.venue?.name}</Text>
                           <View style={{ marginTop: space.sectionGap }}>
                             <ProgressBar value={stamps} max={max} />
                           </View>
-                          <Text style={{ marginTop: 8, fontWeight: '700', color: colors.ink }}>
+                          <Text style={withAppFont({ marginTop: 8, fontWeight: '700', color: colors.ink })}>
                             {progressHintCopy(remaining, title)}
                           </Text>
                           <Text style={{ ...typography.caption, marginTop: 2 }}>
@@ -156,7 +157,7 @@ export default function RewardsScreen() {
                 style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <Text style={typography.section}>Claim history</Text>
-                <Text style={{ fontWeight: '700', color: colors.inkMuted }}>{historyOpen ? '−' : '+'}</Text>
+                <Text style={withAppFont({ fontWeight: '700', color: colors.inkMuted })}>{historyOpen ? '−' : '+'}</Text>
               </Pressable>
               {historyOpen ? (
                 <View style={{ marginTop: space.cardGap, gap: space.cardGap }}>
@@ -164,7 +165,7 @@ export default function RewardsScreen() {
                     <GradientCard key={row.id} padding={12}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <View style={{ flex: 1, paddingRight: 8 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
+                          <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })} numberOfLines={1}>
                             {row.title}
                           </Text>
                           <Text style={{ ...typography.caption, marginTop: 2, color: colors.successText }}>Redeemed</Text>

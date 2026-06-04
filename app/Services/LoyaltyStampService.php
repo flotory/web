@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\RewardRedeemed;
 use App\Events\StampAdded;
 use App\Models\CustomerRewardCycle;
 use App\Models\Customer;
@@ -113,15 +114,19 @@ class LoyaltyStampService
         return $result;
     }
 
-    public function redeemReward(Customer $customer, Reward $reward, User $redeemer): RewardUnlock
-    {
+    public function redeemReward(
+        Customer $customer,
+        Reward $reward,
+        User $redeemer,
+        ?string $claimSessionToken = null,
+    ): RewardUnlock {
         if ($reward->venue_id !== $customer->venue_id || ! $reward->active) {
             throw ValidationException::withMessages([
                 'reward' => 'This reward is not available for the scanned customer.',
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
+        $unlock = DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $unlock = RewardUnlock::query()
                 ->where('customer_id', $customer->id)
@@ -158,6 +163,22 @@ class LoyaltyStampService
 
             return $unlock;
         });
+
+        try {
+            RewardRedeemed::dispatch(
+                $customer->fresh()->load('venue', 'user'),
+                $unlock,
+                $claimSessionToken,
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Reward redeemed but realtime broadcast failed.', [
+                'customer_id' => $customer->id,
+                'unlock_id' => $unlock->id,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
+
+        return $unlock;
     }
 
     /**

@@ -3,6 +3,7 @@ import { Animated, Text, View } from 'react-native'
 
 import ShadowPulse from '../ui/ShadowPulse'
 import { colors } from '../../theme'
+import { withAppFont } from '../../lib/typography'
 
 interface MilestonePathProps {
   collected: number
@@ -11,6 +12,8 @@ interface MilestonePathProps {
   milestoneStamps?: number[]
   /** Stamp positions where the reward was redeemed — static, smaller cells */
   claimedStamps?: number[]
+  /** Stamp slots animating after a live scan */
+  highlightStamps?: number[]
   columns?: number
   sizeScale?: number
 }
@@ -21,6 +24,7 @@ export default function MilestonePath({
   milestoneStamp,
   milestoneStamps,
   claimedStamps = [],
+  highlightStamps = [],
   columns,
   sizeScale = 1,
 }: MilestonePathProps) {
@@ -28,11 +32,30 @@ export default function MilestonePath({
   const cellGap = Math.round(8 * sizeScale)
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
   const claimed = new Set(claimedStamps)
+  const highlighted = new Set(highlightStamps)
+  const stampPulse = useRef(new Animated.Value(1)).current
   const giftPulse = useRef(new Animated.Value(1)).current
   const giftGlow = useRef(new Animated.Value(0.18)).current
   const giftLift = useRef(new Animated.Value(0)).current
 
   const hasUpcomingGift = [...gifts].some((stamp) => stamp > collected && !claimed.has(stamp))
+  const hasHighlight = highlightStamps.length > 0
+
+  useEffect(() => {
+    if (!hasHighlight) {
+      stampPulse.setValue(1)
+      return
+    }
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(stampPulse, { toValue: 1.12, duration: 280, useNativeDriver: true }),
+        Animated.timing(stampPulse, { toValue: 1, duration: 280, useNativeDriver: true }),
+      ]),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [hasHighlight, stampPulse])
 
   useEffect(() => {
     if (!hasUpcomingGift) return
@@ -96,7 +119,7 @@ export default function MilestonePath({
           borderColor,
         }}
       >
-        <Text style={{ fontSize: Math.round((filled ? 14 : isGift ? 16 : 14) * sizeScale), fontWeight: '800', color: textColor }}>
+        <Text style={withAppFont({ fontSize: Math.round((filled ? 14 : isGift ? 16 : 14) * sizeScale), fontWeight: '800', color: textColor })}>
           {content}
         </Text>
       </View>
@@ -120,6 +143,23 @@ export default function MilestonePath({
             shadowOpacity: giftGlow,
             shadowRadius: 10,
             shadowOffset: { width: 0, height: 3 },
+          }}
+        >
+          {cell}
+        </Animated.View>
+      )
+    }
+
+    if (highlighted.has(stamp)) {
+      return (
+        <Animated.View
+          key={stamp}
+          style={{
+            transform: [{ scale: stampPulse }],
+            shadowColor: colors.success,
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
           }}
         >
           {cell}

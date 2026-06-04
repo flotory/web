@@ -1,5 +1,5 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Image,
@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import MilestonePath from '../../src/components/customer/MilestonePath'
+import StampRewardCelebration from '../../src/components/loyalty/StampRewardCelebration'
 import CoverImage from '../../src/components/ui/CoverImage'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
@@ -23,6 +24,10 @@ import { progressCountCopy, progressHintCopy, visitsToRewardCopy } from '../../s
 import { hapticSuccess } from '../../src/lib/haptics'
 import { rewardImageUrl, venueCoverUrl, venueLogoUrl } from '../../src/lib/media'
 import { colors, radius, space, type as typography } from '../../src/theme'
+import { rewardEarnedThisScan, slotsForStampIncrease, stampUpdateSignature } from '../../src/lib/stampLiveUpdate'
+import { useRealtime } from '../../src/providers/RealtimeProvider'
+import type { StampAddedPayload } from '../../src/types/realtime'
+import { withAppFont } from '../../src/lib/typography'
 
 const SCALE = 0.8
 const s = (value: number) => Math.round(value * SCALE)
@@ -33,8 +38,14 @@ export default function CardDetailScreen() {
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const venueId = params.venueId ? String(params.venueId) : undefined
   const { data: payload, loading, refreshing, error, refresh, reload } = useCardDetail(venueId)
+  const { latestStamp, clearLatestStamp } = useRealtime()
   const fade = useFadeOnReady(!loading)
   const readyHapticDone = useRef(false)
+  const lastAnimatedStampSignature = useRef('')
+  const [displayStamps, setDisplayStamps] = useState<number | null>(null)
+  const [animatingSlots, setAnimatingSlots] = useState<number[]>([])
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [celebrationTitle, setCelebrationTitle] = useState('')
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -89,6 +100,75 @@ export default function CardDetailScreen() {
     }
   }, [readyReward])
 
+  useEffect(() => {
+    if (!latestStamp || !payload?.active_card) {
+      return
+    }
+
+    if (latestStamp.customer.id !== payload.active_card.id) {
+      return
+    }
+
+    if (venueId && String(latestStamp.venue.id) !== venueId) {
+      return
+    }
+
+    const signature = stampUpdateSignature(latestStamp)
+    if (signature === lastAnimatedStampSignature.current) {
+      clearLatestStamp()
+      return
+    }
+    lastAnimatedStampSignature.current = signature
+
+    applyLiveStampUpdate(latestStamp)
+    clearLatestStamp()
+  }, [latestStamp, payload?.active_card?.id, venueId, maxStamps])
+
+  function applyLiveStampUpdate(stampPayload: StampAddedPayload) {
+    if (!payload?.active_card) {
+      return
+    }
+
+    const previousAvailableIds = new Set(payload.available_rewards.map((reward) => reward.id))
+    const max = maxStamps
+
+    if (stampPayload.cycle_completed) {
+      setDisplayStamps(max)
+    } else {
+      setDisplayStamps(null)
+    }
+
+    const slots = slotsForStampIncrease(
+      stampPayload.previous_stamps,
+      stampPayload.added_stamps,
+      stampPayload.cycle_completed,
+      max,
+    )
+    setAnimatingSlots(slots)
+    setTimeout(() => setAnimatingSlots([]), 1400)
+
+    hapticSuccess()
+
+    const unlocked = rewardEarnedThisScan(stampPayload, previousAvailableIds, max)
+    if (unlocked) {
+      setCelebrationTitle(unlocked.title)
+      setShowCelebration(true)
+      setTimeout(() => {
+        setShowCelebration(false)
+        if (stampPayload.cycle_completed) {
+          setDisplayStamps(stampPayload.stamps)
+        }
+        void refresh()
+      }, 2400)
+      return
+    }
+
+    void refresh()
+    if (stampPayload.cycle_completed) {
+      setTimeout(() => setDisplayStamps(stampPayload.stamps), 900)
+    }
+  }
+
   if (loading) {
     return <CustomerScreen loading tabBarInset={false} header={null} children={null} />
   }
@@ -101,7 +181,7 @@ export default function CardDetailScreen() {
       <ScreenGradientLayout flexContent tabBarInset={false} paddingTop={insets.top + 8}>
         <View style={{ paddingHorizontal: space.screenX }}>
           <Pressable onPress={handleBack}>
-            <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
+            <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
           </Pressable>
           <View style={{ marginTop: space.sectionY }}>
             <StateCard
@@ -118,7 +198,7 @@ export default function CardDetailScreen() {
   }
 
   const nextReward = payload?.next_reward
-  const stamps = card.stamps
+  const stamps = displayStamps ?? card.stamps
   const stampsToNext = nextReward ? Math.max(nextReward.required_stamps - stamps, 0) : Math.max(maxStamps - stamps, 0)
   const milestones = [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps)
   const cover = venueCoverUrl(card.venue ?? undefined)
@@ -134,7 +214,7 @@ export default function CardDetailScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
     >
       <Pressable onPress={handleBack} style={{ paddingHorizontal: space.screenX }}>
-        <Text style={{ color: colors.ink, fontWeight: '700', fontSize: 16 }}>← Back</Text>
+        <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>← Back</Text>
       </Pressable>
 
       {error ? (
@@ -171,7 +251,7 @@ export default function CardDetailScreen() {
             >
               {logo ? <Image source={{ uri: logo }} style={{ width: s(52), height: s(52) }} /> : <Text style={{ fontSize: s(24) }}>☕</Text>}
             </View>
-            <Text style={{ fontSize: s(26), fontWeight: '800', color: colors.primaryText, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 }}>
+            <Text style={withAppFont({ fontSize: s(26), fontWeight: '800', color: colors.primaryText, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 })}>
               {card.venue?.name ?? 'Loyalty card'}
             </Text>
           </View>
@@ -189,7 +269,7 @@ export default function CardDetailScreen() {
               padding: s(space.cardPad),
             }}
           >
-            <Text style={{ fontSize: s(16), fontWeight: '800', color: colors.accent }}>🔥 {promotion.headline}</Text>
+            <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.accent })}>🔥 {promotion.headline}</Text>
             <Text style={{ ...typography.body, fontSize: s(16), marginTop: s(6), color: colors.inkMuted }}>{promotion.message}</Text>
             {promotion.days_left != null && promotion.days_left >= 0 ? (
               <Text style={{ ...typography.caption, fontSize: s(13), marginTop: s(8), color: colors.inkSoft }}>
@@ -209,7 +289,7 @@ export default function CardDetailScreen() {
               padding: s(space.cardPad),
             }}
           >
-            <Text style={{ fontSize: s(16), fontWeight: '800', color: colors.ink }}>One QR for every venue</Text>
+            <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.ink })}>One QR for every venue</Text>
             <Text style={{ ...typography.body, fontSize: s(15), marginTop: s(6), color: colors.inkMuted }}>
               Use My QR at the counter — staff stamp the card for this visit's venue.
             </Text>
@@ -233,7 +313,7 @@ export default function CardDetailScreen() {
               borderColor: colors.border,
             }}
           >
-            <Text style={{ fontSize: s(28), fontWeight: '800', color: colors.ink }}>
+            <Text style={withAppFont({ fontSize: s(28), fontWeight: '800', color: colors.ink })}>
               {readyReward
                 ? progressHintCopy(0, readyReward.title)
                 : progressHintCopy(stampsToNext, nextReward?.title)}
@@ -244,6 +324,7 @@ export default function CardDetailScreen() {
                 total={maxStamps}
                 milestoneStamps={milestones.map((item) => item.required_stamps)}
                 claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
+                highlightStamps={animatingSlots}
                 columns={5}
                 sizeScale={SCALE}
               />
@@ -253,7 +334,7 @@ export default function CardDetailScreen() {
             </Text>
             {milestones.length > 1 ? (
               <View style={{ marginTop: s(12) }}>
-                <Text style={{ ...typography.caption, fontSize: s(13), fontWeight: '700' }}>All reward milestones</Text>
+                <Text style={withAppFont({ ...typography.caption, fontSize: s(13), fontWeight: '700' })}>All reward milestones</Text>
                 <View style={{ marginTop: s(8), flexDirection: 'row', flexWrap: 'wrap', gap: s(8) }}>
                   {milestones.map((milestone) => {
                     const unlocked = stamps >= milestone.required_stamps
@@ -269,7 +350,7 @@ export default function CardDetailScreen() {
                           paddingVertical: s(6),
                         }}
                       >
-                        <Text style={{ fontSize: s(12), fontWeight: '700', color: unlocked ? colors.successText : '#475569' }}>
+                        <Text style={withAppFont({ fontSize: s(12), fontWeight: '700', color: unlocked ? colors.successText : '#475569' })}>
                           {milestone.required_stamps} • {milestone.title}
                         </Text>
                       </View>
@@ -300,7 +381,7 @@ export default function CardDetailScreen() {
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: s(16), fontWeight: '800', color: colors.ink }}>{nextReward.title}</Text>
+                  <Text style={withAppFont({ fontSize: s(16), fontWeight: '800', color: colors.ink })}>{nextReward.title}</Text>
                   <Text style={{ ...typography.caption, fontSize: s(13), marginTop: 2 }}>
                     {visitsToRewardCopy(stampsToNext, nextReward.title)}
                   </Text>
@@ -324,7 +405,7 @@ export default function CardDetailScreen() {
             }}
           >
             <Text style={{ ...typography.label, fontSize: s(12), color: colors.success }}>REWARD READY</Text>
-            <Text style={{ marginTop: s(8), fontSize: s(28), fontWeight: '800', color: colors.ink }}>{readyReward.title}</Text>
+            <Text style={withAppFont({ marginTop: s(8), fontSize: s(28), fontWeight: '800', color: colors.ink })}>{readyReward.title}</Text>
             {readyUnlock ? (
               <Link
                 href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(readyUnlock.unlock_id) } }}
@@ -338,6 +419,12 @@ export default function CardDetailScreen() {
           </View>
         ) : null}
       </Animated.View>
+
+      <StampRewardCelebration
+        visible={showCelebration}
+        title={celebrationTitle}
+        subtitle="Saved to Rewards — redeem when you are ready."
+      />
     </ScreenGradientLayout>
   )
 }

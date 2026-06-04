@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 
+import { withAppFont } from '../../lib/typography'
 import { colors, radius, space, type as typography } from '../../theme'
 import PrimaryButton from './PrimaryButton'
 
@@ -39,12 +40,12 @@ export default function StateCard({ emoji, title, message, primaryAction, second
       {secondaryAction ? (
         <Text
           onPress={secondaryAction.onPress}
-          style={{
+          style={withAppFont({
             marginTop: primaryAction ? 14 : 18,
             color: colors.inkMuted,
             fontWeight: '700',
             fontSize: 15,
-          }}
+          })}
         >
           {secondaryAction.label}
         </Text>

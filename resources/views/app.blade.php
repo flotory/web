@@ -10,13 +10,16 @@
     <meta name="apple-mobile-web-app-title" content="Flotory">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{{ config('app.name', 'Flotory') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
   </head>
-  <body class="bg-slate-950 text-slate-950 antialiased">
+  <body class="bg-slate-950 font-sans text-slate-950 antialiased">
     <div id="app"></div>
   </body>
 </html>

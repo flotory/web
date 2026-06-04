@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native'
 
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
+import { fonts } from '../../src/lib/typography'
 import { colors, shadows, tabBarQr } from '../../src/theme'
 
 export default function CustomerTabsLayout() {
@@ -44,6 +45,7 @@ export default function CustomerTabsLayout() {
           backgroundColor: colors.bg,
         },
         tabBarLabelStyle: {
+          fontFamily: fonts.semiBold,
           fontSize: 12,
           fontWeight: '600',
         },
