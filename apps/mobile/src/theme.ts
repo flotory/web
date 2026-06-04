@@ -39,6 +39,16 @@ export const carousel = {
   rewardCardGap: 10,
   rewardImageSize: 84,
   cardPad: 14,
+  /** How many campaign cards are visible across the viewport (2 full + half peek). */
+  campaignVisibleCount: 2.5,
+  campaignCardGap: 10,
+} as const
+
+/** Center tab scan button (My QR). */
+export const tabBarQr = {
+  size: 57,
+  iconSize: 29,
+  lift: 8,
 } as const
 
 export const gradients = {

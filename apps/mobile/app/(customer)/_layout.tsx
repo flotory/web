@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native'
 
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors } from '../../src/theme'
+import { colors, shadows, tabBarQr } from '../../src/theme'
 
 export default function CustomerTabsLayout() {
   const { token, role } = useAuth()
@@ -77,23 +77,26 @@ export default function CustomerTabsLayout() {
           tabBarIcon: () => (
             <View
               style={{
-                width: 52,
-                height: 52,
-                borderRadius: 26,
+                width: tabBarQr.size,
+                height: tabBarQr.size,
+                borderRadius: tabBarQr.size / 2,
                 backgroundColor: colors.ink,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 18,
+                borderWidth: 3,
+                borderColor: colors.bg,
+                ...shadows.md,
               }}
             >
-              <Ionicons name="qr-code" size={26} color={colors.bg} />
+              <Ionicons name="qr-code" size={tabBarQr.iconSize} color={colors.bg} />
             </View>
           ),
           tabBarLabel: () => null,
           tabBarButton: ({ ref: _ref, ...props }) => (
             <Pressable
               {...props}
-              style={[props.style, { top: -8 }]}
+              style={[props.style, { top: -tabBarQr.lift }]}
               accessibilityRole="button"
               accessibilityLabel="My QR"
             />
