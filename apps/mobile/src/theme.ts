@@ -95,6 +95,22 @@ export const tabBar = {
   labelSize: 11,
 } as const
 
+/** Custom tab bar surface (CustomerTabBar SVG) */
+export const tabBarSurface = {
+  gradient: ['#FFFFFF', '#FBF8F2', '#F3EBDD', '#E8DFD0'] as const,
+  gradientStops: [0, 0.35, 0.72, 1] as const,
+  border: 'rgba(98, 72, 48, 0.14)',
+  notchGlow: 'rgba(245, 208, 138, 0.22)',
+  topHighlight: 'rgba(255, 255, 255, 0.55)',
+  shadow: {
+    color: '#5C4830',
+    opacity: 0.12,
+    radius: 16,
+    offsetY: -6,
+    elevation: 14,
+  },
+} as const
+
 /** Center tab scan button (My QR). */
 export const tabBarQr = {
   size: 50,

@@ -1,15 +1,16 @@
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import { Pressable, Text, View, useWindowDimensions } from 'react-native'
+import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Path } from 'react-native-svg'
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg'
 
 import TabBarQrButton from './TabBarQrButton'
 import { buildTabBarSurfacePath } from './tabBarShape'
 import { fonts } from '../../lib/typography'
-import { colors, tabBar as tabBarMetrics, tabBarQr } from '../../theme'
+import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../theme'
 
 const HIDDEN_TABS = new Set(['rewards', 'notifications'])
+const GRADIENT_ID = 'tabBarSurfaceGradient'
 
 const TAB_LABELS: Record<string, string> = {
   home: 'Home',
@@ -35,12 +36,35 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const barHeight = tabBarMetrics.height + insets.bottom
-  const surface = '#FFFCF7'
+  const surfacePath = buildTabBarSurfacePath(width, barHeight, {
+    cornerRadius: 18,
+    notchWidth: 78,
+    notchDepth: 16,
+  })
+  const cx = width / 2
+  const notchGlowPath = [
+    `M ${cx - 52} 0`,
+    `Q ${cx - 20} ${tabBarQr.lift + 18} ${cx} ${tabBarQr.lift + 20}`,
+    `Q ${cx + 20} ${tabBarQr.lift + 18} ${cx + 52} 0`,
+    'Z',
+  ].join(' ')
 
   const visibleRoutes = state.routes.filter((route) => !HIDDEN_TABS.has(route.name))
 
   return (
-    <View style={{ backgroundColor: 'transparent' }}>
+    <View
+      style={{
+        backgroundColor: 'transparent',
+        ...(Platform.OS === 'ios'
+          ? {
+              shadowColor: tabBarSurface.shadow.color,
+              shadowOpacity: tabBarSurface.shadow.opacity,
+              shadowRadius: tabBarSurface.shadow.radius,
+              shadowOffset: { width: 0, height: tabBarSurface.shadow.offsetY },
+            }
+          : { elevation: tabBarSurface.shadow.elevation }),
+      }}
+    >
       <View style={{ height: barHeight, paddingBottom: insets.bottom }}>
         <Svg
           width={width}
@@ -48,11 +72,30 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
           style={{ position: 'absolute', left: 0, top: 0 }}
           pointerEvents="none"
         >
+          <Defs>
+            <LinearGradient id={GRADIENT_ID} x1="0" y1="0" x2="0" y2="1">
+              {tabBarSurface.gradient.map((stopColor, index) => (
+                <Stop
+                  key={stopColor}
+                  offset={tabBarSurface.gradientStops[index]}
+                  stopColor={stopColor}
+                />
+              ))}
+            </LinearGradient>
+          </Defs>
+
+          <Path d={notchGlowPath} fill={tabBarSurface.notchGlow} />
           <Path
-            d={buildTabBarSurfacePath(width, barHeight, { cornerRadius: 18, notchWidth: 78, notchDepth: 16 })}
-            fill={surface}
-            stroke="rgba(98, 72, 48, 0.10)"
+            d={surfacePath}
+            fill={`url(#${GRADIENT_ID})`}
+            stroke={tabBarSurface.border}
             strokeWidth={1}
+          />
+          <Path
+            d={`M 1 0.5 L ${width - 1} 0.5`}
+            stroke={tabBarSurface.topHighlight}
+            strokeWidth={1}
+            strokeLinecap="round"
           />
         </Svg>
 
