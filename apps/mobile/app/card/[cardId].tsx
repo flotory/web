@@ -13,6 +13,7 @@ import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { useCardDetail } from '../../src/hooks/useCardDetail'
+import { invalidateCustomerRewardCaches } from '../../src/lib/customerData'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
 import { hapticLightTap, hapticSuccess } from '../../src/lib/haptics'
 import {
@@ -21,6 +22,7 @@ import {
   stampBannerCopy,
   stampUpdateSignature,
 } from '../../src/lib/stampLiveUpdate'
+import { useAuth } from '../../src/providers/AuthProvider'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
 import type { StampAddedPayload } from '../../src/types/realtime'
 import { colors, motion, space } from '../../src/theme'
@@ -31,7 +33,8 @@ export default function CardDetailScreen() {
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const venueId = params.venueId ? String(params.venueId) : undefined
   const { data: payload, loading, refreshing, error, refresh, silentRefresh, reload } = useCardDetail(venueId)
-  const { latestStamp, clearLatestStamp } = useRealtime()
+  const { latestStamp, clearLatestStamp, latestRedeem, clearLatestRedeem } = useRealtime()
+  const { token } = useAuth()
   const fade = useFadeOnReady(Boolean(payload))
   const readyHapticDone = useRef(false)
   const lastAnimatedStampSignature = useRef('')
@@ -105,6 +108,20 @@ export default function CardDetailScreen() {
     applyLiveStampUpdate(latestStamp)
     clearLatestStamp()
   }, [latestStamp, payload?.active_card?.id, venueId, maxStamps])
+
+  useEffect(() => {
+    if (!latestRedeem || !token || !payload?.active_card) {
+      return
+    }
+
+    if (latestRedeem.customer.id !== payload.active_card.id) {
+      return
+    }
+
+    invalidateCustomerRewardCaches(token)
+    void silentRefresh()
+    clearLatestRedeem()
+  }, [latestRedeem, token, payload?.active_card?.id, silentRefresh, clearLatestRedeem])
 
   useEffect(() => {
     return () => {

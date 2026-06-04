@@ -22,7 +22,7 @@ export function useCardDetail(venueId?: string) {
 
   return useScreenResource({
     enabled: Boolean(token && venueId),
-    refetchOnFocus: false,
+    refetchOnFocus: true,
     hydrate,
     errorMessage: 'Could not load this loyalty card.',
     load,

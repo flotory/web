@@ -233,6 +233,25 @@ class LoyaltyStampServiceTest extends TestCase
         $this->assertTrue($pending->every(fn ($unlock) => $unlock->reward->is($reward)));
     }
 
+    public function test_sync_eligible_unlocks_skips_already_claimed_milestone_in_current_cycle(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+        $this->createRewardUnlock($customer, $reward, [
+            'cycle_number' => 1,
+            'claimed_at' => now(),
+        ]);
+
+        $loyalty = app(LoyaltyStampService::class);
+        $loyalty->syncEligibleUnlocks($customer);
+
+        $this->assertSame(0, $loyalty->pendingRewardCountFor($customer));
+        $this->assertTrue($loyalty->journeyFor($customer)['milestones'][0]['claimed']);
+    }
+
     public function test_add_stamp_starts_next_cycle_after_completion(): void
     {
         $staff = $this->createUser();

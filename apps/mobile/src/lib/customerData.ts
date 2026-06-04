@@ -63,12 +63,18 @@ function cacheKey(scope: string, token: string) {
   return `${scope}:${token.slice(0, 12)}`
 }
 
+/** Clears cards, wallet, card detail, and other customer-scoped caches. */
 export function invalidateCustomerCaches(token: string) {
   invalidateCache(cacheKey('customer', token))
 }
 
 export function invalidateCustomerCardsList(token: string) {
   invalidateCache(`${cacheKey('customer', token)}:cards`)
+}
+
+/** Call after a reward is redeemed so Home / Card / Rewards stop showing it as ready. */
+export function invalidateCustomerRewardCaches(token: string) {
+  invalidateCustomerCaches(token)
 }
 
 export function readCachedCardDetail(token: string, venueId: string): CardDetailPayload | null {
@@ -161,17 +167,19 @@ function pendingUnlocksForVenue(wallet: RewardsWalletResponse, venueId: string) 
 
 export async function fetchCardDetail(token: string, venueId: string, fresh = false): Promise<CardDetailPayload> {
   const key = `${cacheKey('customer', token)}:card:${venueId}`
-  const detail = await fetchWithCache(
-    key,
-    () => apiRequest<CardDetailPayload>(`/customer/cards?venue_id=${venueId}`, { token }),
-    fresh,
-  )
+  const [detail, wallet] = await Promise.all([
+    fetchWithCache(
+      key,
+      () => apiRequest<CardDetailPayload>(`/customer/cards?venue_id=${venueId}`, { token }),
+      fresh,
+    ),
+    fetchRewardsWallet(token, fresh),
+  ])
 
-  const pending_unlocks = detail.pending_unlocks?.length
-    ? detail.pending_unlocks
-    : pendingUnlocksForVenue(await fetchRewardsWallet(token, fresh), venueId)
-
-  return { ...detail, pending_unlocks }
+  return {
+    ...detail,
+    pending_unlocks: pendingUnlocksForVenue(wallet, venueId),
+  }
 }
 
 export async function fetchRewardsOverview(token: string, fresh = false): Promise<RewardsOverviewData> {

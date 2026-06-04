@@ -361,6 +361,16 @@ class LoyaltyStampService
         $eligible = $rewards->where('required_stamps', '<=', $stamps);
 
         foreach ($eligible as $reward) {
+            $existing = RewardUnlock::query()
+                ->where('customer_id', $customer->id)
+                ->where('reward_id', $reward->id)
+                ->where('cycle_number', $cycleNumber)
+                ->first();
+
+            if ($existing?->claimed_at !== null) {
+                continue;
+            }
+
             RewardUnlock::query()->firstOrCreate([
                 'customer_id' => $customer->id,
                 'reward_id' => $reward->id,

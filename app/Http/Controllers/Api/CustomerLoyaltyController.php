@@ -116,6 +116,10 @@ class CustomerLoyaltyController extends Controller
             ->orderBy('venue_id')
             ->get();
 
+        foreach ($cards as $card) {
+            $loyalty->syncEligibleUnlocks($card);
+        }
+
         $items = $cards->flatMap(function (Customer $card) use ($loyalty): array {
             return $loyalty->pendingUnlocksFor($card)
                 ->map(fn ($unlock): array => [

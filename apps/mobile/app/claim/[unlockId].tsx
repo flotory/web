@@ -11,7 +11,7 @@ import RewardRedeemedSuccessCard from '../../src/components/loyalty/RewardRedeem
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
-import { invalidateCustomerCaches, invalidateCustomerCardsList } from '../../src/lib/customerData'
+import { invalidateCustomerRewardCaches } from '../../src/lib/customerData'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
@@ -116,8 +116,7 @@ export default function ClaimScreen() {
       return
     }
 
-    invalidateCustomerCaches(token)
-    invalidateCustomerCardsList(token)
+    invalidateCustomerRewardCaches(token)
     await createSession()
   }, [createSession, token])
 
@@ -137,6 +136,9 @@ export default function ClaimScreen() {
     if (!redeemHapticDone.current) {
       redeemHapticDone.current = true
       hapticSuccess()
+    }
+    if (token) {
+      invalidateCustomerRewardCaches(token)
     }
   }
 

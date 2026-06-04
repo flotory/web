@@ -13,7 +13,7 @@ import StateCard from '../src/components/ui/StateCard'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsWallet } from '../src/hooks/useRewardsWallet'
 import { useScreenResource } from '../src/hooks/useScreenResource'
-import { buildHomeActivity, fetchCustomerCardsList } from '../src/lib/customerData'
+import { buildHomeActivity, fetchCustomerCardsList, invalidateCustomerRewardCaches } from '../src/lib/customerData'
 import { sortHomeCampaigns } from '../src/lib/homeCampaigns'
 import { rewardImageUrl } from '../src/lib/media'
 import { stampUpdateSignature } from '../src/lib/stampLiveUpdate'
@@ -43,7 +43,7 @@ export default function CustomerHomeScreen() {
     load: loadHomeCards,
   })
   const walletQuery = useRewardsWallet({ refetchOnFocus: true })
-  const { latestStamp } = useRealtime()
+  const { latestStamp, latestRedeem, clearLatestRedeem } = useRealtime()
   const lastUnlockHaptic = useRef<number | null>(null)
   const lastHomeStampSignature = useRef('')
 
@@ -181,6 +181,17 @@ export default function CustomerHomeScreen() {
     void refreshCards()
     void refreshWallet()
   }, [latestStamp, refreshCards, refreshWallet])
+
+  useEffect(() => {
+    if (!latestRedeem || !token) {
+      return
+    }
+
+    invalidateCustomerRewardCaches(token)
+    void refreshCards()
+    void refreshWallet()
+    clearLatestRedeem()
+  }, [latestRedeem, token, refreshCards, refreshWallet, clearLatestRedeem])
 
   if (role !== 'customer') {
     return (

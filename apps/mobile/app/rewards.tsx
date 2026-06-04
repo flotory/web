@@ -1,5 +1,5 @@
 import { Link, useRouter } from 'expo-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Animated, Pressable, Text, View } from 'react-native'
 
 import ProgressBar from '../src/components/customer/ProgressBar'
@@ -12,6 +12,9 @@ import ScreenHeader from '../src/components/ui/ScreenHeader'
 import StateCard from '../src/components/ui/StateCard'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { useRewardsOverview } from '../src/hooks/useRewardsOverview'
+import { invalidateCustomerRewardCaches } from '../src/lib/customerData'
+import { useAuth } from '../src/providers/AuthProvider'
+import { useRealtime } from '../src/providers/RealtimeProvider'
 import { progressCountCopy, progressHintCopy } from '../src/lib/progressCopy'
 import { formatShortDate } from '../src/lib/format'
 import { rewardImageUrl } from '../src/lib/media'
@@ -20,6 +23,8 @@ import { withAppFont } from '../src/lib/typography'
 
 export default function RewardsScreen() {
   const router = useRouter()
+  const { token } = useAuth()
+  const { latestRedeem, clearLatestRedeem } = useRealtime()
   const { data, loading, refreshing, error, refresh, reload } = useRewardsOverview()
   const [historyOpen, setHistoryOpen] = useState(false)
   const fade = useFadeOnReady(!loading)
@@ -32,6 +37,16 @@ export default function RewardsScreen() {
     () => readyItems.length > 0 || inProgress.length > 0 || claimed.length > 0,
     [claimed.length, inProgress.length, readyItems.length],
   )
+
+  useEffect(() => {
+    if (!latestRedeem || !token) {
+      return
+    }
+
+    invalidateCustomerRewardCaches(token)
+    void refresh()
+    clearLatestRedeem()
+  }, [latestRedeem, token, refresh, clearLatestRedeem])
 
   const header = (
     <View style={{ paddingHorizontal: space.screenX }}>

@@ -14,23 +14,32 @@ export function buildCardVenueRewardSlides(
   return [...milestones]
     .filter((milestone) => !milestone.claimed)
     .sort((a, b) => a.required_stamps - b.required_stamps)
-    .map((milestone) => {
+    .flatMap((milestone) => {
       const unlockId = unlockByRewardId.get(milestone.id)
 
       if (unlockId != null) {
-        return {
-          id: `reward-${milestone.id}`,
-          kind: 'ready' as const,
-          milestone,
-          unlockId,
-        }
+        return [
+          {
+            id: `reward-${milestone.id}`,
+            kind: 'ready' as const,
+            milestone,
+            unlockId,
+          },
+        ]
       }
 
-      return {
-        id: `reward-${milestone.id}`,
-        kind: 'next' as const,
-        milestone,
-        stampsToGo: Math.max(milestone.required_stamps - stamps, 0),
+      const stampsToGo = Math.max(milestone.required_stamps - stamps, 0)
+      if (stampsToGo <= 0) {
+        return []
       }
+
+      return [
+        {
+          id: `reward-${milestone.id}`,
+          kind: 'next' as const,
+          milestone,
+          stampsToGo,
+        },
+      ]
     })
 }
