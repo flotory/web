@@ -9,7 +9,7 @@ import { buildTabBarSurfacePath } from './tabBarShape'
 import { fonts } from '../../lib/typography'
 import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../theme'
 
-const HIDDEN_TABS = new Set(['rewards', 'notifications'])
+const HIDDEN_TABS = new Set(['notifications'])
 const GRADIENT_ID = 'tabBarSurfaceGradient'
 
 const TAB_LABELS: Record<string, string> = {
@@ -137,6 +137,7 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
             return (
               <Pressable
                 key={route.key}
+                testID={`tab-${route.name}`}
                 accessibilityRole="button"
                 accessibilityState={focused ? { selected: true } : {}}
                 accessibilityLabel={options.tabBarAccessibilityLabel ?? String(label)}

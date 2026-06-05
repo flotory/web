@@ -206,7 +206,7 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 
 | Mode | Who | Primary routes |
 |------|-----|----------------|
-| Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Analytics, Team, Settings |
+| Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Campaigns, Analytics, Team, Settings |
 | Staff workspace | staff-only membership | Scanner, Customers, Account |
 | Customer (web) | No team membership (or `workspace: false` routes) | Wallet, **My QR** (`/my-qr`), **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
 | Customer (mobile) | Same API, Expo app | Home, Wallet, **My QR** (center), Venues, Profile; Rewards and Notifications off-tab |
@@ -226,12 +226,14 @@ Customer stamp updates animate on the progress grid; reward unlocks show a brief
 | `/dashboard` | Operational dashboard (KPIs, insights, scanner) | Owner |
 | `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
 | `/rewards` | Milestone CRUD on guest stamp grid (click reward → toolbar: Edit / Archive) | Owner |
+| `/campaigns` | Campaign templates, activation, history, and pause/edit/end actions | Owner |
 | `/scanner` | QR scanner | Owner, staff |
 | `/customers` | Retention list (activity filters, last visit, redeems) | Owner, staff |
 | `/customers/:customerId` | Profile: timeline, visits, rewards, notes, birthday | Owner, staff |
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
 | `/wallet` | Loyalty wallet (venue list + per-venue card detail) | Customer |
+| `/my-qr` | Universal customer stamp QR | Customer |
 | `/customer/rewards` | Rewards wallet (pending unlocks) | Customer |
 | `/venues` | Browse/search all venues, join or open card | Customer |
 | `/customer/settings` | Account details + logout | Customer |
@@ -253,6 +255,7 @@ Workspace store auto-selects the first active venue when none is chosen (MVP sin
 - `POST /api/broadcasting/auth`
 - Venues: CRUD, select, logo/cover upload, join, **discover**, customers, dashboard
 - Rewards: nested CRUD + archive/reactivate/purge
+- Campaigns: templates, nested campaign CRUD, preview, activate/pause/end
 - Scanner: lookup, stamps, **redeem** (claim QR token)
 - Customer claim: `POST .../unlocks/{unlock}/claim-session`, `GET .../claim-sessions/{token}`
 - Team: list, invite, resend/cancel invitation, update/remove member
@@ -297,6 +300,6 @@ Uploaded files are gitignored; directories created at deploy/boot.
 - Venues: Demo Cafe (`demo-cafe`), Harbor Coffee, North Star Burgers, Olive Street Kitchen
 - `owner@example.com` — owner on all four
 - `staff@example.com` — staff at Demo Cafe only
-- `customer@example.com` — 100 stamps at Demo Cafe for reward testing
+- `customer@example.com` — separate card per venue (e.g. 7 stamps at Demo Cafe with 5-stamp reward already claimed; 4 at Harbor Coffee); one universal My QR via `user_stamp_tokens`
 
 Demo password: `password` (local seed only).

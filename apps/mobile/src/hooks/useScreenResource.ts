@@ -1,4 +1,5 @@
 import { useFocusEffect } from 'expo-router'
+import NetInfo from '@react-native-community/netinfo'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type LoadMode = 'initial' | 'refresh' | 'silent'
@@ -41,7 +42,10 @@ export function useScreenResource<T>({
         setData(result)
         setError('')
       } catch {
-        if (mode !== 'silent') setError(errorMessage)
+        if (mode !== 'silent') {
+          const network = await NetInfo.fetch()
+          setError(network.isConnected === false ? 'You appear to be offline. Reconnect and try again.' : errorMessage)
+        }
       } finally {
         if (mode === 'refresh') setRefreshing(false)
         if (mode === 'initial') setLoading(false)

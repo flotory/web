@@ -1,5 +1,6 @@
 import { usePathname } from 'expo-router'
-import { useCallback, useEffect, useRef } from 'react'
+import NetInfo from '@react-native-community/netinfo'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
 import { buildStampPayloadFromCardDetail } from '../lib/buildStampPayload'
@@ -10,6 +11,10 @@ import type { WalletCard } from '../types/loyalty'
 
 const POLL_MS = 2000
 const POLL_MS_ACTIVE = 900
+const CHANNEL_SYNC_MS = 30000
+const FAILURE_BACKOFF_MS = [0, 3000, 8000, 15000, 30000] as const
+
+export type StampWatchdogStatus = 'ok' | 'offline' | 'delayed'
 
 function isQrScreen(pathname: string): boolean {
   return pathname.includes('/qr')
@@ -19,11 +24,15 @@ function isHomeScreen(pathname: string): boolean {
   return pathname.includes('/home')
 }
 
-function usesFastStampPoll(pathname: string): boolean {
-  return isQrScreen(pathname) || isHomeScreen(pathname)
+function isCardScreen(pathname: string): boolean {
+  return pathname.includes('/card/')
 }
 
-async function detectStampIncreases(
+function usesFastStampPoll(pathname: string): boolean {
+  return isQrScreen(pathname) || isHomeScreen(pathname) || isCardScreen(pathname)
+}
+
+async function detectStampChanges(
   cards: WalletCard[],
   baseline: Map<number, number>,
   token: string,
@@ -32,25 +41,25 @@ async function detectStampIncreases(
   for (const card of cards) {
     const previous = baseline.get(card.id)
     const isNewCard = previous === undefined
-    const previousStamps = isNewCard ? 0 : previous
-
-    baseline.set(card.id, card.stamps)
 
     if (!isNewCard && card.stamps === previous) {
       continue
     }
 
-    if (card.stamps <= previousStamps) {
-      continue
+    const previousStamps = isNewCard ? 0 : previous
+    const stampsChanged = isNewCard || card.stamps !== previousStamps
+
+    if (stampsChanged && (card.stamps > previousStamps || card.stamps < previousStamps)) {
+      const detail = await fetchCardDetail(token, String(card.venue_id), true)
+      const payload = buildStampPayloadFromCardDetail(previousStamps, detail)
+
+      if (payload) {
+        invalidateCustomerCardsList(token)
+        ingestStamp(payload)
+      }
     }
 
-    const detail = await fetchCardDetail(token, String(card.venue_id), true)
-    const payload = buildStampPayloadFromCardDetail(previousStamps, detail)
-
-    if (payload) {
-      invalidateCustomerCardsList(token)
-      ingestStamp(payload)
-    }
+    baseline.set(card.id, card.stamps)
   }
 }
 
@@ -58,10 +67,14 @@ export function useStampWatchdog() {
   const pathname = usePathname()
   const { token, role } = useAuth()
   const { ingestStamp, syncChannels } = useRealtime()
+  const [status, setStatus] = useState<StampWatchdogStatus>('ok')
   const stampSnapshot = useRef<Map<number, number>>(new Map())
   const activeBaseline = useRef<Map<number, number>>(new Map())
   const activeBaselineReady = useRef(false)
   const globalBootstrapped = useRef(false)
+  const lastChannelSyncAt = useRef(0)
+  const failureCount = useRef(0)
+  const backoffUntil = useRef(0)
   const fastPoll = usesFastStampPoll(pathname)
 
   const poll = useCallback(async () => {
@@ -69,20 +82,40 @@ export function useStampWatchdog() {
       return
     }
 
+    if (Date.now() < backoffUntil.current) {
+      return
+    }
+
     try {
+      const network = await NetInfo.fetch()
+      if (network.isConnected === false) {
+        setStatus('offline')
+        return
+      }
+
       const { cards } = await fetchCustomerCardsList(token, true)
-      await syncChannels()
+      const now = Date.now()
+      if (now - lastChannelSyncAt.current > CHANNEL_SYNC_MS) {
+        lastChannelSyncAt.current = now
+        await syncChannels(cards)
+      }
 
       if (fastPoll) {
         if (!activeBaselineReady.current) {
           activeBaseline.current = new Map(cards.map((card) => [card.id, card.stamps]))
           activeBaselineReady.current = true
+          failureCount.current = 0
+          backoffUntil.current = 0
+          setStatus('ok')
           return
         }
 
-        await detectStampIncreases(cards, activeBaseline.current, token, (payload) => {
+        await detectStampChanges(cards, activeBaseline.current, token, (payload) => {
           if (payload) ingestStamp(payload)
         })
+        failureCount.current = 0
+        backoffUntil.current = 0
+        setStatus('ok')
         return
       }
 
@@ -93,13 +126,25 @@ export function useStampWatchdog() {
           stampSnapshot.current.set(card.id, card.stamps)
         }
         globalBootstrapped.current = true
+        failureCount.current = 0
+        backoffUntil.current = 0
+        setStatus('ok')
         return
       }
 
-      await detectStampIncreases(cards, stampSnapshot.current, token, (payload) => {
+      await detectStampChanges(cards, stampSnapshot.current, token, (payload) => {
         if (payload) ingestStamp(payload)
       })
+      failureCount.current = 0
+      backoffUntil.current = 0
+      setStatus('ok')
     } catch {
+      failureCount.current += 1
+      const backoff = FAILURE_BACKOFF_MS[Math.min(failureCount.current, FAILURE_BACKOFF_MS.length - 1)] ?? 30000
+      backoffUntil.current = Date.now() + backoff
+      if (failureCount.current >= 2) {
+        setStatus('delayed')
+      }
       // Polling is a fallback when WebSockets are unavailable.
     }
   }, [token, role, ingestStamp, syncChannels, fastPoll])
@@ -110,6 +155,10 @@ export function useStampWatchdog() {
       activeBaseline.current.clear()
       globalBootstrapped.current = false
       activeBaselineReady.current = false
+      lastChannelSyncAt.current = 0
+      failureCount.current = 0
+      backoffUntil.current = 0
+      setStatus('ok')
       return
     }
 
@@ -151,4 +200,6 @@ export function useStampWatchdog() {
       subscription.remove()
     }
   }, [token, role, poll, fastPoll])
+
+  return { status }
 }

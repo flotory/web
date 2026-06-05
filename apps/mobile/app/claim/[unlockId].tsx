@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import NetInfo from '@react-native-community/netinfo'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from 'react-native'
@@ -8,7 +9,6 @@ import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/component
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import QrImage from '../../src/components/QrImage'
 import RewardRedeemedSuccessCard from '../../src/components/loyalty/RewardRedeemedSuccessCard'
-import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
 import { invalidateCustomerRewardCaches } from '../../src/lib/customerData'
@@ -85,7 +85,7 @@ export default function ClaimScreen() {
     }
 
     if (unlockId == null) {
-      setError('This reward is not ready to claim yet. Open your card, pull to refresh, then try again.')
+      setError('This reward is not ready yet. Go back, pull to refresh Home or your card, then tap it again.')
       setLoading(false)
       return
     }
@@ -94,16 +94,28 @@ export default function ClaimScreen() {
     setError('')
 
     try {
+      const network = await NetInfo.fetch()
+      if (network.isConnected === false) {
+        setError('You appear to be offline. Reconnect and try again.')
+        return
+      }
+
       const response = await apiRequest<ClaimSessionPayload>(
         `/customer/rewards/unlocks/${unlockId}/claim-session`,
         { method: 'POST', token },
       )
       setSession(response)
+      invalidateCustomerRewardCaches(token)
     } catch (exception) {
       if (exception instanceof ApiError) {
-        setError(exception.message)
+        const message = exception.message
+        if (message.toLowerCase().includes('already redeemed') || message.toLowerCase().includes('already used')) {
+          setError('This reward was already used. Pull to refresh Home or your card.')
+        } else {
+          setError(message)
+        }
       } else {
-        setError('Could not load your claim ticket. Check your connection and try again.')
+        setError('Could not load your claim QR. Check your connection and try again.')
       }
     } finally {
       setLoading(false)
@@ -179,6 +191,7 @@ export default function ClaimScreen() {
   }, [session?.token, session?.status, token])
 
   const isClaimed = session?.status === 'claimed'
+  const isExpired = session?.status === 'expired' || (session?.status === 'pending' && expiresLabel === '0:00')
   const showError = Boolean(error) && !session
 
   if (loading) {
@@ -229,8 +242,9 @@ export default function ClaimScreen() {
         {showError ? (
           <View>
             <StateCard
-              emoji="🎫"
-              title="Can't open claim ticket"
+              icon="qr-code-outline"
+              iconColor={colors.primary}
+              title="Can't show claim QR"
               message={error}
               primaryAction={{ label: 'Try again', onPress: () => void refreshAndRetry() }}
               secondaryAction={{ label: 'Back to wallet', onPress: goToWallet }}
@@ -238,22 +252,22 @@ export default function ClaimScreen() {
             <View style={{ marginTop: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
               <Ionicons name="information-circle-outline" size={22} color={colors.inkMuted} />
               <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.inkMuted }}>
-                Only rewards listed under Ready in Rewards or on your card can be claimed. If you just earned stamps, refresh your card first.
+                A claim QR is only for ready rewards from Home or the cafe card. Staff scan that QR — not your stamp card. If you just earned stamps, refresh first.
               </Text>
             </View>
           </View>
         ) : null}
 
-        {session?.status === 'pending' ? (
+        {session?.status === 'pending' && !isExpired ? (
           <>
             <View style={{ marginTop: 16, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
               <View style={{ padding: 18, backgroundColor: colors.surfaceMuted }}>
-                <Text style={{ ...typography.label, color: colors.primary }}>REWARD TICKET</Text>
+                <Text style={{ ...typography.label, color: colors.primary }}>CLAIM QR</Text>
                 <Text style={withAppFont({ marginTop: 8, fontSize: 30, fontWeight: '800', color: colors.plum })}>{session.reward.title}</Text>
                 <Text style={{ ...typography.body, marginTop: 4, color: colors.inkMuted }}>{session.venue?.name ?? 'Your venue'}</Text>
               </View>
               <View style={{ padding: 18, alignItems: 'center' }}>
-                <Text style={{ ...typography.caption, marginBottom: 10 }}>Show this ticket at the counter</Text>
+                <Text style={{ ...typography.caption, marginBottom: 10 }}>Staff scans this at the counter</Text>
                 <View style={{ backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.lavenderBorder, padding: 12 }}>
                   <QrImage value={session.qr_value} size={220} />
                 </View>
@@ -268,8 +282,17 @@ export default function ClaimScreen() {
           </>
         ) : null}
 
-        {session?.status === 'expired' ? (
-          <PrimaryButton label="Generate new code" onPress={() => void createSession()} style={{ marginTop: 12 }} />
+        {isExpired && !isClaimed ? (
+          <View style={{ marginTop: 16, gap: 12 }}>
+            <StateCard
+              icon="time-outline"
+              iconColor={colors.danger}
+              title="Claim QR expired"
+              message="Generate a fresh QR when staff is ready to scan it."
+              primaryAction={{ label: 'Generate new code', onPress: () => void createSession() }}
+              secondaryAction={{ label: 'Back to wallet', onPress: goToWallet }}
+            />
+          </View>
         ) : null}
       </View>
       )}

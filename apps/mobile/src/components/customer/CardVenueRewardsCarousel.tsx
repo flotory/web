@@ -16,10 +16,44 @@ interface CardVenueRewardsCarouselProps {
   pendingUnlocks?: { unlock_id: number; reward: RewardRef }[]
 }
 
-const transparent = { backgroundColor: 'transparent' as const }
-
 export function cardVenueRewardSlidesFromProps(props: CardVenueRewardsCarouselProps): CardVenueRewardSlide[] {
   return buildCardVenueRewardSlides(props.milestones, props.stamps, props.pendingUnlocks)
+}
+
+function renderSlide(
+  slide: CardVenueRewardSlide,
+  venue: VenueRef | null | undefined,
+  cardId: number,
+  venueId: number,
+  cardWidth: number,
+) {
+  if (slide.kind === 'ready') {
+    return (
+      <HomeRewardTicketCard
+        variant="ready"
+        title={slide.milestone.title}
+        venue={venue}
+        imageUri={rewardImageUrl(slide.milestone)}
+        unlockId={slide.unlockId}
+        width={cardWidth}
+        linkable
+      />
+    )
+  }
+
+  return (
+    <HomeRewardTicketCard
+      variant="next"
+      title={slide.milestone.title}
+      venue={venue}
+      imageUri={rewardImageUrl(slide.milestone)}
+      stampsToGo={slide.stampsToGo}
+      cardId={cardId}
+      venueId={venueId}
+      width={cardWidth}
+      linkable={false}
+    />
+  )
 }
 
 export default function CardVenueRewardsCarousel({
@@ -41,6 +75,7 @@ export default function CardVenueRewardsCarousel({
   }
 
   const readyCount = slides.filter((slide) => slide.kind === 'ready').length
+  const useCarousel = slides.length > 1
 
   return (
     <View style={{ marginTop: space.sectionGap }}>
@@ -67,7 +102,7 @@ export default function CardVenueRewardsCarousel({
             marginTop: -4,
           })}
         >
-          {readyCount === 1 ? '1 ready to claim' : `${readyCount} ready to claim`}
+          {readyCount === 1 ? '1 reward — show QR at counter' : `${readyCount} rewards — show QR at counter`}
         </Text>
       ) : (
         <Text
@@ -80,64 +115,46 @@ export default function CardVenueRewardsCarousel({
             marginTop: -4,
           })}
         >
-          Swipe to see what you can earn
+          Your next treat at this cafe
         </Text>
       )}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={snapInterval}
-        snapToAlignment="start"
-        disableIntervalMomentum
-        nestedScrollEnabled
-        directionalLockEnabled
-        scrollEventThrottle={16}
-        style={transparent}
-        contentContainerStyle={{
-          paddingLeft: space.screenX,
-          paddingRight: space.screenX,
-          backgroundColor: 'transparent',
-        }}
-      >
-        {slides.map((slide, index) => (
-          <View
-            key={slide.id}
-            style={[
-              transparent,
-              {
+      {useCarousel ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={snapInterval}
+          snapToAlignment="start"
+          disableIntervalMomentum
+          nestedScrollEnabled
+          directionalLockEnabled
+          scrollEventThrottle={16}
+          style={{ backgroundColor: 'transparent' }}
+          contentContainerStyle={{
+            paddingLeft: space.screenX,
+            paddingRight: space.screenX,
+            backgroundColor: 'transparent',
+          }}
+        >
+          {slides.map((slide, index) => (
+            <View
+              key={slide.id}
+              style={{
                 width: cardWidth,
                 marginRight: index < slides.length - 1 ? carousel.rewardCardGap : 0,
-              },
-            ]}
-          >
-            {slide.kind === 'ready' ? (
-              <HomeRewardTicketCard
-                variant="ready"
-                title={slide.milestone.title}
-                venue={venue}
-                imageUri={rewardImageUrl(slide.milestone)}
-                unlockId={slide.unlockId}
-                width={cardWidth}
-                linkable
-              />
-            ) : (
-              <HomeRewardTicketCard
-                variant="next"
-                title={slide.milestone.title}
-                venue={venue}
-                imageUri={rewardImageUrl(slide.milestone)}
-                stampsToGo={slide.stampsToGo}
-                cardId={cardId}
-                venueId={venueId}
-                width={cardWidth}
-                linkable={false}
-              />
-            )}
-          </View>
-        ))}
-      </ScrollView>
+                backgroundColor: 'transparent',
+              }}
+            >
+              {renderSlide(slide, venue, cardId, venueId, cardWidth)}
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={{ paddingHorizontal: space.screenX }}>
+          {renderSlide(slides[0], venue, cardId, venueId, cardWidth)}
+        </View>
+      )}
     </View>
   )
 }

@@ -7,12 +7,6 @@ import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows, space } from '../../theme'
 import type { MilestoneProgress, RewardRef } from '../../types/loyalty'
 
-function pathGridColumns(total: number): number {
-  if (total <= 5) return 5
-  if (total <= 10) return 5
-  return 6
-}
-
 interface CardLoyaltyProgressCardProps {
   stamps: number
   progressTarget: number
@@ -34,11 +28,13 @@ export default function CardLoyaltyProgressCard({
   const goalTitle = nextReward?.title ?? 'Your next reward'
   const collected = Math.min(stamps, slotCount)
   const toGo = Math.max(progressTarget - collected, 0)
-  const progressRatio = progressTarget > 0 ? Math.min(collected / progressTarget, 1) : 0
+  const redeemedMilestones = milestones.filter((item) => item.claimed)
+  const hasRedeemedReward = redeemedMilestones.length > 0
   const milestoneStamps = milestones
+    .filter((item) => !item.claimed)
     .map((item) => item.required_stamps)
     .filter((value) => value > 0 && value < progressTarget && value <= slotCount)
-  const gridColumns = pathGridColumns(slotCount)
+  const gridColumns = 5
   const sizeScale = slotCount > 10 ? 0.9 : 1
 
   return (
@@ -96,7 +92,6 @@ export default function CardLoyaltyProgressCard({
           claimedStamps={milestones.filter((item) => item.claimed).map((item) => item.required_stamps)}
           highlightStamps={animatingSlots}
           celebrateGiftStamp={celebrateGiftStamp}
-          cellShape="circle"
           columns={gridColumns}
           showStampNumbers
           sizeScale={sizeScale}
@@ -112,38 +107,12 @@ export default function CardLoyaltyProgressCard({
             lineHeight: 18,
           })}
         >
-          {toGo > 0
-            ? `${toGo} ${toGo === 1 ? 'stamp' : 'stamps'} until “${goalTitle}”`
-            : 'You have unlocked this reward'}
+          {hasRedeemedReward && toGo <= 0
+            ? 'Reward used — keep collecting for your next treat'
+            : toGo > 0
+              ? `${toGo} ${toGo === 1 ? 'stamp' : 'stamps'} until “${goalTitle}”`
+              : 'Ready to claim — open Rewards'}
         </Text>
-      </View>
-
-      <View style={{ marginTop: 18 }}>
-        <View
-          style={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: colors.progressTrack,
-            overflow: 'hidden',
-          }}
-        >
-          <View
-            style={{
-              width: `${Math.round(progressRatio * 100)}%`,
-              height: '100%',
-              backgroundColor: colors.success,
-              borderRadius: 3,
-            }}
-          />
-        </View>
-        <View style={{ marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted })}>
-            {collected} collected
-          </Text>
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted })}>
-            {toGo > 0 ? `${toGo} to unlock` : 'Unlocked'}
-          </Text>
-        </View>
       </View>
 
       <CardMilestoneChips milestones={milestones} stamps={stamps} />

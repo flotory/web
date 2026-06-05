@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Gift, ScanLine, ShieldCheck, UsersRound } from '@lucide/vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { Check, Gift, Megaphone, ScanLine, ShieldCheck, Star, UserPlus, UsersRound } from '@lucide/vue'
+import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
+import DashboardActiveCampaignsSection from '@/components/campaigns/DashboardActiveCampaignsSection.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import StatCard from '@/components/loyalty/StatCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -14,13 +15,21 @@ import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
-import { venueCoverUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Venue } from '@/types'
+import type { Campaign } from '@/lib/campaignTemplates'
 
 interface DashboardInsight {
   text: string
   tone: 'positive' | 'warning' | 'neutral'
+}
+
+interface DashboardActivity {
+  type: 'stamp' | 'reward_unlocked' | 'reward_redeemed' | 'customer_joined' | 'reward_created' | 'campaign_activated' | string
+  title: string
+  occurred_at: string
+  venue_name?: string
 }
 
 interface DashboardResponse {
@@ -63,6 +72,8 @@ interface DashboardResponse {
     venue_name: string
     stats: DashboardResponse['stats']
   }>
+  active_campaigns?: Campaign[]
+  recent_activity?: DashboardActivity[]
 }
 
 const router = useRouter()
@@ -133,6 +144,16 @@ const stats = computed(() => {
 
 const hasCustomers = computed(() => (dashboard.value?.stats.total_customers ?? 0) > 0)
 const insights = computed(() => dashboard.value?.insights ?? [])
+const activeCampaigns = computed(() => dashboard.value?.active_campaigns ?? [])
+const recentActivity = computed(() => dashboard.value?.recent_activity ?? [])
+const recentActivityRows = computed(() => recentActivity.value.slice(0, 3))
+const monthlyActivityRows = computed(() => (dashboard.value?.monthly_activity ?? []).slice(-6))
+const maxMonthlyVisits = computed(() => Math.max(1, ...monthlyActivityRows.value.map((row) => row.visits)))
+const topConversionRows = computed(() =>
+  [...(dashboard.value?.milestone_conversions ?? [])]
+    .sort((a, b) => b.unlocked_count - a.unlocked_count)
+    .slice(0, 3),
+)
 
 function insightToneClass(tone: DashboardInsight['tone']) {
   switch (tone) {
@@ -145,23 +166,59 @@ function insightToneClass(tone: DashboardInsight['tone']) {
   }
 }
 
-const activityFeed = computed(() => {
-  if (!hasCustomers.value) {
-    return [
-      { icon: '🟢', title: 'QR downloaded', time: 'just now' },
-      { icon: '🟢', title: 'Rewards published', time: '2 min ago' },
-      { icon: '🟢', title: 'Scanner ready', time: '5 min ago' },
-      { icon: '🟢', title: 'Venue activated', time: '8 min ago' },
-    ]
+function activityIconComponent(type: DashboardActivity['type']): Component {
+  switch (type) {
+    case 'stamp':
+      return Check
+    case 'reward_unlocked':
+    case 'reward_redeemed':
+      return Gift
+    case 'customer_joined':
+      return UserPlus
+    case 'reward_created':
+      return Star
+    case 'campaign_activated':
+      return Megaphone
+    default:
+      return ScanLine
   }
+}
 
-  return [
-    { icon: '🟢', title: `${dashboard.value?.stats.visits_this_month ?? 0} visits this month`, time: 'month' },
-    { icon: '🟢', title: `${dashboard.value?.stats.total_customers ?? 0} guests on loyalty`, time: 'all time' },
-    { icon: '🟢', title: `${dashboard.value?.stats.milestones_unlocked ?? 0} rewards unlocked`, time: 'all time' },
-    { icon: '🟢', title: 'Scanner and QR ready', time: 'live' },
-  ]
-})
+function activityIconClasses(type: DashboardActivity['type']) {
+  switch (type) {
+    case 'stamp':
+      return 'bg-emerald-50 text-emerald-600 ring-emerald-100'
+    case 'reward_unlocked':
+    case 'reward_redeemed':
+      return 'bg-amber-50 text-amber-600 ring-amber-100'
+    case 'customer_joined':
+      return 'bg-blue-50 text-blue-600 ring-blue-100'
+    case 'reward_created':
+      return 'bg-violet-50 text-violet-600 ring-violet-100'
+    case 'campaign_activated':
+      return 'bg-rose-50 text-rose-600 ring-rose-100'
+    default:
+      return 'bg-slate-50 text-slate-500 ring-slate-200'
+  }
+}
+
+function formatActivityTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / 60_000)
+  if (diffMinutes < 1) return 'now'
+  if (diffMinutes < 60) return `${diffMinutes}m ago`
+
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
 
 const canOpenActions = computed(() => Boolean(selectedVenue.value && landingUrl.value))
 
@@ -184,6 +241,26 @@ function downloadQrPng() {
   document.body.appendChild(link)
   link.click()
   link.remove()
+}
+
+function openCampaignEditor(campaign: Campaign) {
+  void router.push({ path: '/campaigns', query: { edit: campaign.id } })
+}
+
+async function updateCampaignStatus(campaign: Campaign, status: Campaign['status']) {
+  const venueId = selectedVenue.value?.id ?? workspace.filterVenueId
+  if (!venueId) return
+
+  try {
+    await api(`/venues/${venueId}/campaigns/${campaign.id}`, {
+      method: 'PATCH',
+      body: { status },
+    })
+    toast.success('Campaign updated')
+    await loadDashboard()
+  } catch (exception) {
+    toast.error(apiErrorMessage(exception, 'Could not update campaign.'))
+  }
 }
 
 async function loadDashboard() {
@@ -262,129 +339,152 @@ onMounted(() => {
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
 
-    <div class="mt-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-      <AppCard wrapper-class="hero-shell overflow-hidden !border-slate-700/60 !bg-slate-950 p-0 text-white shadow-2xl shadow-slate-900/40">
-        <div class="relative h-36 overflow-hidden">
-          <img :src="venueCoverUrl(selectedVenue)" alt="" class="h-full w-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-900/30" />
+    <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_2fr] lg:items-stretch">
+      <AppCard wrapper-class="flex h-full flex-col">
+        <h2 class="text-xl font-black text-slate-950">Venue QR</h2>
+        <p class="mt-1 text-sm text-slate-500">Scan to join and collect stamps</p>
+
+        <div class="mt-4 flex flex-1 flex-col items-center justify-center">
+          <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-slate-50 p-3 ring-1 ring-slate-200">
+            <div id="dashboard-qr" class="mx-auto grid place-items-center rounded-2xl bg-white p-2 ring-1 ring-slate-200 [&_canvas]:block">
+              <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="132" level="M" render-as="canvas" :margin="2" />
+            </div>
+            <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
+          </div>
         </div>
-        <div class="hero-ambient pointer-events-none absolute inset-0 opacity-50" />
-        <div class="relative grid gap-4 bg-slate-950 p-4 pt-2 -mt-10">
-          <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-            <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-100">
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-1 ring-1 ring-emerald-300/30"><span class="live-dot" /> QR active</span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-blue-400/15 px-2.5 py-1 ring-1 ring-blue-300/30"><span class="live-dot" /> Rewards live</span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-indigo-400/15 px-2.5 py-1 ring-1 ring-indigo-300/30"><span class="live-dot" /> Scanner ready</span>
-            </div>
-            <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your loyalty program is live</h2>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Guests can now scan your QR, collect stamps, and unlock rewards.</p>
-          </div>
 
-          <div class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Primary actions</p>
-              <div class="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                <AppButton size="lg" class="hero-btn-primary w-full" :disabled="!canOpenActions" @click="downloadQrPng">
-                  ↓ Download QR
-                </AppButton>
-                <RouterLink :to="landingUrl || '/my-venues'" class="inline-flex w-full">
-                  <AppButton size="lg" variant="secondary" class="hero-btn-secondary w-full" :disabled="!canOpenActions">◍ Preview customer experience</AppButton>
-                </RouterLink>
-              </div>
-              <div class="mt-3 grid gap-2 sm:grid-cols-2">
-                <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-                  <p class="text-sm font-semibold text-white">Ready for first scan</p>
-                  <p class="mt-1 text-xs text-white/70">Print your QR and place it near tables.</p>
-                </div>
-                <div class="rounded-2xl bg-white/10 p-3 ring-1 ring-white/10">
-                  <p class="text-sm font-semibold text-white">Guests unlock rewards</p>
-                  <p class="mt-1 text-xs text-white/70">Progress updates automatically after each stamp.</p>
-                </div>
-              </div>
-              <p class="mt-3 text-xs font-medium text-white/65">Operational status: waiting for first guests.</p>
-            </div>
-
-            <div class="rounded-3xl bg-slate-900/70 p-4 ring-1 ring-white/10 backdrop-blur">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">Venue QR asset</p>
-              <div class="mt-3 rounded-[1.4rem] bg-white p-3 shadow-xl shadow-black/30">
-                <div id="dashboard-qr" class="qr-pulse mx-auto rounded-2xl bg-white p-2 ring-1 ring-slate-200">
-                  <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="145" level="M" render-as="canvas" :margin="2" />
-                </div>
-                <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
-              </div>
-              <p class="mt-3 text-xs leading-relaxed text-slate-300">
-                Print and place on tables. Guests scan to join and collect stamps instantly.
-              </p>
-            </div>
-          </div>
+        <div class="mt-5 grid gap-2">
+          <AppButton size="lg" class="w-full" :disabled="!canOpenActions" @click="downloadQrPng">
+            ↓ Download QR
+          </AppButton>
+          <RouterLink :to="landingUrl || '/my-venues'" class="inline-flex w-full">
+            <AppButton size="lg" variant="secondary" class="w-full" :disabled="!canOpenActions">
+              ◍ Preview customer experience
+            </AppButton>
+          </RouterLink>
         </div>
       </AppCard>
 
-      <AppCard>
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-xl font-black text-slate-950">Insights</h2>
-          <RouterLink to="/analytics" class="text-xs font-bold uppercase tracking-wide text-slate-500">View analytics</RouterLink>
+      <AppCard wrapper-class="flex h-full flex-col">
+        <div>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="inline-flex items-center gap-2 text-xl font-black text-slate-950">
+              <span>Activity & insights</span>
+              <span class="live-dot shrink-0" aria-hidden="true" />
+            </h2>
+            <RouterLink to="/analytics" class="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700">
+              View all
+            </RouterLink>
+          </div>
+          <p class="mt-1 text-sm text-slate-500">Real loyalty events plus signals worth acting on.</p>
         </div>
-        <p class="mt-1 text-sm text-slate-500">Actionable signals from your loyalty data.</p>
-        <ul v-if="insights.length" class="mt-4 space-y-2">
-          <li
-            v-for="(insight, index) in insights"
-            :key="`${insight.text}-${index}`"
-            class="flex gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium leading-snug ring-1 ring-slate-200/80"
-            :class="insightToneClass(insight.tone)"
+
+        <div v-if="recentActivityRows.length" class="mt-4 space-y-2">
+          <div
+            v-for="item in recentActivityRows"
+            :key="`${item.type}-${item.title}-${item.occurred_at}`"
+            class="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
           >
-            <span class="text-slate-400" aria-hidden="true">•</span>
-            <span>{{ insight.text }}</span>
-          </li>
-        </ul>
-        <p v-else class="mt-4 text-sm text-slate-500">
-          Insights appear once guests start visiting.
-          <RouterLink to="/rewards" class="font-semibold text-slate-700 underline-offset-2 hover:underline">
-            Set up rewards
-          </RouterLink>
-          or open the scanner when your first guest arrives.
-        </p>
+            <p class="flex min-w-0 items-center gap-2">
+              <span
+                class="grid size-6 shrink-0 place-items-center rounded-full ring-1"
+                :class="activityIconClasses(item.type)"
+              >
+                <component :is="activityIconComponent(item.type)" class="size-3.5" :stroke-width="2.5" aria-hidden="true" />
+              </span>
+              <span class="truncate">{{ item.title }}</span>
+            </p>
+            <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-400">{{ formatActivityTime(item.occurred_at) }}</span>
+          </div>
+        </div>
+        <div v-else class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+          <p class="text-sm font-semibold text-slate-600">No activity yet.</p>
+          <p class="mt-1 text-xs text-slate-500">Open the scanner when your first guest arrives.</p>
+        </div>
+
+        <div class="mt-5 border-t border-slate-100 pt-4">
+          <p class="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Insights</p>
+          <ul v-if="insights.length" class="mt-3 space-y-2">
+            <li
+              v-for="(insight, index) in insights.slice(0, 3)"
+              :key="`${insight.text}-${index}`"
+              class="flex gap-2 rounded-2xl bg-white px-3 py-2 text-sm font-medium leading-snug ring-1 ring-slate-200/80"
+              :class="insightToneClass(insight.tone)"
+            >
+              <span class="text-slate-400" aria-hidden="true">•</span>
+              <span>{{ insight.text }}</span>
+            </li>
+          </ul>
+          <p v-else class="mt-3 text-sm text-slate-500">
+            Insights appear once guests start visiting.
+          </p>
+        </div>
       </AppCard>
     </div>
 
-    <AppCard wrapper-class="mt-6">
-      <h2 class="text-xl font-black text-slate-950">Recent activity</h2>
-      <p class="mt-1 text-sm text-slate-500">This month and all-time snapshot of your loyalty program.</p>
-      <div class="mt-4 space-y-2">
-        <div v-for="item in activityFeed" :key="item.title" class="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-          <p class="flex items-center gap-2">
-            <span class="text-base">{{ item.icon }}</span>
-            <span>{{ item.title }}</span>
-          </p>
-          <span class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ item.time }}</span>
-        </div>
-      </div>
-    </AppCard>
+    <DashboardActiveCampaignsSection
+      :campaigns="activeCampaigns"
+      @pause="(campaign) => updateCampaignStatus(campaign, 'paused')"
+      @edit="openCampaignEditor"
+      @end="(campaign) => updateCampaignStatus(campaign, 'ended')"
+    />
 
     <AppCard wrapper-class="mt-6 overflow-hidden bg-gradient-to-br from-slate-950/95 to-slate-900/90 text-white ring-1 ring-white/10">
       <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <h2 class="text-xl font-black">Analytics preview</h2>
-          <p class="mt-1 text-sm text-white/70">Analytics will appear after your first guest stamps.</p>
-          <ul class="mt-4 space-y-2 text-sm font-semibold text-white/80">
-            <li>• Track repeat stamps</li>
-            <li>• See busiest hours</li>
-            <li>• Measure reward performance</li>
-          </ul>
+          <p class="mt-1 text-sm text-white/70">Real monthly visits and reward performance from this venue.</p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Visits</p>
+              <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
+              <p class="text-xs font-semibold text-white/55">this month</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Claim rate</p>
+              <p class="mt-1 text-2xl font-black">{{ conversionOverview.rate }}%</p>
+              <p class="text-xs font-semibold text-white/55">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Returning</p>
+              <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
+              <p class="text-xs font-semibold text-white/55">repeat guests</p>
+            </div>
+          </div>
+          <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-black text-white underline-offset-4 hover:underline">
+            Open full analytics
+          </RouterLink>
         </div>
         <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-          <div class="mb-3 grid grid-cols-3 gap-2">
-            <div class="h-10 rounded-xl bg-white/10" />
-            <div class="h-10 rounded-xl bg-white/10" />
-            <div class="h-10 rounded-xl bg-white/10" />
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-white/50">Last 6 months</p>
+            <p class="text-xs font-semibold text-white/50">{{ maxMonthlyVisits }} peak visits</p>
           </div>
           <div class="flex h-28 items-end gap-2">
-            <div class="h-9 w-1/6 rounded-t-xl bg-blue-300/40" />
-            <div class="h-14 w-1/6 rounded-t-xl bg-blue-300/50" />
-            <div class="h-11 w-1/6 rounded-t-xl bg-blue-300/45" />
-            <div class="h-20 w-1/6 rounded-t-xl bg-blue-300/60" />
-            <div class="h-13 w-1/6 rounded-t-xl bg-blue-300/45" />
-            <div class="h-16 w-1/6 rounded-t-xl bg-blue-300/55" />
+            <div
+              v-for="row in monthlyActivityRows"
+              :key="row.month"
+              class="flex h-full flex-1 flex-col justify-end gap-2"
+            >
+              <div
+                class="min-h-2 rounded-t-xl bg-blue-300/70"
+                :style="{ height: `${Math.max(row.visits > 0 ? 10 : 4, (row.visits / maxMonthlyVisits) * 100)}%` }"
+                :title="`${row.month}: ${row.visits} visits`"
+              />
+              <p class="truncate text-center text-[10px] font-bold uppercase text-white/45">
+                {{ row.month.slice(5) }}
+              </p>
+            </div>
+          </div>
+          <div v-if="topConversionRows.length" class="mt-4 space-y-2 border-t border-white/10 pt-4">
+            <div
+              v-for="row in topConversionRows"
+              :key="`${row.reward_id}-${row.venue_id ?? 'venue'}`"
+              class="flex items-center justify-between gap-3 text-xs font-semibold text-white/70"
+            >
+              <span class="truncate">{{ row.title }}</span>
+              <span class="shrink-0 text-white">{{ row.claim_rate }}%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -410,54 +510,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.hero-shell {
-  position: relative;
-}
-
-.hero-ambient {
-  background:
-    radial-gradient(circle at 16% 18%, rgba(56, 189, 248, 0.22), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.22), transparent 45%);
-}
-
 .live-dot {
-  width: 0.38rem;
-  height: 0.38rem;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 9999px;
-  background: #34d399;
-  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.42);
   animation: livePulse 2s ease-in-out infinite;
-}
-
-.hero-btn-primary {
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
-}
-
-.hero-btn-secondary {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hero-btn-secondary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
 }
 
 .top-scanner-btn {
   animation: scannerPulse 2.2s ease-in-out infinite;
 }
 
-.qr-pulse {
-  animation: qrGlow 3s ease-in-out infinite;
-}
-
 @keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.45); }
-  50% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
-}
-
-@keyframes qrGlow {
-  0%, 100% { box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 22px rgba(99, 102, 241, 0.25); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.42); }
+  50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
 }
 
 @keyframes scannerPulse {

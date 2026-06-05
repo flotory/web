@@ -13,6 +13,7 @@ use App\Services\LoyaltyStampService;
 use App\Services\RedemptionClaimService;
 use App\Services\UniversalCustomerQrService;
 use App\Support\AuditLog;
+use App\Support\CustomerAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -164,7 +165,7 @@ class CustomerLoyaltyController extends Controller
 
     public function card(Request $request, Customer $customer, LoyaltyStampService $loyalty): JsonResponse
     {
-        abort_unless($customer->user_id === $request->user()->id, 403);
+        CustomerAccess::requireCustomer($request->user(), $customer);
 
         $customer->load('venue');
         $loyalty->syncEligibleUnlocks($customer);
@@ -187,7 +188,7 @@ class CustomerLoyaltyController extends Controller
 
     public function rewards(Request $request, Customer $customer, LoyaltyStampService $loyalty): JsonResponse
     {
-        abort_unless($customer->user_id === $request->user()->id, 403);
+        CustomerAccess::requireCustomer($request->user(), $customer);
 
         return response()->json([
             'rewards' => $customer->venue->rewards()
@@ -200,7 +201,7 @@ class CustomerLoyaltyController extends Controller
 
     public function redeem(Request $request, Customer $customer, Reward $reward, LoyaltyStampService $loyalty): JsonResponse
     {
-        abort_unless($customer->user_id === $request->user()->id, 403);
+        CustomerAccess::requireCustomer($request->user(), $customer);
 
         $unlock = $loyalty->redeemReward($customer, $reward, $request->user());
 
@@ -215,7 +216,7 @@ class CustomerLoyaltyController extends Controller
     ): JsonResponse {
         $unlock->load('customer', 'reward');
 
-        abort_unless($unlock->customer->user_id === $request->user()->id, 403);
+        CustomerAccess::requireUnlock($request->user(), $unlock);
 
         $loyalty->syncEligibleUnlocks($unlock->customer);
         $unlock = $unlock->fresh(['customer', 'reward']);
@@ -238,7 +239,7 @@ class CustomerLoyaltyController extends Controller
             ->with('rewardUnlock.customer', 'rewardUnlock.reward')
             ->firstOrFail();
 
-        abort_unless($session->rewardUnlock->customer->user_id === $request->user()->id, 403);
+        CustomerAccess::requireClaimSession($request->user(), $session);
 
         return response()->json(
             $claims->claimSessionPayload($session, $request->root()),

@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { type ReactNode, useState } from 'react'
-import { Image, Platform, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { ActivityIndicator, Image, Platform, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import Svg, { Line } from 'react-native-svg'
 
 import { visitsToRewardCopy } from '../../lib/progressCopy'
 import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
+import { openClaimQrForUnlock } from '../../lib/openClaimQr'
+import { useAuth } from '../../providers/AuthProvider'
 import { withAppFont } from '../../lib/typography'
 import { colors, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
@@ -15,11 +17,17 @@ const ticket = {
   border: '#EDE4D6',
   badgeReadyBg: '#FBD89A',
   badgeReadyText: '#7C4A0A',
-  badgeNextBg: '#E8EDFF',
-  badgeNextText: '#4338CA',
-  illustrationBg: '#FEF3C7',
-  illustrationIcon: '#C68B1F',
+  badgeNextBg: '#F0E6D8',
+  badgeNextText: '#5C4033',
+  illustrationBg: '#F3EBDD',
+  illustrationIcon: '#8B6914',
   divider: '#BCA98E',
+  progressFilled: '#5C4033',
+  progressTrack: '#E5DDD0',
+  readyAccent: '#8B6914',
+  actionBg: '#FAF6F0',
+  actionBorder: '#D9C9B4',
+  actionText: '#4A3428',
   radius: 22,
 } as const
 
@@ -43,6 +51,66 @@ export interface HomeRewardTicketCardProps {
   style?: StyleProp<ViewStyle>
   /** When false, in-progress tickets are not wrapped in a navigation link */
   linkable?: boolean
+  /** Called when a ready reward is no longer claimable (stale list) */
+  onClaimUnavailable?: () => void
+  /** In-card visit progress (cafe card page) */
+  stampProgress?: { collected: number; target: number } | null
+}
+
+function TicketStampProgress({ collected, target }: { collected: number; target: number }) {
+  const slots = Math.min(Math.max(target, 1), 10)
+  const filled = Math.min(Math.max(collected, 0), slots)
+  const toGo = Math.max(target - collected, 0)
+
+  return (
+    <View style={{ marginTop: 14 }}>
+      <View style={{ flexDirection: 'row', gap: 5 }}>
+        {Array.from({ length: slots }).map((_, index) => (
+          <View
+            key={index}
+            style={{
+              flex: 1,
+              height: 7,
+              borderRadius: 4,
+              backgroundColor: index < filled ? ticket.progressFilled : ticket.progressTrack,
+            }}
+          />
+        ))}
+      </View>
+      <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
+          {filled} of {target} visits
+        </Text>
+        <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? ticket.readyAccent : ticket.badgeNextText })}>
+          {toGo <= 0 ? 'Ready to claim' : toGo === 1 ? '1 visit to go' : `${toGo} visits to go`}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+function TicketCompactAction({ label, icon }: { label: string; icon: keyof typeof Ionicons.glyphMap }) {
+  return (
+    <View
+      style={{
+        marginTop: 14,
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: ticket.actionBorder,
+        backgroundColor: ticket.actionBg,
+      }}
+    >
+      <Ionicons name={icon} size={15} color={ticket.actionText} />
+      <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: ticket.actionText })}>{label}</Text>
+      <Ionicons name="chevron-forward" size={15} color={ticket.actionText} />
+    </View>
+  )
 }
 
 function TicketPattern({ cardWidth }: { cardWidth: number }) {
@@ -133,7 +201,7 @@ function RewardIllustration({
       ) : showPhoto && logo ? (
         <Image source={{ uri: logo }} style={{ width: 88, height: 88 }} resizeMode="cover" />
       ) : (
-        <Ionicons name="cafe-outline" size={42} color={ticket.illustrationIcon} />
+        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={ticket.illustrationIcon} />
       )}
     </View>
   )
@@ -150,12 +218,12 @@ function RewardTicketShell({
   style?: StyleProp<ViewStyle>
   isReady: boolean
   top: ReactNode
-  footer: ReactNode
+  footer: ReactNode | null
 }) {
   const [measuredWidth, setMeasuredWidth] = useState(0)
   const shellWidth = width ?? measuredWidth
 
-  return (
+  const shellFrame = (content: ReactNode) => (
     <View
       onLayout={(event) => {
         if (width != null) return
@@ -171,6 +239,28 @@ function RewardTicketShell({
         style,
       ]}
     >
+      {content}
+    </View>
+  )
+
+  if (footer == null) {
+    return shellFrame(
+      <View
+        style={{
+          backgroundColor: ticket.surface,
+          borderRadius: ticket.radius,
+          ...panelBorder,
+          overflow: 'hidden',
+        }}
+      >
+        {isReady && shellWidth > 0 ? <TicketPattern cardWidth={shellWidth} /> : null}
+        {top}
+      </View>,
+    )
+  }
+
+  return shellFrame(
+    <>
       <View
         style={{
           backgroundColor: ticket.surface,
@@ -213,7 +303,7 @@ function RewardTicketShell({
       >
         {footer}
       </View>
-    </View>
+    </>,
   )
 }
 
@@ -229,10 +319,16 @@ export default function HomeRewardTicketCard({
   width,
   style,
   linkable = true,
+  onClaimUnavailable,
+  stampProgress = null,
 }: HomeRewardTicketCardProps) {
+  const router = useRouter()
+  const { token } = useAuth()
+  const [openingClaim, setOpeningClaim] = useState(false)
   const isReady = variant === 'ready'
   const venueName = venue?.name ?? 'Venue'
   const resolvedImage = imageUri ?? rewardImageUrl({ title, image: null, image_thumb: null })
+  const showInlineAction = isReady || (linkable && cardId != null && venueId != null)
 
   const top = (
     <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}>
@@ -250,7 +346,11 @@ export default function HomeRewardTicketCard({
               backgroundColor: isReady ? ticket.badgeReadyBg : ticket.badgeNextBg,
             }}
           >
-            <Ionicons name="gift" size={13} color={isReady ? '#FFFFFF' : '#6366F1'} />
+            <Ionicons
+              name={isReady ? 'qr-code-outline' : 'cafe-outline'}
+              size={13}
+              color={isReady ? ticket.badgeReadyText : ticket.badgeNextText}
+            />
             <Text
               style={withAppFont({
                 fontSize: 10,
@@ -259,7 +359,7 @@ export default function HomeRewardTicketCard({
                 color: isReady ? ticket.badgeReadyText : ticket.badgeNextText,
               })}
             >
-              {isReady ? 'READY TO CLAIM' : 'NEXT REWARD'}
+              {isReady ? 'SHOW AT COUNTER' : 'NEXT REWARD'}
             </Text>
           </View>
 
@@ -284,18 +384,29 @@ export default function HomeRewardTicketCard({
             </Text>
           </View>
 
-          <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {isReady ? (
-              <>
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.success }} />
-                <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.success })}>Ready now</Text>
-              </>
-            ) : (
-              <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.inkMuted })}>
-                {stampsToGo != null ? visitsToRewardCopy(stampsToGo, title) : 'Keep collecting'}
-              </Text>
-            )}
-          </View>
+          {!stampProgress ? (
+            <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {isReady ? (
+                <>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: ticket.readyAccent }} />
+                  <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: ticket.readyAccent })}>Ready now</Text>
+                </>
+              ) : (
+                <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.inkMuted })}>
+                  {stampsToGo != null ? visitsToRewardCopy(stampsToGo, title) : 'Keep collecting'}
+                </Text>
+              )}
+            </View>
+          ) : null}
+          {stampProgress ? (
+            <TicketStampProgress collected={stampProgress.collected} target={stampProgress.target} />
+          ) : null}
+          {showInlineAction ? (
+            <TicketCompactAction
+              label={isReady ? 'Open claim QR' : 'View card'}
+              icon={isReady ? 'qr-code-outline' : 'card-outline'}
+            />
+          ) : null}
         </View>
 
         <RewardIllustration variant={variant} imageUri={resolvedImage} venue={venue} />
@@ -303,47 +414,47 @@ export default function HomeRewardTicketCard({
     </View>
   )
 
-  const footer = (
-    <View style={{ paddingHorizontal: 18, paddingTop: 14, paddingBottom: 18 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: colors.ink,
-          borderRadius: 16,
-          paddingVertical: 15,
-          paddingLeft: 18,
-          paddingRight: 16,
-          gap: 10,
-        }}
-      >
-        <Ionicons name={isReady ? 'qr-code-outline' : 'stats-chart-outline'} size={22} color={colors.primaryText} />
-        <Text
-          style={withAppFont({
-            flex: 1,
-            fontSize: 16,
-            fontWeight: '700',
-            color: colors.primaryText,
-          })}
-        >
-          {isReady ? 'Show QR to claim' : 'View progress'}
-        </Text>
-        <Ionicons name="chevron-forward" size={20} color={colors.primaryText} />
-      </View>
-    </View>
-  )
-
   const body = (
-    <RewardTicketShell width={width} style={style} isReady={isReady} top={top} footer={footer} />
+    <RewardTicketShell width={width} style={style} isReady={isReady} top={top} footer={null} />
   )
 
   const pressedStyle = ({ pressed }: { pressed: boolean }) => [{ opacity: pressed ? 0.97 : 1 }]
 
   if (linkable && isReady && unlockId) {
     return (
-      <Link href={{ pathname: '/claim/[unlockId]', params: { unlockId: String(unlockId) } }} asChild>
-        <Pressable style={pressedStyle}>{body}</Pressable>
-      </Link>
+      <Pressable
+        style={pressedStyle}
+        disabled={openingClaim}
+        onPress={() => {
+          if (!token || openingClaim) return
+          setOpeningClaim(true)
+          void openClaimQrForUnlock(router, token, unlockId, { onStale: onClaimUnavailable }).finally(() => {
+            setOpeningClaim(false)
+          })
+        }}
+      >
+        <View>
+          {body}
+          {openingClaim ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.72)',
+                borderRadius: ticket.radius,
+              }}
+            >
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : null}
+        </View>
+      </Pressable>
     )
   }
 

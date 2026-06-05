@@ -17,7 +17,10 @@ export function buildStampPayloadFromCardDetail(
     ...(detail.journey?.milestones.map((item) => item.required_stamps) ?? []),
     detail.next_reward?.required_stamps ?? 0,
   )
-  const cycleCompleted = added < 0 || (previousStamps >= maxMilestone && maxMilestone > 0 && stamps === 0)
+  const cycleCompleted =
+    added < 0 ||
+    (stamps === 0 && previousStamps > 0 && maxMilestone > 0) ||
+    (previousStamps >= maxMilestone && maxMilestone > 0 && stamps === 0)
   const addedStamps = cycleCompleted
     ? Math.max(maxMilestone - previousStamps, 1)
     : Math.max(added, 1)

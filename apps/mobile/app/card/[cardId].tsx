@@ -1,31 +1,25 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Animated, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
 import CardLoyaltyProgressCard from '../../src/components/customer/CardLoyaltyProgressCard'
 import CardPromotionBanner from '../../src/components/customer/CardPromotionBanner'
-import CardVenueRewardsCarousel, { cardVenueRewardSlidesFromProps } from '../../src/components/customer/CardVenueRewardsCarousel'
+import CardVenueRewardsCarousel from '../../src/components/customer/CardVenueRewardsCarousel'
 import StampScannedBanner from '../../src/components/customer/StampScannedBanner'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { useCardDetail } from '../../src/hooks/useCardDetail'
-import { invalidateCustomerRewardCaches } from '../../src/lib/customerData'
+import { useCardRewards } from '../../src/hooks/useCardRewards'
+import { useCardStampAnimation } from '../../src/hooks/useCardStampAnimation'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
-import { hapticLightTap, hapticSuccess } from '../../src/lib/haptics'
-import {
-  rewardEarnedThisScan,
-  slotsForStampIncrease,
-  stampBannerCopy,
-  stampUpdateSignature,
-} from '../../src/lib/stampLiveUpdate'
-import { useAuth } from '../../src/providers/AuthProvider'
-import { useRealtime } from '../../src/providers/RealtimeProvider'
-import type { StampAddedPayload } from '../../src/types/realtime'
-import { colors, motion, space } from '../../src/theme'
+import { useRedeemRefresh } from '../../src/hooks/useRedeemRefresh'
+import { hapticSuccess } from '../../src/lib/haptics'
+import { stampBannerCopy } from '../../src/lib/stampLiveUpdate'
+import { colors, space } from '../../src/theme'
 
 export default function CardDetailScreen() {
   const router = useRouter()
@@ -33,23 +27,20 @@ export default function CardDetailScreen() {
   const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
   const venueId = params.venueId ? String(params.venueId) : undefined
   const { data: payload, loading, refreshing, error, refresh, silentRefresh, reload } = useCardDetail(venueId)
-  const { latestStamp, clearLatestStamp, latestRedeem, clearLatestRedeem } = useRealtime()
-  const { token } = useAuth()
   const fade = useFadeOnReady(Boolean(payload))
   const readyHapticDone = useRef(false)
-  const lastAnimatedStampSignature = useRef('')
-  const [displayStamps, setDisplayStamps] = useState<number | null>(null)
-  const [animatingSlots, setAnimatingSlots] = useState<number[]>([])
-  const [celebrateGiftStamp, setCelebrateGiftStamp] = useState<number | null>(null)
-  const [scanBanner, setScanBanner] = useState<StampAddedPayload | null>(null)
-  const stampFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const refreshAfterRedeem = useCallback(() => {
+    void silentRefresh()
+  }, [silentRefresh])
+  useRedeemRefresh(refreshAfterRedeem, { customerId: payload?.active_card?.id ?? null })
 
   function handleBack() {
     if (router.canGoBack()) {
       router.back()
       return
     }
-    router.replace('/(customer)/wallet')
+
+    router.replace('/(customer)/home')
   }
 
   const maxStamps = useMemo(() => {
@@ -57,98 +48,25 @@ export default function CardDetailScreen() {
     return Math.max(10, ...required, payload?.next_reward?.required_stamps ?? 0)
   }, [payload])
 
-  const { readyReward } = useMemo(() => {
-    const unlocks = payload?.pending_unlocks ?? []
-    const preferredRewardId = payload?.available_rewards[0]?.id
-    const unlock = preferredRewardId
-      ? unlocks.find((item) => item.reward.id === preferredRewardId) ?? unlocks[0] ?? null
-      : unlocks[0] ?? null
-
-    const fromApi = unlock?.reward ?? payload?.available_rewards[0] ?? null
-    if (fromApi) return { readyReward: fromApi }
-
-    const stamps = payload?.active_card?.stamps ?? 0
-    const milestone = [...(payload?.journey?.milestones ?? [])]
-      .filter((item) => !item.claimed && stamps >= item.required_stamps)
-      .sort((a, b) => a.required_stamps - b.required_stamps)[0]
-
-    if (!milestone) return { readyReward: null }
-
-    return {
-      readyReward: {
-        id: milestone.id,
-        title: milestone.title,
-        required_stamps: milestone.required_stamps,
-        image: milestone.image,
-        image_thumb: milestone.image_thumb,
-      },
-    }
-  }, [payload])
-
-  useEffect(() => {
-    if (!latestStamp || !payload?.active_card) {
-      return
-    }
-
-    if (latestStamp.customer.id !== payload.active_card.id) {
-      return
-    }
-
-    if (venueId && String(latestStamp.venue.id) !== venueId) {
-      return
-    }
-
-    const signature = stampUpdateSignature(latestStamp)
-    if (signature === lastAnimatedStampSignature.current) {
-      clearLatestStamp()
-      return
-    }
-    lastAnimatedStampSignature.current = signature
-
-    applyLiveStampUpdate(latestStamp)
-    clearLatestStamp()
-  }, [latestStamp, payload?.active_card?.id, venueId, maxStamps])
-
-  useEffect(() => {
-    if (!latestRedeem || !token || !payload?.active_card) {
-      return
-    }
-
-    if (latestRedeem.customer.id !== payload.active_card.id) {
-      return
-    }
-
-    invalidateCustomerRewardCaches(token)
-    void silentRefresh()
-    clearLatestRedeem()
-  }, [latestRedeem, token, payload?.active_card?.id, silentRefresh, clearLatestRedeem])
-
-  useEffect(() => {
-    return () => {
-      if (stampFeedbackTimer.current) {
-        clearTimeout(stampFeedbackTimer.current)
-      }
-    }
-  }, [])
-
-  const sortedMilestones = useMemo(
-    () => [...(payload?.journey?.milestones ?? [])].sort((a, b) => a.required_stamps - b.required_stamps),
-    [payload?.journey?.milestones],
-  )
+  const {
+    displayStamps,
+    animatingSlots,
+    celebrateGiftStamp,
+    scanBanner,
+    setScanBanner,
+  } = useCardStampAnimation({
+    payload,
+    venueId,
+    maxStamps,
+    silentRefresh: refreshAfterRedeem,
+  })
   const stampCount = displayStamps ?? payload?.active_card?.stamps ?? 0
-
-  const venueRewardSlides = useMemo(() => {
-    const active = payload?.active_card
-    if (!active) return []
-    return cardVenueRewardSlidesFromProps({
-      venue: active.venue,
-      milestones: sortedMilestones,
-      stamps: stampCount,
-      cardId: active.id,
-      venueId: active.venue_id,
-      pendingUnlocks: payload?.pending_unlocks,
-    })
-  }, [payload?.active_card, payload?.pending_unlocks, sortedMilestones, stampCount])
+  const {
+    sortedMilestones,
+    venueRewardSlides,
+    progressNextReward,
+    progressTarget,
+  } = useCardRewards(payload, stampCount, maxStamps)
 
   useEffect(() => {
     const hasReady = venueRewardSlides.some((slide) => slide.kind === 'ready')
@@ -161,72 +79,6 @@ export default function CardDetailScreen() {
       hapticSuccess()
     }
   }, [venueRewardSlides])
-
-  function applyLiveStampUpdate(stampPayload: StampAddedPayload) {
-    if (!payload?.active_card) {
-      return
-    }
-
-    if (stampFeedbackTimer.current) {
-      clearTimeout(stampFeedbackTimer.current)
-    }
-
-    const previousAvailableIds = new Set(payload.available_rewards.map((reward) => reward.id))
-    const max = maxStamps
-
-    const slots = slotsForStampIncrease(
-      stampPayload.previous_stamps,
-      stampPayload.added_stamps,
-      stampPayload.cycle_completed,
-      max,
-    )
-
-    stampFeedbackTimer.current = setTimeout(() => {
-      stampFeedbackTimer.current = null
-
-      setScanBanner(stampPayload)
-      hapticLightTap()
-
-      setTimeout(() => {
-        if (stampPayload.cycle_completed) {
-          setDisplayStamps(max)
-        } else {
-          setDisplayStamps(stampPayload.stamps)
-        }
-
-        setAnimatingSlots(slots)
-        hapticSuccess()
-
-        const unlocked = rewardEarnedThisScan(stampPayload, previousAvailableIds, max)
-
-        setTimeout(() => {
-          setAnimatingSlots([])
-
-          if (unlocked) {
-            const giftStamp = Math.min(unlocked.required_stamps, max)
-            setCelebrateGiftStamp(giftStamp)
-            setTimeout(() => {
-              setCelebrateGiftStamp(null)
-              if (stampPayload.cycle_completed) {
-                setDisplayStamps(stampPayload.stamps)
-              }
-            }, motion.stampGiftUnlockMs)
-          } else if (stampPayload.cycle_completed) {
-            setTimeout(() => setDisplayStamps(stampPayload.stamps), 300)
-          }
-
-          scheduleSilentRefresh()
-        }, motion.stampSlotHighlightMs)
-      }, motion.stampBannerBeforeSlotsMs)
-    }, motion.stampCardRevealMs)
-  }
-
-  function scheduleSilentRefresh() {
-    const refreshDelay = motion.stampGiftUnlockMs + 600
-    setTimeout(() => {
-      void silentRefresh()
-    }, refreshDelay)
-  }
 
   if (loading && !payload) {
     return <CustomerScreen loading tabBarInset={false} header={null} children={null} />
@@ -257,38 +109,6 @@ export default function CardDetailScreen() {
 
   const stamps = stampCount
   const milestones = sortedMilestones
-  const apiNext = payload?.next_reward ?? null
-
-  let progressNextReward = apiNext
-  let progressTarget = apiNext?.required_stamps ?? maxStamps
-
-  if (readyReward) {
-    if (apiNext && stamps < apiNext.required_stamps) {
-      progressNextReward = apiNext
-      progressTarget = apiNext.required_stamps
-    } else {
-      const upcoming = milestones.find(
-        (m) =>
-          !m.claimed &&
-          m.id !== readyReward.id &&
-          m.required_stamps > (readyReward.required_stamps ?? 0) &&
-          stamps < m.required_stamps,
-      )
-      if (upcoming) {
-        progressNextReward = {
-          id: upcoming.id,
-          title: upcoming.title,
-          required_stamps: upcoming.required_stamps,
-          image: upcoming.image,
-          image_thumb: upcoming.image_thumb,
-        }
-        progressTarget = upcoming.required_stamps
-      } else {
-        progressNextReward = apiNext
-        progressTarget = maxStamps
-      }
-    }
-  }
   const promotion = payload?.promotion
   const bannerCopy = scanBanner ? stampBannerCopy(scanBanner) : null
 

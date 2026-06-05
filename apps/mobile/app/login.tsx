@@ -51,6 +51,7 @@ export default function LoginScreen() {
 
       {isRegisterMode ? (
         <TextInput
+          testID="login-name-input"
           value={name}
           onChangeText={setName}
           placeholder="Full name"
@@ -59,6 +60,7 @@ export default function LoginScreen() {
       ) : null}
 
       <TextInput
+        testID="login-email-input"
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
@@ -66,6 +68,7 @@ export default function LoginScreen() {
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
       <TextInput
+        testID="login-password-input"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -76,6 +79,7 @@ export default function LoginScreen() {
       {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
       <Pressable
+        testID="login-submit-button"
         onPress={handleAuth}
         disabled={submitting}
         style={{

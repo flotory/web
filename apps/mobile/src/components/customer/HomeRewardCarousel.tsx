@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
 
 import { rewardImageUrl } from '../../lib/media'
@@ -11,11 +12,12 @@ export type HomeRewardSlide =
 
 interface HomeRewardCarouselProps {
   slides: HomeRewardSlide[]
+  onClaimUnavailable?: () => void
 }
 
 const transparent = { backgroundColor: 'transparent' as const }
 
-export default function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
+function HomeRewardCarousel({ slides, onClaimUnavailable }: HomeRewardCarouselProps) {
   const { width: screenWidth } = useWindowDimensions()
 
   const cardWidth = screenWidth - space.screenX * 2 - carousel.rewardCardPeek
@@ -60,6 +62,7 @@ export default function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) 
               imageUri={rewardImageUrl(item.item.reward)}
               unlockId={item.item.unlock_id}
               width={cardWidth}
+              onClaimUnavailable={onClaimUnavailable}
             />
           ) : (
             <HomeRewardTicketCard
@@ -82,3 +85,5 @@ export default function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) 
     </ScrollView>
   )
 }
+
+export default memo(HomeRewardCarousel)

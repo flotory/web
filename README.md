@@ -165,7 +165,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Covers owner campaigns, staff stamp fallback, and customer claim → staff redeem.
+Covers route smoke, owner campaigns, staff stamp fallback, and customer claim → staff redeem. GitHub Actions runs this suite against a seeded SQLite app.
 
 Run pending migrations only:
 
@@ -261,7 +261,7 @@ All seeded accounts use password: **`password`**
 
 | Account | Email | What to test |
 |--------|--------|----------------|
-| **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, team, scanner, analytics |
+| **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, campaigns, team, scanner, analytics |
 | **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
 | **Customer** | `customer@example.com` | Web: Wallet, Rewards claim, My QR. Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues |
 
@@ -336,8 +336,9 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - Customer registration/login (email + Google) with intent-based redirects
 - Owner 5-step onboarding wizard and dashboard success state
 - Owner `/rewards`: 5-column customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
+- Owner `/campaigns`: campaign templates, activation, pause/edit/end actions, and history
 - Owner/staff **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
-- Customer loyalty wallet (`/wallet`) with per-venue stamp QR and journey
+- Customer loyalty wallet (`/wallet`) with per-venue cards and journey; universal stamp QR lives at `/my-qr`
 - Customer bottom nav (web): **Wallet**, **My QR**, **Rewards**, Venues, Settings
 - Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Profile** — see [docs/MOBILE.md](docs/MOBILE.md)
 - Stamp and reward-unlock animations on the wallet detail view (no persistent banner)
@@ -358,10 +359,10 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 ## Progression And QR Model
 
 - A customer has **one loyalty card per venue** they join (`customers` row per `user_id` + `venue_id`).
-- Each card has its own **QR token** and **progress balance**.
+- Customers show one universal **My QR** for stamps; the scanner applies the stamp to the venue currently selected by staff. Legacy per-card QR tokens remain available for backward compatibility.
 - Staff scan in the context of **one venue** (`POST /api/venues/{venue}/scanner/stamps`).
 - `VenueAccess::requireAccess` enforces membership before scanner operations.
-- If the QR belongs to another venue, the API rejects the request.
+- If a legacy card QR belongs to another venue, the API rejects the request.
 - Milestones unlock at thresholds and can be claimed once per cycle.
 - Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
 - Customers redeem from **Rewards → Claim** (per-unlock claim QR). Staff scan on `/scanner` redeems that unlock. Stamp card QR is stamps only. FIFO applies when multiple unlocks exist for the same milestone type via legacy/manual redeem APIs.

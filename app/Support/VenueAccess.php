@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use Illuminate\Database\Eloquent\Model;
 
 class VenueAccess
 {
@@ -49,5 +50,10 @@ class VenueAccess
     public static function requireAccess(User $user, Venue $venue, array $roles = []): void
     {
         abort_unless(self::canAccess($user, $venue, $roles), 403);
+    }
+
+    public static function requireVenueModel(Venue $venue, Model $model, string $venueKey = 'venue_id'): void
+    {
+        abort_unless((int) $model->getAttribute($venueKey) === (int) $venue->id, 404);
     }
 }

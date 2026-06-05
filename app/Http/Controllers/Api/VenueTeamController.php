@@ -79,7 +79,7 @@ class VenueTeamController extends Controller
         VenueStaffInvitationService $invitations,
     ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        abort_unless($invitation->venue_id === $venue->id, 404);
+        VenueAccess::requireVenueModel($venue, $invitation);
 
         return response()->json([
             'invitation' => $invitations->resend($invitation)->load(['inviter:id,name,email']),
@@ -93,7 +93,7 @@ class VenueTeamController extends Controller
         VenueStaffInvitationService $invitations,
     ): JsonResponse {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        abort_unless($invitation->venue_id === $venue->id, 404);
+        VenueAccess::requireVenueModel($venue, $invitation);
 
         return response()->json([
             'invitation' => $invitations->cancel($invitation)->load(['inviter:id,name,email']),

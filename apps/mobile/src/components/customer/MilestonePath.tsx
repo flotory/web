@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { Animated, Easing, ScrollView, Text, View } from 'react-native'
+import { Animated, Easing, Text, View } from 'react-native'
 
-import ShadowPulse from '../ui/ShadowPulse'
 import { colors, motion, rewardReady } from '../../theme'
 import { withAppFont } from '../../lib/typography'
 
@@ -11,7 +10,7 @@ interface MilestonePathProps {
   total: number
   milestoneStamp?: number
   milestoneStamps?: number[]
-  /** Stamp positions where the reward was redeemed — static, smaller cells */
+  /** Stamp positions where the reward was redeemed */
   claimedStamps?: number[]
   /** Stamp slots animating after a live scan */
   highlightStamps?: number[]
@@ -19,14 +18,13 @@ interface MilestonePathProps {
   celebrateGiftStamp?: number | null
   columns?: number
   sizeScale?: number
-  cellShape?: 'rounded' | 'circle'
-  /** Single horizontal row (scrolls when needed). */
-  layout?: 'grid' | 'row'
   /** Replaces the cell at `total` (goal slot at end of journey). */
   endSlot?: ReactNode
-  /** Show stamp index on empty slots (clearer grids). */
+  /** Show stamp index on empty slots */
   showStampNumbers?: boolean
 }
+
+const CELL_SIZE = 32
 
 export default function MilestonePath({
   collected,
@@ -36,14 +34,12 @@ export default function MilestonePath({
   claimedStamps = [],
   highlightStamps = [],
   celebrateGiftStamp = null,
-  columns,
+  columns = 5,
   sizeScale = 1,
-  cellShape = 'rounded',
-  layout = 'grid',
   endSlot,
   showStampNumbers = false,
 }: MilestonePathProps) {
-  const defaultSize = Math.round((cellShape === 'circle' ? 32 : 44) * sizeScale)
+  const size = Math.round(CELL_SIZE * sizeScale)
   const cellGap = Math.round(8 * sizeScale)
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
   const claimed = new Set(claimedStamps)
@@ -175,27 +171,44 @@ export default function MilestonePath({
     const isGift = gifts.has(stamp)
     const isClaimed = isGift && claimed.has(stamp)
     const isCelebrating = celebrateGiftStamp === stamp
+    const borderRadius = size / 2
+
+    if (isClaimed) {
+      return (
+        <View key={stamp}>
+          <View
+            style={{
+              width: size,
+              height: size,
+              borderRadius,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#E2E8F0',
+              borderWidth: 1,
+              borderColor: '#CBD5E1',
+            }}
+          >
+            <Ionicons name="checkmark-done" size={Math.round(16 * sizeScale)} color={colors.inkMuted} />
+          </View>
+        </View>
+      )
+    }
 
     let backgroundColor = '#FFFFFF'
     let borderColor = '#E2E8F0'
     let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : '#94A3B8'
 
     if (filled) {
-      backgroundColor = cellShape === 'circle' ? colors.success : colors.successBg
+      backgroundColor = colors.success
       borderColor = colors.successBorder
-      textColor = cellShape === 'circle' ? '#FFFFFF' : colors.successText
+      textColor = '#FFFFFF'
     } else if (isGift) {
       backgroundColor = '#FEF9C3'
       borderColor = '#FDE68A'
       textColor = '#A16207'
-    } else if (cellShape === 'circle') {
-      backgroundColor = '#FFFFFF'
-      borderColor = '#E2E8F0'
     }
 
-    const size = defaultSize
     const content = isCelebrating ? null : filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
-    const borderRadius = cellShape === 'circle' ? size / 2 : Math.round(14 * sizeScale)
     const celebrateBackground = '#FEF9C3'
     const celebrateBorder = '#FCD34D'
 
@@ -230,14 +243,6 @@ export default function MilestonePath({
 
     if (isCelebrating) {
       return <View key={stamp}>{wrapCelebrate(stamp, cell)}</View>
-    }
-
-    if (isClaimed) {
-      return (
-        <ShadowPulse key={stamp}>
-          {cell}
-        </ShadowPulse>
-      )
     }
 
     if (isGift && !filled) {
@@ -277,48 +282,26 @@ export default function MilestonePath({
     return <View key={stamp}>{cell}</View>
   }
 
-  if (columns && columns > 0) {
-    const stamps = Array.from({ length: total }, (_, index) => index + 1)
-    const rows: number[][] = []
-    for (let index = 0; index < stamps.length; index += columns) {
-      rows.push(stamps.slice(index, index + columns))
-    }
-
-    return (
-      <View style={{ gap: cellGap }}>
-        {rows.map((row, rowIndex) => (
-          <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: cellGap }}>
-            {row.map((stamp) => (
-              <View key={stamp} style={{ flex: 1, alignItems: 'center' }}>
-                {renderCell(stamp)}
-              </View>
-            ))}
-            {Array.from({ length: Math.max(columns - row.length, 0) }, (_, spacer) => (
-              <View key={`spacer-${rowIndex}-${spacer}`} style={{ flex: 1 }} />
-            ))}
-          </View>
-        ))}
-      </View>
-    )
-  }
-
   const stamps = Array.from({ length: total }, (_, index) => index + 1)
-
-  if (layout === 'row') {
-    return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: cellGap, paddingVertical: 2, paddingRight: 4 }}
-      >
-        {stamps.map((stamp) => renderCell(stamp))}
-      </ScrollView>
-    )
+  const rows: number[][] = []
+  for (let index = 0; index < stamps.length; index += columns) {
+    rows.push(stamps.slice(index, index + columns))
   }
 
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: cellGap }}>
-      {stamps.map((stamp) => renderCell(stamp))}
+    <View style={{ gap: cellGap }}>
+      {rows.map((row, rowIndex) => (
+        <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: cellGap }}>
+          {row.map((stamp) => (
+            <View key={stamp} style={{ flex: 1, alignItems: 'center' }}>
+              {renderCell(stamp)}
+            </View>
+          ))}
+          {Array.from({ length: Math.max(columns - row.length, 0) }, (_, spacer) => (
+            <View key={`spacer-${rowIndex}-${spacer}`} style={{ flex: 1 }} />
+          ))}
+        </View>
+      ))}
     </View>
   )
 }

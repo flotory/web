@@ -60,7 +60,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       // Ignore JSON parse failures and keep fallback message.
     }
 
-    const message = messageFromApiPayload(payload, `Request failed (${response.status})`)
+    let fallback = `Request failed (${response.status})`
+    if (response.status === 404) {
+      fallback = 'This reward is no longer available. Pull to refresh Home and try again.'
+    }
+
+    const message = messageFromApiPayload(payload, fallback)
     throw new ApiError(message, response.status, payload.errors ?? {})
   }
 

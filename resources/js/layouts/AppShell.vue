@@ -53,6 +53,7 @@ const nav = computed(() => {
   if (!isWorkspace.value) {
     return [
       { label: 'Wallet', to: '/wallet', icon: '◍' },
+      { label: 'My QR', to: '/my-qr', icon: '◎' },
       { label: 'Rewards', to: '/customer/rewards', icon: '★', badge: customerRewards.pendingCount },
       { label: 'Venues', to: '/venues', icon: '⌂' },
       { label: 'Settings', to: '/customer/settings', icon: '⚙' },
@@ -73,6 +74,7 @@ const nav = computed(() => {
     { label: 'My Venues', to: '/my-venues', icon: '⌂' },
     { label: 'Customers', to: '/customers', icon: '◍' },
     { label: 'Rewards', to: '/rewards', icon: '★' },
+    { label: 'Campaigns', to: '/campaigns', icon: '✦' },
     { label: 'Analytics', to: '/analytics', icon: '◔' },
     { label: 'Team', to: '/team', icon: '◧' },
     { label: 'Workspace', to: '/settings', icon: '⚙' },

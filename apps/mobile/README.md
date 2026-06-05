@@ -40,13 +40,49 @@ EXPO_PUBLIC_REVERB_SCHEME=https \
 npm --prefix apps/mobile run start
 ```
 
-Without matching keys, the app still detects new stamps via polling (~4s) and opens your venue card with animation.
+Without matching keys, the app still detects new stamps via polling (fast on Home/My QR/card, slower elsewhere) and opens your venue card with animation.
+
+## Mobile E2E Smoke Tests
+
+We use [Maestro](https://maestro.mobile.dev/) for local mobile smoke tests. These are intentionally small and manual-first.
+
+Install Maestro once:
+
+```bash
+curl -Ls "https://get.maestro.mobile.dev" | bash
+```
+
+Run the app in a simulator, then run:
+
+```bash
+# Dev build app id
+APP_ID=com.flotory.mobile \
+CUSTOMER_EMAIL=customer@example.com \
+CUSTOMER_PASSWORD=password \
+TEST_VENUE_NAME="Demo Cafe" \
+npm run test:mobile:e2e
+
+# Expo Go app id, if testing through Expo Go
+APP_ID=host.exp.Exponent \
+CUSTOMER_EMAIL=customer@example.com \
+CUSTOMER_PASSWORD=password \
+TEST_VENUE_NAME="Demo Cafe" \
+npm run test:mobile:e2e
+```
+
+The flows live in `.maestro/mobile` and cover:
+
+- login -> Home
+- Wallet -> cafe card
+- ready reward -> claim QR
+
+The claim QR smoke expects seeded demo data with a ready reward. Re-run local seed if it fails because demo rewards were already claimed.
 
 ## Architecture (customer app)
 
-- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center My QR (`TabBarQrButton`), Venues, Profile; Rewards and Notifications are hidden stack routes
+- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center My QR (`TabBarQrButton`), Venues, Profile; Notifications is a hidden stack route
 - **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
-- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useRewardsOverview`, `useDiscoverVenues`, `useCardDetail`, `useStampQr`, `useScreenResource`
+- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useDiscoverVenues`, `useCardDetail`, `useStampQr`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
 - **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`, `HomeRewardTicketCard`, `HomeScreenHeader` (bell → notifications; unread dot when `unreadCount > 0`)
 

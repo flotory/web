@@ -10,36 +10,61 @@ export function buildCardVenueRewardSlides(
   pendingUnlocks: { unlock_id: number; reward: RewardRef }[] = [],
 ): CardVenueRewardSlide[] {
   const unlockByRewardId = new Map(pendingUnlocks.map((item) => [item.reward.id, item.unlock_id]))
+  const slides: CardVenueRewardSlide[] = []
 
-  return [...milestones]
+  for (const milestone of [...milestones]
     .filter((milestone) => !milestone.claimed)
-    .sort((a, b) => a.required_stamps - b.required_stamps)
-    .flatMap((milestone) => {
-      const unlockId = unlockByRewardId.get(milestone.id)
+    .sort((a, b) => a.required_stamps - b.required_stamps)) {
+    const unlockId = unlockByRewardId.get(milestone.id)
 
-      if (unlockId != null) {
-        return [
-          {
-            id: `reward-${milestone.id}`,
-            kind: 'ready' as const,
-            milestone,
-            unlockId,
-          },
-        ]
-      }
+    if (unlockId != null) {
+      slides.push({
+        id: `reward-${milestone.id}`,
+        kind: 'ready',
+        milestone,
+        unlockId,
+      })
+      continue
+    }
 
-      const stampsToGo = Math.max(milestone.required_stamps - stamps, 0)
-      if (stampsToGo <= 0) {
-        return []
-      }
-
-      return [
-        {
-          id: `reward-${milestone.id}`,
-          kind: 'next' as const,
-          milestone,
-          stampsToGo,
-        },
-      ]
+    slides.push({
+      id: `reward-${milestone.id}`,
+      kind: 'next',
+      milestone,
+      stampsToGo: Math.max(milestone.required_stamps - stamps, 0),
     })
+  }
+
+  if (slides.length > 0) {
+    return slides
+  }
+
+  const fallback = [...milestones]
+    .filter((milestone) => !milestone.claimed)
+    .sort((a, b) => a.required_stamps - b.required_stamps)[0]
+
+  if (!fallback) {
+    return []
+  }
+
+  const unlockId = unlockByRewardId.get(fallback.id)
+  if (unlockId != null) {
+    return [
+      {
+        id: `reward-${fallback.id}`,
+        kind: 'ready',
+        milestone: fallback,
+        unlockId,
+      },
+    ]
+  }
+
+  return [
+    {
+      id: `reward-${fallback.id}`,
+      kind: 'next',
+      milestone: fallback,
+      stampsToGo: Math.max(fallback.required_stamps - stamps, 0),
+    },
+  ]
 }

@@ -70,9 +70,11 @@ class VenueDashboardController extends Controller
         $insights = $this->analytics->aggregateInsights($venues);
         $milestoneConversions = [];
         $summaries = [];
+        $activeCampaigns = [];
 
         foreach ($venues as $venue) {
             $payload = $this->dashboardForVenue($venue);
+            $activeCampaigns = array_merge($activeCampaigns, $payload['active_campaigns'] ?? []);
 
             foreach ($payload['milestone_conversions'] as $row) {
                 $milestoneConversions[] = [
@@ -131,6 +133,7 @@ class VenueDashboardController extends Controller
             'has_loyalty_activity' => $this->analytics->hasAggregateActivity($venues),
             'kpi_trends' => $this->analytics->aggregateKpiTrends($venues),
             'recent_activity' => $this->analytics->aggregateRecentActivity($venues),
+            'active_campaigns' => $activeCampaigns,
         ]);
     }
 

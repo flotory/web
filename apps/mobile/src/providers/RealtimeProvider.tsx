@@ -1,8 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { fetchCustomerCardsList } from '../lib/customerData'
+import { stampUpdateSignature } from '../lib/stampLiveUpdate'
 import { disconnectEcho, getEcho } from '../lib/realtime'
 import type { RewardRedeemedPayload, StampAddedPayload } from '../types/realtime'
+import type { WalletCard } from '../types/loyalty'
 import { useAuth } from './AuthProvider'
 
 interface RealtimeContextValue {
@@ -11,7 +13,7 @@ interface RealtimeContextValue {
   clearLatestStamp: () => void
   clearLatestRedeem: () => void
   ingestStamp: (payload: StampAddedPayload) => void
-  syncChannels: () => Promise<void>
+  syncChannels: (cards?: WalletCard[]) => Promise<void>
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefined)
@@ -22,12 +24,20 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [latestRedeem, setLatestRedeem] = useState<RewardRedeemedPayload | null>(null)
   const subscribedIds = useRef<Set<number>>(new Set())
   const echoRef = useRef<ReturnType<typeof getEcho> | null>(null)
+  const lastStampSignature = useRef('')
 
   const clearLatestStamp = useCallback(() => setLatestStamp(null), [])
   const clearLatestRedeem = useCallback(() => setLatestRedeem(null), [])
-  const ingestStamp = useCallback((payload: StampAddedPayload) => {
+  const publishStamp = useCallback((payload: StampAddedPayload) => {
+    const signature = stampUpdateSignature(payload)
+    if (lastStampSignature.current === signature) {
+      return
+    }
+
+    lastStampSignature.current = signature
     setLatestStamp(payload)
   }, [])
+  const ingestStamp = publishStamp
 
   const bindChannel = useCallback((cardId: number) => {
     if (!token || subscribedIds.current.has(cardId) || !echoRef.current) {
@@ -38,14 +48,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     echoRef.current
       .private(`customer.${cardId}`)
       .listen('.stamp.added', (payload: StampAddedPayload) => {
-        setLatestStamp(payload)
+        publishStamp(payload)
       })
       .listen('.reward.redeemed', (payload: RewardRedeemedPayload) => {
         setLatestRedeem(payload)
       })
-  }, [token])
+  }, [token, publishStamp])
 
-  const syncChannels = useCallback(async () => {
+  const syncChannels = useCallback(async (knownCards?: WalletCard[]) => {
     if (!token || role !== 'customer') {
       return
     }
@@ -53,7 +63,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     try {
       const echo = getEcho(token)
       echoRef.current = echo
-      const { cards } = await fetchCustomerCardsList(token, true)
+      const cards = knownCards ?? (await fetchCustomerCardsList(token, true)).cards
       cards.forEach((card) => bindChannel(card.id))
     } catch {
       // Realtime is optional — polling still updates the UI.
@@ -67,10 +77,12 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       disconnectEcho()
       setLatestStamp(null)
       setLatestRedeem(null)
+      lastStampSignature.current = ''
       return
     }
 
     subscribedIds.current.clear()
+    lastStampSignature.current = ''
     void syncChannels()
 
     return () => {

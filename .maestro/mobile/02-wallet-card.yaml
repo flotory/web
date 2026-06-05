@@ -1,0 +1,14 @@
+appId: "${APP_ID}"
+---
+- launchApp
+- tapOn:
+    id: "tab-wallet"
+- extendedWaitUntil:
+    visible: "Wallet"
+    timeout: 20000
+- assertVisible: "${TEST_VENUE_NAME}"
+- tapOn: "${TEST_VENUE_NAME}"
+- extendedWaitUntil:
+    visible: "Your progress"
+    timeout: 20000
+- assertVisible: "Rewards at ${TEST_VENUE_NAME}"

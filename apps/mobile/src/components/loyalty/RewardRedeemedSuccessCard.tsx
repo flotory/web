@@ -80,26 +80,8 @@ export default function RewardRedeemedSuccessCard({
               elevation: 8,
             }}
           >
-            <Ionicons name="checkmark" size={52} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={56} color="#FFFFFF" />
           </Animated.View>
-
-          <View
-            style={{
-              position: 'absolute',
-              top: 28,
-              right: 28,
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              borderWidth: 1,
-              borderColor: colors.successBorder,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Ionicons name="gift" size={22} color={colors.accent} />
-          </View>
 
           <Text
             style={withAppFont({

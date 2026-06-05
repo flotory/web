@@ -88,6 +88,8 @@ Copy: *“Run multiple campaigns. Customers receive the highest eligible multipl
 
 Feature coverage: `tests/Feature/VenueCampaignControllerTest.php` — create/activate, multiple actives, max multiplier, preview, dashboard recommendations, enriched index.
 
+E2E coverage: `e2e/owner-campaigns.spec.ts` and `e2e/web-routes.spec.ts` verify that `/campaigns` is reachable from the owner workspace.
+
 ---
 
 ## Future

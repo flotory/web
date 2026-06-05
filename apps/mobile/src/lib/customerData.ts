@@ -18,12 +18,6 @@ export interface CardDetailPayload {
   recent_visits?: import('../types/loyalty').VisitRow[]
 }
 
-export interface ClaimedRewardRow {
-  id: string
-  title: string
-  claimedAt: string
-}
-
 export interface CustomerCardsListResponse {
   cards: WalletCard[]
   claimed_history: ApiClaimedReward[]
@@ -35,12 +29,6 @@ export interface StampQrResponse {
   public_token: string
   qr_value: string
   version: number
-}
-
-export interface RewardsOverviewData {
-  readyItems: RewardWalletItem[]
-  inProgress: WalletCard[]
-  claimed: ClaimedRewardRow[]
 }
 
 export interface DiscoverVenue {
@@ -79,14 +67,6 @@ export function invalidateCustomerRewardCaches(token: string) {
 
 export function readCachedCardDetail(token: string, venueId: string): CardDetailPayload | null {
   return readCache<CardDetailPayload>(`${cacheKey('customer', token)}:card:${venueId}`)
-}
-
-export function mapClaimedHistory(rows: ApiClaimedReward[]): ClaimedRewardRow[] {
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    claimedAt: row.claimed_at,
-  }))
 }
 
 export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletItem[]): ActivityRow[] {
@@ -153,6 +133,11 @@ export async function fetchCustomerHomeCampaigns(token: string, fresh = false): 
   return response.home_campaigns ?? []
 }
 
+export async function findPendingUnlockId(token: string, unlockId: number): Promise<number | null> {
+  const wallet = await fetchRewardsWallet(token, true)
+  return wallet.items.some((item) => item.unlock_id === unlockId) ? unlockId : null
+}
+
 export async function fetchRewardsWallet(token: string, fresh = false): Promise<RewardsWalletResponse> {
   const key = `${cacheKey('customer', token)}:rewards-wallet`
   return fetchWithCache(key, () => apiRequest<RewardsWalletResponse>('/customer/rewards/wallet', { token }), fresh)
@@ -179,26 +164,6 @@ export async function fetchCardDetail(token: string, venueId: string, fresh = fa
   return {
     ...detail,
     pending_unlocks: pendingUnlocksForVenue(wallet, venueId),
-  }
-}
-
-export async function fetchRewardsOverview(token: string, fresh = false): Promise<RewardsOverviewData> {
-  const [wallet, cardsList] = await Promise.all([
-    fetchRewardsWallet(token, fresh),
-    fetchCustomerCardsList(token, fresh),
-  ])
-
-  const cards = cardsList.cards
-  const pendingVenueIds = new Set(wallet.items.map((item) => item.customer.venue_id))
-  const inProgress = cards.filter((card) => {
-    const toNext = card.summary?.stamps_to_next ?? 0
-    return toNext > 0 && !pendingVenueIds.has(card.venue_id)
-  })
-
-  return {
-    readyItems: wallet.items,
-    inProgress,
-    claimed: mapClaimedHistory(cardsList.claimed_history ?? []),
   }
 }
 

@@ -40,7 +40,7 @@ class VenueCustomerController extends Controller
     public function show(Request $request, Venue $venue, Customer $customer): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
-        abort_unless($customer->venue_id === $venue->id, 404);
+        VenueAccess::requireVenueModel($venue, $customer);
 
         return response()->json($this->retention->buildProfile($customer));
     }
@@ -48,7 +48,7 @@ class VenueCustomerController extends Controller
     public function update(Request $request, Venue $venue, Customer $customer): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
-        abort_unless($customer->venue_id === $venue->id, 404);
+        VenueAccess::requireVenueModel($venue, $customer);
 
         $validated = $request->validate([
             'birthday' => ['nullable', 'date', 'before:today'],
@@ -66,7 +66,7 @@ class VenueCustomerController extends Controller
     public function storeNote(Request $request, Venue $venue, Customer $customer): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
-        abort_unless($customer->venue_id === $venue->id, 404);
+        VenueAccess::requireVenueModel($venue, $customer);
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:2000'],

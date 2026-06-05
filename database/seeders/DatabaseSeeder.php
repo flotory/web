@@ -10,7 +10,9 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Models\Visit;
+use App\Services\LoyaltyStampService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -144,15 +146,15 @@ class DatabaseSeeder extends Seeder
             ->whereHas('customer', fn ($query) => $query->whereIn('venue_id', $venues->pluck('id')))
             ->delete();
 
-        $venues->each(function (Venue $venue, int $venueIndex) use ($customerUsers, $owner): void {
-            $customerUsers->each(function (User $user, int $customerIndex) use ($venue, $venueIndex, $owner): void {
+        $loyalty = app(LoyaltyStampService::class);
+
+        $venues->each(function (Venue $venue, int $venueIndex) use ($customerUsers, $owner, $loyalty): void {
+            $customerUsers->each(function (User $user, int $customerIndex) use ($venue, $venueIndex, $owner, $loyalty): void {
                 if (($customerIndex + $venueIndex) % 4 === 0 && $user->email !== 'customer@example.com') {
                     return;
                 }
 
-                $stamps = $venue->slug === 'demo-cafe' && $user->email === 'customer@example.com'
-                    ? 100
-                    : (($customerIndex * 2) + $venueIndex + 3) % 11;
+                $stamps = $this->demoStampsFor($venue->slug, $user->email, $customerIndex, $venueIndex);
 
                 $customer = Customer::updateOrCreate(
                     [
@@ -181,47 +183,69 @@ class DatabaseSeeder extends Seeder
                 $visitCount = min($stamps + 1, 9);
 
                 foreach (range(1, $visitCount) as $visitIndex) {
-                    // Most recent visit is always in the current month (dashboard KPIs).
+                    // Most recent visit stays in the current month (dashboard KPIs), always in the past.
                     $daysAgo = $visitIndex === $visitCount
                         ? 0
                         : (($visitCount - $visitIndex) * 3) + $customerIndex + $venueIndex;
+
+                    $createdAt = now()->subDays($daysAgo);
+
+                    if ($daysAgo === 0) {
+                        $minutesAgo = 30 + (($customerIndex * 41 + $venueIndex * 29 + $visitIndex * 7) % (72 * 60));
+                        $createdAt = $createdAt->subMinutes($minutesAgo);
+                    } else {
+                        $createdAt = $createdAt->setTime(10 + ($visitIndex % 8), 15);
+                    }
 
                     Visit::create([
                         'customer_id' => $customer->id,
                         'venue_id' => $venue->id,
                         'created_by' => $owner->id,
-                        'created_at' => ($daysAgo === 0 ? now() : now()->subDays($daysAgo))
-                            ->setTime(10 + ($visitIndex % 8), 15),
+                        'created_at' => $createdAt,
                     ]);
                 }
 
-                $venue->rewards()
-                    ->where('active', true)
-                    ->where('required_stamps', '<=', $stamps)
-                    ->each(function (Reward $reward) use ($customer, $owner, $venueIndex): void {
-                        $unlock = RewardUnlock::updateOrCreate(
-                            [
-                                'customer_id' => $customer->id,
-                                'reward_id' => $reward->id,
-                                'cycle_number' => 1,
-                            ],
-                            [
-                                'unlocked_at' => now()->subDays(3),
-                            ],
-                        );
+                $loyalty->syncEligibleUnlocks($customer);
 
-                        if ($reward->required_stamps === 5 && $customer->stamps >= 5) {
-                            $unlock->forceFill([
-                                'claimed_at' => now()->subDays(2 + $venueIndex),
-                                'claimed_by' => $owner->id,
-                            ])->save();
-                        }
-                    });
+                if ($venue->slug === 'demo-cafe' && $user->email === 'customer@example.com') {
+                    RewardUnlock::query()
+                        ->where('customer_id', $customer->id)
+                        ->where('cycle_number', 1)
+                        ->whereNull('claimed_at')
+                        ->whereHas('reward', fn ($query) => $query
+                            ->where('venue_id', $venue->id)
+                            ->where('required_stamps', '<=', 5))
+                        ->update([
+                            'claimed_at' => now()->subDays(2),
+                            'claimed_by' => $owner->id,
+                        ]);
+                }
             });
         });
+
+        Artisan::call('app:backfill-user-stamp-tokens');
 
         if (filter_var(env('SEED_DEMO_SCALE', false), FILTER_VALIDATE_BOOLEAN)) {
             $this->call(DemoScaleSeeder::class);
         }
+    }
+
+    /**
+     * Per-venue loyalty cards (one row per user + venue). Demo customer uses realistic
+     * progress — not the old 100-stamp shortcut that flooded the rewards wallet.
+     */
+    private function demoStampsFor(string $venueSlug, string $email, int $customerIndex, int $venueIndex): int
+    {
+        if ($email === 'customer@example.com') {
+            return match ($venueSlug) {
+                'demo-cafe' => 7,
+                'harbor-coffee' => 4,
+                'north-star-burgers' => 6,
+                'olive-street-kitchen' => 3,
+                default => 5,
+            };
+        }
+
+        return (($customerIndex * 2) + $venueIndex + 3) % 11;
     }
 }

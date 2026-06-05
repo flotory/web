@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
 
 import { withAppFont } from '../../lib/typography'
@@ -11,13 +12,23 @@ interface StateCardAction {
 
 interface StateCardProps {
   emoji?: string
+  icon?: keyof typeof Ionicons.glyphMap
+  iconColor?: string
   title: string
   message: string
   primaryAction?: StateCardAction
   secondaryAction?: StateCardAction
 }
 
-export default function StateCard({ emoji, title, message, primaryAction, secondaryAction }: StateCardProps) {
+export default function StateCard({
+  emoji,
+  icon,
+  iconColor = colors.inkMuted,
+  title,
+  message,
+  primaryAction,
+  secondaryAction,
+}: StateCardProps) {
   return (
     <View
       style={{
@@ -29,8 +40,22 @@ export default function StateCard({ emoji, title, message, primaryAction, second
         alignItems: 'center',
       }}
     >
+      {icon ? (
+        <View
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            backgroundColor: colors.surfaceMuted,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name={icon} size={36} color={iconColor} />
+        </View>
+      ) : null}
       {emoji ? <Text style={{ fontSize: 48 }}>{emoji}</Text> : null}
-      <Text style={{ ...typography.section, marginTop: emoji ? 12 : 0, textAlign: 'center' }}>{title}</Text>
+      <Text style={{ ...typography.section, marginTop: icon || emoji ? 12 : 0, textAlign: 'center' }}>{title}</Text>
       <Text style={{ ...typography.body, marginTop: 8, textAlign: 'center' }}>{message}</Text>
       {primaryAction ? (
         <View style={{ marginTop: 18, alignSelf: 'stretch' }}>

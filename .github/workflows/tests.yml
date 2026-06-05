@@ -75,6 +75,86 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+  e2e:
+    name: Playwright smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare seeded app
+        run: |
+          cp .env.example .env
+          {
+            echo "APP_ENV=local"
+            echo "APP_DEBUG=false"
+            echo "APP_URL=http://127.0.0.1:8000"
+            echo "FRONTEND_URL=http://127.0.0.1:8000"
+            echo "DB_CONNECTION=sqlite"
+            echo "DB_DATABASE=${{ github.workspace }}/database/database.sqlite"
+            echo "SESSION_DRIVER=file"
+            echo "CACHE_STORE=file"
+            echo "QUEUE_CONNECTION=sync"
+            echo "MAIL_MAILER=log"
+          } >> .env
+          touch database/database.sqlite
+          php artisan key:generate --force
+          php artisan migrate:fresh --seed --force
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Start Laravel server
+        run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &
+
+      - name: Wait for Laravel server
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/login >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Laravel server did not start"
+          sed -n '1,160p' storage/logs/e2e-server.log || true
+          exit 1
+
+      - name: Run Playwright smoke tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8000
+        run: npm run test:e2e
+
+      - name: Upload Laravel E2E log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-e2e-log
+          path: storage/logs/e2e-server.log
+
   mobile:
     name: Mobile typecheck
     runs-on: ubuntu-latest

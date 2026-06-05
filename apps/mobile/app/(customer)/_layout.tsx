@@ -91,16 +91,6 @@ export default function CustomerTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
-        options={{
-          title: 'Rewards',
-          href: null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'gift' : 'gift-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="notifications"
         options={{
           title: 'Notifications',

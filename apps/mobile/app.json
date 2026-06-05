@@ -12,9 +12,11 @@
     },
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.flotory.mobile",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.flotory.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

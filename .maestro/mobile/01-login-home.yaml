@@ -1,0 +1,21 @@
+appId: "${APP_ID}"
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Flotory Mobile"
+    timeout: 30000
+- tapOn:
+    id: "login-email-input"
+- inputText: "${CUSTOMER_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${CUSTOMER_PASSWORD}"
+- hideKeyboard
+- tapOn:
+    id: "login-submit-button"
+- extendedWaitUntil:
+    visible: "Scan QR"
+    timeout: 30000
+- assertVisible: "Open wallet"
+- assertVisible: "Find a venue"
