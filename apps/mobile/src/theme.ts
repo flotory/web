@@ -2,62 +2,117 @@ import { fonts } from './lib/typography'
 
 export { fonts }
 
-export const colors = {
-  bg: '#F8FAFC',
+export type FlotoryThemeColors = {
+  bg: string
+  surface: string
+  surfaceMuted: string
+  ink: string
+  inkMuted: string
+  inkSoft: string
+  border: string
+  primary: string
+  primarySoft: string
+  primaryText: string
+  danger: string
+  dangerSoft: string
+  successText: string
+  success: string
+  successBg: string
+  successBorder: string
+  accent: string
+  accentSoft: string
+  accentBorder: string
+  accentActive: string
+  lavender: string
+  lavenderBorder: string
+  plum: string
+  progressTrack: string
+  progressFilled: string
+  campaignBg: string
+  campaignBorder: string
+  rewardReadyAccent: string
+  bgGradientStart: string
+  bgGradientEnd: string
+  discoverPillInactive: string
+  discoverPillBorder: string
+  discoverSearchFill: string
+  discoverCardBorder: string
+  discoverCategoryFill: string
+  discoverCategoryIcon: string
+  discoverRewardsFill: string
+  discoverRewardsText: string
+  discoverRewardsBorder: string
+}
+
+/** Option 3 premium palette — navy, gold, cream, white */
+const defaultColors: FlotoryThemeColors = {
+  bg: '#F7F2E8',
   surface: '#FFFFFF',
-  surfaceMuted: '#F1F5F9',
-  ink: '#0F172A',
-  inkMuted: '#64748B',
-  inkSoft: '#98A2B3',
-  border: '#E2E8F0',
-  primary: '#0F172A',
-  primarySoft: '#334155',
+  surfaceMuted: '#E9ECF1',
+  ink: '#081233',
+  inkMuted: '#5C6478',
+  inkSoft: '#8B93A7',
+  border: '#E9ECF1',
+  primary: '#081233',
+  primarySoft: '#0C1A45',
   primaryText: '#FFFFFF',
-  danger: '#F04438',
-  dangerSoft: '#FFE4E2',
-  successText: '#166534',
-  success: '#22C55E',
-  successBg: '#ECFDF3',
-  successBorder: '#BBF7D0',
-  accent: '#D97706',
-  accentSoft: '#FCF6E9',
-  accentBorder: '#FDE68A',
-  lavender: '#EEF2FF',
-  lavenderBorder: '#E0E7FF',
-  plum: '#1E293B',
-  progressTrack: '#E2E8F0',
+  danger: '#C14E41',
+  dangerSoft: '#FBE7E3',
+  successText: '#2E7D4F',
+  success: '#2E7D4F',
+  successBg: '#DFF2E4',
+  successBorder: '#C8E6D0',
+  accent: '#D6B15E',
+  accentSoft: '#E8D8A8',
+  accentBorder: '#D6B15E',
+  accentActive: '#B78D2F',
+  lavender: '#E8D8A8',
+  lavenderBorder: '#D6B15E',
+  plum: '#081233',
+  progressTrack: '#E9ECF1',
+  progressFilled: '#D6B15E',
+  campaignBg: '#081233',
+  campaignBorder: '#D6B15E',
+  rewardReadyAccent: '#D6B15E',
+  bgGradientStart: '#FAF7F0',
+  bgGradientEnd: '#F7F2E8',
   /** Discover venues — muted surfaces */
   discoverPillInactive: '#FFFFFF',
-  discoverPillBorder: '#E8EDF3',
-  discoverSearchFill: '#F1F5F9',
-  discoverCardBorder: '#E8ECF4',
-  discoverCategoryFill: '#EEF2FF',
-  discoverCategoryIcon: '#475569',
-  discoverRewardsFill: '#F0FDF4',
-  discoverRewardsText: '#15803D',
-  discoverRewardsBorder: '#DCFCE7',
-} as const
+  discoverPillBorder: '#E9ECF1',
+  discoverSearchFill: '#E9ECF1',
+  discoverCardBorder: '#E9ECF1',
+  discoverCategoryFill: '#E8D8A8',
+  discoverCategoryIcon: '#081233',
+  discoverRewardsFill: '#DFF2E4',
+  discoverRewardsText: '#2E7D4F',
+  discoverRewardsBorder: '#C8E6D0',
+}
+
+/** Mutable theme colors — updated by ThemeProvider when platform palette loads. */
+export let colors: FlotoryThemeColors = { ...defaultColors }
+
+export function applyThemeColors(partial: Partial<FlotoryThemeColors>): FlotoryThemeColors {
+  colors = { ...colors, ...partial }
+  return colors
+}
 
 /**
  * App screen wallpaper behind customer flows.
- * - stickers: cool white + loyalty icon doodles
- * - warm: beige + soft doodles (default)
- * - dots: minimal dot grid
  */
 export const screenBackground = {
   variant: 'warm' as 'stickers' | 'warm' | 'dots',
   warm: {
-    base: '#E5DDD0',
-    wash: ['#FBF7F0', '#F4EBDC', '#E8DFD0', '#DDD2C2', '#D4C8B6'] as const,
-    iconForest: 'rgba(22, 78, 58, 0.11)',
-    iconClay: 'rgba(98, 62, 36, 0.095)',
-    iconSand: 'rgba(148, 108, 58, 0.085)',
-    iconAmber: 'rgba(180, 120, 42, 0.08)',
-    iconMoss: 'rgba(52, 98, 72, 0.09)',
-    blobLight: 'rgba(255, 252, 245, 0.5)',
-    blobWarm: 'rgba(232, 196, 140, 0.18)',
-    blobMoss: 'rgba(168, 198, 175, 0.22)',
-    vignette: 'rgba(92, 72, 48, 0.06)',
+    base: '#F7F2E8',
+    wash: ['#FAF7F0', '#F7F2E8'] as const,
+    iconForest: 'rgba(8, 18, 51, 0.05)',
+    iconClay: 'rgba(183, 141, 47, 0.06)',
+    iconSand: 'rgba(214, 177, 94, 0.05)',
+    iconAmber: 'rgba(214, 177, 94, 0.07)',
+    iconMoss: 'rgba(8, 18, 51, 0.04)',
+    blobLight: 'rgba(255, 255, 255, 0.35)',
+    blobWarm: 'rgba(214, 177, 94, 0.08)',
+    blobMoss: 'rgba(8, 18, 51, 0.03)',
+    vignette: 'rgba(8, 18, 51, 0.03)',
   },
 } as const
 
@@ -82,12 +137,10 @@ export const carousel = {
   rewardCardGap: 10,
   rewardImageSize: 84,
   cardPad: 14,
-  /** How many campaign cards are visible across the viewport (2 full + half peek). */
   campaignVisibleCount: 2.5,
   campaignCardGap: 10,
 } as const
 
-/** Customer bottom tab bar — keep in sync with `(customer)/_layout.tsx` */
 export const tabBar = {
   height: 56,
   scrollBottomPad: 10,
@@ -95,23 +148,21 @@ export const tabBar = {
   labelSize: 11,
 } as const
 
-/** Custom tab bar surface (CustomerTabBar SVG) */
 export const tabBarSurface = {
-  gradient: ['#FFFFFF', '#FBF8F2', '#F3EBDD', '#E8DFD0'] as const,
+  gradient: ['#FFFFFF', '#FAF7F0', '#F7F2E8', '#F0EBE0'] as const,
   gradientStops: [0, 0.35, 0.72, 1] as const,
-  border: 'rgba(98, 72, 48, 0.14)',
-  notchGlow: 'rgba(245, 208, 138, 0.22)',
-  topHighlight: 'rgba(255, 255, 255, 0.55)',
+  border: 'rgba(8, 18, 51, 0.08)',
+  notchGlow: 'rgba(214, 177, 94, 0.18)',
+  topHighlight: 'rgba(255, 255, 255, 0.65)',
   shadow: {
-    color: '#5C4830',
-    opacity: 0.12,
+    color: '#081233',
+    opacity: 0.08,
     radius: 16,
     offsetY: -6,
     elevation: 14,
   },
 } as const
 
-/** Center tab scan button (My QR). */
 export const tabBarQr = {
   size: 50,
   iconSize: 24,
@@ -119,12 +170,10 @@ export const tabBarQr = {
 } as const
 
 export const gradients = {
-  /** App-wide warm background — slate → lavender → soft peach → lavender → slate */
-  screen: ['#F8FAFC', '#EEF2FF', '#F5EFE4', '#FCF6E9', '#EEF2FF', '#F8FAFC'] as const,
-  screenLocations: [0, 0.2, 0.38, 0.55, 0.78, 1] as const,
-  /** Carousel reward card — soft white → lavender → peach → white */
-  carouselCard: ['#FFFFFF', '#F6F8FF', '#FDF8F0', '#FAF7FF', '#FFFFFF'] as const,
-  carouselCardLocations: [0, 0.3, 0.55, 0.8, 1] as const,
+  screen: ['#FAF7F0', '#F7F2E8', '#F7F2E8'] as const,
+  screenLocations: [0, 0.55, 1] as const,
+  carouselCard: ['#FFFFFF', '#FAF7F0', '#FFFFFF'] as const,
+  carouselCardLocations: [0, 0.5, 1] as const,
 } as const
 
 export const radius = {
@@ -134,19 +183,16 @@ export const radius = {
   mediaTop: 20,
 } as const
 
-/** Shared cover image dimensions for list cards */
 export const media = {
   coverHeight: 140,
 } as const
 
-/** Full-bleed venue cards on the wallet screen */
 export const walletCard = {
   height: 200,
   radius: 24,
   gap: 16,
 } as const
 
-/** @deprecated Stacked layout — kept for skeleton sizing */
 export const walletStack = {
   peek: 52,
   cardHeight: walletCard.height,
@@ -157,14 +203,10 @@ export const motion = {
   pressScale: 0.985,
   ctaPulseMax: 1.02,
   ctaPulseMs: 900,
-  /** Customer stamp +1 toast on card screen */
   stampBannerShowMs: 3000,
-  /** Delay on card after navigation before +1 toast, then slot highlight */
   stampCardRevealMs: 480,
   stampBannerBeforeSlotsMs: 260,
-  /** Green checkmark pulse on the new stamp slot */
   stampSlotHighlightMs: 5000,
-  /** Inline gift unlock pulse on the progress path */
   stampGiftUnlockMs: 1500,
   shadowPulseMin: 0.06,
   shadowPulseMax: 0.14,
@@ -173,7 +215,6 @@ export const motion = {
   giftBellRotateDeg: 16,
 } as const
 
-/** Shared “reward ready” gift badge (ShakeGiftBadge) */
 export const rewardReady = {
   iconName: 'gift' as const,
   iconSize: 22,
@@ -181,7 +222,7 @@ export const rewardReady = {
   badgeRadius: 12,
   backgroundColor: colors.accentSoft,
   borderColor: colors.accentBorder,
-  iconColor: colors.accent,
+  iconColor: colors.accentActive,
 } as const
 
 export const shadows = {
@@ -256,5 +297,4 @@ export const type = {
   },
 }
 
-/** Default for screens that set Text defaultProps in root layout. */
 export const defaultFontFamily = fonts.regular

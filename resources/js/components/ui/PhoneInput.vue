@@ -164,24 +164,24 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootRef">
-    <label v-if="label" class="text-sm font-bold text-slate-600" :for="id">
-      {{ label }}<span v-if="optional" class="font-semibold text-slate-400"> optional</span>
+    <label v-if="label" class="text-sm font-bold text-ink-muted" :for="id">
+      {{ label }}<span v-if="optional" class="font-semibold text-ink-soft"> optional</span>
     </label>
 
     <div class="relative mt-2">
       <div
-        class="flex h-12 items-center rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-slate-400 focus-within:bg-white"
+        class="flex h-12 items-center rounded-2xl border border-border bg-surface-muted focus-within:border-ink-soft focus-within:bg-surface"
       >
         <button
           type="button"
-          class="flex h-auto shrink-0 items-center gap-1.5 self-center rounded-l-2xl border-r border-slate-200 bg-transparent px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100/80"
+          class="flex h-auto shrink-0 items-center gap-1.5 self-center rounded-l-2xl border-r border-border bg-transparent px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-muted/80"
           :aria-expanded="dropdownOpen"
           aria-haspopup="listbox"
           @click.stop="toggleDropdown"
         >
           <span class="text-base leading-none" aria-hidden="true">{{ selectedCountry.flag }}</span>
           <span>{{ selectedCountry.dialCode }}</span>
-          <span class="text-xs text-slate-400" aria-hidden="true">▾</span>
+          <span class="text-xs text-ink-soft" aria-hidden="true">▾</span>
         </button>
 
         <input
@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
           type="tel"
           inputmode="tel"
           autocomplete="tel-national"
-          class="h-12 min-w-0 flex-1 rounded-r-2xl bg-transparent px-4 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          class="h-12 min-w-0 flex-1 rounded-r-2xl bg-transparent px-4 text-sm font-medium text-ink outline-none placeholder:text-ink-soft"
           :placeholder="countryCode === 'PL' ? '123 456 789' : 'Phone number'"
           @input="onNationalInput"
         >
@@ -198,14 +198,14 @@ onBeforeUnmount(() => {
 
       <div
         v-if="dropdownOpen"
-        class="absolute left-0 top-[calc(100%+0.35rem)] z-50 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/80"
+        class="absolute left-0 top-[calc(100%+0.35rem)] z-50 w-72 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl shadow-border/80"
         role="listbox"
       >
-        <div class="border-b border-slate-100 p-2">
+        <div class="border-b border-border p-2">
           <input
             v-model="countryQuery"
             type="search"
-            class="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+            class="h-9 w-full rounded-xl border border-border bg-surface-muted px-3 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
             placeholder="Search country"
             @click.stop
           >
@@ -214,8 +214,8 @@ onBeforeUnmount(() => {
           <li v-for="option in filteredCountries" :key="option.code">
             <button
               type="button"
-              class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
-              :class="option.code === countryCode ? 'bg-slate-50 font-bold text-slate-950' : 'font-medium text-slate-700'"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-muted"
+              :class="option.code === countryCode ? 'bg-surface-muted font-bold text-ink' : 'font-medium text-ink-muted'"
               role="option"
               :aria-selected="option.code === countryCode"
               @mousedown.prevent
@@ -223,10 +223,10 @@ onBeforeUnmount(() => {
             >
               <span class="text-base leading-none">{{ option.flag }}</span>
               <span class="min-w-0 flex-1 truncate">{{ option.name }}</span>
-              <span class="shrink-0 text-slate-500">{{ option.dialCode }}</span>
+              <span class="shrink-0 text-ink-muted">{{ option.dialCode }}</span>
             </button>
           </li>
-          <li v-if="!filteredCountries.length" class="px-3 py-2 text-sm font-medium text-slate-500">
+          <li v-if="!filteredCountries.length" class="px-3 py-2 text-sm font-medium text-ink-muted">
             No countries found
           </li>
         </ul>

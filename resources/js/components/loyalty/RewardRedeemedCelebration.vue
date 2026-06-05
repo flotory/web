@@ -10,14 +10,14 @@ defineProps<{
   <Transition name="celebrate">
     <div
       v-if="visible"
-      class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/30 px-6 backdrop-blur-[2px]"
+      class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-primary/30 px-6 backdrop-blur-[2px]"
       aria-live="polite"
     >
-      <div class="celebrate-card relative rounded-[2rem] bg-white px-8 py-7 text-center shadow-2xl ring-1 ring-emerald-200">
-        <div class="mx-auto grid size-20 place-items-center rounded-full bg-emerald-100 text-4xl">✓</div>
-        <p class="mt-4 text-xl font-black text-slate-950">Reward used!</p>
-        <p v-if="title" class="mt-1 text-sm font-semibold text-slate-700">{{ title }}</p>
-        <p v-if="subtitle" class="mt-2 text-sm font-medium text-slate-500">{{ subtitle }}</p>
+      <div class="celebrate-card relative rounded-[2rem] bg-surface px-8 py-7 text-center shadow-2xl ring-1 ring-success-border">
+        <div class="mx-auto grid size-20 place-items-center rounded-full bg-success-bg text-4xl">✓</div>
+        <p class="mt-4 text-xl font-black text-ink">Reward used!</p>
+        <p v-if="title" class="mt-1 text-sm font-semibold text-ink-muted">{{ title }}</p>
+        <p v-if="subtitle" class="mt-2 text-sm font-medium text-ink-muted">{{ subtitle }}</p>
         <div class="celebrate-sparkles" aria-hidden="true">
           <span v-for="index in 6" :key="index" class="celebrate-sparkle">★</span>
         </div>

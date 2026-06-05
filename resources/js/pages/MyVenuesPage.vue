@@ -183,30 +183,30 @@ onMounted(loadVenues)
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <AppBadge tone="blue">Workspace</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">My Venues</h1>
-        <p class="mt-2 text-slate-500">Manage loyalty across your locations.</p>
-        <p class="mt-2 text-sm font-semibold text-slate-400">
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">My Venues</h1>
+        <p class="mt-2 text-ink-muted">Manage loyalty across your locations.</p>
+        <p class="mt-2 text-sm font-semibold text-ink-soft">
           {{ totals.venues }} venues • {{ totals.visits }} scans this week • {{ totals.rewards }} active rewards
         </p>
       </div>
-      <AppButton class="bg-slate-950 text-white shadow-lg shadow-slate-950/25 hover:bg-slate-800" @click="openCreateForm">+ Create new venue</AppButton>
+      <AppButton class="bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-soft" @click="openCreateForm">+ Create new venue</AppButton>
     </div>
 
-    <AppCard wrapper-class="mb-5 border-slate-200/80 bg-white/95 backdrop-blur">
+    <AppCard wrapper-class="mb-5 border-border/80 bg-surface/95 backdrop-blur">
       <div class="grid gap-3 md:grid-cols-[1.3fr_0.85fr_0.85fr]">
         <input
           v-model="search"
-          class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+          class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
           placeholder="Search venue"
         >
-        <select v-model="typeFilter" class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-slate-400 focus:bg-white">
+        <select v-model="typeFilter" class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-semibold outline-none focus:border-ink-soft focus:bg-surface">
           <option value="all">All types</option>
           <option value="cafe">Cafe</option>
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
           <option value="bakery">Bakery</option>
         </select>
-        <select v-model="sortBy" class="h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-slate-400 focus:bg-white">
+        <select v-model="sortBy" class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-semibold outline-none focus:border-ink-soft focus:bg-surface">
           <option value="activity">Sort by activity</option>
           <option value="name">Sort by name</option>
           <option value="customers">Sort by customers</option>
@@ -218,43 +218,43 @@ onMounted(loadVenues)
       <form class="grid gap-4" @submit.prevent="createVenue">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-2xl font-black text-slate-950">Create venue</h2>
-            <p class="mt-1 text-sm font-semibold text-slate-500">Profile details customers and staff will recognize.</p>
+            <h2 class="text-2xl font-black text-ink">Create venue</h2>
+            <p class="mt-1 text-sm font-semibold text-ink-muted">Profile details customers and staff will recognize.</p>
           </div>
-          <div class="grid size-16 place-items-center overflow-hidden rounded-3xl bg-slate-100 text-xl font-black text-slate-400 ring-1 ring-slate-200">
+          <div class="grid size-16 place-items-center overflow-hidden rounded-3xl bg-surface-muted text-xl font-black text-ink-soft ring-1 ring-border">
             {{ name.slice(0, 1) || 'V' }}
           </div>
         </div>
 
         <div class="grid gap-4 md:grid-cols-[1fr_180px]">
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-name">Venue name</label>
-            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="Harbor Coffee">
+            <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name</label>
+            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="Harbor Coffee">
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-slug">Slug</label>
-            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="harbor-coffee">
+            <label class="text-sm font-bold text-ink-muted" for="venue-slug">Slug</label>
+            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="harbor-coffee">
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-website">Website optional</label>
-            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="https://example.com">
+            <label class="text-sm font-bold text-ink-muted" for="venue-website">Website optional</label>
+            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="https://example.com">
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-address">Address</label>
+            <label class="text-sm font-bold text-ink-muted" for="venue-address">Address</label>
             <input
               id="venue-address"
               v-model="address"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
               placeholder="12 Market Street, Toruń"
             >
-            <p class="mt-2 text-xs font-medium text-slate-500">
+            <p class="mt-2 text-xs font-medium text-ink-muted">
               Shown on your public venue page and used for Google Maps.
             </p>
           </div>
           <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
         </div>
 
-        <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
 
         <div class="flex flex-wrap gap-2">
           <AsyncActionButton
@@ -303,48 +303,48 @@ onMounted(loadVenues)
       <AppCard
         v-for="venue in filteredVenues"
         :key="venue.id"
-        wrapper-class="group relative overflow-hidden border-slate-200/80 p-0 shadow-sm transition hover:shadow-xl"
+        wrapper-class="group relative overflow-hidden border-border/80 p-0 shadow-sm transition hover:shadow-xl"
       >
         <img :src="venueCoverThumbUrl(venue)" alt="" class="h-24 w-full object-cover">
         <div class="relative p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white text-xl font-black shadow-sm ring-2 ring-white -mt-10">
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface text-xl font-black shadow-sm ring-2 ring-white -mt-10">
               <img :src="venueLogoThumbUrl(venue)" :alt="venue.name" class="size-full object-cover">
             </div>
             <div>
               <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-2xl font-black text-slate-950">{{ venue.name }}</h2>
+                <h2 class="text-2xl font-black text-ink">{{ venue.name }}</h2>
                 <AppBadge tone="green">Active</AppBadge>
                 <AppBadge tone="blue">{{ venueTypeLabel(venue) }}</AppBadge>
               </div>
-              <p class="mt-1 text-sm font-semibold text-slate-500">/{{ venue.slug }}</p>
+              <p class="mt-1 text-sm font-semibold text-ink-muted">/{{ venue.slug }}</p>
             </div>
           </div>
           <div class="relative">
-            <button type="button" class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-200" @click="toggleMenu(venue.id)">⋯</button>
-            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
-              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
-              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
+            <button type="button" class="rounded-xl bg-surface-muted px-3 py-2 text-sm font-black text-ink-muted hover:bg-border" @click="toggleMenu(venue.id)">⋯</button>
+            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-surface p-2 shadow-xl ring-1 ring-border">
+              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
+              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
             </div>
           </div>
         </div>
 
         <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">◎ Guests</p>
-            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.customers_count ?? 0 }}</p>
+          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◎ Guests</p>
+            <p class="mt-1 text-sm font-black text-ink">{{ venue.customers_count ?? 0 }}</p>
           </div>
-          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">↻ Visits</p>
-            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.visits_count ?? 0 }}</p>
+          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">↻ Visits</p>
+            <p class="mt-1 text-sm font-black text-ink">{{ venue.visits_count ?? 0 }}</p>
           </div>
-          <div class="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">◈ Rewards</p>
-            <p class="mt-1 text-sm font-black text-slate-900">{{ venue.rewards_count ?? 0 }}</p>
+          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◈ Rewards</p>
+            <p class="mt-1 text-sm font-black text-ink">{{ venue.rewards_count ?? 0 }}</p>
           </div>
-          <div class="grid place-items-center rounded-xl bg-white p-3 ring-1 ring-slate-200">
-            <div class="inline-flex rounded-lg bg-white p-1 ring-1 ring-slate-200">
+          <div class="grid place-items-center rounded-xl bg-surface p-3 ring-1 ring-border">
+            <div class="inline-flex rounded-lg bg-surface p-1 ring-1 ring-border">
               <QrcodeVue :value="buildVenueLandingUrl(venue.slug)" :size="42" level="M" render-as="canvas" :margin="1" />
             </div>
           </div>
@@ -369,18 +369,18 @@ onMounted(loadVenues)
 
     <div
       v-if="deleteVenueTarget"
-      class="fixed inset-0 z-40 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm"
+      class="fixed inset-0 z-40 grid place-items-center bg-primary/40 px-4 backdrop-blur-sm"
       @click.self="closeDeleteModal"
     >
-      <AppCard wrapper-class="w-full max-w-md border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-black text-slate-950">Delete venue?</h2>
-        <p class="mt-2 text-sm text-slate-600">
-          This will soft-delete <span class="font-bold text-slate-900">{{ deleteVenueTarget.name }}</span>.
+      <AppCard wrapper-class="w-full max-w-md border-border bg-surface p-6">
+        <h2 class="text-2xl font-black text-ink">Delete venue?</h2>
+        <p class="mt-2 text-sm text-ink-muted">
+          This will soft-delete <span class="font-bold text-ink">{{ deleteVenueTarget.name }}</span>.
           You can restore it later from the database.
         </p>
         <div class="mt-5 grid gap-2 sm:grid-cols-2">
           <AppButton variant="secondary" :disabled="saving" @click="closeDeleteModal">Cancel</AppButton>
-          <AppButton :disabled="saving" class="bg-red-600 text-white hover:bg-red-700" @click="deleteVenue(deleteVenueTarget)">
+          <AppButton :disabled="saving" class="bg-danger text-primary-text hover:bg-danger/90" @click="deleteVenue(deleteVenueTarget)">
             {{ saving ? 'Deleting...' : 'Yes, delete venue' }}
           </AppButton>
         </div>

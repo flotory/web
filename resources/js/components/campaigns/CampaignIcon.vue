@@ -26,12 +26,12 @@ const boxClass = computed(() =>
       lg: 'size-14',
     }[props.size],
     {
-      slate: 'bg-slate-100 text-slate-600 ring-slate-200/80',
-      amber: 'bg-amber-100 text-amber-700 ring-amber-200/80',
-      emerald: 'bg-emerald-100 text-emerald-700 ring-emerald-200/80',
-      violet: 'bg-violet-100 text-violet-700 ring-violet-200/80',
-      sky: 'bg-sky-100 text-sky-700 ring-sky-200/80',
-      indigo: 'bg-indigo-100 text-indigo-700 ring-indigo-200/80',
+      slate: 'bg-surface-muted text-ink-muted ring-border/80',
+      amber: 'bg-accent-soft text-accent-active ring-accent-border/80',
+      emerald: 'bg-success-bg text-success-text ring-success-border/80',
+      violet: 'bg-accent-soft text-primary ring-accent-border/80',
+      sky: 'bg-surface-muted text-ink-muted ring-border/80',
+      indigo: 'bg-accent-soft text-primary ring-accent-border/80',
     }[props.tone],
   ),
 )

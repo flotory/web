@@ -14,10 +14,10 @@ withDefaults(
     :class="[
       'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1',
       {
-        slate: 'bg-slate-100 text-slate-700 ring-slate-200',
-        green: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-        blue: 'bg-blue-50 text-blue-700 ring-blue-100',
-        amber: 'bg-amber-50 text-amber-700 ring-amber-100',
+        slate: 'bg-surface-muted text-ink-muted ring-border',
+        green: 'bg-success-bg text-success-text ring-success-border',
+        blue: 'bg-accent-soft text-primary ring-accent-border',
+        amber: 'bg-highlight text-accent-active ring-highlight-border',
       }[tone],
     ]"
   >

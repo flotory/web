@@ -74,9 +74,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+  <main class="relative min-h-screen overflow-hidden bg-primary text-white">
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(99,102,241,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(14,165,233,0.14),transparent_35%)]" />
-    <div class="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-indigo-400/20 blur-[120px] soft-drift" />
+    <div class="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-accent/20 blur-[120px] soft-drift" />
 
     <header class="relative mx-auto flex max-w-6xl items-center justify-between px-4 pt-8 sm:pt-10">
       <RouterLink to="/">
@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
       </RouterLink>
       <div class="flex items-center gap-2">
         <RouterLink to="/login">
-          <AppButton variant="ghost" class="text-white ring-1 ring-white/20 hover:bg-white/10 hover:text-white">Log in</AppButton>
+          <AppButton variant="ghost" class="text-white ring-1 ring-white/20 hover:bg-surface/10 hover:text-white">Log in</AppButton>
         </RouterLink>
         <RouterLink to="/register?intent=owner">
           <AppButton variant="secondary" size="sm" class="btn-glow">Start free</AppButton>
@@ -94,14 +94,14 @@ onBeforeUnmount(() => {
 
     <section class="relative mx-auto grid max-w-6xl gap-12 px-4 py-10 sm:py-14 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:py-20">
       <div class="space-y-9">
-        <p class="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-blue-100 ring-1 ring-white/15">
+        <p class="inline-flex rounded-full bg-surface/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft ring-1 ring-white/15">
           Built for cafes, bars, and restaurants
         </p>
         <div class="space-y-6">
           <h1 class="hero-heading text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
             Turn first-time visitors into regulars.
           </h1>
-          <p class="max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
+          <p class="max-w-xl text-base leading-8 text-ink-soft sm:text-lg">
             Digital stamp cards and QR rewards guests scan at the table — simple for your team, built for repeat visits.
           </p>
         </div>
@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
           <a href="#how-it-works">
-            <AppButton size="lg" variant="ghost" class="w-full text-white ring-1 ring-white/20 hover:bg-white/10 hover:text-white sm:w-auto">
+            <AppButton size="lg" variant="ghost" class="w-full text-white ring-1 ring-white/20 hover:bg-surface/10 hover:text-white sm:w-auto">
               See how it works
             </AppButton>
           </a>
@@ -118,8 +118,8 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="relative floating-phone">
-        <div class="absolute -inset-6 rounded-[2.25rem] bg-gradient-to-br from-indigo-500/25 to-sky-500/15 blur-3xl" />
-        <AppCard wrapper-class="hero-shell relative overflow-hidden border-white/15 bg-white/6 p-4 backdrop-blur-xl">
+        <div class="absolute -inset-6 rounded-[2.25rem] bg-gradient-to-br from-primary/25 to-sky-500/15 blur-3xl" />
+        <AppCard wrapper-class="hero-shell relative overflow-hidden border-white/15 bg-surface/6 p-4 backdrop-blur-xl">
           <div class="mb-4 overflow-hidden rounded-[1.5rem]">
             <img
               src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80"
@@ -128,35 +128,35 @@ onBeforeUnmount(() => {
             >
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Table QR stand</p>
+            <div class="hover-lift rounded-2xl bg-primary/85 p-4 ring-1 ring-white/10">
+              <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Table QR stand</p>
               <div class="mt-3 flex items-center gap-3">
-                <div class="grid size-12 place-items-center rounded-xl bg-white text-slate-900">
+                <div class="grid size-12 place-items-center rounded-xl bg-surface text-ink">
                   <span class="text-xl font-black">▦</span>
                 </div>
-                <p class="text-sm text-slate-200">Guests scan in seconds</p>
+                <p class="text-sm text-primary-text/80">Guests scan in seconds</p>
               </div>
             </div>
-            <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Guest progress</p>
+            <div class="hover-lift rounded-2xl bg-primary/85 p-4 ring-1 ring-white/10">
+              <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Guest progress</p>
               <p class="mt-3 text-lg font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">One stamp away from a free coffee</p>
+              <p class="text-sm text-success">One stamp away from a free coffee</p>
             </div>
-            <div class="hover-lift rounded-2xl bg-slate-900/85 p-4 ring-1 ring-white/10 sm:col-span-2">
+            <div class="hover-lift rounded-2xl bg-primary/85 p-4 ring-1 ring-white/10 sm:col-span-2">
               <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">At the counter</p>
-                <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 soft-pulse" />
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">At the counter</p>
+                <span class="inline-flex h-2.5 w-2.5 rounded-full bg-success soft-pulse" />
               </div>
-              <p class="mt-2 text-sm text-slate-200">Staff scan once — stamp added, guest notified.</p>
+              <p class="mt-2 text-sm text-primary-text/80">Staff scan once — stamp added, guest notified.</p>
             </div>
           </div>
         </AppCard>
       </div>
     </section>
 
-    <section class="reveal relative border-y border-white/10 bg-white/[0.02]">
+    <section class="reveal relative border-y border-white/10 bg-surface/[0.02]">
       <div class="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 py-6 sm:grid-cols-4">
-        <div v-for="item in trustPoints" :key="item" class="rounded-2xl bg-white/5 px-3 py-3 text-center text-sm font-semibold text-slate-200 ring-1 ring-white/10">
+        <div v-for="item in trustPoints" :key="item" class="rounded-2xl bg-surface/5 px-3 py-3 text-center text-sm font-semibold text-primary-text/80 ring-1 ring-white/10">
           {{ item }}
         </div>
       </div>
@@ -164,41 +164,41 @@ onBeforeUnmount(() => {
 
     <section id="how-it-works" class="reveal relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
       <div class="mb-10 space-y-3 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">How It Works</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">How It Works</p>
         <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Simple for teams. Powerful for retention.</h2>
       </div>
       <div class="grid gap-5 md:grid-cols-2">
-        <article v-for="(step, idx) in flowSteps" :key="step.title" class="hover-lift overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04]">
+        <article v-for="(step, idx) in flowSteps" :key="step.title" class="hover-lift overflow-hidden rounded-[1.8rem] border border-white/10 bg-surface/[0.04]">
           <img :src="step.image" :alt="step.title" class="h-48 w-full object-cover sm:h-56">
           <div class="space-y-3 p-5">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Step {{ idx + 1 }}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Step {{ idx + 1 }}</p>
             <h3 class="text-2xl font-black">{{ step.title }}</h3>
-            <p class="text-sm leading-7 text-slate-300">{{ step.copy }}</p>
+            <p class="text-sm leading-7 text-ink-soft">{{ step.copy }}</p>
           </div>
         </article>
       </div>
     </section>
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-16 sm:pb-24">
-      <AppCard wrapper-class="overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/80 p-0">
+      <AppCard wrapper-class="overflow-hidden border-white/10 bg-gradient-to-br from-primary/90 to-primary-soft/80 p-0">
         <div class="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div class="space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Rewards guests notice</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Rewards guests notice</p>
             <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Progress that guests want to complete.</h2>
-            <p class="max-w-xl text-sm leading-8 text-slate-300 sm:text-base">
+            <p class="max-w-xl text-sm leading-8 text-ink-soft sm:text-base">
               Flotory turns stamps into visible progress, milestones, and celebration moments that keep guests coming back.
             </p>
           </div>
           <div class="grid gap-3">
-            <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-slate-200">Progress toward next reward</p>
+            <div class="hover-lift rounded-2xl bg-primary/70 p-4 ring-1 ring-white/10">
+              <p class="text-sm font-semibold text-primary-text/80">Progress toward next reward</p>
               <p class="mt-2 text-2xl font-black shimmer-stars">⭐⭐⭐☆☆</p>
-              <p class="text-sm text-emerald-300">Clear countdown to the next milestone</p>
+              <p class="text-sm text-success">Clear countdown to the next milestone</p>
             </div>
-            <div class="hover-lift rounded-2xl bg-slate-950/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-slate-200">Milestone unlocked</p>
-              <p class="mt-2 text-lg font-black text-amber-300">Reward unlocked: House dessert</p>
-              <p class="text-sm text-slate-300">A moment guests remember — and talk about.</p>
+            <div class="hover-lift rounded-2xl bg-primary/70 p-4 ring-1 ring-white/10">
+              <p class="text-sm font-semibold text-primary-text/80">Milestone unlocked</p>
+              <p class="mt-2 text-lg font-black text-accent">Reward unlocked: House dessert</p>
+              <p class="text-sm text-ink-soft">A moment guests remember — and talk about.</p>
             </div>
           </div>
         </div>
@@ -207,19 +207,19 @@ onBeforeUnmount(() => {
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-16 sm:pb-24">
       <div class="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-        <AppCard wrapper-class="border-white/10 bg-white/[0.04]">
-          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Staff Experience</p>
+        <AppCard wrapper-class="border-white/10 bg-surface/[0.04]">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Staff Experience</p>
           <h2 class="mt-4 text-3xl font-black tracking-tight">Built for busy staff.</h2>
-          <p class="mt-3 text-sm leading-8 text-slate-300 sm:text-base">One tap to open the scanner — built for rush-hour lines.</p>
+          <p class="mt-3 text-sm leading-8 text-ink-soft sm:text-base">One tap to open the scanner — built for rush-hour lines.</p>
           <div class="mt-6 space-y-3">
-            <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-slate-200">1) Open scanner</p>
+            <div class="hover-lift rounded-2xl bg-primary/70 p-4 ring-1 ring-white/10">
+              <p class="text-sm font-semibold text-primary-text/80">1) Open scanner</p>
             </div>
-            <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-slate-200">2) Scan the guest’s QR</p>
+            <div class="hover-lift rounded-2xl bg-primary/70 p-4 ring-1 ring-white/10">
+              <p class="text-sm font-semibold text-primary-text/80">2) Scan the guest’s QR</p>
             </div>
-            <div class="hover-lift rounded-2xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-              <p class="text-sm font-semibold text-emerald-300">3) Stamp added instantly</p>
+            <div class="hover-lift rounded-2xl bg-primary/70 p-4 ring-1 ring-white/10">
+              <p class="text-sm font-semibold text-success">3) Stamp added instantly</p>
             </div>
           </div>
         </AppCard>
@@ -234,31 +234,31 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-16 sm:pb-24">
-      <AppCard wrapper-class="border-white/10 bg-white/[0.04]">
+      <AppCard wrapper-class="border-white/10 bg-surface/[0.04]">
         <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-200">Analytics</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Analytics</p>
             <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">See what brings guests back.</h2>
-            <p class="mt-4 max-w-xl text-sm leading-8 text-slate-300 sm:text-base">
+            <p class="mt-4 max-w-xl text-sm leading-8 text-ink-soft sm:text-base">
               Visits, returning guests, and reward redemptions in one dashboard — so you know what’s working.
             </p>
           </div>
-          <div class="rounded-3xl bg-gradient-to-b from-slate-950/80 to-slate-900/70 p-4 ring-1 ring-white/10">
-            <p class="mb-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">Example dashboard</p>
-            <div class="mb-4 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
+          <div class="rounded-3xl bg-gradient-to-b from-primary/80 to-primary/70 p-4 ring-1 ring-white/10">
+            <p class="mb-3 text-center text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Example dashboard</p>
+            <div class="mb-4 rounded-2xl bg-surface/[0.04] p-3 ring-1 ring-white/10">
               <div class="flex items-end gap-2">
-                <div class="h-8 w-2 rounded-full bg-indigo-300/80" />
-                <div class="h-12 w-2 rounded-full bg-indigo-300/60" />
-                <div class="h-10 w-2 rounded-full bg-indigo-300/70" />
-                <div class="h-16 w-2 rounded-full bg-indigo-300/90" />
-                <div class="h-11 w-2 rounded-full bg-indigo-300/70" />
-                <div class="h-14 w-2 rounded-full bg-indigo-300/85" />
-                <div class="h-9 w-2 rounded-full bg-indigo-300/60" />
+                <div class="h-8 w-2 rounded-full bg-accent/80" />
+                <div class="h-12 w-2 rounded-full bg-accent/60" />
+                <div class="h-10 w-2 rounded-full bg-accent/70" />
+                <div class="h-16 w-2 rounded-full bg-accent/90" />
+                <div class="h-11 w-2 rounded-full bg-accent/70" />
+                <div class="h-14 w-2 rounded-full bg-accent/85" />
+                <div class="h-9 w-2 rounded-full bg-accent/60" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              <div v-for="metric in analyticsMetrics" :key="metric.label" class="hover-lift rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">{{ metric.label }}</p>
+              <div v-for="metric in analyticsMetrics" :key="metric.label" class="hover-lift rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">{{ metric.label }}</p>
                 <p class="mt-2 text-lg font-black text-white">{{ metric.value }}</p>
               </div>
             </div>
@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-16 sm:pb-24">
       <div class="space-y-4 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-200">Physical Venue Experience</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Physical Venue Experience</p>
         <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Turn every table into a loyalty entry point.</h2>
       </div>
       <div class="mt-8 grid gap-4 sm:grid-cols-3">
@@ -280,10 +280,10 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="reveal relative mx-auto max-w-6xl px-4 pb-14 sm:pb-16">
-      <div class="rounded-3xl border border-white/10 bg-white/[0.03] px-5 py-6 sm:px-8">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">Made for independent hospitality</p>
-        <div class="mt-4 grid grid-cols-2 gap-3 text-sm font-semibold text-slate-300 sm:grid-cols-5">
-          <div v-for="name in venueTypes" :key="name" class="rounded-xl bg-white/[0.04] px-3 py-2 text-center ring-1 ring-white/10">
+      <div class="rounded-3xl border border-white/10 bg-surface/[0.03] px-5 py-6 sm:px-8">
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">Made for independent hospitality</p>
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm font-semibold text-ink-soft sm:grid-cols-5">
+          <div v-for="name in venueTypes" :key="name" class="rounded-xl bg-surface/[0.04] px-3 py-2 text-center ring-1 ring-white/10">
             {{ name }}
           </div>
         </div>
@@ -291,9 +291,9 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="reveal relative mx-auto max-w-5xl px-4 pb-20 sm:pb-24">
-      <AppCard wrapper-class="border-white/10 bg-gradient-to-r from-slate-900/95 to-indigo-950/60 text-center">
+      <AppCard wrapper-class="border-white/10 bg-gradient-to-r from-primary/95 to-primary/60 text-center">
         <h2 class="text-3xl font-black tracking-tight sm:text-5xl">Launch your loyalty program in minutes.</h2>
-        <p class="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-300">
+        <p class="mx-auto mt-4 max-w-lg text-sm leading-7 text-ink-soft">
           Create your venue, add rewards, print a QR — most owners are live the same day.
         </p>
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -301,7 +301,7 @@ onBeforeUnmount(() => {
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
           <RouterLink to="/login">
-            <AppButton size="lg" variant="ghost" class="text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white">Log in</AppButton>
+            <AppButton size="lg" variant="ghost" class="text-white ring-1 ring-white/25 hover:bg-surface/10 hover:text-white">Log in</AppButton>
           </RouterLink>
         </div>
       </AppCard>

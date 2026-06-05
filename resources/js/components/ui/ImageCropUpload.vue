@@ -174,13 +174,13 @@ defineExpose({ openPicker })
   <Teleport to="body">
     <div
       v-if="dialogOpen"
-      class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-primary/60 p-4 backdrop-blur-sm sm:items-center"
       @click.self="closeDialog"
     >
-      <AppCard wrapper-class="flex w-full max-w-lg flex-col overflow-hidden border-slate-200 bg-white p-0">
-        <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
-          <h2 class="text-xl font-black text-slate-950">{{ modalTitle }}</h2>
-          <p class="mt-1 text-sm text-slate-500">{{ presetConfig.helpText }}</p>
+      <AppCard wrapper-class="flex w-full max-w-lg flex-col overflow-hidden border-border bg-surface p-0">
+        <div class="border-b border-border px-5 py-4 sm:px-6">
+          <h2 class="text-xl font-black text-ink">{{ modalTitle }}</h2>
+          <p class="mt-1 text-sm text-ink-muted">{{ presetConfig.helpText }}</p>
         </div>
 
         <div class="image-crop-stage">
@@ -194,7 +194,7 @@ defineExpose({ openPicker })
           >
         </div>
 
-        <div class="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <div class="flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           <AppButton type="button" variant="ghost" :disabled="saving" @click="closeDialog">
             Cancel
           </AppButton>
@@ -213,10 +213,10 @@ defineExpose({ openPicker })
   min-height: min(60vh, 28rem);
   max-height: min(60vh, 28rem);
   overflow: hidden;
-  background-color: #0f172a;
+  background-color: var(--flotory-primary);
   background-image:
     radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.05) 1px, transparent 0),
-    linear-gradient(165deg, #475569 0%, #1e293b 42%, #0f172a 72%, #1e1b4b 100%);
+    linear-gradient(165deg, var(--flotory-primary-soft) 0%, var(--flotory-primary) 72%, var(--flotory-primary-soft) 100%);
   background-size:
     18px 18px,
     100% 100%;
@@ -238,13 +238,13 @@ defineExpose({ openPicker })
 }
 
 :deep(.cropper-modal) {
-  background-color: #020617;
+  background-color: var(--flotory-primary);
   opacity: 0.68;
 }
 
 :deep(.cropper-view-box) {
-  outline: 2px solid #818cf8;
-  outline-color: rgb(129 140 248 / 0.9);
+  outline: 2px solid var(--flotory-accent);
+  outline-color: color-mix(in srgb, var(--flotory-accent) 90%, transparent);
   border-radius: 2px;
 }
 
@@ -255,11 +255,11 @@ defineExpose({ openPicker })
 
 :deep(.cropper-line),
 :deep(.cropper-point) {
-  background-color: #818cf8;
+  background-color: var(--flotory-accent);
 }
 
 :deep(.cropper-point.point-se::before) {
-  background-color: #818cf8;
+  background-color: var(--flotory-accent);
 }
 
 :deep(.cropper-dashed) {

@@ -249,37 +249,37 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_58%)] px-4 py-8 text-slate-100 sm:py-12">
+  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-2xl">
-      <AppCard wrapper-class="w-full rounded-3xl border border-white/10 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+      <AppCard wrapper-class="w-full rounded-3xl border border-white/10 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
         <div class="mb-5 flex items-center justify-between gap-3">
           <div>
             <div class="mb-3">
               <FlotoryLogo />
             </div>
             <AppBadge tone="blue">Owner onboarding</AppBadge>
-            <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Launch your loyalty system</h1>
+            <h1 class="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">Launch your loyalty system</h1>
           </div>
-          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step {{ step }} / 4</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Step {{ step }} / 4</p>
         </div>
 
-        <div class="mb-6 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-          <div class="h-full rounded-full bg-slate-900 transition-all duration-300" :style="{ width: `${completionPercent}%` }" />
+        <div class="mb-6 h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+          <div class="h-full rounded-full bg-primary transition-all duration-300" :style="{ width: `${completionPercent}%` }" />
         </div>
 
-        <p v-if="error" class="mb-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
-        <p v-if="success" class="mb-4 rounded-2xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">{{ success }}</p>
+        <p v-if="error" class="mb-4 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+        <p v-if="success" class="mb-4 rounded-2xl bg-success-bg p-3 text-sm font-semibold text-success-text">{{ success }}</p>
 
         <div v-if="step === 1" class="space-y-4">
-          <h2 class="text-2xl font-black text-slate-950">What’s your venue called?</h2>
-          <p class="text-sm text-slate-500">This creates your workspace for rewards, scanner, and analytics.</p>
+          <h2 class="text-2xl font-black text-ink">What’s your venue called?</h2>
+          <p class="text-sm text-ink-muted">This creates your workspace for rewards, scanner, and analytics.</p>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-name">Venue name</label>
-            <input id="venue-name" v-model="venueName" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none focus:border-slate-400 focus:bg-white">
+            <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name</label>
+            <input id="venue-name" v-model="venueName" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft focus:bg-surface">
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="venue-slug">Slug (optional)</label>
-            <input id="venue-slug" v-model="venueSlug" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none focus:border-slate-400 focus:bg-white" placeholder="my-venue">
+            <label class="text-sm font-bold text-ink-muted" for="venue-slug">Slug (optional)</label>
+            <input id="venue-slug" v-model="venueSlug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft focus:bg-surface" placeholder="my-venue">
           </div>
           <AppButton class="w-full" size="lg" :disabled="loading" @click="createVenueAndContinue">
             {{ loading ? 'Creating venue...' : 'Continue' }}
@@ -287,15 +287,15 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="step === 2" class="space-y-4">
-          <h2 class="text-2xl font-black text-slate-950">Choose your venue category</h2>
-          <p class="text-sm text-slate-500">Helps tailor onboarding messaging. You can change this later.</p>
+          <h2 class="text-2xl font-black text-ink">Choose your venue category</h2>
+          <p class="text-sm text-ink-muted">Helps tailor onboarding messaging. You can change this later.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <button
               v-for="item in categories"
               :key="item.id"
               type="button"
               class="rounded-2xl border p-4 text-left transition"
-              :class="category === item.id ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'"
+              :class="category === item.id ? 'border-primary bg-primary text-white' : 'border-border bg-surface-muted text-ink hover:bg-surface-muted'"
               @click="category = item.id"
             >
               <p class="text-lg">{{ item.emoji }}</p>
@@ -311,18 +311,18 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="step === 3" class="space-y-4">
-          <h2 class="text-2xl font-black text-slate-950">Create your first rewards</h2>
-          <p class="text-sm text-slate-500">Starter rewards tailored for {{ categoryLabel(activeCategory).toLowerCase() }}s.</p>
+          <h2 class="text-2xl font-black text-ink">Create your first rewards</h2>
+          <p class="text-sm text-ink-muted">Starter rewards tailored for {{ categoryLabel(activeCategory).toLowerCase() }}s.</p>
           <div class="space-y-3">
             <button
               v-for="preset in rewardPresets"
               :key="preset.id"
               type="button"
               class="flex w-full gap-3 rounded-2xl border p-3 text-left transition"
-              :class="selectedRewards.includes(preset.id) ? 'border-emerald-300 bg-emerald-50 text-slate-900' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'"
+              :class="selectedRewards.includes(preset.id) ? 'border-success-border bg-success-bg text-ink' : 'border-border bg-surface-muted text-ink-muted hover:bg-surface-muted'"
               @click="toggleReward(preset.id)"
             >
-              <img :src="preset.image" :alt="preset.title" class="size-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200">
+              <img :src="preset.image" :alt="preset.title" class="size-16 shrink-0 rounded-xl object-cover ring-1 ring-border">
               <span>
                 <p class="font-bold">{{ preset.title }}</p>
                 <p class="mt-1 text-xs">{{ preset.description }}</p>
@@ -338,16 +338,16 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="step === 4" class="space-y-4">
-          <h2 class="text-2xl font-black text-slate-950">Your venue is live. Print your QR.</h2>
-          <p class="text-sm text-slate-500">Place this on tables and counters so customers can join instantly.</p>
-          <div class="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
-            <div class="mx-auto w-fit rounded-2xl bg-white p-3 ring-1 ring-slate-200 [&_canvas]:block">
+          <h2 class="text-2xl font-black text-ink">Your venue is live. Print your QR.</h2>
+          <p class="text-sm text-ink-muted">Place this on tables and counters so customers can join instantly.</p>
+          <div class="grid gap-4 rounded-3xl border border-border bg-surface-muted p-5 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div class="mx-auto w-fit rounded-2xl bg-surface p-3 ring-1 ring-border [&_canvas]:block">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="170" level="M" render-as="canvas" :margin="2" />
             </div>
             <div class="text-center sm:text-left">
-              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Venue link</p>
-              <p class="mt-2 break-all text-sm font-semibold text-slate-900">{{ landingUrl }}</p>
-              <p class="mt-2 text-sm text-slate-600">Print and place in your venue.</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Venue link</p>
+              <p class="mt-2 break-all text-sm font-semibold text-ink">{{ landingUrl }}</p>
+              <p class="mt-2 text-sm text-ink-muted">Print and place in your venue.</p>
             </div>
           </div>
           <div class="flex gap-2">

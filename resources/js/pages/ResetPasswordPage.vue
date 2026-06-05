@@ -67,37 +67,37 @@ async function submit() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_55%)] px-4 py-8 text-slate-100 sm:py-12">
+  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-md">
       <RouterLink to="/" class="mb-6 inline-flex">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
         <AppBadge tone="blue">Account recovery</AppBadge>
-        <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">Choose a new password</h1>
-        <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">Choose a new password</h1>
+        <p class="mt-2 text-sm leading-relaxed text-ink-muted">
           Set a new password for <strong>{{ email || 'your account' }}</strong>.
         </p>
 
-        <div v-if="!linkValid" class="mt-6 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-950 ring-1 ring-amber-200">
+        <div v-if="!linkValid" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active ring-1 ring-accent-border">
           This reset link is invalid or expired.
-          <RouterLink to="/forgot-password" class="mt-3 block font-bold text-amber-950 underline">
+          <RouterLink to="/forgot-password" class="mt-3 block font-bold text-accent-active underline">
             Request a new link
           </RouterLink>
         </div>
 
         <form v-else class="mt-6 space-y-4" @submit.prevent="submit">
           <div>
-            <label class="text-sm font-bold text-slate-600" for="password">New password</label>
+            <label class="text-sm font-bold text-ink-muted" for="password">New password</label>
             <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="password-confirm">Confirm password</label>
+            <label class="text-sm font-bold text-ink-muted" for="password-confirm">Confirm password</label>
             <input id="password-confirm" v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
 
           <AsyncActionButton
             class="w-full"
@@ -113,8 +113,8 @@ async function submit() {
           />
         </form>
 
-        <p class="mt-5 text-center text-sm text-slate-500">
-          <RouterLink to="/login" class="font-bold text-slate-950">Back to login</RouterLink>
+        <p class="mt-5 text-center text-sm text-ink-muted">
+          <RouterLink to="/login" class="font-bold text-ink">Back to login</RouterLink>
         </p>
       </AppCard>
     </section>

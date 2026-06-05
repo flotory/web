@@ -65,20 +65,20 @@ async function logout() {
 <template>
   <AppShell>
     <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-slate-950">Settings</h1>
-      <p class="mt-1 text-sm text-slate-500">Your account details and sign-in preferences.</p>
+      <h1 class="text-2xl font-black tracking-tight text-ink">Settings</h1>
+      <p class="mt-1 text-sm text-ink-muted">Your account details and sign-in preferences.</p>
 
       <AppCard class="mt-6">
-        <div v-if="auth.user" class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p class="text-xs font-black uppercase tracking-wide text-slate-400">Account</p>
-          <p class="mt-1 font-black text-slate-950">{{ auth.user.name }}</p>
-          <p class="text-sm font-semibold text-slate-500">{{ auth.user.email }}</p>
+        <div v-if="auth.user" class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border">
+          <p class="text-xs font-black uppercase tracking-wide text-ink-soft">Account</p>
+          <p class="mt-1 font-black text-ink">{{ auth.user.name }}</p>
+          <p class="text-sm font-semibold text-ink-muted">{{ auth.user.email }}</p>
         </div>
 
         <form class="mt-5 space-y-4" @submit.prevent="submitPassword">
-          <p class="text-sm font-bold text-slate-700">Change password</p>
+          <p class="text-sm font-bold text-ink-muted">Change password</p>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="current-password">Current password</label>
+            <label class="text-sm font-bold text-ink-muted" for="current-password">Current password</label>
             <input
               id="current-password"
               v-model="currentPassword"
@@ -89,7 +89,7 @@ async function logout() {
             >
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="new-password">New password</label>
+            <label class="text-sm font-bold text-ink-muted" for="new-password">New password</label>
             <input
               id="new-password"
               v-model="newPassword"
@@ -101,7 +101,7 @@ async function logout() {
             >
           </div>
           <div>
-            <label class="text-sm font-bold text-slate-600" for="confirm-password">Confirm new password</label>
+            <label class="text-sm font-bold text-ink-muted" for="confirm-password">Confirm new password</label>
             <input
               id="confirm-password"
               v-model="confirmPassword"
@@ -113,7 +113,7 @@ async function logout() {
             >
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
 
           <AsyncActionButton
             class="w-full"

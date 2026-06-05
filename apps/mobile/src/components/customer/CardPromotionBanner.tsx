@@ -18,10 +18,10 @@ export default function CardPromotionBanner({ promotion }: CardPromotionBannerPr
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        backgroundColor: '#FFFBEB',
+        backgroundColor: colors.accentSoft,
         borderRadius: radius.image,
         borderWidth: 1,
-        borderColor: '#FDE68A',
+        borderColor: colors.accentBorder,
         paddingVertical: 13,
         paddingHorizontal: 14,
       }}
@@ -31,7 +31,7 @@ export default function CardPromotionBanner({ promotion }: CardPromotionBannerPr
           width: 36,
           height: 36,
           borderRadius: 18,
-          backgroundColor: '#FEF3C7',
+          backgroundColor: colors.bg,
           alignItems: 'center',
           justifyContent: 'center',
         }}

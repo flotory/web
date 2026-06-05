@@ -91,8 +91,8 @@ onMounted(loadVenues)
 <template>
   <AppShell>
     <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-slate-950">Venues</h1>
-      <p class="mt-1 text-sm text-slate-500">Browse venues, join new ones, or open your loyalty card.</p>
+      <h1 class="text-2xl font-black tracking-tight text-ink">Venues</h1>
+      <p class="mt-1 text-sm text-ink-muted">Browse venues, join new ones, or open your loyalty card.</p>
 
       <label class="mt-5 block">
         <span class="sr-only">Search venues</span>
@@ -100,7 +100,7 @@ onMounted(loadVenues)
           v-model="search"
           type="search"
           placeholder="Search by name or address"
-          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none ring-slate-300 transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2"
+          class="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-sm outline-none ring-border transition placeholder:text-ink-soft focus:border-ink-soft focus:ring-2"
         >
       </label>
 
@@ -127,10 +127,10 @@ onMounted(loadVenues)
         <li
           v-for="venue in filteredVenues"
           :key="venue.id"
-          class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+          class="rounded-2xl border border-border/80 bg-surface p-4 shadow-sm"
         >
           <div class="flex items-center gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200/80">
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-muted ring-1 ring-border/80">
               <img
                 :src="venueLogoThumbUrl(venue)"
                 :alt="venue.name"
@@ -138,9 +138,9 @@ onMounted(loadVenues)
               >
             </div>
             <div class="min-w-0 flex-1">
-              <p class="truncate font-black text-slate-950">{{ venue.name }}</p>
-              <p v-if="venue.address" class="mt-0.5 truncate text-sm text-slate-500">{{ venue.address }}</p>
-              <p v-else-if="isJoined(venue) && stampsFor(venue.id) !== null" class="mt-0.5 text-sm text-slate-500">
+              <p class="truncate font-black text-ink">{{ venue.name }}</p>
+              <p v-if="venue.address" class="mt-0.5 truncate text-sm text-ink-muted">{{ venue.address }}</p>
+              <p v-else-if="isJoined(venue) && stampsFor(venue.id) !== null" class="mt-0.5 text-sm text-ink-muted">
                 {{ stampsFor(venue.id) }} {{ stampsFor(venue.id) === 1 ? 'stamp' : 'stamps' }}
               </p>
             </div>
@@ -150,7 +150,7 @@ onMounted(loadVenues)
             <RouterLink
               v-if="isJoined(venue)"
               :to="{ name: 'customer-wallet', query: { venue_id: String(venue.id) } }"
-              class="flex w-full items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+              class="flex w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-soft"
             >
               View loyalty card
               <span v-if="stampsFor(venue.id) !== null" class="ml-2 text-white/70">
@@ -173,7 +173,7 @@ onMounted(loadVenues)
         </li>
       </ul>
 
-      <p v-if="joinError" class="mt-4 rounded-2xl bg-red-50 p-3 text-center text-sm font-semibold text-red-700">
+      <p v-if="joinError" class="mt-4 rounded-2xl bg-danger-soft p-3 text-center text-sm font-semibold text-danger">
         {{ joinError }}
       </p>
     </div>

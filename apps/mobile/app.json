@@ -2,13 +2,13 @@
   "expo": {
     "name": "Flotory Mobile",
     "slug": "flotory-mobile",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/flotory-app-icon-padded.png",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/flotory-boot-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAFAF7"
+      "backgroundColor": "#F7F2E8"
     },
     "userInterfaceStyle": "light",
     "ios": {
@@ -18,7 +18,7 @@
     "android": {
       "package": "com.flotory.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#081233",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -34,10 +34,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 220,
+          "image": "./assets/flotory-boot-splash.png",
+          "imageWidth": 400,
           "resizeMode": "contain",
-          "backgroundColor": "#FAFAF7"
+          "backgroundColor": "#F7F2E8"
         }
       ],
       "expo-font"

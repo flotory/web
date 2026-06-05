@@ -51,9 +51,9 @@ onMounted(loadRewards)
 <template>
   <AppShell>
     <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-slate-950">Your rewards</h1>
-      <p class="mt-1 text-sm text-slate-500">
-        At the counter, tap <strong class="text-slate-700">Claim</strong> and show the QR to staff.
+      <h1 class="text-2xl font-black tracking-tight text-ink">Your rewards</h1>
+      <p class="mt-1 text-sm text-ink-muted">
+        At the counter, tap <strong class="text-ink-muted">Claim</strong> and show the QR to staff.
       </p>
 
       <div v-if="loading" class="mt-6">
@@ -83,17 +83,17 @@ onMounted(loadRewards)
         <li
           v-for="item in rewardsStore.items"
           :key="item.unlock_id"
-          class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+          class="overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-sm"
         >
           <div class="flex items-center gap-3 p-4">
             <img
               :src="rewardThumbUrl(item.reward)"
               :alt="item.reward.title"
-              class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200/80"
+              class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-border/80"
             >
             <div class="min-w-0 flex-1">
-              <p class="truncate font-black text-slate-950">{{ item.reward.title }}</p>
-              <p v-if="item.reward.description" class="mt-1 line-clamp-2 text-sm text-slate-500">
+              <p class="truncate font-black text-ink">{{ item.reward.title }}</p>
+              <p v-if="item.reward.description" class="mt-1 line-clamp-2 text-sm text-ink-muted">
                 {{ item.reward.description }}
               </p>
               <div class="mt-1.5 flex items-center gap-2">
@@ -101,14 +101,14 @@ onMounted(loadRewards)
                   v-if="item.customer.venue"
                   :src="venueLogoThumbUrl(item.customer.venue)"
                   :alt="item.customer.venue.name"
-                  class="size-5 rounded-md object-cover ring-1 ring-slate-200/80"
+                  class="size-5 rounded-md object-cover ring-1 ring-border/80"
                 >
-                <p class="truncate text-sm text-slate-500">{{ item.customer.venue?.name }}</p>
+                <p class="truncate text-sm text-ink-muted">{{ item.customer.venue?.name }}</p>
               </div>
             </div>
             <AppButton
               size="sm"
-              class="shrink-0 bg-indigo-600 text-white shadow-md shadow-indigo-600/25 hover:bg-indigo-700"
+              class="shrink-0 bg-primary text-white shadow-md shadow-primary/25 hover:bg-primary-soft"
               @click="openClaim(item)"
             >
               Claim

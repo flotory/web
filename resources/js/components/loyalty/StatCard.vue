@@ -15,13 +15,13 @@ const props = defineProps<{
 const toneClasses = computed(() => {
   switch (props.tone ?? 'purple') {
     case 'amber':
-      return 'bg-amber-50 text-amber-600 ring-amber-100'
+      return 'bg-accent-soft text-accent-active ring-accent-border'
     case 'green':
-      return 'bg-emerald-50 text-emerald-600 ring-emerald-100'
+      return 'bg-success-bg text-success ring-success-border'
     case 'blue':
-      return 'bg-blue-50 text-blue-600 ring-blue-100'
+      return 'bg-accent-soft text-primary ring-accent-border'
     default:
-      return 'bg-violet-50 text-violet-600 ring-violet-100'
+      return 'bg-accent-soft text-primary ring-accent-border'
   }
 })
 
@@ -31,14 +31,14 @@ const trendClass = computed(() => {
   }
 
   if (props.trend > 0) {
-    return 'text-sm font-bold text-emerald-600'
+    return 'text-sm font-bold text-success'
   }
 
   if (props.trend < 0) {
-    return 'text-sm font-bold text-red-500'
+    return 'text-sm font-bold text-danger'
   }
 
-  return 'text-sm font-bold text-slate-400'
+  return 'text-sm font-bold text-ink-soft'
 })
 
 const trendLabel = computed(() => {
@@ -62,7 +62,7 @@ const trendLabel = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/40">
+  <div class="flex gap-4 rounded-2xl border border-border/80 bg-surface p-4 shadow-sm shadow-border/40">
     <div
       :class="cn('grid size-11 shrink-0 place-items-center rounded-xl ring-1', toneClasses)"
       aria-hidden="true"
@@ -71,16 +71,16 @@ const trendLabel = computed(() => {
     </div>
 
     <div class="min-w-0 flex-1">
-      <p class="text-sm font-semibold text-slate-500">{{ label }}</p>
+      <p class="text-sm font-semibold text-ink-muted">{{ label }}</p>
       <div class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <p class="text-3xl font-black tabular-nums tracking-tight text-slate-950">
+        <p class="text-3xl font-black tabular-nums tracking-tight text-ink">
           {{ value }}
         </p>
         <p v-if="trendLabel" :class="trendClass">
           {{ trendLabel }}
         </p>
       </div>
-      <p class="mt-1 text-xs font-medium text-slate-400">vs last month</p>
+      <p class="mt-1 text-xs font-medium text-ink-soft">vs last month</p>
     </div>
   </div>
 </template>

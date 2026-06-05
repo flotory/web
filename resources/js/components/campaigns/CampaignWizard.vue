@@ -137,27 +137,27 @@ function setMultiplier(value: number) {
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4"
+    class="fixed inset-0 z-50 flex items-end justify-center bg-primary/50 p-0 sm:items-center sm:p-4"
     @click.self="emit('close')"
   >
     <div
-      class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+      class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-surface shadow-2xl sm:rounded-3xl"
       role="dialog"
       aria-modal="true"
     >
-      <header class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <header class="flex items-center justify-between border-b border-border px-5 py-4">
         <div class="flex items-center gap-3">
           <CampaignIcon :icon="campaignTemplateIcon(templateId)" :tone="campaignTemplateTone(templateId)" size="md" />
           <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">
               {{ step === 'configure' ? 'Configure' : 'Review' }}
             </p>
-            <h2 class="text-lg font-black text-slate-950">{{ name }}</h2>
+            <h2 class="text-lg font-black text-ink">{{ name }}</h2>
           </div>
         </div>
         <button
           type="button"
-          class="grid size-10 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
+          class="grid size-10 place-items-center rounded-full text-ink-muted hover:bg-surface-muted"
           @click="emit('close')"
         >
           <X class="size-5" />
@@ -167,42 +167,42 @@ function setMultiplier(value: number) {
       <div class="flex-1 overflow-y-auto px-5 py-5">
         <template v-if="step === 'configure'">
           <label class="block">
-            <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Campaign name</span>
+            <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign name</span>
             <input
               v-model="name"
               type="text"
-              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none ring-indigo-500 focus:ring-2"
+              class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-ink outline-none ring-accent focus:ring-2"
             />
           </label>
 
           <div class="mt-6 space-y-5">
             <div v-if="templateId === 'bring_back_customers'" class="space-y-4">
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Inactive days</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Inactive days</span>
                 <input
                   v-model.number="config.inactive_days"
                   type="number"
                   min="7"
                   max="180"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                 />
               </label>
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Campaign duration (days)</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign duration (days)</span>
                 <input
                   v-model.number="config.duration_days"
                   type="number"
                   min="1"
                   max="90"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                 />
               </label>
             </div>
 
             <div v-if="templateId === 'quiet_day_promotion'" class="space-y-4">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Days of week</p>
-                <p class="mt-1 text-sm text-slate-600">Choose the days you want to boost.</p>
+                <p class="text-xs font-bold uppercase tracking-wide text-ink-muted">Days of week</p>
+                <p class="mt-1 text-sm text-ink-muted">Choose the days you want to boost.</p>
                 <div class="mt-3 flex flex-wrap gap-2">
                   <button
                     v-for="day in WEEKDAYS"
@@ -211,8 +211,8 @@ function setMultiplier(value: number) {
                     class="rounded-full px-3 py-2 text-sm font-bold transition"
                     :class="
                       (config.days_of_week ?? []).includes(day.iso)
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+                        ? 'bg-primary-soft text-white'
+                        : 'bg-surface-muted text-ink-muted ring-1 ring-border'
                     "
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
@@ -221,20 +221,20 @@ function setMultiplier(value: number) {
                 </div>
               </div>
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Campaign duration (days)</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign duration (days)</span>
                 <input
                   v-model.number="config.duration_days"
                   type="number"
                   min="1"
                   max="90"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                 />
               </label>
             </div>
 
             <div v-if="templateId === 'happy_hour'" class="space-y-4">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Days of week</p>
+                <p class="text-xs font-bold uppercase tracking-wide text-ink-muted">Days of week</p>
                 <div class="mt-3 flex flex-wrap gap-2">
                   <button
                     v-for="day in WEEKDAYS"
@@ -244,7 +244,7 @@ function setMultiplier(value: number) {
                     :class="
                       (config.days_of_week ?? []).includes(day.iso)
                         ? 'bg-sky-600 text-white'
-                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+                        : 'bg-surface-muted text-ink-muted ring-1 ring-border'
                     "
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
@@ -254,19 +254,19 @@ function setMultiplier(value: number) {
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <label class="block">
-                  <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Start</span>
+                  <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Start</span>
                   <input
                     v-model="config.start_time"
                     type="time"
-                    class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                    class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                   />
                 </label>
                 <label class="block">
-                  <span class="text-xs font-bold uppercase tracking-wide text-slate-500">End</span>
+                  <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">End</span>
                   <input
                     v-model="config.end_time"
                     type="time"
-                    class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                    class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                   />
                 </label>
               </div>
@@ -274,28 +274,28 @@ function setMultiplier(value: number) {
 
             <div v-if="templateId === 'vip_rewards'" class="space-y-4">
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Minimum visits</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum visits</span>
                 <input
                   v-model.number="config.min_visits"
                   type="number"
                   min="1"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                 />
               </label>
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Minimum rewards claimed</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum rewards claimed</span>
                 <input
                   v-model.number="config.min_rewards_claimed"
                   type="number"
                   min="0"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold"
+                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
                 />
               </label>
-              <p class="text-xs text-slate-500">Customer qualifies if either condition is met.</p>
+              <p class="text-xs text-ink-muted">Customer qualifies if either condition is met.</p>
             </div>
 
             <div>
-              <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Multiplier</p>
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-muted">Multiplier</p>
               <div class="mt-2 flex gap-2">
                 <button
                   v-for="value in [2, 3]"
@@ -304,8 +304,8 @@ function setMultiplier(value: number) {
                   class="flex-1 rounded-2xl py-3 text-sm font-black transition"
                   :class="
                     (config.stamp_multiplier ?? 2) === value
-                      ? 'bg-slate-950 text-white'
-                      : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-muted text-ink-muted ring-1 ring-border'
                   "
                   @click="setMultiplier(value)"
                 >
@@ -314,38 +314,38 @@ function setMultiplier(value: number) {
               </div>
             </div>
 
-            <label class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
-              <input v-model="pushEnabled" type="checkbox" class="size-4 rounded border-slate-300" />
-              <span class="text-sm font-semibold text-slate-700">Notify customers via mobile push when available</span>
+            <label class="flex items-center gap-3 rounded-2xl bg-surface-muted px-4 py-3 ring-1 ring-border">
+              <input v-model="pushEnabled" type="checkbox" class="size-4 rounded border-border" />
+              <span class="text-sm font-semibold text-ink-muted">Notify customers via mobile push when available</span>
             </label>
           </div>
         </template>
 
         <template v-else-if="preview">
           <div class="space-y-4">
-            <div class="rounded-2xl bg-slate-950 p-5 text-white">
-              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Multiplier</p>
+            <div class="rounded-2xl bg-primary p-5 text-white">
+              <p class="text-xs font-bold uppercase tracking-wider text-ink-soft">Multiplier</p>
               <p class="mt-1 text-4xl font-black">{{ preview.multiplier }}×</p>
-              <p class="text-sm text-slate-300">Highest eligible bonus — campaigns never stack</p>
+              <p class="text-sm text-ink-soft">Highest eligible bonus — campaigns never stack</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Estimated reach</p>
-              <p class="mt-1 text-2xl font-black text-slate-950">{{ preview.audience_count }} customers</p>
+            <div class="rounded-2xl border border-border p-4">
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Estimated reach</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ preview.audience_count }} customers</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Schedule</p>
+            <div class="rounded-2xl border border-border p-4">
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Schedule</p>
               <div class="mt-2 flex flex-wrap gap-2">
                 <AppBadge v-for="chip in preview.schedule_chips" :key="chip" tone="slate">{{ chip }}</AppBadge>
               </div>
-              <p class="mt-2 text-sm text-slate-600">{{ preview.summary }}</p>
+              <p class="mt-2 text-sm text-ink-muted">{{ preview.summary }}</p>
             </div>
           </div>
         </template>
       </div>
 
-      <footer class="flex gap-2 border-t border-slate-100 px-5 py-4">
+      <footer class="flex gap-2 border-t border-border px-5 py-4">
         <AppButton v-if="step === 'review'" variant="secondary" class="flex-1" @click="step = 'configure'">Back</AppButton>
         <AppButton
           v-if="step === 'configure'"

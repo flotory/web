@@ -1,7 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Image, Platform, Text, View } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-
 import { campaignEndsLabel } from '../../lib/campaignEndsLabel'
 import { venueCoverUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
@@ -66,7 +64,7 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
         ...(dark && Platform.OS === 'ios' ? shadows.sm : {}),
       }}
     >
-      <Text style={withAppFont({ fontSize: 14, fontWeight: '900', color: dark ? '#FCD34D' : colors.accent, lineHeight: 16 })}>
+      <Text style={withAppFont({ fontSize: 14, fontWeight: '900', color: dark ? colors.accent : colors.accentActive, lineHeight: 16 })}>
         {multiplier}×
       </Text>
       <Text
@@ -74,7 +72,7 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
           fontSize: 7,
           fontWeight: '800',
           letterSpacing: 0.8,
-          color: dark ? 'rgba(252,211,77,0.88)' : colors.inkMuted,
+          color: dark ? 'rgba(214,177,94,0.88)' : colors.inkMuted,
         })}
       >
         STAMPS
@@ -85,9 +83,9 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
   return ring
 }
 
-function EndsRow({ label, tone }: { label: string; tone: 'gold' | 'violet' }) {
-  const textColor = tone === 'gold' ? '#FDE68A' : '#6D28D9'
-  const iconColor = tone === 'gold' ? '#FCD34D' : '#8B5CF6'
+function EndsRow({ label, tone }: { label: string; tone: 'gold' | 'muted' }) {
+  const textColor = tone === 'gold' ? colors.accent : colors.inkMuted
+  const iconColor = tone === 'gold' ? colors.accent : colors.inkSoft
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10 }}>
@@ -107,26 +105,23 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
   const title = campaign.name?.trim() || campaign.headline
   const description = campaign.message
 
-  if (featured) {
+  const isDarkCampaign = featured || campaign.applies_now
+
+  if (isDarkCampaign) {
     return (
       <View
         style={{
           width,
-          minHeight: 204,
+          minHeight: featured ? 204 : 176,
           borderRadius: radius.card,
           overflow: 'hidden',
+          backgroundColor: colors.campaignBg,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.08)',
+          borderColor: colors.campaignBorder,
           ...(Platform.OS === 'ios' ? shadows.md : { elevation: 4 }),
         }}
       >
-        <LinearGradient
-          colors={['#1E3A5F', '#0F172A', '#0F172A']}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ flex: 1 }}
-        >
+        <View style={{ flex: 1 }}>
           <View
             style={{
               position: 'absolute',
@@ -154,18 +149,18 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'space-between' }}>
               <View>
                 <CampaignBadge
-                  label="Featured"
-                  icon="star"
-                  backgroundColor="#FEF3C7"
-                  textColor="#92400E"
-                  borderColor="#FDE68A"
+                  label={featured ? 'Featured' : 'Active'}
+                  icon={featured ? 'star' : 'flash'}
+                  backgroundColor="transparent"
+                  textColor={colors.accent}
+                  borderColor={colors.accent}
                 />
                 <Text
                   style={withAppFont({
                     marginTop: 12,
                     fontSize: 12,
                     fontWeight: '600',
-                    color: 'rgba(248,250,252,0.65)',
+                    color: 'rgba(255,255,255,0.65)',
                     letterSpacing: 0.3,
                   })}
                   numberOfLines={1}
@@ -175,10 +170,10 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                 <Text
                   style={withAppFont({
                     marginTop: 5,
-                    fontSize: 20,
+                    fontSize: featured ? 20 : 18,
                     fontWeight: '800',
                     color: '#FFFFFF',
-                    lineHeight: 25,
+                    lineHeight: featured ? 25 : 23,
                     letterSpacing: -0.3,
                   })}
                   numberOfLines={2}
@@ -191,7 +186,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                     fontSize: 13,
                     fontWeight: '500',
                     lineHeight: 19,
-                    color: 'rgba(248,250,252,0.75)',
+                    color: 'rgba(255,255,255,0.75)',
                   })}
                   numberOfLines={2}
                 >
@@ -233,7 +228,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
               </View>
             </View>
           </View>
-        </LinearGradient>
+        </View>
       </View>
     )
   }
@@ -252,11 +247,11 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
       }}
     >
       <CampaignBadge
-        label={campaign.applies_now ? 'Active' : 'New'}
-        icon={campaign.applies_now ? 'flash' : 'sparkles'}
-        backgroundColor={campaign.applies_now ? colors.successBg : colors.lavender}
-        textColor={campaign.applies_now ? colors.successText : '#5B21B6'}
-        borderColor={campaign.applies_now ? colors.successBorder : colors.lavenderBorder}
+        label="New"
+        icon="sparkles"
+        backgroundColor={colors.lavender}
+        textColor={colors.ink}
+        borderColor={colors.lavenderBorder}
       />
       <Text
         style={withAppFont({
@@ -295,7 +290,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
       >
         {description}
       </Text>
-      {endsLabel ? <EndsRow label={endsLabel} tone="violet" /> : null}
+      {endsLabel ? <EndsRow label={endsLabel} tone="muted" /> : null}
     </View>
   )
 }

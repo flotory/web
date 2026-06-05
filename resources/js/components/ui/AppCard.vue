@@ -14,7 +14,7 @@ withDefaults(
 </script>
 
 <template>
-  <section :class="cn('rounded-[2rem] border border-slate-200/80 bg-white shadow-sm shadow-slate-200/70', padded && 'p-5', wrapperClass)">
+  <section :class="cn('rounded-[2rem] border border-border/80 bg-surface shadow-sm shadow-border/70', padded && 'p-5', wrapperClass)">
     <slot />
   </section>
 </template>

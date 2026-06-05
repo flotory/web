@@ -24,9 +24,9 @@ const classes = computed(() =>
   cn(
     'inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
     {
-      primary: 'bg-slate-950 text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800',
-      secondary: 'bg-white text-slate-950 ring-1 ring-slate-200 hover:bg-slate-50',
-      ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+      primary: 'bg-primary text-primary-text shadow-lg shadow-primary/15 hover:bg-primary-soft',
+      secondary: 'bg-surface text-ink ring-1 ring-border hover:bg-surface-muted',
+      ghost: 'bg-transparent text-ink-muted hover:bg-surface-muted hover:text-ink',
     }[props.variant],
     {
       sm: 'h-9 px-4 text-sm',

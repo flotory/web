@@ -145,8 +145,8 @@ onMounted(loadTeam)
   <AppShell>
     <div class="mb-6">
       <AppBadge tone="blue">Team access</AppBadge>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Team</h1>
-      <p class="mt-2 text-slate-500">
+      <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Team</h1>
+      <p class="mt-2 text-ink-muted">
         {{ venue ? `Invite and manage staff for ${venue.name}.` : 'Pick a venue in the sidebar filter to manage its team.' }}
       </p>
     </div>
@@ -169,35 +169,35 @@ onMounted(loadTeam)
     />
 
     <template v-else>
-      <p v-if="statusNote" class="mb-4 rounded-2xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100">
+      <p v-if="statusNote" class="mb-4 rounded-2xl bg-success-bg p-3 text-sm font-semibold text-success-text ring-1 ring-success-border">
         {{ statusNote }}
       </p>
-      <p v-if="error" class="mb-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700 ring-1 ring-red-100">
+      <p v-if="error" class="mb-4 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger ring-1 ring-danger/30">
         {{ error }}
       </p>
 
       <div class="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <AppCard>
-          <h2 class="text-xl font-black text-slate-950">Invite staff member</h2>
-          <p class="mt-2 text-sm font-semibold text-slate-500">
+          <h2 class="text-xl font-black text-ink">Invite staff member</h2>
+          <p class="mt-2 text-sm font-semibold text-ink-muted">
             We email a secure link. They create an account or sign in, then join your venue.
           </p>
 
           <form class="mt-5 grid gap-3" @submit.prevent="invite">
             <div>
-              <label class="text-sm font-bold text-slate-600" for="invite-email">Email</label>
+              <label class="text-sm font-bold text-ink-muted" for="invite-email">Email</label>
               <input
                 id="invite-email"
                 v-model="inviteEmail"
                 required
                 type="email"
-                class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-950 outline-none focus:border-slate-400 focus:bg-white"
+                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft focus:bg-surface"
                 placeholder="staff@venue.com"
               >
             </div>
-            <div class="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200">
-              <p class="text-sm font-bold text-slate-700">Role: Staff</p>
-              <p class="mt-1 text-xs font-semibold text-slate-500">Scanner and customer tools only.</p>
+            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+              <p class="text-sm font-bold text-ink-muted">Role: Staff</p>
+              <p class="mt-1 text-xs font-semibold text-ink-muted">Scanner and customer tools only.</p>
             </div>
             <AsyncActionButton
               type="submit"
@@ -213,21 +213,21 @@ onMounted(loadTeam)
 
         <div class="space-y-5">
           <AppCard>
-            <h2 class="text-xl font-black text-slate-950">Active team members</h2>
+            <h2 class="text-xl font-black text-ink">Active team members</h2>
             <div class="mt-5 space-y-2">
-              <div v-for="member in owners" :key="member.id" class="flex items-center justify-between gap-4 rounded-2xl bg-emerald-50/80 p-4 ring-1 ring-emerald-100">
+              <div v-for="member in owners" :key="member.id" class="flex items-center justify-between gap-4 rounded-2xl bg-success-bg/80 p-4 ring-1 ring-success-border">
                 <div>
-                  <p class="font-black text-slate-950">{{ member.user.name }}</p>
-                  <p class="text-sm font-semibold text-slate-500">{{ member.user.email }}</p>
+                  <p class="font-black text-ink">{{ member.user.name }}</p>
+                  <p class="text-sm font-semibold text-ink-muted">{{ member.user.email }}</p>
                 </div>
                 <AppBadge tone="green">Owner</AppBadge>
               </div>
 
-              <div v-for="member in staffMembers" :key="member.id" class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+              <div v-for="member in staffMembers" :key="member.id" class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 ring-1 ring-border">
                 <div>
-                  <p class="font-black text-slate-950">{{ member.user.name }}</p>
-                  <p class="text-sm font-semibold text-slate-500">{{ member.user.email }}</p>
-                  <p v-if="member.created_at" class="mt-1 text-xs font-semibold text-slate-400">
+                  <p class="font-black text-ink">{{ member.user.name }}</p>
+                  <p class="text-sm font-semibold text-ink-muted">{{ member.user.email }}</p>
+                  <p v-if="member.created_at" class="mt-1 text-xs font-semibold text-ink-soft">
                     Joined {{ formatInvitationWhen(member.created_at) }}
                   </p>
                 </div>
@@ -252,20 +252,20 @@ onMounted(loadTeam)
           </AppCard>
 
           <AppCard>
-            <h2 class="text-xl font-black text-slate-950">Pending invitations</h2>
+            <h2 class="text-xl font-black text-ink">Pending invitations</h2>
             <div class="mt-5 space-y-2">
               <div
                 v-for="invitation in pendingInvitations"
                 :key="invitation.id"
-                class="rounded-2xl bg-amber-50/60 p-4 ring-1 ring-amber-100"
+                class="rounded-2xl bg-accent-soft/60 p-4 ring-1 ring-accent-border"
               >
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p class="font-black text-slate-950">{{ invitation.email }}</p>
-                    <p class="text-sm font-semibold text-slate-500">
+                    <p class="font-black text-ink">{{ invitation.email }}</p>
+                    <p class="text-sm font-semibold text-ink-muted">
                       Invited by {{ invitation.inviter?.name ?? 'Owner' }}
                     </p>
-                    <p class="mt-1 text-xs font-semibold text-slate-400">
+                    <p class="mt-1 text-xs font-semibold text-ink-soft">
                       Sent {{ formatInvitationWhen(invitation.created_at) }}
                     </p>
                   </div>
@@ -301,20 +301,20 @@ onMounted(loadTeam)
           </AppCard>
 
           <AppCard>
-            <h2 class="text-xl font-black text-slate-950">Invitation history</h2>
+            <h2 class="text-xl font-black text-ink">Invitation history</h2>
             <div class="mt-5 space-y-2">
               <div
                 v-for="invitation in invitationHistory"
                 :key="invitation.id"
-                class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"
+                class="rounded-2xl bg-surface p-4 ring-1 ring-border"
               >
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p class="font-black text-slate-950">{{ invitation.email }}</p>
-                    <p class="text-sm font-semibold text-slate-500">
+                    <p class="font-black text-ink">{{ invitation.email }}</p>
+                    <p class="text-sm font-semibold text-ink-muted">
                       Invited by {{ invitation.inviter?.name ?? 'Owner' }}
                     </p>
-                    <p class="mt-1 text-xs font-semibold text-slate-400">
+                    <p class="mt-1 text-xs font-semibold text-ink-soft">
                       Sent {{ formatInvitationWhen(invitation.created_at) }}
                       <span v-if="invitation.accepted_at"> · Accepted {{ formatInvitationWhen(invitation.accepted_at) }}</span>
                     </p>

@@ -132,16 +132,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_55%)] px-4 py-8 text-slate-100 sm:py-12">
+  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-md">
       <RouterLink to="/" class="mb-6 inline-flex">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 
-      <div v-if="landing" class="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+      <div v-if="landing" class="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
         <div class="mt-3 flex items-center gap-3">
-          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
+          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-surface/10">
             <img :src="venueLogoThumbUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
           </div>
           <div>
@@ -149,7 +149,7 @@ onMounted(() => {
             <p class="text-xs text-white/70">Your loyalty card is waiting</p>
           </div>
         </div>
-        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-surface/5 p-2 ring-1 ring-white/10">
           <img :src="rewardThumbUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}
@@ -159,7 +159,7 @@ onMounted(() => {
         <p v-else class="mt-3 text-sm text-white/85">Collect stamps to unlock rewards at this venue.</p>
       </div>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
       <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-950">
         <p class="font-black">Staff invitation</p>
         <p class="mt-1 font-semibold text-cyan-900">
@@ -168,13 +168,13 @@ onMounted(() => {
       </div>
 
       <AppBadge tone="blue">{{ isStaffInvite ? 'Staff invitation' : venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ isStaffInvite ? 'Sign in to join the team' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
-      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ isStaffInvite ? 'Sign in to join the team' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <p class="mt-2 text-sm leading-relaxed text-ink-muted">
         {{ isStaffInvite ? 'After login you can accept the invitation and open the scanner.' : venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
       </p>
 
       <AppButton
-        class="mt-6 w-full border border-slate-300 bg-slate-50 text-slate-900 shadow-sm transition hover:bg-slate-100"
+        class="mt-6 w-full border border-border bg-surface-muted text-ink shadow-sm transition hover:bg-surface-muted"
         size="lg"
         :disabled="loading || oauthLoading"
         @click="continueWithGoogle"
@@ -190,36 +190,36 @@ onMounted(() => {
         </span>
       </AppButton>
 
-      <div class="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-        <span class="h-px flex-1 bg-slate-200" />
+      <div class="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
+        <span class="h-px flex-1 bg-border" />
         or
-        <span class="h-px flex-1 bg-slate-200" />
+        <span class="h-px flex-1 bg-border" />
       </div>
 
       <form class="mt-6 space-y-4" @submit.prevent="submit">
         <div>
-          <label class="text-sm font-bold text-slate-600" for="email">Email</label>
+          <label class="text-sm font-bold text-ink-muted" for="email">Email</label>
           <input id="email" v-model="email" type="email" autocomplete="email" :class="authFieldClass">
         </div>
         <div>
-          <label class="text-sm font-bold text-slate-600" for="password">Password</label>
+          <label class="text-sm font-bold text-ink-muted" for="password">Password</label>
           <input id="password" v-model="password" type="password" autocomplete="current-password" :class="authFieldClass">
           <p class="mt-2 text-right">
             <RouterLink
               :to="{ name: 'forgot-password', query: email ? { email } : {} }"
-              class="text-xs font-bold text-slate-600 hover:text-slate-950"
+              class="text-xs font-bold text-ink-muted hover:text-ink"
             >
               Forgot password?
             </RouterLink>
           </p>
         </div>
-        <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
         <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
           {{ loading ? 'Logging in...' : 'Log in' }}
         </AppButton>
       </form>
 
-      <p v-if="!isStaffInvite" class="mt-5 text-center text-sm text-slate-500">
+      <p v-if="!isStaffInvite" class="mt-5 text-center text-sm text-ink-muted">
         New here?
         <RouterLink
           :to="venueSlug
@@ -227,12 +227,12 @@ onMounted(() => {
             : authIntent === 'owner'
               ? '/register?intent=owner'
               : '/register'"
-          class="font-bold text-slate-950"
+          class="font-bold text-ink"
         >
           Create an account
         </RouterLink>
       </p>
-      <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-slate-500">
+      <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-ink-muted">
         No account yet? Your manager can resend the invitation from the Team page.
       </p>
       </AppCard>

@@ -81,7 +81,10 @@ const nav = computed(() => {
   ]
 
   if (auth.isAdmin) {
-    items.splice(1, 0, { label: 'Activity log', to: '/admin/activity', icon: '◫' })
+    items.splice(1, 0,
+      { label: 'Design palette', to: '/admin/palette', icon: '◐' },
+      { label: 'Activity log', to: '/admin/activity', icon: '◫' },
+    )
   }
 
   return items
@@ -134,8 +137,8 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
-    <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-slate-200/80 bg-white/95 p-4 backdrop-blur md:block">
+  <div class="min-h-screen bg-bg" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
+    <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-border/80 bg-surface/95 p-4 backdrop-blur md:block">
       <RouterLink :to="homePath" class="block px-3 py-3">
         <FlotoryLogo size="lg" />
       </RouterLink>
@@ -150,26 +153,26 @@ async function logout() {
           :class="[
             'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition',
             isNavActive(item)
-              ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/20'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 hover:shadow-sm',
+              ? 'bg-primary text-primary-text shadow-lg shadow-primary/20'
+              : 'text-ink-muted hover:bg-surface-muted hover:text-ink hover:shadow-sm',
           ]"
         >
-          <span class="grid size-6 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-500" :class="isNavActive(item) && 'bg-white/20 text-white'">{{ item.icon }}</span>
+          <span class="grid size-6 place-items-center rounded-lg bg-surface-muted text-sm font-black text-ink-muted" :class="isNavActive(item) && 'bg-white/20 text-white'">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
-      <button class="mt-6 w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-950" @click="logout">
+      <button class="mt-6 w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-ink-muted transition hover:bg-surface-muted hover:text-ink" @click="logout">
         Logout
       </button>
     </aside>
 
     <div>
-      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-white/60 bg-slate-100/85 backdrop-blur-xl md:hidden">
+      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-surface/60 bg-bg/85 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <RouterLink :to="homePath">
             <FlotoryLogo />
           </RouterLink>
-          <button class="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-slate-600 shadow-sm ring-1 ring-slate-200" @click="logout">
+          <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm ring-1 ring-border" @click="logout">
             Logout
           </button>
         </div>
@@ -193,7 +196,7 @@ async function logout() {
 
       <nav
         :class="[
-          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] bg-slate-950 p-2 text-white shadow-2xl',
+          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] bg-primary p-2 text-primary-text shadow-2xl',
           isWorkspace ? 'md:hidden' : 'max-w-md mx-auto',
         ]"
       >
@@ -203,14 +206,14 @@ async function logout() {
           :to="item.to"
           :class="[
             'relative min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
-            isNavActive(item) ? 'bg-white text-slate-950' : 'text-white/65',
+            isNavActive(item) ? 'bg-surface text-ink' : 'text-white/65',
           ]"
         >
           {{ item.label }}
           <span
             v-if="'badge' in item && item.badge"
             :class="[
-              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-amber-400 px-1 py-px text-[10px] font-black leading-none text-slate-950 ring-2 ring-slate-950',
+              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-accent px-1 py-px text-[10px] font-black leading-none text-ink ring-2 ring-primary',
               item.to === '/customer/rewards' && rewardBadgePulsing ? 'reward-badge-pop' : '',
             ]"
           >

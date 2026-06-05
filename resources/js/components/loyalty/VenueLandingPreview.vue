@@ -125,26 +125,26 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
   const draft = slot.milestone?.isDraft
 
   if (draft) {
-    return 'border-dashed border-indigo-300 bg-indigo-50/40 ring-1 ring-indigo-200/60'
+    return 'border-dashed border-accent-border bg-accent-soft/40 ring-1 ring-accent-border/60'
   }
 
   if (selected) {
-    return 'border-indigo-400 bg-white shadow-lg shadow-indigo-100/60 ring-2 ring-indigo-400/50'
+    return 'border-accent bg-surface shadow-lg shadow-accent-soft/60 ring-2 ring-accent/50'
   }
 
   if (slot.filled) {
-    return 'border-amber-200/90 bg-white shadow-md shadow-amber-100/50'
+    return 'border-accent-border/90 bg-surface shadow-md shadow-accent-soft/50'
   }
 
   return isProminent.value
-    ? 'border-slate-200 bg-white shadow-md shadow-slate-200/50'
-    : 'border-slate-200/90 bg-white shadow-sm shadow-slate-200/40'
+    ? 'border-border bg-surface shadow-md shadow-border/50'
+    : 'border-border/90 bg-surface shadow-sm shadow-border/40'
 }
 </script>
 
 <template>
   <article
-    class="loyalty-preview-card w-full rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-16px_rgba(15,23,42,0.12)]"
+    class="loyalty-preview-card w-full rounded-2xl border border-border/80 bg-gradient-to-b from-surface to-surface-muted/80 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-16px_rgba(15,23,42,0.12)]"
     :class="isProminent ? 'max-w-none p-5 sm:p-6' : 'mx-auto max-w-md p-4 sm:p-5'"
   >
     <div
@@ -153,7 +153,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
     >
       <div class="flex items-baseline gap-2">
         <span
-          class="font-semibold tabular-nums tracking-tight text-slate-950"
+          class="font-semibold tabular-nums tracking-tight text-ink"
           :class="[
             animatingSlots?.length ? 'animate-stamp-count' : undefined,
             isProminent ? 'text-3xl sm:text-4xl' : 'text-2xl',
@@ -162,7 +162,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           {{ stampCount }}
         </span>
         <span
-          class="font-medium text-slate-400"
+          class="font-medium text-ink-soft"
           :class="isProminent ? 'text-base' : 'text-sm'"
         >
           / {{ maxStamps }} stamps
@@ -170,7 +170,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
       </div>
       <span
         v-if="editable"
-        class="rounded-full bg-slate-100 font-semibold uppercase tracking-wide text-slate-500"
+        class="rounded-full bg-surface-muted font-semibold uppercase tracking-wide text-ink-muted"
         :class="isProminent ? 'px-2.5 py-1 text-[11px]' : 'hidden px-2 py-0.5 text-[10px] sm:inline'"
       >
         Click a reward to manage
@@ -210,7 +210,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           @keydown.space.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
         >
           <div
-            class="relative min-h-0 overflow-hidden bg-slate-100"
+            class="relative min-h-0 overflow-hidden bg-surface-muted"
             :class="isProminent ? 'flex-[1.35]' : 'flex-[1.15]'"
           >
             <img
@@ -218,11 +218,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
               :alt="slot.milestone.title"
               class="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
             >
-            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
 
             <span
               v-if="slot.filled"
-              class="absolute left-1.5 top-1.5 grid place-items-center rounded-full bg-amber-400 text-white shadow-sm"
+              class="absolute left-1.5 top-1.5 grid place-items-center rounded-full bg-accent text-white shadow-sm"
               :class="isProminent ? 'size-5 text-[10px]' : 'size-4 text-[9px]'"
               aria-hidden="true"
             >
@@ -231,14 +231,14 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
 
             <span
               v-if="!isProminent"
-              class="absolute bottom-1 left-1 inline-flex items-center gap-0.5 rounded-md bg-white/90 px-1 py-0.5 text-[9px] font-medium text-rose-500 shadow-sm backdrop-blur-sm"
+              class="absolute bottom-1 left-1 inline-flex items-center gap-0.5 rounded-md bg-surface/90 px-1 py-0.5 text-[9px] font-medium text-rose-500 shadow-sm backdrop-blur-sm"
               aria-hidden="true"
             >
               <Gift class="size-2.5" :stroke-width="2.2" />
             </span>
 
             <span
-              class="absolute right-1.5 top-1.5 rounded-full bg-white font-bold tabular-nums text-slate-800 shadow-sm ring-1 ring-slate-200/90"
+              class="absolute right-1.5 top-1.5 rounded-full bg-surface font-bold tabular-nums text-ink shadow-sm ring-1 ring-border/90"
               :class="isProminent ? 'px-2 py-0.5 text-[11px] sm:text-xs' : 'px-1.5 py-0.5 text-[9px]'"
             >
               {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
@@ -246,11 +246,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           </div>
 
           <div
-            class="flex shrink-0 items-center border-t border-slate-100/90 bg-white"
+            class="flex shrink-0 items-center border-t border-border/90 bg-surface"
             :class="isProminent ? 'px-2.5 py-2' : 'px-1.5 py-1'"
           >
             <p
-              class="min-w-0 flex-1 font-semibold leading-snug text-slate-900"
+              class="min-w-0 flex-1 font-semibold leading-snug text-ink"
               :class="[
                 isProminent ? 'line-clamp-2 text-xs sm:text-sm' : 'line-clamp-1 text-[10px] sm:text-[11px]',
               ]"
@@ -267,8 +267,8 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           :class="[
             isProminent ? 'size-10 sm:size-11' : 'size-9 sm:size-10',
             slot.filled
-              ? 'border-amber-300 bg-amber-100 text-amber-700 shadow-sm ring-1 ring-amber-200/60'
-              : 'border-dashed border-slate-300 bg-slate-100/90 text-slate-500 ring-1 ring-slate-200/50',
+              ? 'border-accent-border bg-accent-soft text-accent-active shadow-sm ring-1 ring-accent-border/60'
+              : 'border-dashed border-border bg-surface-muted/90 text-ink-muted ring-1 ring-border/50',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
           ]"
           :aria-label="`Stamp ${slot.position}`"
@@ -283,20 +283,20 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
       v-if="editable"
       class="mt-3 flex h-[6.75rem] flex-col justify-center gap-2 overflow-hidden rounded-xl border px-3 py-2 shadow-sm sm:h-[4.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-0"
       :class="activeManageMilestone
-        ? 'border-indigo-200/80 bg-indigo-50/90'
-        : 'border-slate-200/80 bg-slate-50/60'"
+        ? 'border-accent-border/80 bg-accent-soft/90'
+        : 'border-border/80 bg-surface-muted/60'"
     >
       <div v-if="activeManageMilestone" class="min-h-0 min-w-0 flex-1">
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+        <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">
           {{ activeManageMilestone.required_stamps }} {{ activeManageMilestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
         </p>
-        <p class="truncate text-sm font-semibold text-slate-900 sm:text-base">
+        <p class="truncate text-sm font-semibold text-ink sm:text-base">
           {{ activeManageMilestone.title }}
         </p>
       </div>
       <p
         v-else
-        class="min-w-0 flex-1 text-center text-sm text-slate-400 sm:text-left"
+        class="min-w-0 flex-1 text-center text-sm text-ink-soft sm:text-left"
       >
         Click a reward card to edit or archive
       </p>
@@ -307,7 +307,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
       >
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink shadow-sm transition hover:border-border hover:bg-surface-muted disabled:opacity-50"
           :disabled="menuSaving || !activeManageMilestone"
           tabindex="-1"
           @click.stop="activeManageMilestone && onAction('edit', activeManageMilestone.id)"
@@ -318,7 +318,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
         <button
           v-if="!activeManageMilestone || activeManageMilestone.active !== false"
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-accent-border bg-surface px-3 py-2 text-sm font-semibold text-accent-active shadow-sm transition hover:border-accent-border hover:bg-accent-soft disabled:opacity-50"
           :disabled="menuSaving || !activeManageMilestone"
           tabindex="-1"
           @click.stop="activeManageMilestone && onAction('archive', activeManageMilestone.id)"
@@ -329,7 +329,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
         <button
           v-else
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-success-border bg-surface px-3 py-2 text-sm font-semibold text-success-text shadow-sm transition hover:border-success-border hover:bg-success-bg disabled:opacity-50"
           :disabled="menuSaving"
           @click.stop="onAction('reactivate', activeManageMilestone.id)"
         >

@@ -9,32 +9,17 @@ import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
 import { openClaimQrForUnlock } from '../../lib/openClaimQr'
 import { useAuth } from '../../providers/AuthProvider'
 import { withAppFont } from '../../lib/typography'
-import { colors, shadows } from '../../theme'
+import { colors, radius, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
 
-const ticket = {
-  surface: '#FFFBF5',
-  border: '#EDE4D6',
-  badgeReadyBg: '#FBD89A',
-  badgeReadyText: '#7C4A0A',
-  badgeNextBg: '#F0E6D8',
-  badgeNextText: '#5C4033',
-  illustrationBg: '#F3EBDD',
-  illustrationIcon: '#8B6914',
-  divider: '#BCA98E',
-  progressFilled: '#5C4033',
-  progressTrack: '#E5DDD0',
-  readyAccent: '#8B6914',
-  actionBg: '#FAF6F0',
-  actionBorder: '#D9C9B4',
-  actionText: '#4A3428',
-  radius: 22,
-} as const
+const TICKET_RADIUS = 22
 
-const panelBorder = {
-  borderColor: ticket.border,
-  borderWidth: 1,
-} as const
+function panelBorder() {
+  return {
+    borderColor: colors.border,
+    borderWidth: 1,
+  } as const
+}
 
 export type HomeRewardTicketVariant = 'ready' | 'next'
 
@@ -72,7 +57,7 @@ function TicketStampProgress({ collected, target }: { collected: number; target:
               flex: 1,
               height: 7,
               borderRadius: 4,
-              backgroundColor: index < filled ? ticket.progressFilled : ticket.progressTrack,
+              backgroundColor: index < filled ? colors.progressFilled : colors.progressTrack,
             }}
           />
         ))}
@@ -81,7 +66,7 @@ function TicketStampProgress({ collected, target }: { collected: number; target:
         <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
           {filled} of {target} visits
         </Text>
-        <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? ticket.readyAccent : ticket.badgeNextText })}>
+        <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? colors.accent : colors.ink })}>
           {toGo <= 0 ? 'Ready to claim' : toGo === 1 ? '1 visit to go' : `${toGo} visits to go`}
         </Text>
       </View>
@@ -89,10 +74,18 @@ function TicketStampProgress({ collected, target }: { collected: number; target:
   )
 }
 
-function TicketCompactAction({ label, icon }: { label: string; icon: keyof typeof Ionicons.glyphMap }) {
+function TicketCompactAction({
+  label,
+  icon,
+  style,
+}: {
+  label: string
+  icon: keyof typeof Ionicons.glyphMap
+  style?: StyleProp<ViewStyle>
+}) {
   return (
     <View
-      style={{
+      style={[{
         marginTop: 14,
         alignSelf: 'flex-start',
         flexDirection: 'row',
@@ -102,13 +95,13 @@ function TicketCompactAction({ label, icon }: { label: string; icon: keyof typeo
         paddingVertical: 9,
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: ticket.actionBorder,
-        backgroundColor: ticket.actionBg,
-      }}
+        borderColor: colors.border,
+        backgroundColor: colors.bgGradientStart,
+      }, style]}
     >
-      <Ionicons name={icon} size={15} color={ticket.actionText} />
-      <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: ticket.actionText })}>{label}</Text>
-      <Ionicons name="chevron-forward" size={15} color={ticket.actionText} />
+      <Ionicons name={icon} size={15} color={colors.ink} />
+      <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>{label}</Text>
+      <Ionicons name="chevron-forward" size={15} color={colors.ink} />
     </View>
   )
 }
@@ -131,7 +124,7 @@ function TicketPattern({ cardWidth }: { cardWidth: number }) {
             left: mark.left,
             fontSize: mark.size,
             opacity: mark.opacity,
-            color: ticket.badgeReadyText,
+            color: colors.ink,
           }}
         >
           {mark.glyph}
@@ -145,25 +138,26 @@ function TicketPerforation({ inset = 0 }: { inset?: number }) {
   const [lineWidth, setLineWidth] = useState(0)
 
   return (
-    <View style={{ flex: 1, height: 18, justifyContent: 'center', marginHorizontal: inset }}>
+    <View style={{ flex: 1, height: 22, justifyContent: 'center', marginHorizontal: inset }}>
       <View
-        style={{ height: 1, overflow: 'hidden' }}
+        style={{ height: 2, overflow: 'hidden' }}
         onLayout={(event) => {
           const width = Math.round(event.nativeEvent.layout.width)
           setLineWidth((current) => (current === width ? current : width))
         }}
       >
         {lineWidth > 0 ? (
-          <Svg width={lineWidth} height={1}>
+          <Svg width={lineWidth} height={2}>
             <Line
               x1="0"
-              y1="0"
+              y1="1"
               x2={lineWidth}
-              y2="0"
-              stroke={ticket.divider}
-              strokeWidth={2}
-              strokeDasharray="6 7"
+              y2="1"
+              stroke={colors.inkSoft}
+              strokeWidth={1.5}
+              strokeDasharray="5 6"
               strokeLinecap="round"
+              strokeOpacity={0.55}
             />
           </Svg>
         ) : null}
@@ -190,7 +184,7 @@ function RewardIllustration({
         width: 88,
         height: 88,
         borderRadius: 44,
-        backgroundColor: ticket.illustrationBg,
+        backgroundColor: colors.bg,
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
@@ -201,7 +195,7 @@ function RewardIllustration({
       ) : showPhoto && logo ? (
         <Image source={{ uri: logo }} style={{ width: 88, height: 88 }} resizeMode="cover" />
       ) : (
-        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={ticket.illustrationIcon} />
+        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={colors.accentActive} />
       )}
     </View>
   )
@@ -213,15 +207,18 @@ function RewardTicketShell({
   isReady,
   top,
   footer,
+  showPerforation = true,
 }: {
   width?: number
   style?: StyleProp<ViewStyle>
   isReady: boolean
   top: ReactNode
   footer: ReactNode | null
+  showPerforation?: boolean
 }) {
   const [measuredWidth, setMeasuredWidth] = useState(0)
   const shellWidth = width ?? measuredWidth
+  const splitTicket = showPerforation && footer != null
 
   const shellFrame = (content: ReactNode) => (
     <View
@@ -243,13 +240,16 @@ function RewardTicketShell({
     </View>
   )
 
-  if (footer == null) {
+  const readyAccent = isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}
+
+  if (!splitTicket) {
     return shellFrame(
       <View
         style={{
-          backgroundColor: ticket.surface,
-          borderRadius: ticket.radius,
-          ...panelBorder,
+          backgroundColor: colors.surface,
+          borderRadius: TICKET_RADIUS,
+          ...panelBorder(),
+          ...readyAccent,
           overflow: 'hidden',
         }}
       >
@@ -263,10 +263,11 @@ function RewardTicketShell({
     <>
       <View
         style={{
-          backgroundColor: ticket.surface,
-          borderTopLeftRadius: ticket.radius,
-          borderTopRightRadius: ticket.radius,
-          ...panelBorder,
+          backgroundColor: colors.surface,
+          borderTopLeftRadius: TICKET_RADIUS,
+          borderTopRightRadius: TICKET_RADIUS,
+          ...panelBorder(),
+          ...readyAccent,
           borderBottomWidth: 0,
           overflow: 'hidden',
         }}
@@ -280,13 +281,14 @@ function RewardTicketShell({
           flexDirection: 'row',
           alignItems: 'center',
           height: 22,
-          backgroundColor: ticket.surface,
+          backgroundColor: colors.surface,
           borderLeftWidth: 1,
           borderRightWidth: 1,
-          borderColor: ticket.border,
+          borderColor: colors.border,
           marginTop: -1,
           marginBottom: -1,
           zIndex: 2,
+          ...(isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}),
         }}
       >
         <TicketPerforation inset={22} />
@@ -294,11 +296,12 @@ function RewardTicketShell({
 
       <View
         style={{
-          backgroundColor: ticket.surface,
-          borderBottomLeftRadius: ticket.radius,
-          borderBottomRightRadius: ticket.radius,
-          ...panelBorder,
+          backgroundColor: colors.surface,
+          borderBottomLeftRadius: TICKET_RADIUS,
+          borderBottomRightRadius: TICKET_RADIUS,
+          ...panelBorder(),
           borderTopWidth: 0,
+          ...(isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}),
         }}
       >
         {footer}
@@ -342,21 +345,21 @@ export default function HomeRewardTicketCard({
               alignSelf: 'flex-start',
               paddingHorizontal: 11,
               paddingVertical: 6,
-              borderRadius: 999,
-              backgroundColor: isReady ? ticket.badgeReadyBg : ticket.badgeNextBg,
+              borderRadius: radius.button,
+              backgroundColor: isReady ? colors.accentSoft : colors.bg,
             }}
           >
             <Ionicons
               name={isReady ? 'qr-code-outline' : 'cafe-outline'}
               size={13}
-              color={isReady ? ticket.badgeReadyText : ticket.badgeNextText}
+              color={colors.ink}
             />
             <Text
               style={withAppFont({
                 fontSize: 10,
                 fontWeight: '800',
                 letterSpacing: 0.85,
-                color: isReady ? ticket.badgeReadyText : ticket.badgeNextText,
+                color: colors.ink,
               })}
             >
               {isReady ? 'SHOW AT COUNTER' : 'NEXT REWARD'}
@@ -388,8 +391,8 @@ export default function HomeRewardTicketCard({
             <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {isReady ? (
                 <>
-                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: ticket.readyAccent }} />
-                  <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: ticket.readyAccent })}>Ready now</Text>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />
+                  <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.accent })}>Ready now</Text>
                 </>
               ) : (
                 <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.inkMuted })}>
@@ -401,12 +404,6 @@ export default function HomeRewardTicketCard({
           {stampProgress ? (
             <TicketStampProgress collected={stampProgress.collected} target={stampProgress.target} />
           ) : null}
-          {showInlineAction ? (
-            <TicketCompactAction
-              label={isReady ? 'Open claim QR' : 'View card'}
-              icon={isReady ? 'qr-code-outline' : 'card-outline'}
-            />
-          ) : null}
         </View>
 
         <RewardIllustration variant={variant} imageUri={resolvedImage} venue={venue} />
@@ -414,8 +411,25 @@ export default function HomeRewardTicketCard({
     </View>
   )
 
+  const footer = showInlineAction ? (
+    <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 }}>
+      <TicketCompactAction
+        label={isReady ? 'Open claim QR' : 'View card'}
+        icon={isReady ? 'qr-code-outline' : 'card-outline'}
+        style={{ marginTop: 0 }}
+      />
+    </View>
+  ) : null
+
   const body = (
-    <RewardTicketShell width={width} style={style} isReady={isReady} top={top} footer={null} />
+    <RewardTicketShell
+      width={width}
+      style={style}
+      isReady={isReady}
+      top={top}
+      footer={footer}
+      showPerforation={showInlineAction}
+    />
   )
 
   const pressedStyle = ({ pressed }: { pressed: boolean }) => [{ opacity: pressed ? 0.97 : 1 }]
@@ -447,7 +461,7 @@ export default function HomeRewardTicketCard({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: 'rgba(255, 255, 255, 0.72)',
-                borderRadius: ticket.radius,
+                borderRadius: TICKET_RADIUS,
               }}
             >
               <ActivityIndicator color={colors.primary} />

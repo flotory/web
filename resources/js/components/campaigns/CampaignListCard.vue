@@ -24,7 +24,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+  <article class="rounded-2xl border border-border bg-surface p-5 shadow-sm">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="flex items-start gap-3">
         <CampaignIcon
@@ -37,15 +37,15 @@ const emit = defineEmits<{
             <AppBadge :tone="campaignStatusTone(campaign.status)">
               {{ campaign.status_label ?? campaignStatusLabel(campaign.status) }}
             </AppBadge>
-            <span class="text-sm font-bold text-slate-500">{{ campaign.audience_count }} customers</span>
-            <span class="text-sm font-black text-slate-900">{{ campaign.multiplier ?? 2 }}×</span>
+            <span class="text-sm font-bold text-ink-muted">{{ campaign.audience_count }} customers</span>
+            <span class="text-sm font-black text-ink">{{ campaign.multiplier ?? 2 }}×</span>
           </div>
-          <h3 class="mt-2 font-bold text-slate-900">{{ campaign.name }}</h3>
+          <h3 class="mt-2 font-bold text-ink">{{ campaign.name }}</h3>
           <div v-if="campaign.schedule_chips?.length" class="mt-2 flex flex-wrap gap-1.5">
             <span
               v-for="chip in campaign.schedule_chips"
               :key="chip"
-              class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600"
+              class="rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-semibold text-ink-muted"
             >
               {{ chip }}
             </span>

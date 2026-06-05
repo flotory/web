@@ -158,11 +158,11 @@ const topConversionRows = computed(() =>
 function insightToneClass(tone: DashboardInsight['tone']) {
   switch (tone) {
     case 'positive':
-      return 'text-emerald-800'
+      return 'text-success-text'
     case 'warning':
-      return 'text-amber-800'
+      return 'text-accent-active'
     default:
-      return 'text-slate-700'
+      return 'text-ink-muted'
   }
 }
 
@@ -187,18 +187,18 @@ function activityIconComponent(type: DashboardActivity['type']): Component {
 function activityIconClasses(type: DashboardActivity['type']) {
   switch (type) {
     case 'stamp':
-      return 'bg-emerald-50 text-emerald-600 ring-emerald-100'
+      return 'bg-success-bg text-success ring-success-border'
     case 'reward_unlocked':
     case 'reward_redeemed':
-      return 'bg-amber-50 text-amber-600 ring-amber-100'
+      return 'bg-accent-soft text-accent-active ring-accent-border'
     case 'customer_joined':
-      return 'bg-blue-50 text-blue-600 ring-blue-100'
+      return 'bg-accent-soft text-primary ring-accent-border'
     case 'reward_created':
-      return 'bg-violet-50 text-violet-600 ring-violet-100'
+      return 'bg-accent-soft text-primary ring-accent-border'
     case 'campaign_activated':
       return 'bg-rose-50 text-rose-600 ring-rose-100'
     default:
-      return 'bg-slate-50 text-slate-500 ring-slate-200'
+      return 'bg-surface-muted text-ink-muted ring-border'
   }
 }
 
@@ -305,19 +305,19 @@ onMounted(() => {
   <AppShell>
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex items-center gap-3">
-        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border">
           <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
         <div>
         <AppBadge tone="green">Loyalty active</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">{{ title }}</h1>
-        <p class="mt-2 text-slate-500">Your live venue workspace. Invite guests, track returns, and unlock rewards.</p>
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">{{ title }}</h1>
+        <p class="mt-2 text-ink-muted">Your live venue workspace. Invite guests, track returns, and unlock rewards.</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <AppBadge v-if="workspace.activeVenues.length > 1" tone="blue">Switch venue from sidebar</AppBadge>
         <RouterLink :to="selectedVenue ? `/scanner?venue_id=${selectedVenue.id}` : '/scanner'">
-          <AppButton class="top-scanner-btn bg-slate-950 text-white shadow-lg shadow-slate-950/25 hover:bg-slate-800">
+          <AppButton class="top-scanner-btn bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-soft">
             ◎ Open scanner
           </AppButton>
         </RouterLink>
@@ -341,15 +341,15 @@ onMounted(() => {
 
     <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_2fr] lg:items-stretch">
       <AppCard wrapper-class="flex h-full flex-col">
-        <h2 class="text-xl font-black text-slate-950">Venue QR</h2>
-        <p class="mt-1 text-sm text-slate-500">Scan to join and collect stamps</p>
+        <h2 class="text-xl font-black text-ink">Venue QR</h2>
+        <p class="mt-1 text-sm text-ink-muted">Scan to join and collect stamps</p>
 
         <div class="mt-4 flex flex-1 flex-col items-center justify-center">
-          <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-slate-50 p-3 ring-1 ring-slate-200">
-            <div id="dashboard-qr" class="mx-auto grid place-items-center rounded-2xl bg-white p-2 ring-1 ring-slate-200 [&_canvas]:block">
+          <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-surface-muted p-3 ring-1 ring-border">
+            <div id="dashboard-qr" class="mx-auto grid place-items-center rounded-2xl bg-surface p-2 ring-1 ring-border [&_canvas]:block">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="132" level="M" render-as="canvas" :margin="2" />
             </div>
-            <p class="mt-3 text-center text-xs font-semibold text-slate-600">Ready for tables</p>
+            <p class="mt-3 text-center text-xs font-semibold text-ink-muted">Ready for tables</p>
           </div>
         </div>
 
@@ -368,22 +368,22 @@ onMounted(() => {
       <AppCard wrapper-class="flex h-full flex-col">
         <div>
           <div class="flex items-center justify-between gap-3">
-            <h2 class="inline-flex items-center gap-2 text-xl font-black text-slate-950">
+            <h2 class="inline-flex items-center gap-2 text-xl font-black text-ink">
               <span>Activity & insights</span>
               <span class="live-dot shrink-0" aria-hidden="true" />
             </h2>
-            <RouterLink to="/analytics" class="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700">
+            <RouterLink to="/analytics" class="shrink-0 text-xs font-bold uppercase tracking-wide text-ink-muted hover:text-ink-muted">
               View all
             </RouterLink>
           </div>
-          <p class="mt-1 text-sm text-slate-500">Real loyalty events plus signals worth acting on.</p>
+          <p class="mt-1 text-sm text-ink-muted">Real loyalty events plus signals worth acting on.</p>
         </div>
 
         <div v-if="recentActivityRows.length" class="mt-4 space-y-2">
           <div
             v-for="item in recentActivityRows"
             :key="`${item.type}-${item.title}-${item.occurred_at}`"
-            class="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+            class="group flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink-muted ring-1 ring-border transition hover:-translate-y-0.5 hover:bg-surface hover:shadow-md"
           >
             <p class="flex min-w-0 items-center gap-2">
               <span
@@ -394,28 +394,28 @@ onMounted(() => {
               </span>
               <span class="truncate">{{ item.title }}</span>
             </p>
-            <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-400">{{ formatActivityTime(item.occurred_at) }}</span>
+            <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-ink-soft">{{ formatActivityTime(item.occurred_at) }}</span>
           </div>
         </div>
-        <div v-else class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
-          <p class="text-sm font-semibold text-slate-600">No activity yet.</p>
-          <p class="mt-1 text-xs text-slate-500">Open the scanner when your first guest arrives.</p>
+        <div v-else class="mt-4 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
+          <p class="text-sm font-semibold text-ink-muted">No activity yet.</p>
+          <p class="mt-1 text-xs text-ink-muted">Open the scanner when your first guest arrives.</p>
         </div>
 
-        <div class="mt-5 border-t border-slate-100 pt-4">
-          <p class="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Insights</p>
+        <div class="mt-5 border-t border-border pt-4">
+          <p class="text-xs font-black uppercase tracking-[0.14em] text-ink-soft">Insights</p>
           <ul v-if="insights.length" class="mt-3 space-y-2">
             <li
               v-for="(insight, index) in insights.slice(0, 3)"
               :key="`${insight.text}-${index}`"
-              class="flex gap-2 rounded-2xl bg-white px-3 py-2 text-sm font-medium leading-snug ring-1 ring-slate-200/80"
+              class="flex gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-medium leading-snug ring-1 ring-border/80"
               :class="insightToneClass(insight.tone)"
             >
-              <span class="text-slate-400" aria-hidden="true">•</span>
+              <span class="text-ink-soft" aria-hidden="true">•</span>
               <span>{{ insight.text }}</span>
             </li>
           </ul>
-          <p v-else class="mt-3 text-sm text-slate-500">
+          <p v-else class="mt-3 text-sm text-ink-muted">
             Insights appear once guests start visiting.
           </p>
         </div>
@@ -429,23 +429,23 @@ onMounted(() => {
       @end="(campaign) => updateCampaignStatus(campaign, 'ended')"
     />
 
-    <AppCard wrapper-class="mt-6 overflow-hidden bg-gradient-to-br from-slate-950/95 to-slate-900/90 text-white ring-1 ring-white/10">
+    <AppCard wrapper-class="mt-6 overflow-hidden bg-gradient-to-br from-primary/95 to-primary/90 text-white ring-1 ring-white/10">
       <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <h2 class="text-xl font-black">Analytics preview</h2>
           <p class="mt-1 text-sm text-white/70">Real monthly visits and reward performance from this venue.</p>
           <div class="mt-4 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
               <p class="text-xs font-bold uppercase tracking-wide text-white/50">Visits</p>
               <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
               <p class="text-xs font-semibold text-white/55">this month</p>
             </div>
-            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
               <p class="text-xs font-bold uppercase tracking-wide text-white/50">Claim rate</p>
               <p class="mt-1 text-2xl font-black">{{ conversionOverview.rate }}%</p>
               <p class="text-xs font-semibold text-white/55">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
             </div>
-            <div class="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
               <p class="text-xs font-bold uppercase tracking-wide text-white/50">Returning</p>
               <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
               <p class="text-xs font-semibold text-white/55">repeat guests</p>
@@ -455,7 +455,7 @@ onMounted(() => {
             Open full analytics
           </RouterLink>
         </div>
-        <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+        <div class="rounded-2xl bg-surface/5 p-4 ring-1 ring-white/10">
           <div class="mb-3 flex items-center justify-between gap-3">
             <p class="text-xs font-bold uppercase tracking-wide text-white/50">Last 6 months</p>
             <p class="text-xs font-semibold text-white/50">{{ maxMonthlyVisits }} peak visits</p>
@@ -467,7 +467,7 @@ onMounted(() => {
               class="flex h-full flex-1 flex-col justify-end gap-2"
             >
               <div
-                class="min-h-2 rounded-t-xl bg-blue-300/70"
+                class="min-h-2 rounded-t-xl bg-accent/70"
                 :style="{ height: `${Math.max(row.visits > 0 ? 10 : 4, (row.visits / maxMonthlyVisits) * 100)}%` }"
                 :title="`${row.month}: ${row.visits} visits`"
               />
@@ -491,15 +491,15 @@ onMounted(() => {
     </AppCard>
 
     <AppCard v-if="dashboard?.venue_summaries?.length && workspace.activeVenues.length > 1" wrapper-class="mt-6">
-      <h2 class="text-xl font-black text-slate-950">Other venues</h2>
+      <h2 class="text-xl font-black text-ink">Other venues</h2>
       <div class="mt-4 grid gap-3 md:grid-cols-2">
         <div
           v-for="summary in dashboard.venue_summaries"
           :key="summary.venue_id"
-          class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200"
+          class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border"
         >
-          <p class="font-black text-slate-950">{{ summary.venue_name }}</p>
-          <p class="mt-2 text-sm font-semibold text-slate-500">
+          <p class="font-black text-ink">{{ summary.venue_name }}</p>
+          <p class="mt-2 text-sm font-semibold text-ink-muted">
             {{ summary.stats.total_customers }} guests · {{ summary.stats.total_visits }} visits
           </p>
         </div>

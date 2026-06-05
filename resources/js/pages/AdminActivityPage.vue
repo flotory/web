@@ -93,15 +93,15 @@ watch(page, loadActivity)
     <div class="mx-auto max-w-6xl space-y-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Super admin</p>
-          <h1 class="mt-1 text-3xl font-black text-slate-950">Activity log</h1>
-          <p class="mt-2 max-w-2xl text-sm text-slate-600">
+          <p class="text-xs font-bold uppercase tracking-widest text-primary">Super admin</p>
+          <h1 class="mt-1 text-3xl font-black text-ink">Activity log</h1>
+          <p class="mt-2 max-w-2xl text-sm text-ink-muted">
             Loyalty actions and API validation failures. Use the request ID from the network tab when correlating issues.
           </p>
         </div>
         <RouterLink
           to="/dashboard"
-          class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          class="inline-flex shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-4 py-2 text-sm font-bold text-ink-muted shadow-sm transition hover:bg-surface-muted"
         >
           ← Owner dashboard
         </RouterLink>
@@ -109,57 +109,57 @@ watch(page, loadActivity)
 
       <AppCard class="space-y-4 p-5">
         <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block text-sm font-semibold text-ink-muted">
             Search
             <input
               v-model="q"
               type="search"
               placeholder="stamp, redeem, reward…"
-              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
               @keyup.enter="applyFilters"
             >
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block text-sm font-semibold text-ink-muted">
             Event
-            <select v-model="eventFilter" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+            <select v-model="eventFilter" class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm">
               <option value="">All</option>
               <option value="success">success</option>
               <option value="failed">failed</option>
               <option value="info">info</option>
             </select>
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block text-sm font-semibold text-ink-muted">
             Request ID
             <input
               v-model="requestId"
               type="text"
               placeholder="UUID from network tab"
-              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-mono text-xs"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 font-mono text-xs"
               @keyup.enter="applyFilters"
             >
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block text-sm font-semibold text-ink-muted">
             Venue ID
             <input
               v-model="venueId"
               type="number"
-              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
               @keyup.enter="applyFilters"
             >
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block text-sm font-semibold text-ink-muted">
             Customer ID
             <input
               v-model="customerId"
               type="number"
-              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
               @keyup.enter="applyFilters"
             >
           </label>
         </div>
         <button
           type="button"
-          class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white"
+          class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white"
           @click="applyFilters"
         >
           Apply filters
@@ -168,7 +168,7 @@ watch(page, loadActivity)
 
       <ErrorState v-if="error" :message="error" @retry="loadActivity" />
 
-      <AppCard v-else-if="loading" class="p-8 text-center text-sm text-slate-500">
+      <AppCard v-else-if="loading" class="p-8 text-center text-sm text-ink-muted">
         Loading activity…
       </AppCard>
 
@@ -180,7 +180,7 @@ watch(page, loadActivity)
       />
 
       <template v-else>
-        <p class="text-sm text-slate-600">{{ total }} events · page {{ page }} of {{ lastPage }}</p>
+        <p class="text-sm text-ink-muted">{{ total }} events · page {{ page }} of {{ lastPage }}</p>
 
         <div class="space-y-3">
           <AppCard
@@ -190,31 +190,31 @@ watch(page, loadActivity)
           >
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p class="font-bold text-slate-950">{{ formatDescription(row.description) }}</p>
-                <p class="mt-1 text-xs text-slate-500">{{ formatShortDate(row.created_at) }}</p>
+                <p class="font-bold text-ink">{{ formatDescription(row.description) }}</p>
+                <p class="mt-1 text-xs text-ink-muted">{{ formatShortDate(row.created_at) }}</p>
               </div>
               <AppBadge :tone="eventTone(row.event)">{{ row.event }}</AppBadge>
             </div>
 
-            <dl class="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+            <dl class="mt-3 grid gap-2 text-xs text-ink-muted sm:grid-cols-2">
               <div v-if="row.causer">
-                <dt class="font-semibold text-slate-500">Actor</dt>
+                <dt class="font-semibold text-ink-muted">Actor</dt>
                 <dd>{{ row.causer.name }} ({{ row.causer.email }})</dd>
               </div>
               <div v-if="row.venue_id">
-                <dt class="font-semibold text-slate-500">Venue</dt>
+                <dt class="font-semibold text-ink-muted">Venue</dt>
                 <dd>#{{ row.venue_id }}</dd>
               </div>
               <div v-if="row.customer_id">
-                <dt class="font-semibold text-slate-500">Customer</dt>
+                <dt class="font-semibold text-ink-muted">Customer</dt>
                 <dd>#{{ row.customer_id }}</dd>
               </div>
               <div v-if="row.request_id">
-                <dt class="font-semibold text-slate-500">Request ID</dt>
+                <dt class="font-semibold text-ink-muted">Request ID</dt>
                 <dd class="break-all font-mono">{{ row.request_id }}</dd>
               </div>
               <div v-if="row.route">
-                <dt class="font-semibold text-slate-500">Route</dt>
+                <dt class="font-semibold text-ink-muted">Route</dt>
                 <dd class="break-all">{{ row.route }}</dd>
               </div>
             </dl>
@@ -224,7 +224,7 @@ watch(page, loadActivity)
         <div v-if="lastPage > 1" class="flex justify-center gap-2">
           <button
             type="button"
-            class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold disabled:opacity-40"
+            class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
             :disabled="page <= 1"
             @click="page -= 1"
           >
@@ -232,7 +232,7 @@ watch(page, loadActivity)
           </button>
           <button
             type="button"
-            class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold disabled:opacity-40"
+            class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
             :disabled="page >= lastPage"
             @click="page += 1"
           >

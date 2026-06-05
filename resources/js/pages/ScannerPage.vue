@@ -418,21 +418,21 @@ watch(activeScannerVenueId, (venueId, previous) => {
     <div class="mx-auto max-w-2xl">
       <div class="mb-5">
         <AppBadge tone="green">Staff scanner</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Scan loyalty QR</h1>
-        <p class="mt-2 text-slate-500">
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Scan loyalty QR</h1>
+        <p class="mt-2 text-ink-muted">
           {{
             venue
               ? `At ${venue.name}: stamp card adds stamps. Claim screen redeems rewards.`
               : 'Designed for a sub-3-second cashier flow.'
           }}
         </p>
-        <p class="mt-1 text-xs font-medium text-slate-500">
-          For rewards, the customer must tap <span class="font-semibold text-slate-700">Claim</span> in Rewards — not their stamp card.
+        <p class="mt-1 text-xs font-medium text-ink-muted">
+          For rewards, the customer must tap <span class="font-semibold text-ink-muted">Claim</span> in Rewards — not their stamp card.
         </p>
       </div>
 
       <AppCard wrapper-class="overflow-hidden p-0">
-        <div class="relative aspect-square bg-slate-950">
+        <div class="relative aspect-square bg-primary">
           <QrcodeStream
             v-if="scanning && !selectedCustomer"
             class="h-full w-full object-cover"
@@ -440,7 +440,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
           />
           <div
             v-else-if="scanning && selectedCustomer"
-            class="grid h-full place-items-center bg-slate-900 px-6 text-center text-white"
+            class="grid h-full place-items-center bg-primary px-6 text-center text-white"
           >
             <p class="text-lg font-black">Guest selected</p>
             <p class="mt-2 text-sm font-semibold text-white/75">
@@ -450,7 +450,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
           <div
             v-else-if="status === 'processing'"
             class="grid h-full place-items-center text-white"
-            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-indigo-950 to-slate-950' : 'bg-slate-950'"
+            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-primary-soft to-primary' : 'bg-primary'"
           >
             <div class="text-center">
               <div class="mx-auto size-16 animate-spin rounded-full border-4 border-white/20 border-t-white" />
@@ -460,20 +460,20 @@ watch(activeScannerVenueId, (venueId, previous) => {
               <p class="text-sm font-semibold text-white/60">Please keep this screen open</p>
             </div>
           </div>
-          <div v-else-if="status === 'error'" class="grid h-full place-items-center bg-gradient-to-br from-red-500 to-slate-950 text-white">
+          <div v-else-if="status === 'error'" class="grid h-full place-items-center bg-gradient-to-br from-danger to-primary text-primary-text">
             <div class="max-w-sm px-6 text-center">
-              <div class="mx-auto grid size-20 place-items-center rounded-full bg-white/20 text-5xl font-black">!</div>
+              <div class="mx-auto grid size-20 place-items-center rounded-full bg-surface/20 text-5xl font-black">!</div>
               <p class="mt-5 text-2xl font-black">{{ scanError?.title ?? 'Scan failed' }}</p>
-              <p class="mt-2 text-sm font-semibold leading-relaxed text-red-50">{{ scanError?.detail ?? message }}</p>
-              <p v-if="scanError?.hint" class="mt-3 text-xs font-medium leading-relaxed text-red-100/90">
+              <p class="mt-2 text-sm font-semibold leading-relaxed text-primary-text">{{ scanError?.detail ?? message }}</p>
+              <p v-if="scanError?.hint" class="mt-3 text-xs font-medium leading-relaxed text-primary-text/80">
                 {{ scanError.hint }}
               </p>
-              <p v-if="scanError?.requestId" class="mt-4 font-mono text-[10px] text-red-100/50">
+              <p v-if="scanError?.requestId" class="mt-4 font-mono text-[10px] text-primary-text/50">
                 Ref {{ scanError.requestId }}
               </p>
               <button
                 type="button"
-                class="mt-5 rounded-2xl bg-white px-5 py-3 text-sm font-black text-red-600 shadow-lg"
+                class="mt-5 rounded-2xl bg-surface px-5 py-3 text-sm font-black text-danger shadow-lg"
                 @click="resetScanner"
               >
                 Try again
@@ -483,7 +483,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
           <div
             v-else
             class="grid h-full place-items-center text-white"
-            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-indigo-500 via-violet-600 to-slate-950' : 'bg-gradient-to-br from-emerald-500 to-slate-950'"
+            :class="lastScanKind === 'redeem' ? 'bg-gradient-to-br from-primary via-primary-soft to-primary' : 'bg-gradient-to-br from-success to-primary'"
           >
             <div class="px-6 text-center">
               <SuccessCheck />
@@ -497,8 +497,8 @@ watch(activeScannerVenueId, (venueId, previous) => {
               <p v-else class="opacity-90">{{ customer?.stamps ?? 0 }} active stamps</p>
             </div>
           </div>
-          <div class="absolute inset-x-6 top-6 rounded-3xl bg-white/90 p-4 text-center shadow-xl backdrop-blur">
-            <p class="text-sm font-black text-slate-950">{{ statusLabel }}</p>
+          <div class="absolute inset-x-6 top-6 rounded-3xl bg-surface/90 p-4 text-center shadow-xl backdrop-blur">
+            <p class="text-sm font-black text-ink">{{ statusLabel }}</p>
           </div>
         </div>
 
@@ -506,9 +506,9 @@ watch(activeScannerVenueId, (venueId, previous) => {
           v-if="status === 'success' && pendingClaimWarning"
           class="border-b border-sky-100 bg-sky-50/90 px-5 py-4"
         >
-          <p class="text-sm font-black text-slate-900">Reward ready to claim</p>
-          <p class="mt-1 text-sm font-medium text-slate-600">{{ pendingClaimWarning.message }}</p>
-          <ul v-if="pendingClaimWarning.rewards.length" class="mt-2 space-y-1 text-sm text-slate-600">
+          <p class="text-sm font-black text-ink">Reward ready to claim</p>
+          <p class="mt-1 text-sm font-medium text-ink-muted">{{ pendingClaimWarning.message }}</p>
+          <ul v-if="pendingClaimWarning.rewards.length" class="mt-2 space-y-1 text-sm text-ink-muted">
             <li v-for="reward in pendingClaimWarning.rewards" :key="reward.id">• {{ reward.title }}</li>
           </ul>
           <div class="mt-3 flex gap-2">
@@ -520,8 +520,8 @@ watch(activeScannerVenueId, (venueId, previous) => {
 
         <div v-if="showStampControls" class="space-y-5 p-5">
           <div>
-            <p class="text-sm font-black text-slate-950">Stamps to add</p>
-            <p class="text-xs font-semibold text-slate-500">Only when scanning the customer loyalty card.</p>
+            <p class="text-sm font-black text-ink">Stamps to add</p>
+            <p class="text-xs font-semibold text-ink-muted">Only when scanning the customer loyalty card.</p>
             <div class="mt-3 grid grid-cols-5 gap-2">
               <button
                 v-for="amount in [1, 2, 3, 4, 5]"
@@ -530,7 +530,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
                 :disabled="isBusy"
                 :class="[
                   'h-11 rounded-2xl text-sm font-black transition',
-                  !useCustomStamps && selectedPresetStamps === amount ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  !useCustomStamps && selectedPresetStamps === amount ? 'bg-primary text-white' : 'bg-surface-muted text-ink-muted hover:bg-border',
                   isBusy ? 'cursor-not-allowed opacity-50' : '',
                 ]"
                 @click="selectPresetAmount(amount)"
@@ -538,7 +538,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
                 {{ amount }}
               </button>
             </div>
-            <label class="mt-3 block text-sm font-bold text-slate-600" for="custom-stamps">Custom amount</label>
+            <label class="mt-3 block text-sm font-bold text-ink-muted" for="custom-stamps">Custom amount</label>
             <input
               id="custom-stamps"
               v-model.number="customStamps"
@@ -546,17 +546,17 @@ watch(activeScannerVenueId, (venueId, previous) => {
               max="100"
               type="number"
               :disabled="isBusy"
-              class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none transition focus:border-slate-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none transition focus:border-ink-soft focus:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Custom stamps"
               @focus="useCustomStamps = true"
             >
           </div>
 
-          <div class="rounded-[1.5rem] bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div class="rounded-[1.5rem] bg-surface-muted p-4 ring-1 ring-border">
             <div class="flex items-center justify-between gap-3">
               <div>
-                <p class="text-sm font-black text-slate-950">Customer fallback</p>
-                <p class="text-xs font-semibold text-slate-500">Pick a guest if the camera cannot read their My QR.</p>
+                <p class="text-sm font-black text-ink">Customer fallback</p>
+                <p class="text-xs font-semibold text-ink-muted">Pick a guest if the camera cannot read their My QR.</p>
               </div>
               <AppBadge>{{ customerLoading ? 'Loading' : `${customers.length} cards` }}</AppBadge>
             </div>
@@ -564,22 +564,22 @@ watch(activeScannerVenueId, (venueId, previous) => {
             <input
               v-model="customerSearch"
               :disabled="isBusy"
-              class="mt-3 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              class="mt-3 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium outline-none transition focus:border-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Search by name or email"
             >
 
-            <div v-if="selectedCustomer" class="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-3 ring-1 ring-emerald-100">
+            <div v-if="selectedCustomer" class="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-success-bg p-3 ring-1 ring-success-border">
               <div>
-                <p class="font-black text-emerald-950">{{ selectedCustomer.user?.name ?? 'Customer' }}</p>
-                <p class="text-sm font-semibold text-emerald-700">{{ selectedCustomer.stamps }} current stamps</p>
+                <p class="font-black text-success-text">{{ selectedCustomer.user?.name ?? 'Customer' }}</p>
+                <p class="text-sm font-semibold text-success-text">{{ selectedCustomer.stamps }} current stamps</p>
               </div>
-              <button type="button" class="text-sm font-black text-emerald-700" @click="clearSelectedCustomer">
+              <button type="button" class="text-sm font-black text-success-text" @click="clearSelectedCustomer">
                 Clear
               </button>
             </div>
 
             <div v-else class="mt-3 space-y-2">
-              <p v-if="customerLoadError" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700 ring-1 ring-red-100">
+              <p v-if="customerLoadError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger ring-1 ring-danger/30">
                 {{ customerLoadError }}
                 <button type="button" class="ml-2 font-black underline" @click="loadCustomers">Retry</button>
               </p>
@@ -588,14 +588,14 @@ watch(activeScannerVenueId, (venueId, previous) => {
                 :key="item.id"
                 type="button"
                 :disabled="isBusy"
-                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-3 text-left ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface p-3 text-left ring-1 ring-border transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
                 @click="selectCustomerForFallback(item)"
               >
                 <span>
-                  <span class="block font-black text-slate-950">{{ item.user?.name ?? 'Customer' }}</span>
-                  <span class="block text-sm font-semibold text-slate-500">{{ item.user?.email }}</span>
+                  <span class="block font-black text-ink">{{ item.user?.name ?? 'Customer' }}</span>
+                  <span class="block text-sm font-semibold text-ink-muted">{{ item.user?.email }}</span>
                 </span>
-                <span class="text-sm font-black text-slate-500">{{ item.stamps }} stamps</span>
+                <span class="text-sm font-black text-ink-muted">{{ item.stamps }} stamps</span>
               </button>
               <EmptyState
                 v-if="!customerLoading && !customerLoadError && !filteredCustomers.length"
@@ -623,11 +623,11 @@ watch(activeScannerVenueId, (venueId, previous) => {
         </div>
 
         <div v-else-if="status === 'success' && !pendingClaimWarning" class="p-5">
-          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-indigo-50 p-3 ring-1 ring-indigo-100">
+          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-accent-soft p-3 ring-1 ring-accent-border">
             <img :src="rewardThumbUrl(redeemedReward)" alt="" class="size-12 rounded-xl object-cover ring-1 ring-white">
             <div>
-              <p class="font-black text-slate-950">{{ redeemedReward.title }}</p>
-              <p class="text-sm font-semibold text-indigo-700">Marked as used</p>
+              <p class="font-black text-ink">{{ redeemedReward.title }}</p>
+              <p class="text-sm font-semibold text-primary">Marked as used</p>
             </div>
           </div>
           <AppButton class="w-full" variant="secondary" @click="resetScanner">

@@ -79,7 +79,7 @@ const landingMilestones = computed(() =>
 
     <p
       v-else
-      class="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-sm text-slate-500"
+      class="mx-auto max-w-xl rounded-2xl border border-dashed border-border bg-surface-muted/80 p-6 text-center text-sm text-ink-muted"
     >
       Add a milestone to preview the guest card{{ venueName ? ` at ${venueName}` : '' }}.
     </p>

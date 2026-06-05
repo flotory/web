@@ -65,6 +65,9 @@ class VenueDashboardControllerTest extends TestCase
                     'rewards_unlocked' => ['previous', 'change_pct'],
                     'repeat_rate' => ['previous', 'change_pct'],
                 ],
+                'customer_health' => ['total', 'active', 'inactive', 'new', 'cooling'],
+                'milestone_conversions',
+                'most_loyal_customers',
                 'monthly_activity' => [
                     ['month', 'label', 'visits'],
                 ],

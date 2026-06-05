@@ -83,9 +83,9 @@ function WarmAmbientLayer({ minHeight, width }: { minHeight: number; width: numb
     <>
       <LinearGradient
         colors={[...screenBackground.warm.wash]}
-        locations={[0, 0.25, 0.55, 0.8, 1]}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.85, y: 1 }}
+        locations={[0, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
@@ -121,7 +121,7 @@ function WarmAmbientLayer({ minHeight, width }: { minHeight: number; width: numb
             transform: [{ rotate: `${mark.rotate}deg` }],
           }}
         >
-          <Ionicons name={mark.name} size={mark.size} color="rgba(88, 62, 38, 0.045)" />
+          <Ionicons name={mark.name} size={mark.size} color="rgba(8, 18, 51, 0.04)" />
         </View>
       ))}
     </>

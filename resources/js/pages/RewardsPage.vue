@@ -524,9 +524,9 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 <template>
   <AppShell>
     <!-- Owner milestone builder -->
-    <section class="journey-hero relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
+    <section class="journey-hero relative overflow-hidden rounded-3xl border border-primary-soft/80 bg-gradient-to-br from-primary via-primary-soft to-primary p-6 shadow-2xl shadow-primary/30 sm:p-8">
         <div class="journey-hero-glow pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div class="journey-hero-glow pointer-events-none absolute -bottom-20 left-8 size-48 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div class="journey-hero-glow pointer-events-none absolute -bottom-20 left-8 size-48 rounded-full bg-primary/20 blur-3xl" />
         <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <AppBadge tone="blue">Milestone builder</AppBadge>
@@ -543,7 +543,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             </p>
           </div>
           <div v-if="canEditRewards" class="flex flex-wrap gap-2">
-            <AppButton variant="secondary" class="hero-cta shrink-0 bg-white font-bold text-slate-950 shadow-lg shadow-black/20 hover:bg-slate-100" @click="openCreateForm">
+            <AppButton variant="secondary" class="hero-cta shrink-0 bg-surface font-bold text-ink shadow-lg shadow-black/20 hover:bg-surface-muted" @click="openCreateForm">
               + Create milestone
             </AppButton>
           </div>
@@ -574,77 +574,77 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       <!-- Create / edit panel -->
       <div
         v-if="formOpen && canEditRewards && !needsVenuePick"
-        class="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60"
+        class="mt-4 overflow-hidden rounded-3xl border border-border bg-surface shadow-xl shadow-border/60"
       >
-        <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6">
-          <h2 class="text-lg font-black text-slate-950">
+        <div class="border-b border-border bg-gradient-to-r from-surface-muted to-surface px-5 py-4 sm:px-6">
+          <h2 class="text-lg font-black text-ink">
             {{ editingReward ? 'Edit milestone' : 'Create a collectible milestone' }}
           </h2>
-          <p class="mt-1 text-sm text-slate-500">
+          <p class="mt-1 text-sm text-ink-muted">
             {{ editingReward ? 'Update how guests unlock this reward.' : 'Pick a template or craft your own — achievable rewards drive repeat stamps.' }}
           </p>
         </div>
 
         <div
           v-if="error"
-          class="border-b border-red-100 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 sm:px-6"
+          class="border-b border-danger/30 bg-danger-soft px-5 py-3 text-sm font-bold text-danger sm:px-6"
         >
           {{ error }}
         </div>
 
-        <div v-if="!editingReward" class="border-b border-slate-100 px-5 py-3 sm:px-6">
+        <div v-if="!editingReward" class="border-b border-border px-5 py-3 sm:px-6">
           <button
             type="button"
-            class="text-sm font-bold text-indigo-600 hover:text-indigo-800"
+            class="text-sm font-bold text-primary hover:text-primary"
             @click="showTemplatePicker = !showTemplatePicker"
           >
             {{ showTemplatePicker ? 'Hide templates' : 'Start from a template' }}
           </button>
         </div>
 
-        <div v-if="showTemplatePicker && !editingReward" class="border-b border-slate-100 p-5 sm:p-6">
-          <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Smart templates</p>
+        <div v-if="showTemplatePicker && !editingReward" class="border-b border-border p-5 sm:p-6">
+          <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Smart templates</p>
           <div class="mt-3 grid gap-3 md:grid-cols-3">
             <button
               v-for="template in rewardTemplates"
               :key="template.id"
               type="button"
-              class="template-card group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg"
+              class="template-card group rounded-2xl border border-border bg-surface-muted p-4 text-left transition hover:-translate-y-0.5 hover:border-accent-border hover:shadow-lg"
               :disabled="saving"
               @click="applyTemplate(template)"
             >
               <p class="text-2xl">{{ template.emoji }}</p>
-              <p class="mt-2 font-black text-slate-900">{{ template.name }}</p>
-              <p class="mt-1 text-xs text-slate-500">{{ template.description }}</p>
-              <p class="mt-3 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
+              <p class="mt-2 font-black text-ink">{{ template.name }}</p>
+              <p class="mt-1 text-xs text-ink-muted">{{ template.description }}</p>
+              <p class="mt-3 text-xs font-semibold text-primary group-hover:text-primary">
                 {{ template.rewards.map((item) => `${item.required_stamps} stamps`).join(' → ') }}
               </p>
             </button>
           </div>
-          <button type="button" class="mt-4 text-sm font-bold text-slate-500 hover:text-slate-800" @click="showTemplatePicker = false">
+          <button type="button" class="mt-4 text-sm font-bold text-ink-muted hover:text-ink" @click="showTemplatePicker = false">
             Or build a custom milestone ↓
           </button>
         </div>
 
         <form class="space-y-6 p-5 sm:p-6" @submit.prevent="saveReward">
           <section class="space-y-4">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">1. Reward details</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">1. Reward details</p>
             <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_132px]">
               <div>
-                <label class="text-sm font-bold text-slate-600" for="reward-title">Reward title</label>
+                <label class="text-sm font-bold text-ink-muted" for="reward-title">Reward title</label>
                 <input
                   id="reward-title"
                   ref="titleInput"
                   v-model="title"
                   required
-                  class="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-sm font-medium outline-none focus:bg-white"
-                  :class="fieldErrors.title ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                  class="mt-2 h-12 w-full rounded-2xl border bg-surface-muted px-4 text-sm font-medium outline-none focus:bg-surface"
+                  :class="fieldErrors.title ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                   placeholder="Free signature coffee"
                 >
-                <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.title }}</p>
+                <p v-if="fieldErrors.title" class="mt-1 text-xs font-semibold text-danger">{{ fieldErrors.title }}</p>
               </div>
               <div>
-                <label class="text-sm font-bold text-slate-600" for="reward-stamps">Unlock after</label>
+                <label class="text-sm font-bold text-ink-muted" for="reward-stamps">Unlock after</label>
                 <div class="relative mt-2">
                   <input
                     id="reward-stamps"
@@ -653,33 +653,33 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                     min="1"
                     max="100"
                     type="number"
-                    class="h-12 w-full rounded-2xl border bg-slate-50 px-4 pr-14 text-sm font-medium outline-none focus:bg-white"
-                    :class="fieldErrors.required_stamps ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                    class="h-12 w-full rounded-2xl border bg-surface-muted px-4 pr-14 text-sm font-medium outline-none focus:bg-surface"
+                    :class="fieldErrors.required_stamps ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                   >
-                  <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">stamps</span>
+                  <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">stamps</span>
                 </div>
-                <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.required_stamps }}</p>
+                <p v-if="fieldErrors.required_stamps" class="mt-1 text-xs font-semibold text-danger">{{ fieldErrors.required_stamps }}</p>
               </div>
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="reward-description">Guest-facing description</label>
+              <label class="text-sm font-bold text-ink-muted" for="reward-description">Guest-facing description</label>
               <textarea
                 id="reward-description"
                 v-model="description"
                 rows="2"
-                class="mt-2 w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:bg-white"
-                :class="fieldErrors.description ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-slate-400'"
+                class="mt-2 w-full rounded-2xl border bg-surface-muted px-4 py-3 text-sm font-medium outline-none focus:bg-surface"
+                :class="fieldErrors.description ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                 placeholder="Reward regular guests with a free signature coffee they'll talk about."
               />
-              <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-red-600">{{ fieldErrors.description }}</p>
+              <p v-if="fieldErrors.description" class="mt-1 text-xs font-semibold text-danger">{{ fieldErrors.description }}</p>
             </div>
           </section>
 
-          <section class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">2. Reward visual</p>
-            <p class="mt-1 text-sm text-slate-500">Square crop for the loyalty card. JPG or PNG, max 5 MB.</p>
+          <section class="rounded-2xl border border-border bg-surface-muted/80 p-4 sm:p-5">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">2. Reward visual</p>
+            <p class="mt-1 text-sm text-ink-muted">Square crop for the loyalty card. JPG or PNG, max 5 MB.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
-              <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
+              <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-border bg-surface-muted shadow-inner">
                 <img
                   :src="imagePreviewUrl ?? rewardImageUrl({
                     title: title || 'reward',
@@ -691,7 +691,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                 >
               </div>
               <div class="flex flex-col gap-3">
-                <p class="text-sm font-semibold text-slate-700">
+                <p class="text-sm font-semibold text-ink-muted">
                   {{ imageFile?.name ?? (removeImage ? 'Image will be removed on save' : (editingReward?.image ? 'Current milestone image' : 'No image yet — fallback will be used')) }}
                 </p>
                 <div class="flex flex-wrap gap-2">
@@ -717,12 +717,12 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                     Remove
                   </AppButton>
                 </div>
-                <p v-if="fieldErrors.image" class="text-xs font-semibold text-red-600">{{ fieldErrors.image }}</p>
+                <p v-if="fieldErrors.image" class="text-xs font-semibold text-danger">{{ fieldErrors.image }}</p>
               </div>
             </div>
           </section>
 
-          <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+          <div class="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
             <AppButton type="button" variant="ghost" :disabled="saving || saveRewardAction.loading" @click="closeCreateForm">
               Cancel
             </AppButton>
@@ -741,11 +741,11 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
       <!-- Customer card preview -->
       <section v-if="!loading && !needsVenuePick" class="mt-6">
-        <AppCard wrapper-class="overflow-hidden border-slate-200/90 bg-white p-0">
-          <div class="border-b border-slate-100 bg-slate-50/90 px-5 py-4 sm:px-6">
-            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Customer Card Preview</p>
-            <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">Loyalty card</h2>
-            <p class="mt-1 max-w-2xl text-sm text-slate-500">
+        <AppCard wrapper-class="overflow-hidden border-border/90 bg-surface p-0">
+          <div class="border-b border-border bg-surface-muted/90 px-5 py-4 sm:px-6">
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Customer Card Preview</p>
+            <h2 class="mt-1 text-xl font-semibold tracking-tight text-ink sm:text-2xl">Loyalty card</h2>
+            <p class="mt-1 max-w-2xl text-sm text-ink-muted">
               This is how customers will see your loyalty card.
               <template v-if="programMaxStamps > 0">
                 {{ programMaxStamps }} positions per cycle — numbered slots are stamps, cards are rewards.
@@ -753,7 +753,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             </p>
           </div>
 
-          <div class="bg-gradient-to-b from-slate-50/40 via-white to-white px-3 py-5 sm:px-6 sm:py-6 lg:px-8">
+          <div class="bg-gradient-to-b from-surface-muted/40 via-surface to-surface px-3 py-5 sm:px-6 sm:py-6 lg:px-8">
             <GuestWalletCardPreview
               variant="prominent"
               :milestones="programCardMilestones"
@@ -765,14 +765,14 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             />
           </div>
 
-          <div v-if="pausedRewards.length && canEditRewards" class="border-t border-slate-100 px-5 py-4 sm:px-6">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Paused milestones</p>
+          <div v-if="pausedRewards.length && canEditRewards" class="border-t border-border px-5 py-4 sm:px-6">
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Paused milestones</p>
             <div class="mt-2 flex flex-wrap gap-2">
               <button
                 v-for="reward in pausedRewards"
                 :key="`paused-${reward.id}`"
                 type="button"
-                class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                class="rounded-full border border-border bg-surface-muted px-3 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-accent-border hover:bg-accent-soft hover:text-primary"
                 @click="startEditing(reward)"
               >
                 {{ reward.required_stamps }} · {{ reward.title }}
@@ -785,13 +785,13 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
       <!-- Empty state -->
       <section
         v-if="!loading && !sortedOwnerRewards.length && !needsVenuePick && canEditRewards"
-        class="mt-6 overflow-hidden rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-8 text-center shadow-inner"
+        class="mt-6 overflow-hidden rounded-3xl border border-dashed border-accent-border bg-gradient-to-br from-accent-soft via-surface to-cyan-50 p-8 text-center shadow-inner"
       >
-        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200/80">
+        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-primary ring-1 ring-accent-border/80">
           <Gift class="size-7" :stroke-width="1.75" aria-hidden="true" />
         </div>
-        <h2 class="mt-4 text-3xl font-black text-slate-950">Create your first reward</h2>
-        <p class="mx-auto mt-2 max-w-lg text-sm text-slate-600">
+        <h2 class="mt-4 text-3xl font-black text-ink">Create your first reward</h2>
+        <p class="mx-auto mt-2 max-w-lg text-sm text-ink-muted">
           Customers return more often when rewards feel achievable. Start with a 5-stamp win — guests love seeing progress move.
         </p>
         <div class="mt-6 flex flex-wrap justify-center gap-2">
@@ -802,13 +802,13 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
             v-for="template in rewardTemplates"
             :key="`empty-${template.id}`"
             type="button"
-            class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            class="rounded-2xl border border-white bg-surface/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             :disabled="saving"
             @click="applyTemplate(template)"
           >
             <p class="text-2xl">{{ template.emoji }}</p>
-            <p class="mt-2 font-black text-slate-900">{{ template.name }}</p>
-            <p class="mt-1 text-xs text-slate-500">{{ template.rewards[0]?.title }}</p>
+            <p class="mt-2 font-black text-ink">{{ template.name }}</p>
+            <p class="mt-1 text-xs text-ink-muted">{{ template.rewards[0]?.title }}</p>
           </button>
         </div>
       </section>
@@ -817,17 +817,17 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
     <!-- Delete confirmation -->
     <div
       v-if="deleteRewardTarget"
-      class="fixed inset-0 z-40 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm"
+      class="fixed inset-0 z-40 grid place-items-center bg-primary/40 px-4 backdrop-blur-sm"
       @click.self="closeDeleteModal"
     >
-      <AppCard wrapper-class="w-full max-w-md border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-black text-slate-950">Delete milestone?</h2>
-        <p class="mt-2 text-sm text-slate-600">
-          This permanently removes <span class="font-bold text-slate-900">{{ deleteRewardTarget.title }}</span>.
+      <AppCard wrapper-class="w-full max-w-md border-border bg-surface p-6">
+        <h2 class="text-2xl font-black text-ink">Delete milestone?</h2>
+        <p class="mt-2 text-sm text-ink-muted">
+          This permanently removes <span class="font-bold text-ink">{{ deleteRewardTarget.title }}</span>.
         </p>
         <div class="mt-5 grid gap-2 sm:grid-cols-2">
           <AppButton variant="secondary" :disabled="saving" @click="closeDeleteModal">Cancel</AppButton>
-          <AppButton :disabled="saving" class="bg-red-600 text-white hover:bg-red-700" @click="deleteReward(deleteRewardTarget)">
+          <AppButton :disabled="saving" class="bg-danger text-primary-text hover:bg-danger/90" @click="deleteReward(deleteRewardTarget)">
             {{ saving ? 'Deleting...' : 'Yes, delete' }}
           </AppButton>
         </div>

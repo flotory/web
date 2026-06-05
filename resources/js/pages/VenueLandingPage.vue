@@ -98,7 +98,7 @@ onMounted(loadLanding)
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#f7f8fb] text-slate-900">
+  <main class="min-h-screen bg-[#f7f8fb] text-ink">
     <div
       class="pointer-events-none fixed inset-0 opacity-40"
       aria-hidden="true"
@@ -106,11 +106,11 @@ onMounted(loadLanding)
     />
 
     <div v-if="loading" class="flex min-h-screen flex-col justify-center px-5">
-      <p class="text-center text-sm font-semibold text-slate-500">Loading rewards...</p>
+      <p class="text-center text-sm font-semibold text-ink-muted">Loading rewards...</p>
     </div>
 
     <div v-else-if="error" class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-5 text-center">
-      <p class="text-sm font-semibold text-red-600">{{ error }}</p>
+      <p class="text-sm font-semibold text-danger">{{ error }}</p>
       <AppButton variant="secondary" @click="loadLanding">Try again</AppButton>
     </div>
 
@@ -122,13 +122,13 @@ onMounted(loadLanding)
             alt=""
             class="size-full object-cover"
           >
-          <div class="absolute inset-0 bg-gradient-to-b from-slate-950/15 via-slate-950/5 to-[#f7f8fb]" />
+          <div class="absolute inset-0 bg-gradient-to-b from-primary/15 via-primary/5 to-[#f7f8fb]" />
         </div>
       </header>
 
       <section class="relative mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-md flex-col px-5 pb-8">
         <div class="relative z-10 -mt-8 flex items-center gap-3">
-          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md ring-1 ring-slate-200/80">
+          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface p-0.5 shadow-md ring-1 ring-border/80">
             <img
               :src="venueLogoUrl(landing.venue)"
               :alt="landing.venue.name"
@@ -136,8 +136,8 @@ onMounted(loadLanding)
             >
           </div>
           <div class="min-w-0 text-left">
-            <h1 class="truncate text-xl font-black tracking-tight text-slate-950">{{ landing.venue.name }}</h1>
-            <p class="mt-0.5 text-sm font-medium text-slate-500">
+            <h1 class="truncate text-xl font-black tracking-tight text-ink">{{ landing.venue.name }}</h1>
+            <p class="mt-0.5 text-sm font-medium text-ink-muted">
               {{ isMember ? 'Your loyalty card at this venue' : 'Earn stamps and unlock rewards.' }}
             </p>
           </div>
@@ -152,7 +152,7 @@ onMounted(loadLanding)
         <div class="mt-5 flex-1">
           <VenueLandingPreview :milestones="milestones" :stamps="previewStamps" />
 
-          <p v-if="!milestones.length" class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 text-center text-sm text-slate-500">
+          <p v-if="!milestones.length" class="mt-4 rounded-2xl border border-dashed border-border bg-surface/80 p-4 text-center text-sm text-ink-muted">
             Rewards are being set up. Join now and your first stamp is on the way.
           </p>
         </div>
@@ -171,11 +171,11 @@ onMounted(loadLanding)
             @click="handlePrimaryAction"
           />
 
-          <p v-if="!auth.isAuthenticated" class="text-center text-sm text-slate-500">
+          <p v-if="!auth.isAuthenticated" class="text-center text-sm text-ink-muted">
             Already a member?
             <button
               type="button"
-              class="font-bold text-slate-950 underline-offset-2 hover:underline"
+              class="font-bold text-ink underline-offset-2 hover:underline"
               @click="router.push(buildAuthRedirectWithVenue(slug, joinNextPath))"
             >
               Sign in

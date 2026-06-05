@@ -177,57 +177,57 @@ watch(latestRedeem, (payload) => {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
+    class="fixed inset-0 z-50 flex items-end justify-center bg-primary/70 p-4 backdrop-blur-sm sm:items-center"
     @click.self="emit('close')"
   >
     <div
-      class="w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-white shadow-[0_24px_80px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+      class="w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-surface shadow-[0_24px_80px_-20px_rgba(15,23,42,0.35)] ring-1 ring-border/80"
       role="dialog"
       aria-labelledby="claim-reward-title"
     >
-      <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-5 py-5 text-center">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-300/90">Redeem reward</p>
+      <div class="bg-gradient-to-br from-primary via-primary-soft to-primary px-5 py-5 text-center">
+        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-soft/90">Redeem reward</p>
         <h2 id="claim-reward-title" class="mt-2 text-xl font-black tracking-tight text-white">
           {{ item.reward.title }}
         </h2>
       </div>
 
       <div class="px-5 py-6">
-        <p v-if="loading" class="text-center text-sm font-medium text-slate-500">Preparing your code…</p>
-        <p v-else-if="error" class="rounded-2xl bg-red-50 p-3 text-center text-sm font-semibold text-red-700 ring-1 ring-red-100">{{ error }}</p>
+        <p v-if="loading" class="text-center text-sm font-medium text-ink-muted">Preparing your code…</p>
+        <p v-else-if="error" class="rounded-2xl bg-danger-soft p-3 text-center text-sm font-semibold text-danger ring-1 ring-danger/30">{{ error }}</p>
 
         <template v-else-if="session?.status === 'pending'">
-          <p class="text-center text-lg font-black tracking-tight text-slate-950">Show this to staff</p>
-          <p class="mt-1.5 text-center text-sm leading-relaxed text-slate-500">
-            Staff scans this in <span class="font-semibold text-slate-800">Scanner</span> to redeem your reward.
+          <p class="text-center text-lg font-black tracking-tight text-ink">Show this to staff</p>
+          <p class="mt-1.5 text-center text-sm leading-relaxed text-ink-muted">
+            Staff scans this in <span class="font-semibold text-ink">Scanner</span> to redeem your reward.
           </p>
 
           <div class="relative mx-auto mt-6 w-fit">
-            <div class="absolute -inset-3 rounded-[1.35rem] bg-gradient-to-br from-indigo-500/15 to-violet-500/10 blur-md" aria-hidden="true" />
-            <div class="relative mx-auto w-fit rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200 [&_canvas]:block">
+            <div class="absolute -inset-3 rounded-[1.35rem] bg-gradient-to-br from-primary/15 to-primary-soft/10 blur-md" aria-hidden="true" />
+            <div class="relative mx-auto w-fit rounded-2xl bg-surface p-3.5 shadow-sm ring-1 ring-border [&_canvas]:block">
               <QrcodeVue v-if="qrValue" :value="qrValue" :size="216" level="M" render-as="canvas" :margin="2" />
             </div>
           </div>
 
-          <div class="mt-6 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
-            <p class="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Expires in</p>
-            <p class="mt-0.5 text-center text-4xl font-black tabular-nums tracking-tight text-slate-900">
+          <div class="mt-6 rounded-2xl bg-surface-muted px-4 py-3 ring-1 ring-border">
+            <p class="text-center text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Expires in</p>
+            <p class="mt-0.5 text-center text-4xl font-black tabular-nums tracking-tight text-ink">
               {{ expiresLabel }}
             </p>
           </div>
         </template>
 
         <template v-else-if="session?.status === 'claimed'">
-          <div class="rounded-2xl bg-emerald-50 px-4 py-5 text-center ring-1 ring-emerald-100">
-            <p class="text-lg font-black text-emerald-950">Reward redeemed</p>
-            <p class="mt-1 text-sm text-emerald-800/80">You can close this screen.</p>
+          <div class="rounded-2xl bg-success-bg px-4 py-5 text-center ring-1 ring-success-border">
+            <p class="text-lg font-black text-success-text">Reward redeemed</p>
+            <p class="mt-1 text-sm text-success-text/80">You can close this screen.</p>
           </div>
         </template>
 
         <template v-else-if="session?.status === 'expired'">
-          <div class="rounded-2xl bg-slate-50 px-4 py-5 text-center ring-1 ring-slate-200">
-            <p class="text-lg font-black text-slate-950">Code expired</p>
-            <p class="mt-1 text-sm text-slate-500">Generate a fresh code for staff.</p>
+          <div class="rounded-2xl bg-surface-muted px-4 py-5 text-center ring-1 ring-border">
+            <p class="text-lg font-black text-ink">Code expired</p>
+            <p class="mt-1 text-sm text-ink-muted">Generate a fresh code for staff.</p>
             <AppButton class="mt-4 w-full" size="lg" @click="startSession">New code</AppButton>
           </div>
         </template>

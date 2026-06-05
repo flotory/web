@@ -1,19 +1,63 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   label: string
   value: string | number
   description: string
+  trend?: number | null
 }>()
+
+const trendClass = computed(() => {
+  if (props.trend === null || props.trend === undefined) {
+    return ''
+  }
+
+  if (props.trend > 0) {
+    return 'text-sm font-bold text-success'
+  }
+
+  if (props.trend < 0) {
+    return 'text-sm font-bold text-danger'
+  }
+
+  return 'text-sm font-bold text-ink-soft'
+})
+
+const trendLabel = computed(() => {
+  if (props.trend === null || props.trend === undefined) {
+    return null
+  }
+
+  const absolute = Math.abs(props.trend)
+  const formatted = Number.isInteger(absolute) ? `${absolute}` : absolute.toFixed(1)
+
+  if (props.trend > 0) {
+    return `↑ ${formatted}%`
+  }
+
+  if (props.trend < 0) {
+    return `↓ ${formatted}%`
+  }
+
+  return '— 0%'
+})
 </script>
 
 <template>
-  <div class="flex h-full min-h-[8.5rem] flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/40">
-    <p class="text-sm font-semibold text-slate-500">{{ label }}</p>
-    <p class="mt-3 text-4xl font-black tabular-nums tracking-tight text-slate-950">
-      {{ value }}
-    </p>
-    <p class="mt-auto pt-3 text-sm leading-snug text-slate-500">
+  <div class="flex h-full min-h-[8.5rem] flex-col rounded-2xl border border-border/80 bg-surface p-5 shadow-sm shadow-border/40">
+    <p class="text-sm font-semibold text-ink-muted">{{ label }}</p>
+    <div class="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <p class="text-4xl font-black tabular-nums tracking-tight text-ink">
+        {{ value }}
+      </p>
+      <p v-if="trendLabel" :class="trendClass">
+        {{ trendLabel }}
+      </p>
+    </div>
+    <p class="mt-auto pt-3 text-sm leading-snug text-ink-muted">
       {{ description }}
     </p>
+    <p v-if="trendLabel" class="mt-1 text-xs font-medium text-ink-soft">vs last month</p>
   </div>
 </template>

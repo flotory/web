@@ -38,20 +38,20 @@ export default function CustomerStampOrchestrator() {
           paddingVertical: 9,
           borderRadius: 999,
           borderWidth: 1,
-          borderColor: offline ? '#FED7AA' : colors.lavenderBorder,
-          backgroundColor: offline ? '#FFF7ED' : colors.lavender,
+          borderColor: offline ? colors.accentBorder : colors.lavenderBorder,
+          backgroundColor: offline ? colors.bg : colors.lavender,
         }}
       >
         <Ionicons
           name={offline ? 'cloud-offline-outline' : 'sync-outline'}
           size={16}
-          color={offline ? '#C2410C' : colors.primary}
+          color={offline ? colors.accentActive : colors.primary}
         />
         <Text
           style={withAppFont({
             fontSize: 12,
             fontWeight: '800',
-            color: offline ? '#C2410C' : colors.primary,
+            color: offline ? colors.accentActive : colors.primary,
           })}
         >
           {offline ? 'Offline — updates paused' : 'Sync delayed — retrying'}

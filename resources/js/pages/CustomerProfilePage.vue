@@ -122,7 +122,7 @@ onMounted(loadProfile)
   <AppShell>
     <RouterLink
       to="/customers"
-      class="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+      class="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-ink-muted transition hover:text-ink"
     >
       <ArrowLeft class="size-4" :stroke-width="2.2" />
       Back to customers
@@ -140,27 +140,27 @@ onMounted(loadProfile)
           <AppBadge :tone="activityTone(profile.stats.activity_status)">
             {{ activityLabel(profile.stats.activity_status) }}
           </AppBadge>
-          <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+          <h1 class="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">
             {{ profile.customer.user?.name ?? 'Customer' }}
           </h1>
-          <p class="mt-1 text-slate-500">{{ profile.customer.user?.email }}</p>
+          <p class="mt-1 text-ink-muted">{{ profile.customer.user?.email }}</p>
         </div>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <AppCard wrapper-class="p-3 text-center min-w-[5.5rem]">
-            <p class="text-xl font-black text-slate-950">{{ profile.stats.visits_count }}</p>
-            <p class="text-[11px] font-semibold uppercase text-slate-400">Visits</p>
+            <p class="text-xl font-black text-ink">{{ profile.stats.visits_count }}</p>
+            <p class="text-[11px] font-semibold uppercase text-ink-soft">Visits</p>
           </AppCard>
           <AppCard wrapper-class="p-3 text-center min-w-[5.5rem]">
-            <p class="text-xl font-black text-slate-950">{{ profile.stats.rewards_claimed_count }}</p>
-            <p class="text-[11px] font-semibold uppercase text-slate-400">Redeemed</p>
+            <p class="text-xl font-black text-ink">{{ profile.stats.rewards_claimed_count }}</p>
+            <p class="text-[11px] font-semibold uppercase text-ink-soft">Redeemed</p>
           </AppCard>
           <AppCard wrapper-class="p-3 text-center min-w-[5.5rem]">
-            <p class="text-xl font-black text-amber-700">{{ profile.stats.stamps }}</p>
-            <p class="text-[11px] font-semibold uppercase text-slate-400">Stamps</p>
+            <p class="text-xl font-black text-accent-active">{{ profile.stats.stamps }}</p>
+            <p class="text-[11px] font-semibold uppercase text-ink-soft">Stamps</p>
           </AppCard>
           <AppCard wrapper-class="p-3 text-center min-w-[5.5rem]">
-            <p class="text-sm font-bold text-slate-800">{{ formatRelativeDays(profile.stats.last_visit_at) }}</p>
-            <p class="text-[11px] font-semibold uppercase text-slate-400">Last visit</p>
+            <p class="text-sm font-bold text-ink">{{ formatRelativeDays(profile.stats.last_visit_at) }}</p>
+            <p class="text-[11px] font-semibold uppercase text-ink-soft">Last visit</p>
           </AppCard>
         </div>
       </div>
@@ -168,59 +168,59 @@ onMounted(loadProfile)
       <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div class="space-y-6">
           <AppCard>
-            <h2 class="text-lg font-black text-slate-950">Activity timeline</h2>
-            <p class="mt-1 text-sm text-slate-500">
+            <h2 class="text-lg font-black text-ink">Activity timeline</h2>
+            <p class="mt-1 text-sm text-ink-muted">
               Joined {{ formatShortDate(profile.stats.joined_at) }} ·
               {{ profile.stats.rewards_unlocked_count }} unlocks ·
               {{ profile.stats.rewards_claimed_count }} redemptions
             </p>
-            <ol v-if="profile.timeline.length" class="mt-5 space-y-4 border-l-2 border-slate-100 pl-5">
+            <ol v-if="profile.timeline.length" class="mt-5 space-y-4 border-l-2 border-border pl-5">
               <li
                 v-for="(event, index) in profile.timeline"
                 :key="`${event.type}-${event.occurred_at}-${index}`"
                 class="relative"
               >
                 <span
-                  class="absolute -left-[1.65rem] top-0.5 grid size-6 place-items-center rounded-full bg-white text-xs ring-2 ring-slate-100"
+                  class="absolute -left-[1.65rem] top-0.5 grid size-6 place-items-center rounded-full bg-surface text-xs ring-2 ring-border"
                   aria-hidden="true"
                 >
                   {{ timelineIcon(event.type) }}
                 </span>
-                <p class="font-semibold text-slate-900">{{ event.title }}</p>
-                <p class="text-xs text-slate-400">
+                <p class="font-semibold text-ink">{{ event.title }}</p>
+                <p class="text-xs text-ink-soft">
                   {{ formatShortDate(event.occurred_at) }}
                   <span v-if="event.detail"> · {{ event.detail }}</span>
                 </p>
               </li>
             </ol>
-            <p v-else class="mt-4 text-sm text-slate-500">No activity yet.</p>
+            <p v-else class="mt-4 text-sm text-ink-muted">No activity yet.</p>
           </AppCard>
 
           <AppCard>
-            <h2 class="text-lg font-black text-slate-950">Visit history</h2>
-            <ul v-if="profile.visits.length" class="mt-4 divide-y divide-slate-100">
+            <h2 class="text-lg font-black text-ink">Visit history</h2>
+            <ul v-if="profile.visits.length" class="mt-4 divide-y divide-border">
               <li
                 v-for="visit in profile.visits"
                 :key="visit.id"
                 class="flex items-center justify-between gap-3 py-3 text-sm"
               >
-                <span class="font-semibold text-slate-800">{{ formatShortDate(visit.created_at) }}</span>
-                <span class="text-slate-500">{{ visit.staff_name ? `Stamp by ${visit.staff_name}` : 'Stamp recorded' }}</span>
+                <span class="font-semibold text-ink">{{ formatShortDate(visit.created_at) }}</span>
+                <span class="text-ink-muted">{{ visit.staff_name ? `Stamp by ${visit.staff_name}` : 'Stamp recorded' }}</span>
               </li>
             </ul>
-            <p v-else class="mt-4 text-sm text-slate-500">No visits recorded yet.</p>
+            <p v-else class="mt-4 text-sm text-ink-muted">No visits recorded yet.</p>
           </AppCard>
 
           <AppCard>
-            <h2 class="text-lg font-black text-slate-950">Reward history</h2>
-            <ul v-if="profile.reward_history.length" class="mt-4 divide-y divide-slate-100">
+            <h2 class="text-lg font-black text-ink">Reward history</h2>
+            <ul v-if="profile.reward_history.length" class="mt-4 divide-y divide-border">
               <li
                 v-for="reward in profile.reward_history"
                 :key="reward.id"
                 class="py-3 text-sm"
               >
-                <p class="font-semibold text-slate-900">{{ reward.title }}</p>
-                <p class="text-slate-500">
+                <p class="font-semibold text-ink">{{ reward.title }}</p>
+                <p class="text-ink-muted">
                   Unlocked {{ formatShortDate(reward.unlocked_at) }}
                   <span v-if="reward.claimed_at">
                     · Redeemed {{ formatShortDate(reward.claimed_at) }}
@@ -228,21 +228,21 @@ onMounted(loadProfile)
                 </p>
               </li>
             </ul>
-            <p v-else class="mt-4 text-sm text-slate-500">No rewards unlocked yet.</p>
+            <p v-else class="mt-4 text-sm text-ink-muted">No rewards unlocked yet.</p>
           </AppCard>
         </div>
 
         <div class="space-y-6">
           <AppCard>
-            <h2 class="text-lg font-black text-slate-950">Birthday</h2>
-            <p class="mt-1 text-sm text-slate-500">For future birthday campaigns.</p>
+            <h2 class="text-lg font-black text-ink">Birthday</h2>
+            <p class="mt-1 text-sm text-ink-muted">For future birthday campaigns.</p>
             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label class="flex-1 text-sm font-semibold text-slate-700">
+              <label class="flex-1 text-sm font-semibold text-ink-muted">
                 Date
                 <input
                   v-model="birthday"
                   type="date"
-                  class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-900 shadow-sm"
+                  class="mt-1 w-full rounded-xl border border-border px-3 py-2.5 text-sm font-medium text-ink shadow-sm"
                 >
               </label>
               <AppButton :disabled="savingBirthday" @click="saveBirthday">
@@ -252,25 +252,25 @@ onMounted(loadProfile)
           </AppCard>
 
           <AppCard>
-            <h2 class="text-lg font-black text-slate-950">Notes</h2>
-            <p class="mt-1 text-sm text-slate-500">Private to your venue team.</p>
+            <h2 class="text-lg font-black text-ink">Notes</h2>
+            <p class="mt-1 text-sm text-ink-muted">Private to your venue team.</p>
             <textarea
               v-model="noteBody"
               rows="3"
-              class="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm"
+              class="mt-4 w-full rounded-xl border border-border px-3 py-2.5 text-sm text-ink shadow-sm"
               placeholder="e.g. Prefers oat milk, visits on weekends…"
             />
             <AppButton class="mt-3" :disabled="savingNote || !noteBody.trim()" @click="addNote">
               {{ savingNote ? 'Adding…' : 'Add note' }}
             </AppButton>
-            <ul v-if="profile.notes.length" class="mt-5 space-y-3 border-t border-slate-100 pt-4">
+            <ul v-if="profile.notes.length" class="mt-5 space-y-3 border-t border-border pt-4">
               <li
                 v-for="note in profile.notes"
                 :key="note.id"
-                class="rounded-xl bg-slate-50 px-3 py-3 text-sm"
+                class="rounded-xl bg-surface-muted px-3 py-3 text-sm"
               >
-                <p class="text-slate-800">{{ note.body }}</p>
-                <p class="mt-2 text-xs text-slate-400">
+                <p class="text-ink">{{ note.body }}</p>
+                <p class="mt-2 text-xs text-ink-soft">
                   {{ note.author_name ?? 'Team' }} · {{ formatShortDate(note.created_at) }}
                 </p>
               </li>

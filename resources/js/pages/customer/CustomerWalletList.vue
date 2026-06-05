@@ -83,8 +83,8 @@ onMounted(() => {
   <AppShell>
     <div class="mx-auto w-full max-w-md px-4 pb-8 pt-4">
       <header class="mb-5">
-        <h1 class="text-2xl font-black tracking-tight text-slate-950">Wallet</h1>
-        <p class="mt-1 text-sm text-slate-500">Progress at each venue — use My QR when you order.</p>
+        <h1 class="text-2xl font-black tracking-tight text-ink">Wallet</h1>
+        <p class="mt-1 text-sm text-ink-muted">Progress at each venue — use My QR when you order.</p>
         <RouterLink to="/my-qr" class="mt-4 block">
           <AppButton class="w-full">Show My QR</AppButton>
         </RouterLink>
@@ -112,16 +112,16 @@ onMounted(() => {
 
       <template v-else>
         <label class="relative mb-4 block">
-          <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft" />
           <input
             v-model="search"
             type="search"
             placeholder="Search venues"
-            class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 shadow-sm outline-none ring-indigo-500/30 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2"
+            class="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-ink shadow-sm outline-none ring-accent/30 placeholder:text-ink-soft focus:border-accent-border focus:ring-2"
           >
         </label>
 
-        <p v-if="!filteredCards.length" class="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-6 text-center text-sm text-slate-500">
+        <p v-if="!filteredCards.length" class="rounded-2xl border border-dashed border-border bg-surface/80 p-6 text-center text-sm text-ink-muted">
           No venues match your search.
         </p>
 
@@ -129,7 +129,7 @@ onMounted(() => {
           <li v-for="card in filteredCards" :key="card.id">
             <button
               type="button"
-              class="group w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white text-left shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] transition hover:border-indigo-200 hover:shadow-[0_20px_48px_-24px_rgba(79,70,229,0.22)]"
+              class="group w-full overflow-hidden rounded-3xl border border-border/90 bg-surface text-left shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] transition hover:border-accent-border hover:shadow-[0_20px_48px_-24px_rgba(79,70,229,0.22)]"
               @click="openCard(card)"
             >
               <div class="relative h-28 w-full overflow-hidden">
@@ -139,7 +139,7 @@ onMounted(() => {
                   :alt="card.venue.name"
                   class="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
                 >
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
+                <div class="absolute inset-0 bg-gradient-to-t from-primary/75 via-primary/25 to-transparent" />
                 <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
                   <div class="min-w-0">
                     <p class="truncate text-base font-bold text-white">{{ card.venue?.name }}</p>
@@ -159,18 +159,18 @@ onMounted(() => {
 
               <div class="space-y-2 px-4 py-3.5">
                 <div class="flex items-center justify-between gap-3 text-sm">
-                  <span class="font-semibold text-slate-800">
+                  <span class="font-semibold text-ink">
                     {{ card.summary?.stamps ?? card.stamps }} / {{ card.summary?.max_stamps ?? 10 }} stamps
                   </span>
-                  <ChevronRight class="size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+                  <ChevronRight class="size-4 shrink-0 text-ink-soft transition group-hover:translate-x-0.5 group-hover:text-accent" />
                 </div>
-                <div class="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div class="h-2 overflow-hidden rounded-full bg-surface-muted">
                   <div
-                    class="h-full rounded-full bg-indigo-500 transition-all"
+                    class="h-full rounded-full bg-primary transition-all"
                     :style="{ width: `${progressPercent(card)}%` }"
                   />
                 </div>
-                <p v-if="card.summary?.next_reward_title" class="truncate text-xs text-slate-500">
+                <p v-if="card.summary?.next_reward_title" class="truncate text-xs text-ink-muted">
                   <template v-if="(card.summary?.stamps_to_next ?? 0) > 0">
                     {{ card.summary?.stamps_to_next }} more for {{ card.summary?.next_reward_title }}
                   </template>

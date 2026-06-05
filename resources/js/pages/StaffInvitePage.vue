@@ -144,20 +144,20 @@ async function logoutForInvite() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_55%)] px-4 py-8 text-slate-100 sm:py-12">
+  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-md">
       <RouterLink to="/" class="mb-6 inline-flex">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-        <p v-if="loading" class="text-sm font-bold text-slate-500">Loading invitation...</p>
+      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+        <p v-if="loading" class="text-sm font-bold text-ink-muted">Loading invitation...</p>
 
         <template v-else-if="!inviteValid">
           <AppBadge tone="slate">Invitation</AppBadge>
-          <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-950">Link unavailable</h1>
-          <p class="mt-2 text-sm font-semibold text-slate-500">{{ invalidMessage }}</p>
-          <p v-if="preview?.venue?.name" class="mt-4 text-sm font-semibold text-slate-600">
+          <h1 class="mt-4 text-3xl font-black tracking-tight text-ink">Link unavailable</h1>
+          <p class="mt-2 text-sm font-semibold text-ink-muted">{{ invalidMessage }}</p>
+          <p v-if="preview?.venue?.name" class="mt-4 text-sm font-semibold text-ink-muted">
             Venue: <strong>{{ preview.venue.name }}</strong>
           </p>
           <RouterLink to="/login" class="mt-6 inline-block">
@@ -167,23 +167,23 @@ async function logoutForInvite() {
 
         <template v-else-if="preview">
           <AppBadge tone="blue">Team invitation</AppBadge>
-          <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-950">
+          <h1 class="mt-4 text-3xl font-black tracking-tight text-ink">
             Join {{ preview.venue.name }}
           </h1>
-          <p class="mt-2 text-sm font-semibold text-slate-500">
+          <p class="mt-2 text-sm font-semibold text-ink-muted">
             <strong>{{ preview.inviter.name }}</strong> invited you to join as staff on Flotory.
           </p>
 
-          <ul class="mt-4 space-y-2 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600 ring-1 ring-slate-200">
+          <ul class="mt-4 space-y-2 rounded-2xl bg-surface-muted p-4 text-sm font-semibold text-ink-muted ring-1 ring-border">
             <li>Open the scanner</li>
             <li>Add customer stamps</li>
             <li>Help customers redeem rewards</li>
           </ul>
 
-          <p v-if="error" class="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+          <p v-if="error" class="mt-4 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
 
           <div v-if="accountExists && !auth.isAuthenticated" class="mt-6 space-y-3">
-            <p class="text-sm font-semibold text-slate-600">
+            <p class="text-sm font-semibold text-ink-muted">
               An account already exists for <strong>{{ preview.email }}</strong>. Sign in to accept.
             </p>
             <RouterLink :to="{ name: 'login', query: { email: preview.email, redirect: loginRedirect } }">
@@ -191,7 +191,7 @@ async function logoutForInvite() {
             </RouterLink>
           </div>
 
-          <div v-else-if="auth.isAuthenticated && emailMatches === false" class="mt-6 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-950 ring-1 ring-amber-200">
+          <div v-else-if="auth.isAuthenticated && emailMatches === false" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active ring-1 ring-accent-border">
             You are signed in as a different user. Log out, then sign in with <strong>{{ preview.email }}</strong>.
             <AppButton class="mt-4 w-full" variant="secondary" size="sm" @click="logoutForInvite">
               Log out
@@ -215,19 +215,19 @@ async function logoutForInvite() {
 
           <form v-else class="mt-6 grid gap-3" @submit.prevent="registerAndJoin">
             <div>
-              <label class="text-sm font-bold text-slate-600" for="invite-name">Your name</label>
-              <input id="invite-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-950 outline-none focus:border-slate-400 focus:bg-white" placeholder="Alex Rivera">
+              <label class="text-sm font-bold text-ink-muted" for="invite-name">Your name</label>
+              <input id="invite-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft focus:bg-surface" placeholder="Alex Rivera">
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="invite-email">Email</label>
-              <input id="invite-email" :value="preview.email" readonly class="mt-2 h-12 w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 text-sm font-medium text-slate-600">
+              <label class="text-sm font-bold text-ink-muted" for="invite-email">Email</label>
+              <input id="invite-email" :value="preview.email" readonly class="mt-2 h-12 w-full cursor-not-allowed rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink-muted">
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="invite-password">Password</label>
+              <label class="text-sm font-bold text-ink-muted" for="invite-password">Password</label>
               <input id="invite-password" v-model="password" required type="password" autocomplete="new-password" :class="authFieldClass">
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="invite-password-confirm">Confirm password</label>
+              <label class="text-sm font-bold text-ink-muted" for="invite-password-confirm">Confirm password</label>
               <input id="invite-password-confirm" v-model="passwordConfirmation" required type="password" autocomplete="new-password" :class="authFieldClass">
             </div>
             <AsyncActionButton

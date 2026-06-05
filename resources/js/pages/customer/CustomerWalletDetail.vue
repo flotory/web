@@ -383,10 +383,10 @@ watch(
         <header v-if="card.venue" class="relative z-10">
           <div class="relative h-36 w-full overflow-hidden sm:h-40">
             <img :src="venueCoverUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-slate-950/10" />
+            <div class="absolute inset-0 bg-gradient-to-t from-primary/85 via-primary/35 to-primary/10" />
             <button
               type="button"
-              class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25"
+              class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-surface/15 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-surface/25"
               @click="backToWallet"
             >
               <ChevronLeft class="size-4" />
@@ -400,22 +400,22 @@ watch(
         </header>
 
         <section class="relative z-10 -mt-4 flex flex-col px-4 pb-8">
-          <AppCard wrapper-class="w-full rounded-3xl border border-amber-200/80 bg-amber-50/60 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.12)] sm:p-6">
-            <h2 class="text-center text-lg font-black text-slate-950">One QR for every venue</h2>
-            <p class="mt-1 text-center text-sm text-slate-600">
-              Open <span class="font-bold text-slate-950">My QR</span> at the counter — stamps apply to {{ card.venue?.name ?? 'this venue' }}.
+          <AppCard wrapper-class="w-full rounded-3xl border border-accent-border/80 bg-accent-soft/60 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.12)] sm:p-6">
+            <h2 class="text-center text-lg font-black text-ink">One QR for every venue</h2>
+            <p class="mt-1 text-center text-sm text-ink-muted">
+              Open <span class="font-bold text-ink">My QR</span> at the counter — stamps apply to {{ card.venue?.name ?? 'this venue' }}.
             </p>
             <RouterLink to="/my-qr" class="mt-4 block">
               <AppButton class="w-full">Show My QR</AppButton>
             </RouterLink>
           </AppCard>
 
-          <AppCard wrapper-class="mt-5 w-full rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">
+          <AppCard wrapper-class="mt-5 w-full rounded-3xl border border-border bg-surface/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">
             <div class="flex items-end justify-between gap-3">
               <div>
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Your progress</p>
-                <p class="mt-2 text-4xl font-black leading-none text-slate-950">{{ previewStamps }}</p>
-                <p class="mt-1 text-sm font-medium text-slate-500">stamps collected</p>
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">Your progress</p>
+                <p class="mt-2 text-4xl font-black leading-none text-ink">{{ previewStamps }}</p>
+                <p class="mt-1 text-sm font-medium text-ink-muted">stamps collected</p>
               </div>
             </div>
 
@@ -432,11 +432,11 @@ watch(
                   :class="[
                     isGiftStamp(stamp)
                       ? isStampCollected(stamp)
-                        ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
-                        : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200'
+                        ? 'bg-accent-soft text-accent-active ring-1 ring-accent-border'
+                        : 'bg-surface-muted text-ink-soft ring-1 ring-border'
                       : isStampCollected(stamp)
-                        ? 'bg-slate-950 text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.6)]'
-                        : 'bg-white text-slate-400 ring-1 ring-slate-200',
+                        ? 'bg-primary text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.6)]'
+                        : 'bg-surface text-ink-soft ring-1 ring-border',
                     isStampAnimating(stamp) ? 'scale-105 animate-pulse' : '',
                   ]"
                 >
@@ -450,11 +450,11 @@ watch(
 
           <AppCard
             v-if="readyReward"
-            wrapper-class="mt-5 w-full rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5 shadow-[0_16px_36px_-24px_rgba(16,185,129,0.35)] sm:p-6"
+            wrapper-class="mt-5 w-full rounded-3xl border border-success-border bg-success-bg/70 p-5 shadow-[0_16px_36px_-24px_rgba(16,185,129,0.35)] sm:p-6"
           >
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Reward ready</p>
-            <h2 class="mt-2 text-2xl font-black text-slate-950">🎉 {{ readyReward.title }}</h2>
-            <p class="mt-1 text-sm font-medium text-slate-600">Staff scans your claim QR to redeem.</p>
+            <p class="text-xs font-bold uppercase tracking-[0.14em] text-success-text">Reward ready</p>
+            <h2 class="mt-2 text-2xl font-black text-ink">🎉 {{ readyReward.title }}</h2>
+            <p class="mt-1 text-sm font-medium text-ink-muted">Staff scans your claim QR to redeem.</p>
             <AppButton
               class="mt-4 w-full"
               size="lg"

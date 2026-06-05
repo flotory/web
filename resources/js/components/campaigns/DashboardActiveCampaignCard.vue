@@ -36,7 +36,14 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
 </script>
 
 <template>
-  <article class="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
+  <article
+    class="flex h-full flex-col rounded-2xl border p-4 shadow-sm"
+    :style="{
+      backgroundColor: 'var(--flotory-campaign-bg)',
+      borderColor: 'var(--flotory-campaign-border)',
+      color: 'var(--flotory-primary-text)',
+    }"
+  >
     <div class="flex items-start justify-between gap-3">
       <div class="flex min-w-0 items-center gap-3">
         <CampaignIcon
@@ -44,11 +51,16 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
           :tone="campaignTemplateTone(campaign.template_id)"
           size="md"
         />
-        <h3 class="truncate text-base font-bold text-slate-950">
+        <h3 class="truncate text-base font-bold text-white">
           {{ campaign.name }}
         </h3>
       </div>
-      <span class="shrink-0 text-xs font-bold text-emerald-600">Active</span>
+      <span
+        class="shrink-0 text-xs font-bold"
+        :style="{ color: 'var(--flotory-accent)' }"
+      >
+        Active
+      </span>
     </div>
 
     <div class="mt-4 flex flex-1 items-start justify-between gap-4">
@@ -58,10 +70,11 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
             v-for="day in WEEKDAYS"
             :key="day.iso"
             class="rounded-md px-2 py-0.5 text-xs font-semibold"
-            :class="
+            :class="activeDays.includes(day.iso) ? 'text-white' : 'text-white/40'"
+            :style="
               activeDays.includes(day.iso)
-                ? 'bg-slate-950 text-white'
-                : 'text-slate-400'
+                ? { backgroundColor: 'rgba(255,255,255,0.14)' }
+                : undefined
             "
           >
             {{ day.short }}
@@ -70,19 +83,20 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
 
         <p
           v-if="timeRange"
-          class="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-500"
+          class="mt-2 flex items-center gap-1.5 text-xs font-medium text-white/70"
         >
           <Clock3 class="size-3.5 shrink-0" aria-hidden="true" />
           {{ timeRange }}
         </p>
 
         <div v-if="criteriaChips.length" class="space-y-1.5">
-          <p class="text-xs font-medium text-slate-500">Customers with</p>
+          <p class="text-xs font-medium text-white/70">Customers with</p>
           <div class="flex flex-wrap gap-1.5">
             <span
               v-for="chip in criteriaChips"
               :key="chip"
-              class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
+              class="rounded-md px-2 py-0.5 text-xs font-semibold text-white/90 ring-1 ring-white/15"
+              :style="{ backgroundColor: 'rgba(255,255,255,0.08)' }"
             >
               {{ chip }}
             </span>
@@ -91,23 +105,29 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
 
         <p
           v-if="!showDayRow && !timeRange && !criteriaChips.length && campaign.schedule_summary"
-          class="text-xs font-medium leading-relaxed text-slate-500"
+          class="text-xs font-medium leading-relaxed text-white/75"
         >
           {{ campaign.schedule_summary }}
         </p>
       </div>
 
       <div class="shrink-0 text-right">
-        <p class="text-3xl font-black leading-none tabular-nums text-slate-950">
+        <p
+          class="text-3xl font-black leading-none tabular-nums"
+          :style="{ color: 'var(--flotory-accent)' }"
+        >
           {{ multiplier }}×
         </p>
-        <p class="mt-0.5 text-xs font-semibold text-slate-500">stamps</p>
+        <p class="mt-0.5 text-xs font-semibold text-white/65">stamps</p>
       </div>
     </div>
 
-    <div class="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-slate-500">
-        <span class="font-semibold text-slate-700">Targets:</span>
+    <div
+      class="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"
+      :style="{ borderColor: 'rgba(255,255,255,0.12)' }"
+    >
+      <p class="text-sm text-white/75">
+        <span class="font-semibold text-white/90">Targets:</span>
         {{ targetLabel }}
       </p>
 
@@ -120,7 +140,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
           <Pencil class="size-3.5" aria-hidden="true" />
           Edit
         </AppButton>
-        <AppButton variant="ghost" size="sm" class="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700" @click="emit('end')">
+        <AppButton variant="ghost" size="sm" class="gap-1.5 text-danger/70 hover:bg-surface/10 hover:text-danger/60" @click="emit('end')">
           <Trash2 class="size-3.5" aria-hidden="true" />
           End
         </AppButton>

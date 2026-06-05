@@ -147,7 +147,7 @@ export default function MilestonePath({
       <Animated.View
         style={{
           transform: [{ scale: celebrateScale }, { rotate: celebrateRotateDeg }],
-          shadowColor: '#F59E0B',
+          shadowColor: colors.accent,
           shadowOpacity: celebrateGlow,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: 4 },
@@ -183,9 +183,9 @@ export default function MilestonePath({
               borderRadius,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#E2E8F0',
+              backgroundColor: colors.surfaceMuted,
               borderWidth: 1,
-              borderColor: '#CBD5E1',
+              borderColor: colors.border,
             }}
           >
             <Ionicons name="checkmark-done" size={Math.round(16 * sizeScale)} color={colors.inkMuted} />
@@ -194,23 +194,23 @@ export default function MilestonePath({
       )
     }
 
-    let backgroundColor = '#FFFFFF'
-    let borderColor = '#E2E8F0'
-    let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : '#94A3B8'
+    let backgroundColor = colors.surface
+    let borderColor = colors.border
+    let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : colors.inkSoft
 
     if (filled) {
       backgroundColor = colors.success
       borderColor = colors.successBorder
-      textColor = '#FFFFFF'
+      textColor = colors.primaryText
     } else if (isGift) {
-      backgroundColor = '#FEF9C3'
-      borderColor = '#FDE68A'
-      textColor = '#A16207'
+      backgroundColor = colors.accentSoft
+      borderColor = colors.accentBorder
+      textColor = colors.accentActive
     }
 
     const content = isCelebrating ? null : filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
-    const celebrateBackground = '#FEF9C3'
-    const celebrateBorder = '#FCD34D'
+    const celebrateBackground = colors.accentSoft
+    const celebrateBorder = colors.accent
 
     const cell = (
       <View
@@ -251,7 +251,7 @@ export default function MilestonePath({
           key={stamp}
           style={{
             transform: [{ scale: giftPulse }, { translateY: giftLift }],
-            shadowColor: '#F59E0B',
+            shadowColor: colors.accent,
             shadowOpacity: giftGlow,
             shadowRadius: 10,
             shadowOffset: { width: 0, height: 3 },

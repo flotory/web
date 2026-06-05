@@ -126,21 +126,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,_#0f172a,_#020617_55%)] px-4 py-8 text-slate-100 sm:py-12">
+  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-md">
       <RouterLink to="/" class="mb-6 inline-flex">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-slate-200/20 bg-white/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
       <AppBadge tone="green">{{ venueSlug ? 'Join rewards in seconds' : authIntent === 'owner' ? 'Launch Flotory' : 'Join Flotory' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-950">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
-      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
+      <p class="mt-2 text-sm leading-relaxed text-ink-muted">
         {{ venueSlug ? 'Create your account and open this venue loyalty card instantly.' : authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting stamps.' : 'Create your account in seconds and keep your loyalty progress in one place.' }}
       </p>
 
       <AppButton
-        class="mt-6 w-full border border-slate-300 bg-slate-50 text-slate-900 shadow-sm transition hover:bg-slate-100"
+        class="mt-6 w-full border border-border bg-surface-muted text-ink shadow-sm transition hover:bg-surface-muted"
         size="lg"
         :disabled="loading"
         @click="continueWithGoogle"
@@ -156,28 +156,28 @@ onMounted(() => {
         </span>
       </AppButton>
 
-      <div class="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-        <span class="h-px flex-1 bg-slate-200" />
+      <div class="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
+        <span class="h-px flex-1 bg-border" />
         or
-        <span class="h-px flex-1 bg-slate-200" />
+        <span class="h-px flex-1 bg-border" />
       </div>
 
       <form class="mt-6 space-y-4" @submit.prevent="submit">
         <div>
-          <label class="text-sm font-bold text-slate-600" for="name">Name</label>
+          <label class="text-sm font-bold text-ink-muted" for="name">Name</label>
           <input id="name" v-model="name" required :class="authFieldClass">
         </div>
         <div>
-          <label class="text-sm font-bold text-slate-600" for="email">Email</label>
+          <label class="text-sm font-bold text-ink-muted" for="email">Email</label>
           <input id="email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
         </div>
         <div>
-          <label class="text-sm font-bold text-slate-600" for="password">Password</label>
+          <label class="text-sm font-bold text-ink-muted" for="password">Password</label>
           <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
         </div>
-        <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">
           {{ error }}
-          <RouterLink v-if="error.includes('Log in')" :to="loginLink" class="mt-2 block font-black text-red-900 underline">
+          <RouterLink v-if="error.includes('Log in')" :to="loginLink" class="mt-2 block font-black text-danger underline">
             Go to log in
           </RouterLink>
         </p>
@@ -186,18 +186,18 @@ onMounted(() => {
         </AppButton>
       </form>
 
-      <p class="mt-5 text-center text-sm text-slate-500">
+      <p class="mt-5 text-center text-sm text-ink-muted">
         Already have an account?
-        <RouterLink :to="loginLink" class="font-bold text-slate-950">
+        <RouterLink :to="loginLink" class="font-bold text-ink">
           Log in
         </RouterLink>
       </p>
       </AppCard>
 
-      <div v-if="landing" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+      <div v-if="landing" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
         <div class="mt-3 flex items-center gap-3">
-          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
+          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-surface/10">
             <img :src="venueLogoThumbUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
           </div>
           <div>
@@ -205,7 +205,7 @@ onMounted(() => {
             <p class="text-xs text-white/70">Start collecting rewards</p>
           </div>
         </div>
-        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-surface/5 p-2 ring-1 ring-white/10">
           <img :src="rewardThumbUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}
@@ -215,23 +215,23 @@ onMounted(() => {
         <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you collect more stamps.</p>
       </div>
 
-      <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+      <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>
         <p class="mt-2 text-sm leading-relaxed text-white/85">
           QR-based loyalty for cafes, bars, and restaurants. Set up in minutes — guests use their phone, no app download.
         </p>
         <ol class="mt-4 grid gap-2 sm:grid-cols-3">
-          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">1</p>
             <p class="mt-1 text-sm font-bold text-white">Guests scan your QR</p>
             <p class="mt-1 text-xs text-white/70">They join instantly from the table.</p>
           </li>
-          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">2</p>
             <p class="mt-1 text-sm font-bold text-white">Staff add stamps</p>
             <p class="mt-1 text-xs text-white/70">Each stamp adds progress in seconds.</p>
           </li>
-          <li class="rounded-2xl border border-white/10 bg-white/10 p-3">
+          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">3</p>
             <p class="mt-1 text-sm font-bold text-white">Rewards bring them back</p>
             <p class="mt-1 text-xs text-white/70">Milestones unlock perks guests actually claim.</p>

@@ -25,14 +25,14 @@ withDefaults(
 <template>
   <component
     :is="bare ? 'div' : AppCard"
-    :class="bare ? cn(compact && 'py-2', bordered && 'rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4') : undefined"
-    :wrapper-class="!bare ? cn(compact && 'py-6', bordered && 'border-dashed border-slate-300 bg-slate-50/80') : undefined"
+    :class="bare ? cn(compact && 'py-2', bordered && 'rounded-2xl border border-dashed border-border bg-surface-muted/80 p-4') : undefined"
+    :wrapper-class="!bare ? cn(compact && 'py-6', bordered && 'border-dashed border-border bg-surface-muted/80') : undefined"
   >
     <div class="text-center">
       <div
         v-if="icon"
         :class="[
-          'mx-auto grid place-items-center rounded-2xl bg-slate-100 text-slate-600 ring-1 ring-slate-200/80',
+          'mx-auto grid place-items-center rounded-2xl bg-surface-muted text-ink-muted ring-1 ring-border/80',
           compact ? 'size-12' : 'size-14',
           icon ? 'mt-0' : '',
         ]"
@@ -46,14 +46,14 @@ withDefaults(
       </div>
       <h2
         :class="[
-          'font-black tracking-tight text-slate-950',
+          'font-black tracking-tight text-ink',
           icon ? 'mt-3' : '',
           compact ? 'text-base' : 'text-lg',
         ]"
       >
         {{ title }}
       </h2>
-      <p v-if="description" class="mx-auto mt-2 max-w-sm text-sm font-semibold text-slate-500">
+      <p v-if="description" class="mx-auto mt-2 max-w-sm text-sm font-semibold text-ink-muted">
         {{ description }}
       </p>
       <div v-if="$slots.default" class="mt-4 flex flex-wrap items-center justify-center gap-2">

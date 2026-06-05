@@ -43,15 +43,15 @@ const {
   <AppShell>
     <div class="mx-auto max-w-5xl space-y-10 pb-16">
       <header>
-        <p class="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Loyalty</p>
-        <h1 class="mt-2 text-3xl font-black text-slate-900">Campaigns</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-primary">Loyalty</p>
+        <h1 class="mt-2 text-3xl font-black text-ink">Campaigns</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
           Run multiple campaigns. Customers receive the
-          <strong class="font-semibold text-slate-800">highest eligible multiplier</strong> — bonuses never stack together.
+          <strong class="font-semibold text-ink">highest eligible multiplier</strong> — bonuses never stack together.
         </p>
       </header>
 
-      <div v-if="!hasVenue && !loading" class="rounded-3xl border border-dashed border-slate-300 p-8">
+      <div v-if="!hasVenue && !loading" class="rounded-3xl border border-dashed border-border p-8">
         <EmptyState :icon="Store" title="Select a venue" description="Choose a venue in the header to manage campaigns." />
       </div>
 
@@ -60,12 +60,12 @@ const {
       <template v-else-if="hasVenue">
         <section>
           <div>
-            <h2 class="text-xl font-black text-slate-950">Active campaigns</h2>
-            <p class="mt-1 text-sm text-slate-500">Stamp bonuses currently turned on for your venue.</p>
+            <h2 class="text-xl font-black text-ink">Active campaigns</h2>
+            <p class="mt-1 text-sm text-ink-muted">Stamp bonuses currently turned on for your venue.</p>
           </div>
 
           <div v-if="loading" class="mt-5 grid gap-4 sm:grid-cols-2">
-            <div v-for="index in 2" :key="index" class="h-40 animate-pulse rounded-3xl bg-slate-100" />
+            <div v-for="index in 2" :key="index" class="h-40 animate-pulse rounded-3xl bg-surface-muted" />
           </div>
 
           <div v-else-if="activeCampaigns.length" class="mt-5 grid items-stretch gap-4 sm:grid-cols-2">
@@ -81,18 +81,18 @@ const {
 
           <p
             v-else
-            class="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 text-center text-sm font-semibold text-slate-500"
+            class="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/80 px-4 py-6 text-center text-sm font-semibold text-ink-muted"
           >
             No active campaigns. Create one below to boost visits.
           </p>
         </section>
 
         <section>
-          <h2 class="text-xl font-black text-slate-950">Create campaign</h2>
-          <p class="mt-1 text-sm text-slate-500">Pick a template — setup takes under a minute.</p>
+          <h2 class="text-xl font-black text-ink">Create campaign</h2>
+          <p class="mt-1 text-sm text-ink-muted">Pick a template — setup takes under a minute.</p>
 
           <div v-if="loading" class="mt-5 grid gap-4 sm:grid-cols-2">
-            <div v-for="index in 4" :key="index" class="h-36 animate-pulse rounded-3xl bg-slate-100" />
+            <div v-for="index in 4" :key="index" class="h-36 animate-pulse rounded-3xl bg-surface-muted" />
           </div>
 
           <div v-else class="mt-5 grid gap-4 sm:grid-cols-2">
@@ -100,7 +100,7 @@ const {
               v-for="template in templates"
               :key="template.template_id"
               type="button"
-              class="group flex flex-col rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md"
+              class="group flex flex-col rounded-3xl border border-border bg-surface p-5 text-left shadow-sm transition hover:border-border hover:shadow-md"
               @click="openCreate(template.template_id)"
             >
               <div class="flex items-start justify-between gap-3">
@@ -110,14 +110,14 @@ const {
                   size="lg"
                 />
                 <span
-                  class="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-slate-950 group-hover:text-white"
+                  class="grid size-10 place-items-center rounded-full bg-surface-muted text-ink-muted transition group-hover:bg-primary group-hover:text-white"
                 >
                   <Plus class="size-5" />
                 </span>
               </div>
-              <h3 class="mt-4 text-lg font-black text-slate-950">{{ template.name }}</h3>
-              <p class="mt-1 text-sm text-slate-600">{{ campaignTemplateMeta[template.template_id].tagline }}</p>
-              <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+              <h3 class="mt-4 text-lg font-black text-ink">{{ template.name }}</h3>
+              <p class="mt-1 text-sm text-ink-muted">{{ campaignTemplateMeta[template.template_id].tagline }}</p>
+              <p class="mt-3 text-xs font-bold uppercase tracking-wide text-ink-soft">
                 {{ template.audience_count }} in scope
               </p>
             </button>
@@ -126,12 +126,12 @@ const {
 
         <section>
           <div class="flex flex-wrap items-end justify-between gap-4">
-            <h2 class="text-xl font-black text-slate-950">Campaign history</h2>
+            <h2 class="text-xl font-black text-ink">Campaign history</h2>
           </div>
 
-          <div class="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div class="mt-4 overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
             <div
-              class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3"
+              class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-muted/50 px-5 py-3"
             >
               <div class="flex gap-1 sm:gap-2">
                 <button
@@ -142,8 +142,8 @@ const {
                     cn(
                       'rounded-full px-3.5 py-1.5 text-sm font-bold transition',
                       historyFilter === tab.id
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-white hover:text-slate-900',
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-ink-muted hover:bg-surface hover:text-ink',
                     )
                   "
                   @click="historyFilter = tab.id"
@@ -155,7 +155,7 @@ const {
                 <span class="sr-only">Sort campaigns</span>
                 <select
                   v-model="historySort"
-                  class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none ring-indigo-500 focus:ring-2"
+                  class="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink outline-none ring-accent focus:ring-2"
                 >
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>
@@ -167,11 +167,11 @@ const {
               <div
                 v-for="index in 4"
                 :key="index"
-                class="h-[4.75rem] border-b border-slate-100 bg-slate-50/50 last:border-b-0"
+                class="h-[4.75rem] border-b border-border bg-surface-muted/50 last:border-b-0"
               />
             </div>
 
-            <ul v-else-if="historyCampaigns.length" class="divide-y divide-slate-100">
+            <ul v-else-if="historyCampaigns.length" class="divide-y divide-border">
               <li v-for="campaign in historyCampaigns" :key="campaign.id" class="last:divide-none">
                 <CampaignHistoryRow
                   :campaign="campaign"
@@ -183,7 +183,7 @@ const {
               </li>
             </ul>
 
-            <p v-else class="px-5 py-14 text-center text-sm font-semibold text-slate-500">
+            <p v-else class="px-5 py-14 text-center text-sm font-semibold text-ink-muted">
               <template v-if="campaigns.length === 0">No campaigns yet.</template>
               <template v-else>
                 No {{ historyFilter === 'all' ? '' : historyFilter }} campaigns in this view.
@@ -194,7 +194,7 @@ const {
 
         <div
           v-if="!loading && campaigns.length === 0"
-          class="rounded-3xl border border-dashed border-slate-300 p-8"
+          class="rounded-3xl border border-dashed border-border p-8"
         >
           <EmptyState
             :icon="Megaphone"

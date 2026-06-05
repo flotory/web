@@ -4,7 +4,10 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 
 import App from './App.vue'
+import { loadAndApplyPlatformPalette } from './lib/applyPalette'
 import router from './router'
+
+void loadAndApplyPlatformPalette()
 
 createApp(App).use(createPinia()).use(router).mount('#app')
 

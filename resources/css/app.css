@@ -1,12 +1,89 @@
 @import 'tailwindcss';
 
+/**
+ * Semantic Tailwind colors → runtime CSS variables (--flotory-*).
+ * Admin palette updates :root vars; utilities pick them up automatically.
+ */
 @theme {
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-500: #2563eb;
-  --color-brand-600: #1d4ed8;
-  --color-brand-950: #172554;
+
+  --color-primary: var(--flotory-primary);
+  --color-primary-soft: var(--flotory-primary-soft);
+  --color-primary-text: var(--flotory-primary-text);
+
+  --color-accent: var(--flotory-accent);
+  --color-accent-soft: var(--flotory-accent-soft);
+  --color-accent-border: var(--flotory-accent-border);
+  --color-accent-active: var(--flotory-accent-active);
+
+  --color-bg: var(--flotory-bg);
+  --color-surface: var(--flotory-surface);
+  --color-surface-muted: var(--flotory-surface-muted);
+  --color-border: var(--flotory-border);
+  --color-workspace-bg: var(--flotory-workspace-bg);
+
+  --color-ink: var(--flotory-ink);
+  --color-ink-muted: var(--flotory-ink-muted);
+  --color-ink-soft: var(--flotory-ink-soft);
+
+  --color-success: var(--flotory-success);
+  --color-success-text: var(--flotory-success-text);
+  --color-success-bg: var(--flotory-success-bg);
+  --color-success-border: var(--flotory-success-border);
+
+  --color-danger: var(--flotory-danger);
+  --color-danger-soft: var(--flotory-danger-soft);
+
+  --color-campaign: var(--flotory-campaign-bg);
+  --color-campaign-border: var(--flotory-campaign-border);
+  --color-reward-ready: var(--flotory-reward-ready-accent);
+
+  --color-highlight: var(--flotory-lavender);
+  --color-highlight-border: var(--flotory-lavender-border);
+
+  --color-link: var(--flotory-link);
+  --color-chart: var(--flotory-chart);
+  --color-nav-active: var(--flotory-nav-active);
+
+  --color-progress-track: var(--flotory-progress-track);
+  --color-progress-filled: var(--flotory-progress-filled);
+}
+
+:root {
+  --flotory-primary: #081233;
+  --flotory-primary-soft: #0c1a45;
+  --flotory-primary-text: #ffffff;
+  --flotory-accent: #d6b15e;
+  --flotory-accent-soft: #e8d8a8;
+  --flotory-accent-border: #d6b15e;
+  --flotory-accent-active: #b78d2f;
+  --flotory-bg: #f7f2e8;
+  --flotory-bg-gradient-start: #faf7f0;
+  --flotory-bg-gradient-end: #f7f2e8;
+  --flotory-surface: #ffffff;
+  --flotory-surface-muted: #e9ecf1;
+  --flotory-border: #e9ecf1;
+  --flotory-ink: #081233;
+  --flotory-ink-muted: #5c6478;
+  --flotory-ink-soft: #8b93a7;
+  --flotory-success: #2e7d4f;
+  --flotory-success-text: #2e7d4f;
+  --flotory-success-bg: #dff2e4;
+  --flotory-success-border: #c8e6d0;
+  --flotory-danger: #c14e41;
+  --flotory-danger-soft: #fbe7e3;
+  --flotory-campaign-bg: #081233;
+  --flotory-campaign-border: #d6b15e;
+  --flotory-reward-ready-accent: #d6b15e;
+  --flotory-lavender: #e8d8a8;
+  --flotory-lavender-border: #d6b15e;
+  --flotory-plum: #081233;
+  --flotory-progress-track: #e9ecf1;
+  --flotory-progress-filled: #d6b15e;
+  --flotory-link: #081233;
+  --flotory-chart: #d6b15e;
+  --flotory-nav-active: #081233;
+  --flotory-workspace-bg: #f7f2e8;
 }
 
 html {
@@ -16,8 +93,18 @@ html {
 body {
   min-height: 100vh;
   font-family: var(--font-sans);
+  background: linear-gradient(180deg, var(--flotory-bg-gradient-start) 0%, var(--flotory-bg-gradient-end) 100%);
+  color: var(--flotory-ink);
 }
 
 #app {
   min-height: 100vh;
+}
+
+.bg-app-gradient {
+  background: linear-gradient(180deg, var(--flotory-bg-gradient-start) 0%, var(--flotory-bg-gradient-end) 100%);
+}
+
+.bg-auth-gradient {
+  background: radial-gradient(circle at top, var(--flotory-primary) 0%, #020617 55%);
 }

@@ -26,7 +26,7 @@ const iconSrc = computed(() => (props.size === 'lg' ? FLOTORY_ICON_512 : FLOTORY
 
 const wordmarkClass = computed(() => {
   const base = 'font-black tracking-tight'
-  const tone = props.inverted ? 'text-white' : 'text-slate-950'
+  const tone = props.inverted ? 'text-white' : 'text-ink'
   const scale = props.size === 'lg' ? 'text-xl' : props.size === 'sm' ? 'text-base' : 'text-lg'
   return `${base} ${tone} ${scale}`
 })
@@ -37,7 +37,7 @@ const wordmarkClass = computed(() => {
     <img
       :src="iconSrc"
       :alt="`${FLOTORY_APP_NAME} logo`"
-      :class="[iconClass, 'shrink-0 rounded-[22%] object-contain']"
+      :class="[iconClass, 'shrink-0 rounded-[18%] object-contain']"
       width="44"
       height="44"
       decoding="async"

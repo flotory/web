@@ -11,9 +11,9 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import FlotoryBootScreen from '../src/components/brand/FlotoryBootScreen'
 import { AuthProvider, useAuth } from '../src/providers/AuthProvider'
 import { RealtimeProvider } from '../src/providers/RealtimeProvider'
+import { ThemeProvider } from '../src/providers/ThemeProvider'
 import { applyDefaultAppTypography } from '../src/setupTypography'
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined)
@@ -36,7 +36,7 @@ function RootNavigator() {
   }, [booting, fontsLoaded])
 
   if (booting || !fontsLoaded) {
-    return <FlotoryBootScreen />
+    return null
   }
 
   return <Stack screenOptions={{ headerShown: false }} />
@@ -45,12 +45,13 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RealtimeProvider>
-          <RootNavigator />
-        </RealtimeProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RealtimeProvider>
+            <RootNavigator />
+          </RealtimeProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   )
 }
-

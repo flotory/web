@@ -38,7 +38,7 @@ function ScannerCorner({
         borderLeftWidth: left != null ? stroke : 0,
         borderRightWidth: right != null ? stroke : 0,
         borderBottomWidth: bottom != null ? stroke : 0,
-        borderColor: 'rgba(245, 208, 138, 0.92)',
+        borderColor: colors.accent,
         borderTopLeftRadius: top != null && left != null ? 4 : 0,
         borderTopRightRadius: top != null && right != null ? 4 : 0,
         borderBottomLeftRadius: bottom != null && left != null ? 4 : 0,
@@ -71,7 +71,7 @@ export default function TabBarQrButton({ focused }: TabBarQrButtonProps) {
           width: size + 8,
           height: size + 8,
           borderRadius: radius + 6,
-          backgroundColor: '#F5D08A',
+          backgroundColor: colors.accent,
           alignItems: 'center',
           justifyContent: 'center',
           ...(Platform.OS === 'ios' ? shadows.button : { elevation: 6 }),
@@ -82,13 +82,13 @@ export default function TabBarQrButton({ focused }: TabBarQrButtonProps) {
             width: size + 4,
             height: size + 4,
             borderRadius: radius + 4,
-            backgroundColor: '#FFFBF5',
+            backgroundColor: colors.bgGradientStart,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <LinearGradient
-            colors={focused ? ['#334155', '#0F172A', '#1E293B'] : ['#1E293B', '#0F172A', '#172033']}
+            colors={focused ? [colors.primarySoft, colors.primary, colors.primarySoft] : [colors.primary, colors.primarySoft, colors.primary]}
             locations={[0, 0.55, 1]}
             start={{ x: 0.15, y: 0 }}
             end={{ x: 0.85, y: 1 }}

@@ -1,13 +1,13 @@
-const CACHE_NAME = 'flotory-v6'
+const CACHE_NAME = 'flotory-v10'
 const APP_SHELL = [
   '/dashboard',
   '/wallet',
   '/login',
   '/manifest.webmanifest',
   '/favicon.png',
-  '/icons/icon-180.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icons/icon-180.png?v=gold-cream-f-20260605-webpad',
+  '/icons/icon-192.png?v=gold-cream-f-20260605-webpad',
+  '/icons/icon-512.png?v=gold-cream-f-20260605-webpad',
 ]
 
 function isCacheableRequest(request) {

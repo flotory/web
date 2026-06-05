@@ -58,6 +58,13 @@ class VenueDashboardController extends Controller
                 'insights' => [],
                 'has_loyalty_activity' => false,
                 'kpi_trends' => $this->emptyKpiTrends(),
+                'customer_health' => [
+                    'total' => 0,
+                    'active' => 0,
+                    'inactive' => 0,
+                    'new' => 0,
+                    'cooling' => 0,
+                ],
                 'active_campaigns' => [],
                 'recent_activity' => [],
             ]);
@@ -132,6 +139,7 @@ class VenueDashboardController extends Controller
             'insights' => $insights,
             'has_loyalty_activity' => $this->analytics->hasAggregateActivity($venues),
             'kpi_trends' => $this->analytics->aggregateKpiTrends($venues),
+            'customer_health' => $this->analytics->aggregateCustomerHealth($venues),
             'recent_activity' => $this->analytics->aggregateRecentActivity($venues),
             'active_campaigns' => $activeCampaigns,
         ]);
@@ -179,6 +187,7 @@ class VenueDashboardController extends Controller
             'insights' => $this->analytics->insightsForVenue($venue),
             'has_loyalty_activity' => $this->analytics->hasLoyaltyActivity($venue),
             'kpi_trends' => $this->analytics->kpiTrendsForVenue($venue),
+            'customer_health' => $this->analytics->customerHealthForVenue($venue),
             'recent_activity' => $this->analytics->recentActivityForVenue($venue),
             'milestone_conversions' => DB::table('reward_unlocks')
                 ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')

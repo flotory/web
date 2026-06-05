@@ -168,6 +168,37 @@ class VenueAnalyticsService
         return $venue->customers()->whereHas('visits')->exists();
     }
 
+    /**
+     * @return array{total: int, active: int, inactive: int, new: int, cooling: int}
+     */
+    public function customerHealthForVenue(Venue $venue): array
+    {
+        return $this->retention->activitySummary($venue);
+    }
+
+    /**
+     * @param  Collection<int, Venue>  $venues
+     * @return array{total: int, active: int, inactive: int, new: int, cooling: int}
+     */
+    public function aggregateCustomerHealth(Collection $venues): array
+    {
+        $summary = [
+            'total' => 0,
+            'active' => 0,
+            'inactive' => 0,
+            'new' => 0,
+            'cooling' => 0,
+        ];
+
+        foreach ($venues as $venue) {
+            foreach ($this->customerHealthForVenue($venue) as $key => $value) {
+                $summary[$key] = ($summary[$key] ?? 0) + (int) $value;
+            }
+        }
+
+        return $summary;
+    }
+
     private function customersCloseToNextReward(Venue $venue): int
     {
         $milestones = Reward::query()

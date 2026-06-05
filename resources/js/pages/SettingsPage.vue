@@ -70,8 +70,8 @@ onMounted(load)
   <AppShell>
     <div class="mb-8">
       <AppBadge tone="blue">Workspace</AppBadge>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">Workspace overview</h1>
-      <p class="mt-2 max-w-2xl text-slate-500">
+      <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Workspace overview</h1>
+      <p class="mt-2 max-w-2xl text-ink-muted">
         A quick snapshot of your venues, team, and loyalty program — without the complexity of admin settings.
       </p>
     </div>
@@ -88,7 +88,7 @@ onMounted(load)
     />
 
     <template v-else>
-      <div v-if="!ownerVenues.length" class="rounded-3xl border border-dashed border-slate-200 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 p-10 text-center">
+      <div v-if="!ownerVenues.length" class="rounded-3xl border border-dashed border-border bg-gradient-to-br from-surface-muted via-surface to-accent-soft/30 p-10 text-center">
         <EmptyState
           bare
           :icon="Store"
@@ -112,7 +112,7 @@ onMounted(load)
         </div>
 
         <AppCard wrapper-class="mb-6 p-5 sm:p-6">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Quick actions</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wide text-ink-soft">Quick actions</h2>
           <div class="mt-4 flex flex-wrap gap-3">
             <RouterLink to="/my-venues">
               <AppButton variant="secondary" class="gap-2">
@@ -132,8 +132,8 @@ onMounted(load)
         <div>
           <div class="mb-4 flex items-end justify-between gap-4">
             <div>
-              <h2 class="text-xl font-black text-slate-950">Your venues</h2>
-              <p class="mt-1 text-sm text-slate-500">Manage branding, QR codes, and loyalty per location.</p>
+              <h2 class="text-xl font-black text-ink">Your venues</h2>
+              <p class="mt-1 text-sm text-ink-muted">Manage branding, QR codes, and loyalty per location.</p>
             </div>
           </div>
 
@@ -141,10 +141,10 @@ onMounted(load)
             <article
               v-for="venue in ownerVenues"
               :key="venue.id"
-              class="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/40 transition hover:border-slate-300 hover:shadow-md"
+              class="group rounded-2xl border border-border/80 bg-surface p-5 shadow-sm shadow-border/40 transition hover:border-border hover:shadow-md"
             >
               <div class="flex gap-4">
-                <div class="size-14 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
+                <div class="size-14 shrink-0 overflow-hidden rounded-xl bg-surface-muted ring-1 ring-border/80">
                   <img
                     :src="venueLogoThumbUrl(venue)"
                     :alt="venue.name"
@@ -153,19 +153,19 @@ onMounted(load)
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="truncate text-lg font-black text-slate-950">{{ venue.name }}</h3>
+                    <h3 class="truncate text-lg font-black text-ink">{{ venue.name }}</h3>
                     <AppBadge tone="slate">{{ categoryLabel(venue) }}</AppBadge>
                   </div>
-                  <p class="mt-0.5 text-sm font-medium text-slate-500">/{{ venue.slug }}</p>
-                  <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-                    <span><strong class="font-semibold text-slate-800">{{ venue.staff_count ?? 0 }}</strong> staff</span>
-                    <span><strong class="font-semibold text-slate-800">{{ venue.customers_count ?? 0 }}</strong> customers</span>
-                    <span><strong class="font-semibold text-slate-800">{{ venue.rewards_count ?? 0 }}</strong> rewards</span>
+                  <p class="mt-0.5 text-sm font-medium text-ink-muted">/{{ venue.slug }}</p>
+                  <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
+                    <span><strong class="font-semibold text-ink">{{ venue.staff_count ?? 0 }}</strong> staff</span>
+                    <span><strong class="font-semibold text-ink">{{ venue.customers_count ?? 0 }}</strong> customers</span>
+                    <span><strong class="font-semibold text-ink">{{ venue.rewards_count ?? 0 }}</strong> rewards</span>
                   </div>
                 </div>
               </div>
 
-              <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              <div class="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
                 <AppButton
                   variant="secondary"
                   size="sm"

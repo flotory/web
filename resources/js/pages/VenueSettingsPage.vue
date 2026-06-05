@@ -270,20 +270,20 @@ onMounted(loadVenue)
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <AppBadge tone="blue">Venue settings</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950">
+        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">
           {{ venue?.name ?? 'Venue settings' }}
         </h1>
-        <p class="mt-2 text-slate-500">Manage this venue as its own workspace.</p>
+        <p class="mt-2 text-ink-muted">Manage this venue as its own workspace.</p>
       </div>
       <AppButton variant="secondary" @click="router.push('/my-venues')">Back to My Venues</AppButton>
     </div>
 
     <AppCard v-if="loading">
-      <p class="text-sm font-bold text-slate-500">Loading venue...</p>
+      <p class="text-sm font-bold text-ink-muted">Loading venue...</p>
     </AppCard>
 
     <AppCard v-else-if="error && !venue">
-      <p class="text-sm font-bold text-red-600">{{ error }}</p>
+      <p class="text-sm font-bold text-danger">{{ error }}</p>
       <AppButton class="mt-4" @click="loadVenue">Retry</AppButton>
     </AppCard>
 
@@ -293,8 +293,8 @@ onMounted(loadVenue)
           <AppCard wrapper-class="overflow-hidden p-0">
             <img :src="venueCoverUrl(venue)" alt="" class="h-36 w-full object-cover">
             <div class="p-5 text-center">
-              <h2 class="text-xl font-black text-slate-950">Cover image</h2>
-              <p class="mt-2 text-sm font-semibold text-slate-500">Shown on your dashboard, landing page, and customer card.</p>
+              <h2 class="text-xl font-black text-ink">Cover image</h2>
+              <p class="mt-2 text-sm font-semibold text-ink-muted">Shown on your dashboard, landing page, and customer card.</p>
               <input ref="coverInput" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" @change="uploadCover">
               <div class="mt-4 flex flex-wrap justify-center gap-2">
                 <AppButton variant="secondary" :disabled="coverUploading" @click="openCoverPicker">
@@ -309,12 +309,12 @@ onMounted(loadVenue)
 
           <AppCard>
             <div class="grid place-items-center text-center">
-              <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-slate-100 ring-1 ring-slate-200">
+              <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-surface-muted ring-1 ring-border">
                 <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-full object-cover">
               </div>
 
-              <h2 class="mt-5 text-2xl font-black text-slate-950">Venue logo</h2>
-              <p class="mt-2 text-sm font-semibold text-slate-500">Square crop — shown on cards, scanner, and landing page.</p>
+              <h2 class="mt-5 text-2xl font-black text-ink">Venue logo</h2>
+              <p class="mt-2 text-sm font-semibold text-ink-muted">Square crop — shown on cards, scanner, and landing page.</p>
 
               <div class="mt-5 flex flex-wrap justify-center gap-2">
                 <ImageCropUpload
@@ -338,11 +338,11 @@ onMounted(loadVenue)
         </div>
 
         <AppCard wrapper-class="relative">
-          <h2 class="text-xl font-black text-slate-950">Public venue</h2>
-          <p class="mt-2 text-sm font-semibold text-slate-500">
+          <h2 class="text-xl font-black text-ink">Public venue</h2>
+          <p class="mt-2 text-sm font-semibold text-ink-muted">
             Customers use this link to join your loyalty program. It updates when you change the slug (save to apply).
           </p>
-          <p class="mt-4 break-all rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 ring-1 ring-slate-200">
+          <p class="mt-4 break-all rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink ring-1 ring-border">
             {{ landingUrl || 'Save a slug to generate your public link' }}
           </p>
           <div class="mt-4 flex flex-wrap gap-2">
@@ -367,47 +367,47 @@ onMounted(loadVenue)
             />
           </div>
 
-          <form class="mt-8 grid gap-4 border-t border-slate-200 pt-8" @submit.prevent="saveVenue">
+          <form class="mt-8 grid gap-4 border-t border-border pt-8" @submit.prevent="saveVenue">
           <div class="grid gap-4 md:grid-cols-[1fr_180px]">
             <div>
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-name">Venue name</label>
-              <input id="edit-venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-name">Venue name</label>
+              <input id="edit-venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface">
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-slug">Slug</label>
-              <input id="edit-venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white">
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-slug">Slug</label>
+              <input id="edit-venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface">
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-category">Category</label>
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-category">Category</label>
               <select
                 id="edit-venue-category"
                 v-model="category"
-                class="mt-2 h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+                class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface-muted bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
                 :style="selectChevronStyle"
               >
                 <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
               </select>
             </div>
             <div>
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-website">Website optional</label>
-              <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white" placeholder="https://example.com">
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-website">Website optional</label>
+              <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="https://example.com">
             </div>
             <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />
             <div class="md:col-span-2">
-              <label class="text-sm font-bold text-slate-600" for="edit-venue-address">Address</label>
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-address">Address</label>
               <input
                 id="edit-venue-address"
                 v-model="address"
-                class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none focus:border-slate-400 focus:bg-white"
+                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
                 placeholder="12 Market Street, Toruń"
               >
-              <p class="mt-2 text-xs font-medium text-slate-500">
+              <p class="mt-2 text-xs font-medium text-ink-muted">
                 Shown on your public venue page and used for Google Maps.
               </p>
             </div>
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{{ error }}</p>
+          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
             <AsyncActionButton
               type="submit"
               idle-label="Save venue"

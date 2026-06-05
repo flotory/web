@@ -114,7 +114,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                 </Text>
                 <WalletStampDashes filled={stamps} total={max} />
               </View>
-              <View style={{ alignItems: 'flex-end', minWidth: 88 }}>
+              <View style={{ alignItems: 'flex-end', minWidth: 88, marginBottom: 12 }}>
                 <Text
                   style={withAppFont({
                     fontSize: 40,

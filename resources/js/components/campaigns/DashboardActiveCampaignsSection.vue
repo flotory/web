@@ -70,21 +70,21 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <div class="flex flex-wrap items-center gap-2">
-          <h2 class="text-xl font-black text-slate-950">Active campaigns</h2>
+          <h2 class="text-xl font-black text-ink">Active campaigns</h2>
           <span
             v-if="campaigns.length"
-            class="inline-flex size-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
+            class="inline-flex size-6 items-center justify-center rounded-full bg-surface-muted text-xs font-bold text-ink-muted ring-1 ring-border"
           >
             {{ countLabel }}
           </span>
         </div>
-        <p class="mt-1 max-w-2xl text-sm text-slate-500">
+        <p class="mt-1 max-w-2xl text-sm text-ink-muted">
           Customers receive the highest eligible multiplier. Campaigns never stack.
         </p>
       </div>
       <RouterLink
         to="/campaigns"
-        class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+        class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-ink-muted hover:text-ink-muted"
       >
         Manage all campaigns
         <ChevronRight class="size-3.5" aria-hidden="true" />
@@ -95,7 +95,7 @@ onUnmounted(() => {
       <button
         v-if="canScrollPrev"
         type="button"
-        class="absolute left-0 top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+        class="absolute left-0 top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-ink-muted shadow-sm transition hover:bg-surface-muted"
         aria-label="Previous campaigns"
         @click="scrollByPage(-1)"
       >
@@ -121,7 +121,7 @@ onUnmounted(() => {
       <button
         v-if="canScrollNext"
         type="button"
-        class="absolute right-0 top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+        class="absolute right-0 top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-ink-muted shadow-sm transition hover:bg-surface-muted"
         aria-label="Next campaigns"
         @click="scrollByPage(1)"
       >
@@ -131,12 +131,12 @@ onUnmounted(() => {
 
     <div
       v-else
-      class="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 text-center"
+      class="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/80 px-4 py-6 text-center"
     >
-      <p class="text-sm font-semibold text-slate-600">No active campaigns right now.</p>
+      <p class="text-sm font-semibold text-ink-muted">No active campaigns right now.</p>
       <RouterLink
         to="/campaigns"
-        class="mt-2 inline-block text-sm font-bold text-slate-950 underline-offset-2 hover:underline"
+        class="mt-2 inline-block text-sm font-bold text-ink underline-offset-2 hover:underline"
       >
         Create a campaign
       </RouterLink>

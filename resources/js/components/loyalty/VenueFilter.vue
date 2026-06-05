@@ -12,10 +12,10 @@ const selectStyle = {
 
 <template>
   <div v-if="workspace.activeVenues.length > 1" class="flex flex-wrap items-center gap-2">
-    <label class="text-xs font-bold uppercase tracking-wide text-slate-400">Venue</label>
+    <label class="text-xs font-bold uppercase tracking-wide text-ink-soft">Venue</label>
     <select
       :value="workspace.filterVenueId ?? workspace.activeVenues[0]?.id"
-      class="h-10 min-w-[180px] appearance-none rounded-xl border border-slate-200 bg-white bg-[length:14px_14px] bg-no-repeat px-3 pr-9 text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+      class="h-10 min-w-[180px] appearance-none rounded-xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat px-3 pr-9 text-sm font-semibold text-ink-muted outline-none focus:border-ink-soft"
       :style="selectStyle"
       @change="workspace.setFilter(Number(($event.target as HTMLSelectElement).value))"
     >
