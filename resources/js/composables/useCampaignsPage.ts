@@ -2,6 +2,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { api, apiErrorMessage } from '@/lib/api'
+import { updateCampaignStatus } from '@/lib/campaignActions'
 import {
   filterCampaigns,
   sortCampaigns,
@@ -93,16 +94,7 @@ export function useCampaignsPage() {
     const venueId = workspace.effectiveVenueId
     if (!venueId) return
 
-    try {
-      await api(`/venues/${venueId}/campaigns/${campaign.id}`, {
-        method: 'PATCH',
-        body: { status },
-      })
-      toast.success('Campaign updated')
-      await loadPage()
-    } catch (exception) {
-      toast.error(apiErrorMessage(exception, 'Could not update campaign.'))
-    }
+    await updateCampaignStatus(venueId, campaign, status, loadPage)
   }
 
   function prefillFromQuery() {

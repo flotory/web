@@ -13,6 +13,7 @@ import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
+import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverUrl, venueHasCustomCover, venueHasCustomLogo, venueLogoUrl } from '@/lib/venueMedia'
@@ -253,31 +254,13 @@ function openPublicPage() {
 function downloadQrPng() {
   if (!landingUrl.value || !venue.value) return
 
-  const canvas = document.querySelector<HTMLCanvasElement>('#venue-settings-qr canvas')
-  if (!canvas) {
+  const slug = publicSlug.value || venue.value.slug
+  if (!downloadVenueQrPng('#venue-settings-qr', slug)) {
     error.value = 'QR is not ready yet. Wait a moment and try again.'
     return
   }
 
-  const exportCanvas = document.createElement('canvas')
-  exportCanvas.width = 512
-  exportCanvas.height = 512
-  const ctx = exportCanvas.getContext('2d')
-  if (!ctx) {
-    error.value = 'Could not export QR. Try again.'
-    return
-  }
-
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, 512, 512)
-  ctx.drawImage(canvas, 0, 0, 512, 512)
-
-  const link = document.createElement('a')
-  link.download = `${publicSlug.value || venue.value.slug}-qr.png`
-  link.href = exportCanvas.toDataURL('image/png')
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
+  error.value = ''
 }
 
 onMounted(loadVenue)

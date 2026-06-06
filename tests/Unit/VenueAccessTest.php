@@ -12,13 +12,13 @@ class VenueAccessTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
-    public function test_admin_can_access_any_venue_without_membership(): void
+    public function test_platform_admin_cannot_access_venue_owner_tools(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
         $venue = $this->createVenue();
 
-        $this->assertTrue(VenueAccess::canAccess($admin, $venue, ['owner']));
-        $this->assertTrue(VenueAccess::canAccess($admin, $venue));
+        $this->assertFalse(VenueAccess::canAccess($admin, $venue, ['owner']));
+        $this->assertFalse(VenueAccess::canAccess($admin, $venue));
     }
 
     public function test_non_member_cannot_access_venue(): void

@@ -27,21 +27,7 @@ class VenueController extends Controller
         $user = $request->user();
 
         if (VenueAccess::isAdmin($user)) {
-            return response()->json([
-                'venues' => Venue::query()
-                    ->select('venues.*')
-                    ->selectRaw("'owner' as membership_role")
-                    ->withTrashed()
-                    ->withCount([
-                        'customers',
-                        'visits',
-                        'rewards',
-                        'memberships as staff_count' => fn ($query) => $query->where('role', 'staff'),
-                    ])
-                    ->orderByRaw('deleted_at is not null')
-                    ->latest()
-                    ->get(),
-            ]);
+            return response()->json(['venues' => []]);
         }
 
         return response()->json([
@@ -143,6 +129,7 @@ class VenueController extends Controller
     public function store(StoreRestaurantRequest $request): JsonResponse
     {
         $user = $request->user();
+        VenueAccess::assertNotPlatformAdmin($user);
 
         $location = $this->venueAddresses->normalizedLocation([
             'address' => $request->input('address'),

@@ -1,6 +1,6 @@
 # Super admin access
 
-Flotory super admins (`users.is_admin = true`) can access **all venues** without `venue_users` membership and use internal tools such as the **Activity log**.
+Flotory super admins (`users.is_admin = true`) control the **platform only** — venue listings, design palette, and activity log. They do **not** own venues, join teams, or use owner tools (scanner, rewards, dashboard).
 
 There is no separate admin URL or login form — use `/login` with an admin account.
 
@@ -10,7 +10,7 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 | Account | Email | `is_admin` | What you get |
 |---------|--------|------------|----------------|
-| **Super admin** | `admin@flotory.com` | yes | Owner-style UI for every venue + **Venue listings** + **Activity log** in the sidebar |
+| **Super admin** | `admin@flotory.com` | yes | **Venue listings**, **Design palette**, **Activity log** only — no scanner or My Venues |
 | **Venue owner** | `owner@example.com` | no | Normal owner (dashboard, rewards, team, scanner) — **no** activity log |
 | **Staff** | `staff@example.com` | no | Scanner + customers for Demo Cafe |
 | **Customer** | `customer@example.com` | no | Wallet / guest flows |
@@ -21,7 +21,7 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 - Sidebar nav: **Venue listings** (approve/reject owner submissions), **Activity log**
 - Direct URLs: `/admin/venues`, `/admin/activity`
-- Same owner workspace layout as dashboard (left sidebar on desktop)
+- Dedicated platform sidebar (left on desktop) — not the owner dashboard
 
 ### Verify you are admin
 

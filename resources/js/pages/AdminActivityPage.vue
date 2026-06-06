@@ -3,6 +3,7 @@ import { Activity } from '@lucide/vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -40,6 +41,8 @@ const eventFilter = ref('')
 const requestId = ref('')
 const venueId = ref('')
 const customerId = ref('')
+const fromDate = ref('')
+const toDate = ref('')
 
 function eventTone(event: string): 'green' | 'amber' | 'slate' | 'blue' {
   if (event === 'success') return 'green'
@@ -63,6 +66,8 @@ async function loadActivity() {
     if (requestId.value.trim()) params.set('request_id', requestId.value.trim())
     if (venueId.value.trim()) params.set('venue_id', venueId.value.trim())
     if (customerId.value.trim()) params.set('customer_id', customerId.value.trim())
+    if (fromDate.value) params.set('from', fromDate.value)
+    if (toDate.value) params.set('to', toDate.value)
 
     const response = await api<{
       data: AuditRow[]
@@ -99,8 +104,8 @@ watch(page, loadActivity)
         description="Loyalty actions and API validation failures. Use the request ID from the network tab when correlating issues."
       >
         <template #actions>
-          <RouterLink to="/dashboard">
-            <AppButton variant="secondary">Back to dashboard</AppButton>
+          <RouterLink to="/admin/venues">
+            <AppButton variant="secondary">Back to venue listings</AppButton>
           </RouterLink>
         </template>
       </PageHeader>
@@ -152,6 +157,24 @@ watch(page, loadActivity)
               type="number"
               class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
               @keyup.enter="applyFilters"
+            >
+          </label>
+          <label class="block text-sm font-semibold text-ink-muted">
+            From
+            <input
+              v-model="fromDate"
+              type="date"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
+              @change="applyFilters"
+            >
+          </label>
+          <label class="block text-sm font-semibold text-ink-muted">
+            To
+            <input
+              v-model="toDate"
+              type="date"
+              class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm"
+              @change="applyFilters"
             >
           </label>
         </div>

@@ -51,6 +51,13 @@ async function submit() {
 
   try {
     await auth.login({ email: email.value, password: password.value })
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
+    loading.value = false
+    return
+  }
+
+  try {
     await workspace.bootstrap(true)
 
     if (venueSlug.value) {
@@ -69,8 +76,8 @@ async function submit() {
     await router.push(
       resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
     )
-  } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
+  } catch {
+    error.value = 'Signed in, but we could not open your workspace. Please refresh and try again.'
   } finally {
     loading.value = false
   }

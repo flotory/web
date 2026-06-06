@@ -63,6 +63,16 @@ class VenuePublicationServiceTest extends TestCase
         $this->assertTrue($this->service->isPublic($published));
     }
 
+    public function test_admin_approval_requires_completed_checklist(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->approve($venue, $admin);
+    }
+
     public function test_admin_rejection_returns_venue_to_owner_with_note(): void
     {
         $admin = $this->createUser(['is_admin' => true]);

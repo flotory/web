@@ -15,10 +15,13 @@ import PageSection from '@/components/ui/PageSection.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
+import { updateCampaignStatus } from '@/lib/campaignActions'
+import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { toast } from '@/lib/toast'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
+import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, Venue } from '@/types'
 import type { Campaign } from '@/lib/campaignTemplates'
@@ -81,12 +84,17 @@ interface DashboardResponse {
 
 const router = useRouter()
 const route = useRoute()
+const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const dashboard = ref<DashboardResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
 
 const selectedVenue = computed(() => {
+  if (dashboard.value?.scope === 'all') {
+    return null
+  }
+
   if (workspace.filterVenueId && workspace.filteredVenue) {
     return workspace.filteredVenue
   }
@@ -95,10 +103,18 @@ const selectedVenue = computed(() => {
     return workspace.activeVenues[0]
   }
 
-  return workspace.activeVenues[0] ?? null
+  return null
 })
 
-const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue?.name ?? 'Your venue')
+const isAggregateView = computed(() => dashboard.value?.scope === 'all')
+
+const title = computed(() => {
+  if (isAggregateView.value) {
+    return `All venues (${dashboard.value?.venues_count ?? 0})`
+  }
+
+  return selectedVenue.value?.name ?? dashboard.value?.venue?.name ?? 'Your venue'
+})
 
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
 
@@ -238,44 +254,24 @@ function formatActivityTime(value: string) {
 const canOpenActions = computed(() => Boolean(selectedVenue.value && landingUrl.value))
 
 function downloadQrPng() {
-  const canvas = document.querySelector<HTMLCanvasElement>('#dashboard-qr canvas')
-  if (!canvas) {
-    return
-  }
-  const exportCanvas = document.createElement('canvas')
-  exportCanvas.width = 512
-  exportCanvas.height = 512
-  const ctx = exportCanvas.getContext('2d')
-  if (!ctx) return
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, 512, 512)
-  ctx.drawImage(canvas, 0, 0, 512, 512)
-  const link = document.createElement('a')
-  link.download = `${selectedVenue.value?.slug ?? 'venue'}-qr.png`
-  link.href = exportCanvas.toDataURL('image/png')
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
+  if (!selectedVenue.value) return
+  downloadVenueQrPng('#dashboard-qr', selectedVenue.value.slug)
 }
 
 function openCampaignEditor(campaign: Campaign) {
   void router.push({ path: '/campaigns', query: { edit: campaign.id } })
 }
 
-async function updateCampaignStatus(campaign: Campaign, status: Campaign['status']) {
+async function pauseCampaign(campaign: Campaign) {
   const venueId = selectedVenue.value?.id ?? workspace.filterVenueId
   if (!venueId) return
+  await updateCampaignStatus(venueId, campaign, 'paused', loadDashboard)
+}
 
-  try {
-    await api(`/venues/${venueId}/campaigns/${campaign.id}`, {
-      method: 'PATCH',
-      body: { status },
-    })
-    toast.success('Campaign updated')
-    await loadDashboard()
-  } catch (exception) {
-    toast.error(apiErrorMessage(exception, 'Could not update campaign.'))
-  }
+async function endCampaign(campaign: Campaign) {
+  const venueId = selectedVenue.value?.id ?? workspace.filterVenueId
+  if (!venueId) return
+  await updateCampaignStatus(venueId, campaign, 'ended', loadDashboard)
 }
 
 async function loadDashboard() {
@@ -290,11 +286,14 @@ async function loadDashboard() {
       return
     }
 
-    if (!workspace.filterVenueId && workspace.activeVenues.length) {
-      workspace.setFilter(workspace.activeVenues[0].id)
+    const ownerVenues = workspace.activeVenues.filter((venue) => venue.membership_role === 'owner')
+    const shouldAutoSelectVenue = !auth.isAdmin && ownerVenues.length > 0
+
+    if (!workspace.filterVenueId && shouldAutoSelectVenue) {
+      workspace.setFilter(ownerVenues[0].id)
     }
 
-    const venueId = selectedVenue.value?.id ?? workspace.filterVenueId
+    const venueId = workspace.filterVenueId ?? undefined
     const query = venueId ? `?venue_id=${venueId}` : ''
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
   } catch (exception) {
@@ -446,9 +445,9 @@ onMounted(() => {
 
     <DashboardActiveCampaignsSection
       :campaigns="activeCampaigns"
-      @pause="(campaign) => updateCampaignStatus(campaign, 'paused')"
+      @pause="pauseCampaign"
       @edit="openCampaignEditor"
-      @end="(campaign) => updateCampaignStatus(campaign, 'ended')"
+      @end="endCampaign"
     />
 
     <AppCard wrapper-class="mt-6">

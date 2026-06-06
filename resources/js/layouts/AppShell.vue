@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
-import { staffScannerPath } from '@/lib/venueRoles'
+import { ADMIN_HOME_PATH, staffScannerPath } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -42,6 +42,10 @@ const homePath = computed(() => {
     return '/wallet'
   }
 
+  if (auth.isAdmin) {
+    return ADMIN_HOME_PATH
+  }
+
   if (workspace.usesStaffNav) {
     return staffScannerPath(workspace.effectiveVenueId)
   }
@@ -68,7 +72,15 @@ const nav = computed(() => {
     ]
   }
 
-  const items = [
+  if (auth.isAdmin) {
+    return [
+      { label: 'Venue listings', to: '/admin/venues', icon: '▣' },
+      { label: 'Design palette', to: '/admin/palette', icon: '◐' },
+      { label: 'Activity log', to: '/admin/activity', icon: '◫' },
+    ]
+  }
+
+  return [
     { label: 'Dashboard', to: '/dashboard', icon: '◈' },
     { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
     { label: 'My Venues', to: '/my-venues', icon: '⌂' },
@@ -79,16 +91,6 @@ const nav = computed(() => {
     { label: 'Team', to: '/team', icon: '◧' },
     { label: 'Workspace', to: '/settings', icon: '⚙' },
   ]
-
-  if (auth.isAdmin) {
-    items.splice(1, 0,
-      { label: 'Venue listings', to: '/admin/venues', icon: '⌂' },
-      { label: 'Design palette', to: '/admin/palette', icon: '◐' },
-      { label: 'Activity log', to: '/admin/activity', icon: '◫' },
-    )
-  }
-
-  return items
 })
 
 const isNavActive = (item: { to: string; routeName?: string }) =>
@@ -147,7 +149,10 @@ async function logout() {
         <FlotoryLogo size="lg" inverted />
       </RouterLink>
 
-      <div v-if="!workspace.usesStaffNav || workspace.activeVenues.length > 1" class="mt-5 px-1">
+      <div
+        v-if="workspace.hasMembership && (!workspace.usesStaffNav || workspace.activeVenues.length > 1)"
+        class="mt-5 px-1"
+      >
         <VenueFilter variant="sidebar" />
       </div>
 
@@ -195,7 +200,10 @@ async function logout() {
             Logout
           </button>
         </div>
-        <div v-if="workspace.activeVenues.length > 1" class="mx-auto max-w-6xl px-4 pb-3">
+        <div
+          v-if="workspace.hasMembership && workspace.activeVenues.length > 1"
+          class="mx-auto max-w-6xl px-4 pb-3"
+        >
           <VenueFilter variant="default" />
         </div>
       </header>

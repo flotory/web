@@ -9,14 +9,6 @@ use Illuminate\Validation\ValidationException;
 
 class VenuePublicationService
 {
-    public const STATUS_DRAFT = 'draft';
-
-    public const STATUS_PENDING_REVIEW = 'pending_review';
-
-    public const STATUS_PUBLISHED = 'published';
-
-    public const STATUS_REJECTED = 'rejected';
-
     /**
      * @return list<array{key: string, label: string, complete: bool, hint: string}>
      */
@@ -68,7 +60,7 @@ class VenuePublicationService
     {
         $items = $this->checklistItems($venue);
         $ready = collect($items)->every(fn (array $item): bool => $item['complete']);
-        $status = $venue->status ?? self::STATUS_DRAFT;
+        $status = $venue->status ?? Venue::STATUS_DRAFT;
 
         return [
             'status' => $status,
@@ -76,8 +68,8 @@ class VenuePublicationService
             'submitted_at' => $venue->submitted_at?->toIso8601String(),
             'published_at' => $venue->published_at?->toIso8601String(),
             'ready_to_submit' => $ready,
-            'can_submit' => $ready && in_array($status, [self::STATUS_DRAFT, self::STATUS_REJECTED], true),
-            'is_public' => $status === self::STATUS_PUBLISHED,
+            'can_submit' => $ready && in_array($status, [Venue::STATUS_DRAFT, Venue::STATUS_REJECTED], true),
+            'is_public' => $status === Venue::STATUS_PUBLISHED,
             'items' => $items,
         ];
     }
@@ -99,14 +91,14 @@ class VenuePublicationService
         }
 
         $venue->forceFill([
-            'status' => self::STATUS_PENDING_REVIEW,
+            'status' => Venue::STATUS_PENDING_REVIEW,
             'review_note' => null,
             'submitted_at' => now(),
         ])->save();
 
         AuditLog::record('venue.submitted_for_review', $venue, $actor, 'success', [
             'venue_id' => $venue->id,
-            'status' => self::STATUS_PENDING_REVIEW,
+            'status' => Venue::STATUS_PENDING_REVIEW,
         ]);
 
         return $venue->fresh();
@@ -114,21 +106,27 @@ class VenuePublicationService
 
     public function approve(Venue $venue, User $admin): Venue
     {
-        if ($venue->status !== self::STATUS_PENDING_REVIEW) {
+        if ($venue->status !== Venue::STATUS_PENDING_REVIEW) {
             throw ValidationException::withMessages([
                 'status' => 'Only venues awaiting review can be approved.',
             ]);
         }
 
+        if (! $this->snapshot($venue)['ready_to_submit']) {
+            throw ValidationException::withMessages([
+                'listing' => 'Venue no longer meets listing requirements.',
+            ]);
+        }
+
         $venue->forceFill([
-            'status' => self::STATUS_PUBLISHED,
+            'status' => Venue::STATUS_PUBLISHED,
             'review_note' => null,
             'published_at' => now(),
         ])->save();
 
         AuditLog::record('venue.listing_approved', $venue, $admin, 'success', [
             'venue_id' => $venue->id,
-            'status' => self::STATUS_PUBLISHED,
+            'status' => Venue::STATUS_PUBLISHED,
         ]);
 
         return $venue->fresh();
@@ -136,20 +134,20 @@ class VenuePublicationService
 
     public function reject(Venue $venue, User $admin, ?string $note): Venue
     {
-        if ($venue->status !== self::STATUS_PENDING_REVIEW) {
+        if ($venue->status !== Venue::STATUS_PENDING_REVIEW) {
             throw ValidationException::withMessages([
                 'status' => 'Only venues awaiting review can be rejected.',
             ]);
         }
 
         $venue->forceFill([
-            'status' => self::STATUS_REJECTED,
+            'status' => Venue::STATUS_REJECTED,
             'review_note' => $this->normalizeReviewNote($note),
         ])->save();
 
         AuditLog::record('venue.listing_rejected', $venue, $admin, 'success', [
             'venue_id' => $venue->id,
-            'status' => self::STATUS_REJECTED,
+            'status' => Venue::STATUS_REJECTED,
             'review_note' => $venue->review_note,
         ]);
 
@@ -158,14 +156,14 @@ class VenuePublicationService
 
     public function unpublish(Venue $venue, User $admin, ?string $note = null): Venue
     {
-        if ($venue->status !== self::STATUS_PUBLISHED) {
+        if ($venue->status !== Venue::STATUS_PUBLISHED) {
             throw ValidationException::withMessages([
                 'status' => 'Only published venues can be unpublished.',
             ]);
         }
 
         $venue->forceFill([
-            'status' => self::STATUS_DRAFT,
+            'status' => Venue::STATUS_DRAFT,
             'review_note' => $this->normalizeReviewNote($note),
             'submitted_at' => null,
             'published_at' => null,
@@ -173,7 +171,7 @@ class VenuePublicationService
 
         AuditLog::record('venue.listing_unpublished', $venue, $admin, 'success', [
             'venue_id' => $venue->id,
-            'status' => self::STATUS_DRAFT,
+            'status' => Venue::STATUS_DRAFT,
         ]);
 
         return $venue->fresh();
@@ -181,7 +179,7 @@ class VenuePublicationService
 
     public function isPublic(Venue $venue): bool
     {
-        return ($venue->status ?? self::STATUS_DRAFT) === self::STATUS_PUBLISHED
+        return ($venue->status ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED
             && $venue->deleted_at === null;
     }
 

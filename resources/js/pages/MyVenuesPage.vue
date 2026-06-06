@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -16,6 +17,7 @@ import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverThumbUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
@@ -334,7 +336,9 @@ onMounted(loadVenues)
             <div>
               <div class="flex flex-wrap items-center gap-2">
                 <h2 class="text-2xl font-black text-ink">{{ venue.name }}</h2>
-                <AppBadge tone="green">Active</AppBadge>
+                <AppBadge :tone="listingStatusTone(venue.status ?? 'draft')">
+                  {{ listingStatusLabel(venue.status ?? 'draft') }}
+                </AppBadge>
                 <AppBadge tone="blue">{{ venueTypeLabel(venue) }}</AppBadge>
               </div>
               <p class="mt-1 text-sm font-semibold text-ink-muted">/{{ venue.slug }}</p>

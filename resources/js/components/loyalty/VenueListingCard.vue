@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { Check, Circle, Clock3, Send } from '@lucide/vue'
+import { Clock3, Send } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 
+import ListingChecklist from '@/components/loyalty/ListingChecklist.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import {
-  listingItemPath,
   listingStatusLabel,
   listingStatusTone,
   type VenueListingSnapshot,
@@ -90,6 +89,9 @@ watch(() => props.venueId, loadListing)
           <template v-else-if="listing?.status === 'rejected'">
             {{ listing.review_note || 'Please update your venue details and submit again.' }}
           </template>
+          <template v-else-if="listing?.status === 'draft' && listing.review_note">
+            {{ listing.review_note }}
+          </template>
           <template v-else>
             Finish these steps, then submit for approval. Customers will only see your venue after approval.
           </template>
@@ -101,32 +103,13 @@ watch(() => props.venueId, loadListing)
       </div>
     </div>
 
-    <ul v-if="listing && listing.status !== 'pending_review'" class="mt-5 space-y-3">
-      <li
-        v-for="item in listing.items"
-        :key="item.key"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-surface-muted/70 px-4 py-3"
-      >
-        <div class="flex min-w-0 items-start gap-3">
-          <component
-            :is="item.complete ? Check : Circle"
-            class="mt-0.5 size-4 shrink-0"
-            :class="item.complete ? 'text-success' : 'text-ink-soft'"
-          />
-          <div class="min-w-0">
-            <p class="text-sm font-bold text-ink">{{ item.label }}</p>
-            <p v-if="!item.complete" class="mt-1 text-xs font-medium text-ink-muted">{{ item.hint }}</p>
-          </div>
-        </div>
-        <RouterLink
-          v-if="!item.complete"
-          :to="listingItemPath(venueId, item.key)"
-          class="shrink-0 text-xs font-bold text-primary-soft hover:text-primary"
-        >
-          Add
-        </RouterLink>
-      </li>
-    </ul>
+    <ListingChecklist
+      v-if="listing && listing.status !== 'pending_review'"
+      class="mt-5"
+      variant="owner"
+      :items="listing.items"
+      :venue-id="venueId"
+    />
 
     <div v-if="listing?.status === 'pending_review'" class="mt-5 flex items-center gap-3 rounded-2xl bg-lavender px-4 py-3 text-sm font-semibold text-primary-soft">
       <Clock3 class="size-4 shrink-0" />

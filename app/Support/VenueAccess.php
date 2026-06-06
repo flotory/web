@@ -25,10 +25,15 @@ class VenueAccess
     /**
      * @param  array<int, string>  $roles
      */
+    public static function assertNotPlatformAdmin(User $user): void
+    {
+        abort_if(self::isAdmin($user), 403, 'Platform admins cannot use venue owner tools.');
+    }
+
     public static function canAccess(User $user, Venue $venue, array $roles = []): bool
     {
         if (self::isAdmin($user)) {
-            return true;
+            return false;
         }
 
         $membership = self::membership($user, $venue);

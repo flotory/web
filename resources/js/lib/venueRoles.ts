@@ -4,6 +4,8 @@ import type { Venue } from '@/types'
 
 export const OWNER_ONBOARDING_PATH = '/onboarding/create-venue'
 
+export const ADMIN_HOME_PATH = '/admin/venues'
+
 export type VenueMembershipRole = 'owner' | 'staff'
 
 export function isVenueOwner(venue: Pick<Venue, 'membership_role'> | null | undefined): boolean {
@@ -32,14 +34,19 @@ export function hasOwnerMembership(venues: Venue[]): boolean {
   return venues.some((venue) => !venue.archived && venue.membership_role === 'owner')
 }
 
+/** Platform super admin — system control only, never a venue operator. */
+export function isPlatformAdmin(isAdmin: boolean | undefined): boolean {
+  return isAdmin === true
+}
+
 /** Where to send the user right after login (owners → dashboard, staff → scanner, guests → card). */
 export function resolveAuthenticatedHomePath(
   isAdmin: boolean | undefined,
   activeVenues: Venue[],
   effectiveVenueId: number | null,
 ): string {
-  if (isAdmin) {
-    return '/dashboard'
+  if (isPlatformAdmin(isAdmin)) {
+    return ADMIN_HOME_PATH
   }
 
   const active = activeVenues.filter((venue) => !venue.archived)
@@ -94,7 +101,11 @@ export function resolvePostLoginDestination(
     return home
   }
 
-  if (isOwnerWorkspacePath(safe) && !hasTeam && !isAdmin && hasOwnerOnboardingIntent()) {
+  if (isPlatformAdmin(isAdmin)) {
+    return safe.startsWith('/admin/') ? safe : ADMIN_HOME_PATH
+  }
+
+  if (isOwnerWorkspacePath(safe) && !hasTeam && hasOwnerOnboardingIntent()) {
     return OWNER_ONBOARDING_PATH
   }
 

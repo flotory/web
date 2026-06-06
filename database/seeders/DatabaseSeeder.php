@@ -53,6 +53,9 @@ class DatabaseSeeder extends Seeder
                 'name' => 'North Star Burgers',
                 'slug' => 'north-star-burgers',
                 'category' => 'restaurant',
+                'address' => '44 Main Street, Warsaw',
+                'latitude' => 52.2296760,
+                'longitude' => 21.0122290,
                 'status' => Venue::STATUS_PUBLISHED,
             ],
             [

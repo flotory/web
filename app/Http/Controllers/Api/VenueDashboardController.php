@@ -157,10 +157,6 @@ class VenueDashboardController extends Controller
      */
     private function ownerVenueIds(User $user): array
     {
-        if (VenueAccess::isAdmin($user)) {
-            return Venue::query()->pluck('id')->all();
-        }
-
         return VenueUser::query()
             ->where('user_id', $user->id)
             ->where('role', 'owner')

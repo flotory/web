@@ -17,7 +17,7 @@ class AdminVenueReviewController extends Controller
         $status = $request->string('status')->toString();
 
         $query = Venue::query()
-            ->withTrashed()
+            ->when($request->boolean('include_archived'), fn ($builder) => $builder->withTrashed())
             ->withCount([
                 'rewards as active_rewards_count' => fn ($builder) => $builder->where('active', true),
                 'customers',
@@ -47,23 +47,23 @@ class AdminVenueReviewController extends Controller
         ]);
     }
 
-    public function approve(Request $request, Venue $venue): JsonResponse
+    public function approve(Request $request, int $venue): JsonResponse
     {
-        $venue = $this->publication->approve($venue, $request->user());
+        $venue = $this->publication->approve($this->resolveVenue($venue), $request->user());
 
         return response()->json([
             'venue' => $this->presentVenue($venue),
         ]);
     }
 
-    public function reject(Request $request, Venue $venue): JsonResponse
+    public function reject(Request $request, int $venue): JsonResponse
     {
         $validated = $request->validate([
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $venue = $this->publication->reject(
-            $venue,
+            $this->resolveVenue($venue),
             $request->user(),
             $validated['note'] ?? null,
         );
@@ -73,14 +73,14 @@ class AdminVenueReviewController extends Controller
         ]);
     }
 
-    public function unpublish(Request $request, Venue $venue): JsonResponse
+    public function unpublish(Request $request, int $venue): JsonResponse
     {
         $validated = $request->validate([
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $venue = $this->publication->unpublish(
-            $venue,
+            $this->resolveVenue($venue),
             $request->user(),
             $validated['note'] ?? null,
         );
@@ -88,6 +88,11 @@ class AdminVenueReviewController extends Controller
         return response()->json([
             'venue' => $this->presentVenue($venue),
         ]);
+    }
+
+    private function resolveVenue(int $venueId): Venue
+    {
+        return Venue::query()->withTrashed()->findOrFail($venueId);
     }
 
     /**

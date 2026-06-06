@@ -31,8 +31,10 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { clearOwnerOnboardingIntent, hasOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import {
+  ADMIN_HOME_PATH,
   hasOwnerMembership,
   hasTeamMembership,
+  isPlatformAdmin,
   ownerBootstrapPath,
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
@@ -64,9 +66,9 @@ const router = createRouter({
     { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
-    { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
-    { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
+    { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/card', redirect: (to) => ({ path: '/wallet', query: to.query }) },
@@ -100,6 +102,14 @@ router.beforeEach(async (to) => {
     return { path: '/dashboard' }
   }
 
+  function redirectPlatformAdminFromOwnerRoute(): string | null {
+    if (!isPlatformAdmin(auth.isAdmin) || to.meta.adminOnly) {
+      return null
+    }
+
+    return ADMIN_HOME_PATH
+  }
+
   if (auth.isAuthenticated) {
     const needsWorkspaceContext = to.meta.workspace === true || to.meta.workspace === 'auto'
 
@@ -115,12 +125,32 @@ router.beforeEach(async (to) => {
 
     const allowWithoutMembership = to.meta.allowWithoutMembership === true
 
-    if (needsWorkspaceContext && !teamMember && !auth.user?.is_admin && !allowWithoutMembership) {
+    const platformAdminRedirect = redirectPlatformAdminFromOwnerRoute()
+    if (platformAdminRedirect && needsWorkspaceContext && !to.meta.adminOnly && !allowWithoutMembership) {
+      return { path: platformAdminRedirect }
+    }
+
+    if (needsWorkspaceContext && !teamMember && !allowWithoutMembership && !to.meta.adminOnly) {
+      if (auth.isAdmin) {
+        return { path: ADMIN_HOME_PATH }
+      }
+
       return { path: home }
     }
 
-    if (to.meta.ownerOnly && !auth.user?.is_admin && !ownerMember && !allowWithoutMembership) {
+    if (to.meta.ownerOnly && !ownerMember && !allowWithoutMembership) {
+      if (auth.isAdmin) {
+        return { path: ADMIN_HOME_PATH }
+      }
+
       return { path: home }
+    }
+
+    if (
+      (to.name === 'onboarding' || to.name === 'onboarding-create-venue')
+      && auth.isAdmin
+    ) {
+      return { path: ADMIN_HOME_PATH }
     }
 
     if (
@@ -141,7 +171,11 @@ router.beforeEach(async (to) => {
       }
     }
 
-    if (to.name === 'my-venues' && !auth.user?.is_admin && !ownerMember && to.query.intent !== 'owner') {
+    if (to.name === 'my-venues' && !ownerMember && to.query.intent !== 'owner') {
+      if (auth.isAdmin) {
+        return { path: ADMIN_HOME_PATH }
+      }
+
       return { path: home }
     }
   }
@@ -150,9 +184,13 @@ router.beforeEach(async (to) => {
     const workspace = useWorkspaceStore()
     await workspace.bootstrap()
 
-    if (hasOwnerOnboardingIntent() || hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues) || auth.user?.is_admin) {
+    if (auth.user?.is_admin) {
+      return { path: ADMIN_HOME_PATH }
+    }
+
+    if (hasOwnerOnboardingIntent() || hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues)) {
       return {
-        path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+        path: ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId),
       }
     }
 

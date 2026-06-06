@@ -30,6 +30,12 @@ class VenueStaffInvitationService
         $existingUser = User::query()->where('email', $email)->first();
 
         if ($existingUser) {
+            if ($existingUser->is_admin) {
+                throw ValidationException::withMessages([
+                    'email' => 'Platform admin accounts cannot join venue teams.',
+                ]);
+            }
+
             $membership = VenueUser::query()
                 ->where('venue_id', $venue->id)
                 ->where('user_id', $existingUser->id)
