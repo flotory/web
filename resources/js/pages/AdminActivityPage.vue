@@ -3,8 +3,9 @@ import { Activity } from '@lucide/vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import AppBadge from '@/components/ui/AppBadge.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -90,22 +91,19 @@ watch(page, loadActivity)
 
 <template>
   <AppShell>
-    <div class="mx-auto max-w-6xl space-y-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-widest text-primary">Super admin</p>
-          <h1 class="mt-1 text-3xl font-black text-ink">Activity log</h1>
-          <p class="mt-2 max-w-2xl text-sm text-ink-muted">
-            Loyalty actions and API validation failures. Use the request ID from the network tab when correlating issues.
-          </p>
-        </div>
-        <RouterLink
-          to="/dashboard"
-          class="inline-flex shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-4 py-2 text-sm font-bold text-ink-muted shadow-sm transition hover:bg-surface-muted"
-        >
-          ← Owner dashboard
-        </RouterLink>
-      </div>
+    <div class="space-y-6">
+      <PageHeader
+        title="Activity log"
+        badge="Super admin"
+        compact
+        description="Loyalty actions and API validation failures. Use the request ID from the network tab when correlating issues."
+      >
+        <template #actions>
+          <RouterLink to="/dashboard">
+            <AppButton variant="secondary">Back to dashboard</AppButton>
+          </RouterLink>
+        </template>
+      </PageHeader>
 
       <AppCard class="space-y-4 p-5">
         <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -157,13 +155,9 @@ watch(page, loadActivity)
             >
           </label>
         </div>
-        <button
-          type="button"
-          class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white"
-          @click="applyFilters"
-        >
+        <AppButton type="button" @click="applyFilters">
           Apply filters
-        </button>
+        </AppButton>
       </AppCard>
 
       <ErrorState v-if="error" :message="error" @retry="loadActivity" />

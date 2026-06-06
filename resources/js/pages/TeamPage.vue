@@ -4,9 +4,10 @@ import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageSection from '@/components/ui/PageSection.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
@@ -143,13 +144,11 @@ onMounted(loadTeam)
 
 <template>
   <AppShell>
-    <div class="mb-6">
-      <AppBadge tone="blue">Team access</AppBadge>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Team</h1>
-      <p class="mt-2 text-ink-muted">
-        {{ venue ? `Invite and manage staff for ${venue.name}.` : 'Pick a venue in the sidebar filter to manage its team.' }}
-      </p>
-    </div>
+    <PageHeader
+      title="Team"
+      badge="Staff access"
+      :description="venue ? `Invite and manage staff for ${venue.name}.` : 'Pick a venue in the sidebar filter to manage its team.'"
+    />
 
     <AppCard v-if="loading">
       <EmptyState compact title="Loading team…" />
@@ -178,10 +177,10 @@ onMounted(loadTeam)
 
       <div class="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <AppCard>
-          <h2 class="text-xl font-black text-ink">Invite staff member</h2>
-          <p class="mt-2 text-sm font-semibold text-ink-muted">
-            We email a secure link. They create an account or sign in, then join your venue.
-          </p>
+          <PageSection
+            title="Invite staff member"
+            description="We email a secure link. They create an account or sign in, then join your venue."
+          />
 
           <form class="mt-5 grid gap-3" @submit.prevent="invite">
             <div>

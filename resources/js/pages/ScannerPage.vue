@@ -5,9 +5,9 @@ import { QrcodeStream } from 'vue-qrcode-reader'
 import { useRoute, useRouter } from 'vue-router'
 
 import SuccessCheck from '@/components/loyalty/SuccessCheck.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage } from '@/lib/api'
@@ -415,21 +415,23 @@ watch(activeScannerVenueId, (venueId, previous) => {
 
 <template>
   <AppShell>
-    <div class="mx-auto max-w-2xl">
-      <div class="mb-5">
-        <AppBadge tone="green">Staff scanner</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Scan loyalty QR</h1>
-        <p class="mt-2 text-ink-muted">
-          {{
-            venue
-              ? `At ${venue.name}: stamp card adds stamps. Claim screen redeems rewards.`
-              : 'Designed for a sub-3-second cashier flow.'
-          }}
-        </p>
-        <p class="mt-1 text-xs font-medium text-ink-muted">
-          For rewards, the customer must tap <span class="font-semibold text-ink-muted">Claim</span> in Rewards — not their stamp card.
-        </p>
-      </div>
+    <div class="mx-auto max-w-3xl">
+      <PageHeader
+        title="Scanner"
+        badge="Staff tool"
+        badge-tone="green"
+        compact
+        :description="venue ? `At ${venue.name}: stamp card adds stamps. Claim screen redeems rewards.` : 'Designed for a fast cashier flow.'"
+      >
+        <template v-if="venue" #meta>
+          <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted ring-1 ring-border">
+            {{ venue.name }}
+          </span>
+        </template>
+      </PageHeader>
+      <p class="-mt-2 mb-5 text-xs text-ink-soft">
+        For rewards, the customer must tap <span class="font-semibold text-ink-muted">Claim</span> in Rewards — not their stamp card.
+      </p>
 
       <AppCard wrapper-class="overflow-hidden p-0">
         <div class="relative aspect-square bg-primary">

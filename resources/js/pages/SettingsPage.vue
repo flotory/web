@@ -7,6 +7,7 @@ import WorkspaceSummaryCard from '@/components/loyalty/WorkspaceSummaryCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -68,13 +69,11 @@ onMounted(load)
 
 <template>
   <AppShell>
-    <div class="mb-8">
-      <AppBadge tone="blue">Workspace</AppBadge>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Workspace overview</h1>
-      <p class="mt-2 max-w-2xl text-ink-muted">
-        A quick snapshot of your venues, team, and loyalty program — without the complexity of admin settings.
-      </p>
-    </div>
+    <PageHeader
+      title="Workspace"
+      badge="Overview"
+      description="A quick snapshot of your venues, team, and loyalty program."
+    />
 
     <AppCard v-if="loading" wrapper-class="mb-6">
       <EmptyState compact title="Loading workspace…" />

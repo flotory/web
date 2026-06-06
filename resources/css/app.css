@@ -21,6 +21,17 @@
   --color-surface-muted: var(--flotory-surface-muted);
   --color-border: var(--flotory-border);
   --color-workspace-bg: var(--flotory-workspace-bg);
+  --color-workspace-bg-gradient-start: var(--flotory-workspace-bg-gradient-start);
+  --color-workspace-bg-gradient-end: var(--flotory-workspace-bg-gradient-end);
+  --color-surface-elevated: var(--flotory-surface-elevated);
+
+  --color-sidebar-bg: var(--flotory-sidebar-bg);
+  --color-sidebar-border: var(--flotory-sidebar-border);
+  --color-sidebar-text: var(--flotory-sidebar-text);
+  --color-sidebar-text-muted: var(--flotory-sidebar-text-muted);
+  --color-sidebar-hover: var(--flotory-sidebar-hover);
+  --color-nav-active-bg: var(--flotory-nav-active-bg);
+  --color-nav-active-text: var(--flotory-nav-active-text);
 
   --color-ink: var(--flotory-ink);
   --color-ink-muted: var(--flotory-ink-muted);
@@ -61,8 +72,19 @@
   --flotory-bg-gradient-start: #faf7f0;
   --flotory-bg-gradient-end: #f7f2e8;
   --flotory-surface: #ffffff;
-  --flotory-surface-muted: #e9ecf1;
-  --flotory-border: #e9ecf1;
+  --flotory-surface-muted: #eef1f6;
+  --flotory-surface-elevated: #ffffff;
+  --flotory-border: #e2e8f0;
+  --flotory-workspace-bg: #f3f6fa;
+  --flotory-workspace-bg-gradient-start: #f8fafc;
+  --flotory-workspace-bg-gradient-end: #eef2f7;
+  --flotory-sidebar-bg: #081233;
+  --flotory-sidebar-border: #152548;
+  --flotory-sidebar-text: #ffffff;
+  --flotory-sidebar-text-muted: #9aa6be;
+  --flotory-sidebar-hover: #0f2248;
+  --flotory-nav-active-bg: #d6b15e;
+  --flotory-nav-active-text: #081233;
   --flotory-ink: #081233;
   --flotory-ink-muted: #5c6478;
   --flotory-ink-soft: #8b93a7;
@@ -82,8 +104,7 @@
   --flotory-progress-filled: #d6b15e;
   --flotory-link: #081233;
   --flotory-chart: #d6b15e;
-  --flotory-nav-active: #081233;
-  --flotory-workspace-bg: #f7f2e8;
+  --flotory-nav-active: #d6b15e;
 }
 
 html {
@@ -105,6 +126,33 @@ body {
   background: linear-gradient(180deg, var(--flotory-bg-gradient-start) 0%, var(--flotory-bg-gradient-end) 100%);
 }
 
+.bg-workspace-gradient {
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, color-mix(in srgb, var(--flotory-accent) 6%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--flotory-workspace-bg-gradient-start) 0%, var(--flotory-workspace-bg-gradient-end) 100%);
+}
+
 .bg-auth-gradient {
   background: radial-gradient(circle at top, var(--flotory-primary) 0%, #020617 55%);
+}
+
+/* Google Places autocomplete dropdown (attached to document.body) */
+.pac-container {
+  z-index: 10000 !important;
+  border-radius: 1rem;
+  border: 1px solid var(--flotory-border);
+  box-shadow: 0 12px 32px rgba(8, 18, 51, 0.12);
+  margin-top: 0.35rem;
+  font-family: var(--font-sans);
+}
+
+.pac-item {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background: var(--flotory-surface-muted);
 }

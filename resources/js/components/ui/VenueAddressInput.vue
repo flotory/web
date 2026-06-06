@@ -1,0 +1,209 @@
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+import { loadGoogleMaps, resolveGoogleMapsApiKey } from '@/lib/googleMapsLoader'
+
+const props = withDefaults(defineProps<{
+  id: string
+  label?: string
+  placeholder?: string
+  hint?: string
+  quotaRemaining?: number | null
+  disabled?: boolean
+}>(), {
+  label: 'Address',
+  placeholder: 'Search for your venue address',
+  hint: 'Pick a Google suggestion so customers can find you on the map.',
+  quotaRemaining: null,
+  disabled: false,
+})
+
+const address = defineModel<string>('address', { default: '' })
+const latitude = defineModel<number | null>('latitude', { default: null })
+const longitude = defineModel<number | null>('longitude', { default: null })
+const googlePlaceId = defineModel<string | null>('googlePlaceId', { default: null })
+
+const inputRef = ref<HTMLInputElement | null>(null)
+const mapsConfigured = ref(false)
+const autocompleteReady = ref(false)
+const loadError = ref('')
+const selectionRequired = ref(false)
+
+const quotaHint = computed(() => {
+  if (props.quotaRemaining === null) {
+    return null
+  }
+
+  if (props.quotaRemaining <= 0) {
+    return 'Address updates are limited to 3 per day. You can try again tomorrow.'
+  }
+
+  return `${props.quotaRemaining} address update${props.quotaRemaining === 1 ? '' : 's'} left today.`
+})
+
+let autocomplete: google.maps.places.Autocomplete | null = null
+let placeListener: google.maps.MapsEventListener | null = null
+let applyingPlace = false
+let lastSelectedAddress = ''
+
+function syncInputValue(value: string) {
+  if (!inputRef.value || inputRef.value.value === value) {
+    return
+  }
+
+  inputRef.value.value = value
+}
+
+function applyPlace(place: google.maps.places.PlaceResult) {
+  const formatted = place.formatted_address?.trim() ?? ''
+  const location = place.geometry?.location
+
+  applyingPlace = true
+
+  if (!formatted || !location) {
+    selectionRequired.value = true
+    latitude.value = null
+    longitude.value = null
+    googlePlaceId.value = null
+    applyingPlace = false
+    return
+  }
+
+  lastSelectedAddress = formatted
+  address.value = formatted
+  syncInputValue(formatted)
+  latitude.value = location.lat()
+  longitude.value = location.lng()
+  googlePlaceId.value = place.place_id ?? null
+  selectionRequired.value = false
+  applyingPlace = false
+}
+
+function onNativeInput() {
+  if (applyingPlace || !inputRef.value) {
+    return
+  }
+
+  const nextValue = inputRef.value.value
+  address.value = nextValue
+
+  if (nextValue.trim() === lastSelectedAddress.trim()) {
+    return
+  }
+
+  latitude.value = null
+  longitude.value = null
+  googlePlaceId.value = null
+  selectionRequired.value = Boolean(nextValue.trim())
+}
+
+function validateSelection(): boolean {
+  const trimmed = address.value.trim()
+
+  if (!trimmed) {
+    selectionRequired.value = false
+    return true
+  }
+
+  if (latitude.value === null || longitude.value === null) {
+    selectionRequired.value = true
+    return false
+  }
+
+  selectionRequired.value = false
+  return true
+}
+
+defineExpose({ validateSelection })
+
+onMounted(async () => {
+  await nextTick()
+
+  const apiKey = await resolveGoogleMapsApiKey()
+  mapsConfigured.value = apiKey.length > 0
+
+  if (address.value) {
+    lastSelectedAddress = address.value.trim()
+    syncInputValue(address.value)
+  }
+
+  if (!apiKey || !inputRef.value) {
+    return
+  }
+
+  inputRef.value.addEventListener('input', onNativeInput)
+
+  try {
+    await loadGoogleMaps(apiKey)
+    autocomplete = new google.maps.places.Autocomplete(inputRef.value, {
+      fields: ['formatted_address', 'geometry', 'place_id'],
+    })
+    placeListener = autocomplete.addListener('place_changed', () => {
+      applyPlace(autocomplete?.getPlace() ?? {})
+    })
+    autocompleteReady.value = true
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : 'Could not load Google address search.'
+  }
+})
+
+onBeforeUnmount(() => {
+  inputRef.value?.removeEventListener('input', onNativeInput)
+  placeListener?.remove()
+  placeListener = null
+  autocomplete = null
+})
+
+watch(address, (value) => {
+  if (applyingPlace) {
+    return
+  }
+
+  syncInputValue(value)
+
+  if (value.trim() === '') {
+    lastSelectedAddress = ''
+    latitude.value = null
+    longitude.value = null
+    googlePlaceId.value = null
+    selectionRequired.value = false
+    return
+  }
+
+  if (!autocompleteReady.value && value.trim() !== lastSelectedAddress.trim()) {
+    latitude.value = null
+    longitude.value = null
+    googlePlaceId.value = null
+    selectionRequired.value = true
+  }
+})
+</script>
+
+<template>
+  <div class="venue-address-input">
+    <label class="text-sm font-bold text-ink-muted" :for="id">{{ label }}</label>
+    <input
+      :id="id"
+      ref="inputRef"
+      :disabled="disabled"
+      class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+      :placeholder="placeholder"
+      autocomplete="off"
+    >
+    <p v-if="hint" class="mt-2 text-xs font-medium text-ink-muted">
+      {{ hint }}
+    </p>
+    <p v-if="quotaHint" class="mt-2 text-xs font-semibold" :class="quotaRemaining === 0 ? 'text-danger' : 'text-ink-muted'">
+      {{ quotaHint }}
+    </p>
+    <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-ink-muted">
+      Google address search is not configured. Add `GOOGLE_MAPS_API_KEY` to the server environment.
+    </p>
+    <p v-else-if="loadError" class="mt-2 text-xs font-semibold text-danger">
+      {{ loadError }}
+    </p>
+    <p v-else-if="selectionRequired" class="mt-2 text-xs font-semibold text-danger">
+      Select an address from the Google suggestions list.
+    </p>
+  </div>
+</template>

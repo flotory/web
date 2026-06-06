@@ -13,7 +13,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances."
+      }
     },
     "android": {
       "package": "com.flotory.mobile",
@@ -40,7 +43,13 @@
           "backgroundColor": "#F7F2E8"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Flotory uses your location to show nearby venues and distances."
+        }
+      ]
     ]
   }
 }

@@ -11,6 +11,14 @@ export interface Venue {
   cover_image?: string | null
   cover_image_thumb?: string | null
   address?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  google_place_id?: string | null
+  address_quota?: {
+    limit: number
+    used_today: number
+    remaining: number
+  } | null
   phone?: string | null
   website?: string | null
   archived?: boolean

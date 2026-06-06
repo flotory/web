@@ -9,6 +9,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import ImageCropUpload from '@/components/ui/ImageCropUpload.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
+import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
@@ -32,6 +33,11 @@ const logoCropDisabled = computed(() => logoUploading.value)
 const name = ref('')
 const slug = ref('')
 const address = ref('')
+const latitude = ref<number | null>(null)
+const longitude = ref<number | null>(null)
+const googlePlaceId = ref<string | null>(null)
+const addressQuotaRemaining = ref<number | null>(null)
+const addressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
 const phone = ref('')
 const website = ref('')
 const category = ref<VenueCategory>('cafe')
@@ -60,6 +66,10 @@ function hydrateForm(item: Venue) {
   name.value = item.name
   slug.value = item.slug
   address.value = item.address ?? ''
+  latitude.value = item.latitude ?? null
+  longitude.value = item.longitude ?? null
+  googlePlaceId.value = item.google_place_id ?? null
+  addressQuotaRemaining.value = item.address_quota?.remaining ?? null
   phone.value = item.phone ?? ''
   website.value = item.website ?? ''
   category.value = normalizeVenueCategory(item.category)
@@ -82,6 +92,11 @@ async function loadVenue() {
 async function saveVenue() {
   if (!venue.value) return
 
+  if (!addressInput.value?.validateSelection()) {
+    error.value = 'Select an address from the Google suggestions list.'
+    return
+  }
+
   try {
     await saveVenueAction.run(async () => {
       error.value = ''
@@ -93,6 +108,9 @@ async function saveVenue() {
             name: name.value,
             slug: slug.value || undefined,
             address: address.value || undefined,
+            latitude: latitude.value ?? undefined,
+            longitude: longitude.value ?? undefined,
+            google_place_id: googlePlaceId.value ?? undefined,
             phone: phone.value || undefined,
             website: website.value || undefined,
             category: category.value,
@@ -394,16 +412,17 @@ onMounted(loadVenue)
             </div>
             <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />
             <div class="md:col-span-2">
-              <label class="text-sm font-bold text-ink-muted" for="edit-venue-address">Address</label>
-              <input
+              <VenueAddressInput
                 id="edit-venue-address"
-                v-model="address"
-                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
-                placeholder="12 Market Street, Toruń"
-              >
-              <p class="mt-2 text-xs font-medium text-ink-muted">
-                Shown on your public venue page and used for Google Maps.
-              </p>
+                ref="addressInput"
+                v-model:address="address"
+                v-model:latitude="latitude"
+                v-model:longitude="longitude"
+                v-model:google-place-id="googlePlaceId"
+                :quota-remaining="addressQuotaRemaining"
+                :disabled="addressQuotaRemaining === 0"
+                hint="Shown on your public venue page. Used later to show nearby venues to customers."
+              />
             </div>
           </div>
 

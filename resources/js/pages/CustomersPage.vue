@@ -3,8 +3,9 @@ import { Users } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import FilterPills from '@/components/ui/FilterPills.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -78,15 +79,11 @@ onMounted(loadCustomers)
 
 <template>
   <AppShell>
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <AppBadge tone="blue">Retention</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Customers</h1>
-        <p class="mt-2 max-w-2xl text-ink-muted">
-          See who is active, who has gone quiet, and open a profile for visit history and notes.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Customers"
+      badge="Guest list"
+      description="See who is active, who has gone quiet, and open a profile for visit history and notes."
+    />
 
     <div v-if="summary && hasVenue" class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
       <AppCard wrapper-class="p-4 text-center">
@@ -112,20 +109,7 @@ onMounted(loadCustomers)
     </div>
 
     <div v-if="hasVenue" class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="option in filterOptions"
-          :key="option.id"
-          type="button"
-          class="rounded-full px-3 py-1.5 text-sm font-semibold transition"
-          :class="activityFilter === option.id
-            ? 'bg-primary text-white shadow-sm'
-            : 'bg-surface text-ink-muted ring-1 ring-border hover:bg-surface-muted'"
-          @click="activityFilter = option.id"
-        >
-          {{ option.label }}
-        </button>
-      </div>
+      <FilterPills v-model="activityFilter" :options="filterOptions" />
       <label class="flex items-center gap-2 text-sm font-semibold text-ink-muted">
         Sort
         <select

@@ -4,9 +4,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import AnalyticsKpiCard from '@/components/loyalty/AnalyticsKpiCard.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -188,13 +188,17 @@ onMounted(load)
 
 <template>
   <AppShell>
-    <div class="mb-8">
-      <AppBadge tone="blue">Retention</AppBadge>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Analytics</h1>
-      <p class="mt-2 max-w-2xl text-ink-muted">
-        See whether guests are joining, returning, and redeeming rewards — {{ scopeLabel }}.
-      </p>
-    </div>
+    <PageHeader
+      title="Analytics"
+      badge="Insights"
+      description="See whether guests are joining, returning, and redeeming rewards."
+    >
+      <template #meta>
+        <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted ring-1 ring-border">
+          {{ scopeLabel }}
+        </span>
+      </template>
+    </PageHeader>
 
     <AppCard v-if="loading" wrapper-class="mb-6">
       <EmptyState compact title="Loading analytics…" />

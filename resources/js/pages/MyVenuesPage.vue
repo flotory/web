@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { Search, Store } from '@lucide/vue'
+import { Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
+import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
@@ -39,6 +40,10 @@ const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
 const name = ref('')
 const slug = ref('')
 const address = ref('')
+const latitude = ref<number | null>(null)
+const longitude = ref<number | null>(null)
+const googlePlaceId = ref<string | null>(null)
+const addressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
 const phone = ref('')
 const website = ref('')
 
@@ -82,6 +87,9 @@ function resetForm() {
   name.value = ''
   slug.value = ''
   address.value = ''
+  latitude.value = null
+  longitude.value = null
+  googlePlaceId.value = null
   phone.value = ''
   website.value = ''
 }
@@ -109,6 +117,11 @@ async function loadVenues() {
 }
 
 async function createVenue() {
+  if (!addressInput.value?.validateSelection()) {
+    error.value = 'Select an address from the Google suggestions list.'
+    return
+  }
+
   try {
     await createVenueAction.run(async () => {
       error.value = ''
@@ -120,6 +133,9 @@ async function createVenue() {
             name: name.value,
             slug: slug.value || undefined,
             address: address.value || undefined,
+            latitude: latitude.value ?? undefined,
+            longitude: longitude.value ?? undefined,
+            google_place_id: googlePlaceId.value ?? undefined,
             phone: phone.value || undefined,
             website: website.value || undefined,
           },
@@ -180,17 +196,23 @@ onMounted(loadVenues)
 
 <template>
   <AppShell>
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <AppBadge tone="blue">Workspace</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">My Venues</h1>
-        <p class="mt-2 text-ink-muted">Manage loyalty across your locations.</p>
-        <p class="mt-2 text-sm font-semibold text-ink-soft">
-          {{ totals.venues }} venues • {{ totals.visits }} scans this week • {{ totals.rewards }} active rewards
-        </p>
-      </div>
-      <AppButton class="bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-soft" @click="openCreateForm">+ Create new venue</AppButton>
-    </div>
+    <PageHeader
+      title="My Venues"
+      badge="Locations"
+      description="Manage loyalty across your locations."
+    >
+      <template #meta>
+        <span class="text-sm font-semibold text-ink-soft">
+          {{ totals.venues }} venues · {{ totals.visits }} scans this week · {{ totals.rewards }} active rewards
+        </span>
+      </template>
+      <template #actions>
+        <AppButton @click="openCreateForm">
+          <Plus class="size-4" />
+          Create venue
+        </AppButton>
+      </template>
+    </PageHeader>
 
     <AppCard wrapper-class="mb-5 border-border/80 bg-surface/95 backdrop-blur">
       <div class="grid gap-3 md:grid-cols-[1.3fr_0.85fr_0.85fr]">
@@ -239,18 +261,15 @@ onMounted(loadVenues)
             <label class="text-sm font-bold text-ink-muted" for="venue-website">Website optional</label>
             <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="https://example.com">
           </div>
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="venue-address">Address</label>
-            <input
-              id="venue-address"
-              v-model="address"
-              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
-              placeholder="12 Market Street, Toruń"
-            >
-            <p class="mt-2 text-xs font-medium text-ink-muted">
-              Shown on your public venue page and used for Google Maps.
-            </p>
-          </div>
+          <VenueAddressInput
+            id="venue-address"
+            ref="addressInput"
+            v-model:address="address"
+            v-model:latitude="latitude"
+            v-model:longitude="longitude"
+            v-model:google-place-id="googlePlaceId"
+            hint="Optional. Pick a Google suggestion so we can save map coordinates."
+          />
           <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
         </div>
 

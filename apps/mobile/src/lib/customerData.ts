@@ -38,6 +38,9 @@ export interface DiscoverVenue {
   cover_image?: string | null
   cover_image_thumb?: string | null
   category?: string | null
+  address?: string | null
+  latitude?: number | null
+  longitude?: number | null
   joined_count?: number
   rewards_count?: number
 }

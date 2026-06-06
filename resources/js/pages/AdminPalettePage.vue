@@ -2,9 +2,9 @@
 import { Palette, RotateCcw, Save } from '@lucide/vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -158,15 +158,13 @@ onBeforeUnmount(() => {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <AppBadge tone="blue">Platform design</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Design palette</h1>
-        <p class="mt-2 max-w-2xl text-ink-muted">
-          Central place for Flotory colors used across web and mobile. Tweak values, preview, then save when ready.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+    <PageHeader
+      title="Design palette"
+      badge="Platform design"
+      compact
+      description="Central place for Flotory colors used across web and mobile. Tweak values, preview, then save when ready."
+    >
+      <template #actions>
         <AppButton variant="secondary" :disabled="saving" @click="resetDraftToDefaults">
           <RotateCcw class="size-4" />
           Revert draft
@@ -178,8 +176,8 @@ onBeforeUnmount(() => {
           <Save class="size-4" />
           {{ saving ? 'Saving…' : 'Save palette' }}
         </AppButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <AppCard v-if="loading" wrapper-class="mb-6">
       <EmptyState compact title="Loading palette…" />
@@ -295,7 +293,7 @@ onBeforeUnmount(() => {
                   class="rounded-xl px-4 py-2 text-sm font-bold"
                   :style="{
                     backgroundColor: 'var(--flotory-accent-soft)',
-                    color: 'var(--flotory-accent)',
+                    color: 'var(--flotory-accent-active)',
                     border: '1px solid var(--flotory-accent-border)',
                   }"
                 >
@@ -331,7 +329,7 @@ onBeforeUnmount(() => {
                 borderLeftColor: 'var(--flotory-reward-ready-accent)',
               }"
             >
-              <p class="text-xs font-bold uppercase tracking-wide" :style="{ color: 'var(--flotory-accent)' }">
+              <p class="text-xs font-bold uppercase tracking-wide" :style="{ color: 'var(--flotory-accent-active)' }">
                 Reward ready
               </p>
               <p class="mt-2 text-lg font-black" :style="{ color: 'var(--flotory-ink)' }">
@@ -370,7 +368,11 @@ onBeforeUnmount(() => {
 
             <div
               class="rounded-xl px-3 py-2 text-sm font-bold"
-              :style="{ backgroundColor: 'var(--flotory-lavender)', border: '1px solid var(--flotory-lavender-border)' }"
+              :style="{
+                backgroundColor: 'var(--flotory-lavender)',
+                color: 'var(--flotory-primary)',
+                border: '1px solid var(--flotory-lavender-border)',
+              }"
             >
               Analytics highlight
             </div>

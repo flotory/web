@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Gift, Megaphone, ScanLine, ShieldCheck, Star, UserPlus, UsersRound } from '@lucide/vue'
+import { Check, Download, ExternalLink, Gift, Megaphone, ScanLine, ShieldCheck, Star, UserPlus, UsersRound } from '@lucide/vue'
 import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -7,9 +7,10 @@ import QrcodeVue from 'qrcode.vue'
 import DashboardActiveCampaignsSection from '@/components/campaigns/DashboardActiveCampaignsSection.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import StatCard from '@/components/loyalty/StatCard.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageSection from '@/components/ui/PageSection.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
@@ -303,26 +304,26 @@ onMounted(() => {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div class="flex items-center gap-3">
-        <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border">
+    <PageHeader
+      :title="title"
+      badge="Loyalty active"
+      badge-tone="green"
+      description="Your live venue workspace. Invite guests, track returns, and unlock rewards."
+    >
+      <template #leading>
+        <div class="grid size-14 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border">
           <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
-        <div>
-        <AppBadge tone="green">Loyalty active</AppBadge>
-        <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">{{ title }}</h1>
-        <p class="mt-2 text-ink-muted">Your live venue workspace. Invite guests, track returns, and unlock rewards.</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <AppBadge v-if="workspace.activeVenues.length > 1" tone="blue">Switch venue from sidebar</AppBadge>
+      </template>
+      <template #actions>
         <RouterLink :to="selectedVenue ? `/scanner?venue_id=${selectedVenue.id}` : '/scanner'">
-          <AppButton class="top-scanner-btn bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-soft">
-            ◎ Open scanner
+          <AppButton>
+            <ScanLine class="size-4" />
+            Open scanner
           </AppButton>
         </RouterLink>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
       <EmptyState compact title="Loading dashboard…" />
@@ -341,8 +342,7 @@ onMounted(() => {
 
     <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_2fr] lg:items-stretch">
       <AppCard wrapper-class="flex h-full flex-col">
-        <h2 class="text-xl font-black text-ink">Venue QR</h2>
-        <p class="mt-1 text-sm text-ink-muted">Scan to join and collect stamps</p>
+        <PageSection title="Venue QR" description="Scan to join and collect stamps" />
 
         <div class="mt-4 flex flex-1 flex-col items-center justify-center">
           <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-surface-muted p-3 ring-1 ring-border">
@@ -355,11 +355,13 @@ onMounted(() => {
 
         <div class="mt-5 grid gap-2">
           <AppButton size="lg" class="w-full" :disabled="!canOpenActions" @click="downloadQrPng">
-            ↓ Download QR
+            <Download class="size-4" />
+            Download QR
           </AppButton>
           <RouterLink :to="landingUrl || '/my-venues'" class="inline-flex w-full">
             <AppButton size="lg" variant="secondary" class="w-full" :disabled="!canOpenActions">
-              ◍ Preview customer experience
+              <ExternalLink class="size-4" />
+              Preview customer experience
             </AppButton>
           </RouterLink>
         </div>
@@ -368,7 +370,7 @@ onMounted(() => {
       <AppCard wrapper-class="flex h-full flex-col">
         <div>
           <div class="flex items-center justify-between gap-3">
-            <h2 class="inline-flex items-center gap-2 text-xl font-black text-ink">
+            <h2 class="inline-flex items-center gap-2 text-lg font-bold text-ink md:text-xl">
               <span>Activity & insights</span>
               <span class="live-dot shrink-0" aria-hidden="true" />
             </h2>
@@ -429,36 +431,35 @@ onMounted(() => {
       @end="(campaign) => updateCampaignStatus(campaign, 'ended')"
     />
 
-    <AppCard wrapper-class="mt-6 overflow-hidden bg-gradient-to-br from-primary/95 to-primary/90 text-white ring-1 ring-white/10">
+    <AppCard wrapper-class="mt-6">
       <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <h2 class="text-xl font-black">Analytics preview</h2>
-          <p class="mt-1 text-sm text-white/70">Real monthly visits and reward performance from this venue.</p>
-          <div class="mt-4 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
-              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Visits</p>
-              <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
-              <p class="text-xs font-semibold text-white/55">this month</p>
+          <PageSection title="Analytics preview" description="Monthly visits and reward performance from this venue." />
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Visits</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
+              <p class="text-xs font-semibold text-ink-muted">this month</p>
             </div>
-            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
-              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Claim rate</p>
-              <p class="mt-1 text-2xl font-black">{{ conversionOverview.rate }}%</p>
-              <p class="text-xs font-semibold text-white/55">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
+            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Claim rate</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ conversionOverview.rate }}%</p>
+              <p class="text-xs font-semibold text-ink-muted">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
             </div>
-            <div class="rounded-2xl bg-surface/5 p-3 ring-1 ring-white/10">
-              <p class="text-xs font-bold uppercase tracking-wide text-white/50">Returning</p>
-              <p class="mt-1 text-2xl font-black">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
-              <p class="text-xs font-semibold text-white/55">repeat guests</p>
+            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Returning</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
+              <p class="text-xs font-semibold text-ink-muted">repeat guests</p>
             </div>
           </div>
-          <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-black text-white underline-offset-4 hover:underline">
-            Open full analytics
+          <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-bold text-primary hover:text-primary-soft">
+            Open full analytics →
           </RouterLink>
         </div>
-        <div class="rounded-2xl bg-surface/5 p-4 ring-1 ring-white/10">
+        <div class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border">
           <div class="mb-3 flex items-center justify-between gap-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-white/50">Last 6 months</p>
-            <p class="text-xs font-semibold text-white/50">{{ maxMonthlyVisits }} peak visits</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Last 6 months</p>
+            <p class="text-xs font-semibold text-ink-muted">{{ maxMonthlyVisits }} peak visits</p>
           </div>
           <div class="flex h-28 items-end gap-2">
             <div
@@ -467,23 +468,23 @@ onMounted(() => {
               class="flex h-full flex-1 flex-col justify-end gap-2"
             >
               <div
-                class="min-h-2 rounded-t-xl bg-accent/70"
+                class="min-h-2 rounded-t-xl bg-chart/80"
                 :style="{ height: `${Math.max(row.visits > 0 ? 10 : 4, (row.visits / maxMonthlyVisits) * 100)}%` }"
                 :title="`${row.month}: ${row.visits} visits`"
               />
-              <p class="truncate text-center text-[10px] font-bold uppercase text-white/45">
+              <p class="truncate text-center text-[10px] font-bold uppercase text-ink-soft">
                 {{ row.month.slice(5) }}
               </p>
             </div>
           </div>
-          <div v-if="topConversionRows.length" class="mt-4 space-y-2 border-t border-white/10 pt-4">
+          <div v-if="topConversionRows.length" class="mt-4 space-y-2 border-t border-border pt-4">
             <div
               v-for="row in topConversionRows"
               :key="`${row.reward_id}-${row.venue_id ?? 'venue'}`"
-              class="flex items-center justify-between gap-3 text-xs font-semibold text-white/70"
+              class="flex items-center justify-between gap-3 text-xs font-semibold text-ink-muted"
             >
               <span class="truncate">{{ row.title }}</span>
-              <span class="shrink-0 text-white">{{ row.claim_rate }}%</span>
+              <span class="shrink-0 font-bold text-ink">{{ row.claim_rate }}%</span>
             </div>
           </div>
         </div>
@@ -514,26 +515,6 @@ onMounted(() => {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background: #22c55e;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.42);
-  animation: livePulse 2s ease-in-out infinite;
-}
-
-.top-scanner-btn {
-  animation: scannerPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.42); }
-  50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
-}
-
-@keyframes scannerPulse {
-  0%, 100% {
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35), 0 0 0 0 rgba(15, 23, 42, 0.42);
-  }
-  50% {
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35), 0 0 0 9px rgba(15, 23, 42, 0);
-  }
+  background: var(--flotory-success);
 }
 </style>

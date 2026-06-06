@@ -22,6 +22,9 @@ class Venue extends Model
         'cover_image',
         'cover_image_thumb',
         'address',
+        'latitude',
+        'longitude',
+        'google_place_id',
         'phone',
         'website',
     ];
@@ -29,6 +32,14 @@ class Venue extends Model
     protected $appends = [
         'archived',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
 
     public function getArchivedAttribute(): bool
     {

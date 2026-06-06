@@ -7,6 +7,8 @@ import CampaignIcon from '@/components/campaigns/CampaignIcon.vue'
 import CampaignWizard from '@/components/campaigns/CampaignWizard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageSection from '@/components/ui/PageSection.vue'
 import { useCampaignsPage } from '@/composables/useCampaignsPage'
 import AppShell from '@/layouts/AppShell.vue'
 import {
@@ -41,28 +43,22 @@ const {
 
 <template>
   <AppShell>
-    <div class="mx-auto max-w-5xl space-y-10 pb-16">
-      <header>
-        <p class="text-xs font-bold uppercase tracking-[0.2em] text-primary">Loyalty</p>
-        <h1 class="mt-2 text-3xl font-black text-ink">Campaigns</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
-          Run multiple campaigns. Customers receive the
-          <strong class="font-semibold text-ink">highest eligible multiplier</strong> — bonuses never stack together.
-        </p>
-      </header>
+    <div class="space-y-8 pb-10">
+      <PageHeader
+        title="Campaigns"
+        badge="Stamp bonuses"
+        description="Run multiple campaigns. Customers receive the highest eligible multiplier — bonuses never stack together."
+      />
 
       <div v-if="!hasVenue && !loading" class="rounded-3xl border border-dashed border-border p-8">
-        <EmptyState :icon="Store" title="Select a venue" description="Choose a venue in the header to manage campaigns." />
+        <EmptyState :icon="Store" title="Select a venue" description="Choose a venue in the sidebar filter to manage campaigns." />
       </div>
 
       <ErrorState v-else-if="error" :message="error" @retry="loadPage" />
 
       <template v-else-if="hasVenue">
         <section>
-          <div>
-            <h2 class="text-xl font-black text-ink">Active campaigns</h2>
-            <p class="mt-1 text-sm text-ink-muted">Stamp bonuses currently turned on for your venue.</p>
-          </div>
+          <PageSection title="Active campaigns" description="Stamp bonuses currently turned on for your venue." />
 
           <div v-if="loading" class="mt-5 grid gap-4 sm:grid-cols-2">
             <div v-for="index in 2" :key="index" class="h-40 animate-pulse rounded-3xl bg-surface-muted" />
@@ -88,8 +84,7 @@ const {
         </section>
 
         <section>
-          <h2 class="text-xl font-black text-ink">Create campaign</h2>
-          <p class="mt-1 text-sm text-ink-muted">Pick a template — setup takes under a minute.</p>
+          <PageSection title="Create campaign" description="Pick a template — setup takes under a minute." />
 
           <div v-if="loading" class="mt-5 grid gap-4 sm:grid-cols-2">
             <div v-for="index in 4" :key="index" class="h-36 animate-pulse rounded-3xl bg-surface-muted" />
@@ -125,9 +120,7 @@ const {
         </section>
 
         <section>
-          <div class="flex flex-wrap items-end justify-between gap-4">
-            <h2 class="text-xl font-black text-ink">Campaign history</h2>
-          </div>
+          <PageSection title="Campaign history" />
 
           <div class="mt-4 overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
             <div

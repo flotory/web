@@ -1,6 +1,7 @@
 export const paletteGroupLabels: Record<string, string> = {
   brand: 'Brand',
   surfaces: 'Surfaces',
+  admin: 'Admin shell',
   text: 'Text',
   status: 'Status',
   components: 'Components',
@@ -8,4 +9,4 @@ export const paletteGroupLabels: Record<string, string> = {
   web: 'Web app',
 }
 
-export const paletteGroupOrder = ['brand', 'surfaces', 'text', 'status', 'components', 'extras', 'web'] as const
+export const paletteGroupOrder = ['brand', 'surfaces', 'admin', 'text', 'status', 'components', 'extras', 'web'] as const

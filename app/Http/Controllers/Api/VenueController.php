@@ -7,6 +7,7 @@ use App\Http\Requests\StoreRestaurantRequest;
 use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\ImageThumbnailService;
+use App\Services\VenueAddressUpdateService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,10 @@ use Illuminate\Support\Str;
 
 class VenueController extends Controller
 {
-    public function __construct(private ImageThumbnailService $images) {}
+    public function __construct(
+        private ImageThumbnailService $images,
+        private VenueAddressUpdateService $venueAddresses,
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -110,6 +114,8 @@ class VenueController extends Controller
                 'logo_thumb' => $venue->logo_thumb,
                 'cover_image' => $venue->cover_image,
                 'address' => $venue->address,
+                'latitude' => $venue->latitude,
+                'longitude' => $venue->longitude,
             ],
             'milestones' => $milestones,
         ]);
@@ -127,13 +133,22 @@ class VenueController extends Controller
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         return response()->json([
-            'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
+            'venue' => $this->presentVenue($venue->loadCount(['customers', 'visits', 'rewards'])),
         ]);
     }
 
     public function store(StoreRestaurantRequest $request): JsonResponse
     {
         $user = $request->user();
+
+        $location = $this->venueAddresses->normalizedLocation([
+            'address' => $request->input('address'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
+            'google_place_id' => $request->input('google_place_id'),
+        ]);
+
+        $this->venueAddresses->assertCanApply(new Venue, $location, enforceDailyLimit: false);
 
         $venue = Venue::create([
             'name' => $request->string('name')->toString(),
@@ -144,7 +159,10 @@ class VenueController extends Controller
             'logo' => null,
             'logo_thumb' => null,
             'cover_image' => null,
-            'address' => $request->string('address')->toString() ?: null,
+            'address' => $location['address'],
+            'latitude' => $location['latitude'],
+            'longitude' => $location['longitude'],
+            'google_place_id' => $location['google_place_id'],
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
         ]);
@@ -160,13 +178,23 @@ class VenueController extends Controller
         ])->save();
 
         return response()->json([
-            'venue' => $venue,
+            'venue' => $this->presentVenue($venue),
         ], 201);
     }
 
     public function update(StoreRestaurantRequest $request, Venue $venue): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
+
+        $location = $this->venueAddresses->normalizedLocation([
+            'address' => $request->input('address'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
+            'google_place_id' => $request->input('google_place_id'),
+        ]);
+
+        $this->venueAddresses->assertCanApply($venue, $location, enforceDailyLimit: true);
+        $this->venueAddresses->recordChangeIfNeeded($venue, $request->user(), $location);
 
         $venue->update([
             'name' => $request->string('name')->toString(),
@@ -176,13 +204,16 @@ class VenueController extends Controller
             'category' => $request->filled('category')
                 ? $request->string('category')->toString()
                 : $venue->category,
-            'address' => $request->string('address')->toString() ?: null,
+            'address' => $location['address'],
+            'latitude' => $location['latitude'],
+            'longitude' => $location['longitude'],
+            'google_place_id' => $location['google_place_id'],
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
         ]);
 
         return response()->json([
-            'venue' => $venue->fresh()->loadCount(['customers', 'visits', 'rewards']),
+            'venue' => $this->presentVenue($venue->fresh()->loadCount(['customers', 'visits', 'rewards'])),
         ]);
     }
 
@@ -316,6 +347,13 @@ class VenueController extends Controller
         return response()->json([
             'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
         ]);
+    }
+
+    private function presentVenue(Venue $venue): Venue
+    {
+        $venue->setAttribute('address_quota', $this->venueAddresses->quotaFor($venue));
+
+        return $venue;
     }
 
     private function deleteLocalLogo(Venue $venue): void

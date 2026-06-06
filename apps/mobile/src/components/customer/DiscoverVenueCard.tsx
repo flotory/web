@@ -25,6 +25,7 @@ function categoryIcon(category: string | null | undefined): IoniconName {
 interface DiscoverVenueCardProps {
   venue: DiscoverVenue
   card?: WalletCard | null
+  distanceLabel?: string | null
   onPress: () => void
 }
 
@@ -49,7 +50,7 @@ const PILL_STYLES = {
   },
 }
 
-export default function DiscoverVenueCard({ venue, card, onPress }: DiscoverVenueCardProps) {
+export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress }: DiscoverVenueCardProps) {
   const cover = venueCoverUrl(venue)
   const categoryLabel = formatVenueCategoryLabel(venue.category)
   const joined = (venue.joined_count ?? 0) > 0
@@ -108,8 +109,13 @@ export default function DiscoverVenueCard({ venue, card, onPress }: DiscoverVenu
               {venue.name}
             </Text>
             <Text style={withAppFont({ marginTop: 2, fontSize: 13, color: colors.inkMuted })} numberOfLines={1}>
-              {categoryLabel}
+              {distanceLabel ?? categoryLabel}
             </Text>
+            {distanceLabel ? (
+              <Text style={withAppFont({ marginTop: 2, fontSize: 12, color: colors.inkSoft })} numberOfLines={1}>
+                {categoryLabel}
+              </Text>
+            ) : null}
           </View>
         </View>
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Gift, Store } from '@lucide/vue'
+import { Gift, Plus, Store } from '@lucide/vue'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import GuestWalletCardPreview from '@/components/loyalty/GuestWalletCardPreview.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import ImageCropUpload from '@/components/ui/ImageCropUpload.vue'
@@ -523,32 +523,23 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
 <template>
   <AppShell>
-    <!-- Owner milestone builder -->
-    <section class="journey-hero relative overflow-hidden rounded-3xl border border-primary-soft/80 bg-gradient-to-br from-primary via-primary-soft to-primary p-6 shadow-2xl shadow-primary/30 sm:p-8">
-        <div class="journey-hero-glow pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div class="journey-hero-glow pointer-events-none absolute -bottom-20 left-8 size-48 rounded-full bg-primary/20 blur-3xl" />
-        <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <AppBadge tone="blue">Milestone builder</AppBadge>
-            <h1 class="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Rewards Journey</h1>
-            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
-              Design milestone rewards that turn occasional guests into loyal regulars.
-            </p>
-            <p v-if="!needsVenuePick && venue" class="mt-4 text-sm font-semibold text-cyan-200/90">
-              {{ activeRewardCount }} active rewards
-              <span class="text-white/40">•</span>
-              Avg unlock: {{ avgUnlockVisits || '—' }} stamps
-              <span v-if="venue.name" class="text-white/40">•</span>
-              <span v-if="venue.name">{{ venue.name }}</span>
-            </p>
-          </div>
-          <div v-if="canEditRewards" class="flex flex-wrap gap-2">
-            <AppButton variant="secondary" class="hero-cta shrink-0 bg-surface font-bold text-ink shadow-lg shadow-black/20 hover:bg-surface-muted" @click="openCreateForm">
-              + Create milestone
-            </AppButton>
-          </div>
-        </div>
-      </section>
+    <PageHeader
+      title="Rewards"
+      badge="Milestones"
+      description="Design milestone rewards that turn occasional guests into loyal regulars."
+    >
+      <template v-if="!needsVenuePick && venue" #meta>
+        <span class="text-sm font-semibold text-ink-soft">
+          {{ activeRewardCount }} active · avg unlock {{ avgUnlockVisits || '—' }} stamps · {{ venue.name }}
+        </span>
+      </template>
+      <template v-if="canEditRewards" #actions>
+        <AppButton @click="openCreateForm">
+          <Plus class="size-4" />
+          Create milestone
+        </AppButton>
+      </template>
+    </PageHeader>
 
       <AppCard v-if="canEditRewards && needsVenuePick" wrapper-class="mt-4">
         <EmptyState
@@ -838,14 +829,6 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 </template>
 
 <style scoped>
-.journey-hero-glow {
-  animation: ambient-drift 8s ease-in-out infinite alternate;
-}
-
-.hero-cta {
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
-}
-
 .reward-media-frame {
   position: relative;
   width: 100%;
@@ -878,12 +861,4 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
   object-position: center;
 }
 
-@keyframes ambient-drift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(12px, -8px) scale(1.08);
-  }
-}
 </style>

@@ -12,6 +12,7 @@ import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
 import { formatVenueCategoryLabel } from '../../src/lib/format'
 import { venueCoverUrl } from '../../src/lib/media'
+import { hasVenueMapTarget, openVenueInMaps } from '../../src/lib/openMaps'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
@@ -22,6 +23,8 @@ interface LandingPayload {
     name: string
     slug: string
     address?: string | null
+    latitude?: number | null
+    longitude?: number | null
     category?: string | null
     cover_image?: string | null
     cover_image_thumb?: string | null
@@ -124,6 +127,25 @@ export default function VenueJoinScreen() {
   const cover = venueCoverUrl(landing?.venue)
   const categoryLabel = landing?.venue.category ? formatVenueCategoryLabel(landing.venue.category) : null
   const milestones = landing?.milestones ?? []
+  const venue = landing?.venue
+  const canOpenMaps = venue ? hasVenueMapTarget(venue) : false
+
+  async function handleDirections() {
+    if (!venue || !canOpenMaps) {
+      return
+    }
+
+    const opened = await openVenueInMaps({
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      address: venue.address,
+      label: venue.name,
+    })
+
+    if (!opened) {
+      setError('Could not open maps for this venue.')
+    }
+  }
 
   return (
     <ScreenGradientLayout
@@ -153,10 +175,10 @@ export default function VenueJoinScreen() {
         </Text>
 
         <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-          {landing?.venue.address ? (
+          {venue?.address ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
               <Ionicons name="location-outline" size={15} color={colors.inkMuted} />
-              <Text style={withAppFont({ fontSize: 14, color: colors.inkMuted })}>{landing.venue.address}</Text>
+              <Text style={withAppFont({ fontSize: 14, color: colors.inkMuted })}>{venue.address}</Text>
             </View>
           ) : null}
           {categoryLabel ? (
@@ -185,6 +207,33 @@ export default function VenueJoinScreen() {
         >
           Join to start a digital loyalty card. Show your QR when you visit — stamps and rewards stay in the app.
         </Text>
+
+        {canOpenMaps ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open directions in maps"
+            onPress={() => void handleDirections()}
+            style={({ pressed }) => ({
+              marginTop: 14,
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 999,
+              backgroundColor: colors.surfaceMuted,
+              borderWidth: 1,
+              borderColor: colors.border,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <Ionicons name="map-outline" size={16} color={colors.primarySoft} />
+            <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.primarySoft })}>
+              Directions
+            </Text>
+          </Pressable>
+        ) : null}
 
         <View style={{ marginTop: space.sectionGap }}>
           <VenueJoinMilestones milestones={milestones} />

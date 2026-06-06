@@ -62,7 +62,7 @@ const trendLabel = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-4 rounded-2xl border border-border/80 bg-surface p-4 shadow-sm shadow-border/40">
+  <div class="flex gap-4 rounded-2xl border border-border/70 bg-surface-elevated p-4 shadow-[0_1px_2px_rgba(8,18,51,0.04),0_8px_24px_rgba(8,18,51,0.05)]">
     <div
       :class="cn('grid size-11 shrink-0 place-items-center rounded-xl ring-1', toneClasses)"
       aria-hidden="true"

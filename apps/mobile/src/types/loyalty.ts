@@ -17,6 +17,8 @@ export interface VenueRef {
   cover_image_thumb?: string | null
   category?: string | null
   address?: string | null
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export interface RewardRef {

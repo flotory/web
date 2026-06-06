@@ -19,9 +19,21 @@ return [
     'bg_gradient_start' => '#FAF7F0',
     'bg_gradient_end' => '#F7F2E8',
     'surface' => '#FFFFFF',
-    'surface_muted' => '#E9ECF1',
-    'border' => '#E9ECF1',
-    'workspace_bg' => '#F7F2E8',
+    'surface_muted' => '#EEF1F6',
+    'surface_elevated' => '#FFFFFF',
+    'border' => '#E2E8F0',
+    'workspace_bg' => '#F3F6FA',
+    'workspace_bg_gradient_start' => '#F8FAFC',
+    'workspace_bg_gradient_end' => '#EEF2F7',
+
+    // Owner admin shell
+    'sidebar_bg' => '#081233',
+    'sidebar_border' => '#152548',
+    'sidebar_text' => '#FFFFFF',
+    'sidebar_text_muted' => '#9AA6BE',
+    'sidebar_hover' => '#0F2248',
+    'nav_active_bg' => '#D6B15E',
+    'nav_active_text' => '#081233',
 
     // Text
     'ink' => '#081233',
@@ -49,5 +61,5 @@ return [
     // Web owner app
     'link' => '#081233',
     'chart' => '#D6B15E',
-    'nav_active' => '#081233',
+    'nav_active' => '#D6B15E',
 ];

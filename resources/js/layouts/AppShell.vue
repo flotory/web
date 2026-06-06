@@ -137,37 +137,55 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg" :class="isWorkspace && 'md:grid md:grid-cols-[260px_1fr]'">
-    <aside v-if="isWorkspace" class="sticky top-0 hidden h-screen border-r border-border/80 bg-surface/95 p-4 backdrop-blur md:block">
-      <RouterLink :to="homePath" class="block px-3 py-3">
-        <FlotoryLogo size="lg" />
+  <div class="min-h-screen" :class="isWorkspace ? 'md:grid md:grid-cols-[272px_1fr]' : 'bg-bg'">
+    <aside
+      v-if="isWorkspace"
+      class="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar-bg px-4 py-5 md:flex"
+    >
+      <RouterLink :to="homePath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover">
+        <FlotoryLogo size="lg" inverted />
       </RouterLink>
-      <div v-if="!workspace.usesStaffNav || workspace.activeVenues.length > 1" class="mt-4 px-2">
-        <VenueFilter />
+
+      <div v-if="!workspace.usesStaffNav || workspace.activeVenues.length > 1" class="mt-5 px-1">
+        <VenueFilter variant="sidebar" />
       </div>
-      <nav class="mt-6 space-y-1">
+
+      <nav class="mt-6 flex-1 space-y-1 overflow-y-auto px-1">
         <RouterLink
           v-for="item in nav"
           :key="item.to"
           :to="item.to"
           :class="[
-            'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition',
+            'group flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold transition',
             isNavActive(item)
-              ? 'bg-primary text-primary-text shadow-lg shadow-primary/20'
-              : 'text-ink-muted hover:bg-surface-muted hover:text-ink hover:shadow-sm',
+              ? 'bg-nav-active-bg text-nav-active-text shadow-[0_8px_24px_rgba(214,177,94,0.28)]'
+              : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text',
           ]"
         >
-          <span class="grid size-6 place-items-center rounded-lg bg-surface-muted text-sm font-black text-ink-muted" :class="isNavActive(item) && 'bg-white/20 text-white'">{{ item.icon }}</span>
-          <span>{{ item.label }}</span>
+          <span
+            :class="[
+              'grid size-7 shrink-0 place-items-center rounded-xl text-sm font-black transition',
+              isNavActive(item)
+                ? 'bg-nav-active-text/10 text-nav-active-text'
+                : 'bg-white/5 text-sidebar-text-muted group-hover:bg-white/10 group-hover:text-sidebar-text',
+            ]"
+          >
+            {{ item.icon }}
+          </span>
+          <span class="truncate">{{ item.label }}</span>
         </RouterLink>
       </nav>
-      <button class="mt-6 w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-ink-muted transition hover:bg-surface-muted hover:text-ink" @click="logout">
+
+      <button
+        class="mt-4 w-full rounded-2xl border border-sidebar-border px-4 py-3 text-left text-sm font-bold text-sidebar-text-muted transition hover:border-accent/40 hover:bg-sidebar-hover hover:text-sidebar-text"
+        @click="logout"
+      >
         Logout
       </button>
     </aside>
 
-    <div>
-      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-surface/60 bg-bg/85 backdrop-blur-xl md:hidden">
+    <div :class="isWorkspace && 'bg-workspace-gradient min-h-screen'">
+      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <RouterLink :to="homePath">
             <FlotoryLogo />
@@ -177,7 +195,7 @@ async function logout() {
           </button>
         </div>
         <div v-if="workspace.activeVenues.length > 1" class="mx-auto max-w-6xl px-4 pb-3">
-          <VenueFilter />
+          <VenueFilter variant="default" />
         </div>
       </header>
 
@@ -196,7 +214,7 @@ async function logout() {
 
       <nav
         :class="[
-          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] bg-primary p-2 text-primary-text shadow-2xl',
+          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] border border-sidebar-border bg-sidebar-bg p-2 text-sidebar-text shadow-2xl shadow-primary/30',
           isWorkspace ? 'md:hidden' : 'max-w-md mx-auto',
         ]"
       >
@@ -206,7 +224,7 @@ async function logout() {
           :to="item.to"
           :class="[
             'relative min-w-20 flex-1 rounded-2xl px-3 py-3 text-center text-xs font-bold transition',
-            isNavActive(item) ? 'bg-surface text-ink' : 'text-white/65',
+            isNavActive(item) ? 'bg-nav-active-bg text-nav-active-text' : 'text-sidebar-text-muted',
           ]"
         >
           {{ item.label }}
