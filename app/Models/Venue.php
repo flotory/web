@@ -13,6 +13,14 @@ class Venue extends Model
     use HasFactory;
     use SoftDeletes;
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PENDING_REVIEW = 'pending_review';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_REJECTED = 'rejected';
+
     protected $fillable = [
         'name',
         'slug',
@@ -27,6 +35,10 @@ class Venue extends Model
         'google_place_id',
         'phone',
         'website',
+        'status',
+        'review_note',
+        'submitted_at',
+        'published_at',
     ];
 
     protected $appends = [
@@ -38,7 +50,14 @@ class Venue extends Model
         return [
             'latitude' => 'float',
             'longitude' => 'float',
+            'submitted_at' => 'datetime',
+            'published_at' => 'datetime',
         ];
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', self::STATUS_PUBLISHED);
     }
 
     public function getArchivedAttribute(): bool

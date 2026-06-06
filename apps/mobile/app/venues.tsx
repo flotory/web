@@ -13,7 +13,7 @@ import { useCustomerLocation } from '../src/hooks/useCustomerLocation'
 import { useDiscoverVenues } from '../src/hooks/useDiscoverVenues'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
-import { sortVenuesByDistance } from '../src/lib/distance'
+import { hasVenueCoordinates, sortVenuesByDistance } from '../src/lib/distance'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
@@ -42,13 +42,21 @@ export default function VenuesScreen() {
   const router = useRouter()
   const { role } = useAuth()
   const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
-  const { status: locationStatus, coords, hasLocation, requestLocation, refreshLocation } = useCustomerLocation()
+  const {
+    status: locationStatus,
+    coords,
+    hasLocation,
+    requestLocation,
+    refreshLocation,
+    openLocationSettings,
+  } = useCustomerLocation({ autoRequest: true })
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<DiscoverCategoryFilter>('all')
   const fade = useFadeOnReady(!loading)
 
   const venues = data?.venues ?? []
   const cardsByVenue = data?.cardsByVenue ?? {}
+  const locatedVenueCount = venues.filter(hasVenueCoordinates).length
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -111,30 +119,45 @@ export default function VenuesScreen() {
 
     if (hasLocation) {
       return (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Refresh nearby venues"
-          onPress={() => void refreshLocation()}
-          style={({ pressed }) => ({
-            marginTop: 14,
-            borderRadius: radius.image,
-            backgroundColor: colors.lavender,
-            borderWidth: 1,
-            borderColor: colors.lavenderBorder,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            opacity: pressed ? 0.92 : 1,
-          })}
-        >
-          <Ionicons name="navigate-outline" size={18} color={colors.primarySoft} />
-          <Text style={withAppFont({ flex: 1, fontSize: 13, fontWeight: '600', color: colors.primarySoft })}>
-            Sorted by distance from you
-          </Text>
-          <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>Refresh</Text>
-        </Pressable>
+        <View style={{ marginTop: 14, gap: 10 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Refresh nearby venues"
+            onPress={() => void refreshLocation()}
+            style={({ pressed }) => ({
+              borderRadius: radius.image,
+              backgroundColor: colors.lavender,
+              borderWidth: 1,
+              borderColor: colors.lavenderBorder,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              opacity: pressed ? 0.92 : 1,
+            })}
+          >
+            <Ionicons name="navigate-outline" size={18} color={colors.primarySoft} />
+            <Text style={withAppFont({ flex: 1, fontSize: 13, fontWeight: '600', color: colors.primarySoft })}>
+              Sorted by distance from you
+            </Text>
+            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>Refresh</Text>
+          </Pressable>
+          {locatedVenueCount === 0 ? (
+            <View
+              style={{
+                borderRadius: radius.image,
+                backgroundColor: colors.surfaceMuted,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+              }}
+            >
+              <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
+                No venues have a map location yet. Owners can add a Google address in venue settings on the web.
+              </Text>
+            </View>
+          ) : null}
+        </View>
       )
     }
 
@@ -147,15 +170,74 @@ export default function VenuesScreen() {
             backgroundColor: colors.surfaceMuted,
             paddingHorizontal: 14,
             paddingVertical: 12,
-            gap: 4,
+            gap: 10,
           }}
         >
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>
-            Location is off
-          </Text>
+          <View style={{ gap: 4 }}>
+            <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>
+              Location is off
+            </Text>
+            <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
+              Allow location access to sort venues by distance and show how far away they are.
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open location settings"
+            onPress={() => void openLocationSettings()}
+            style={({ pressed }) => ({
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.discoverPillBorder,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>
+              Open settings
+            </Text>
+          </Pressable>
+        </View>
+      )
+    }
+
+    if (locationStatus === 'unavailable') {
+      return (
+        <View
+          style={{
+            marginTop: 14,
+            borderRadius: radius.image,
+            backgroundColor: colors.surfaceMuted,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            gap: 10,
+          }}
+        >
           <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
-            Enable location in your phone settings to sort venues by distance.
+            Could not read your location. Try again or check that location services are enabled on your phone.
           </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Try location again"
+            onPress={() => void requestLocation()}
+            style={({ pressed }) => ({
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.discoverPillBorder,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>
+              Try again
+            </Text>
+          </Pressable>
         </View>
       )
     }
@@ -193,10 +275,10 @@ export default function VenuesScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>
-            Show nearby venues
+            Allow location to see distance
           </Text>
           <Text style={withAppFont({ marginTop: 2, fontSize: 12, color: colors.inkMuted, lineHeight: 17 })}>
-            We use your phone location to sort venues by distance.
+            We will ask once, then sort venues nearest-first.
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />

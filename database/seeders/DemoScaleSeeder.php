@@ -118,13 +118,20 @@ class DemoScaleSeeder extends Seeder
                 'is_admin' => false,
             ]);
 
+            $city = $this->rng->randomElement($cities);
+            $coordinates = $this->coordinatesForCity($city);
+
             $venue = Venue::query()->create([
                 'name' => $name,
                 'slug' => $slug,
                 'category' => $category,
-                'address' => $this->rng->buildingNumber().' '.$this->rng->randomElement($streets).', '.$this->rng->randomElement($cities),
+                'address' => $this->rng->buildingNumber().' '.$this->rng->randomElement($streets).', '.$city,
+                'latitude' => $coordinates['latitude'],
+                'longitude' => $coordinates['longitude'],
                 'phone' => $this->rng->numerify('###-###-####'),
                 'website' => "https://{$slug}.example.com",
+                'status' => Venue::STATUS_PUBLISHED,
+                'published_at' => $this->randomPastTimestamp(30, 90),
                 'created_at' => $this->randomPastTimestamp(120, 150),
                 'updated_at' => now(),
             ]);
@@ -479,6 +486,32 @@ class DemoScaleSeeder extends Seeder
         }
 
         return $slug;
+    }
+
+    /**
+     * @return array{latitude: float, longitude: float}
+     */
+    private function coordinatesForCity(string $city): array
+    {
+        $centers = [
+            'San Francisco' => [37.7749, -122.4194],
+            'Oakland' => [37.8044, -122.2712],
+            'Berkeley' => [37.8715, -122.2730],
+            'San Jose' => [37.3382, -121.8863],
+            'Portland' => [45.5152, -122.6784],
+            'Seattle' => [47.6062, -122.3321],
+            'Austin' => [30.2672, -97.7431],
+            'Denver' => [39.7392, -104.9903],
+            'Chicago' => [41.8781, -87.6298],
+            'Boston' => [42.3601, -71.0589],
+        ];
+
+        [$lat, $lng] = $centers[$city] ?? [37.7749, -122.4194];
+
+        return [
+            'latitude' => round($lat + $this->rng->randomFloat(4, -0.02, 0.02), 7),
+            'longitude' => round($lng + $this->rng->randomFloat(4, -0.02, 0.02), 7),
+        ];
     }
 
     private function randomPastTimestamp(int $minDaysAgo, int $maxDaysAgo): Carbon

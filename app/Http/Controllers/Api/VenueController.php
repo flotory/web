@@ -8,6 +8,7 @@ use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\ImageThumbnailService;
 use App\Services\VenueAddressUpdateService;
+use App\Services\VenuePublicationService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class VenueController extends Controller
     public function __construct(
         private ImageThumbnailService $images,
         private VenueAddressUpdateService $venueAddresses,
+        private VenuePublicationService $publication,
     ) {}
     public function index(Request $request): JsonResponse
     {
@@ -73,6 +75,7 @@ class VenueController extends Controller
 
         return response()->json([
             'venues' => Venue::query()
+                ->published()
                 ->whereNull('deleted_at')
                 ->withCount([
                     'customers',
@@ -92,7 +95,7 @@ class VenueController extends Controller
             ->whereNull('deleted_at')
             ->first();
 
-        if (! $venue) {
+        if (! $venue || ! $this->publication->isPublic($venue)) {
             abort(404, 'Venue not found');
         }
 
@@ -165,6 +168,7 @@ class VenueController extends Controller
             'google_place_id' => $location['google_place_id'],
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
+            'status' => Venue::STATUS_DRAFT,
         ]);
 
         VenueUser::create([

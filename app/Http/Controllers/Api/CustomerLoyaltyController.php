@@ -10,6 +10,7 @@ use App\Models\Venue;
 use App\Models\Reward;
 use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
+use App\Services\VenuePublicationService;
 use App\Services\RedemptionClaimService;
 use App\Services\UniversalCustomerQrService;
 use App\Support\AuditLog;
@@ -139,8 +140,10 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function join(Request $request, Venue $venue): JsonResponse
+    public function join(Request $request, Venue $venue, VenuePublicationService $publication): JsonResponse
     {
+        $publication->assertPublic($venue);
+
         $customer = Customer::firstOrCreate(
             [
                 'venue_id' => $venue->id,

@@ -24,6 +24,7 @@ Owner/staff training must match [BUSINESS_RULES.md](./BUSINESS_RULES.md) (stamps
 Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
 - Owner can sign up, complete onboarding, and create at least one milestone reward
+- Owner can complete the **listing checklist** and submit for review; admin can approve at `/admin/venues`
 - QR download / print asset works for counter display
 - Staff invitation email delivers (check spam; verify SMTP in production)
 - Scanner flow: scan customer QR → stamp → customer sees update on card
@@ -59,12 +60,13 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
 ### With the owner (30 min)
 
-1. Owner creates account → onboarding (venue name, logo, one reward milestone)
+1. Owner creates account → quick onboarding (venue name, category, starter rewards)
 2. Set realistic first milestone (e.g. **5 stamps = free drink**) — not too high
-3. Download / print QR → place at register and on a table tent
-4. Owner invites 1–2 staff via email from Team page
-5. Walk through dashboard: **Venue active ✓**, visits this month, insights, **Open scanner**
-6. Optional: set venue address in Settings → shown on `/v/{slug}` with **Open in Maps**
+3. Complete **listing checklist** on dashboard: Google address, logo/cover, active reward → **Submit for listing**
+4. Flotory admin approves at **Venue listings** — venue goes live in customer Discover
+5. Download / print QR → place at register and on a table tent
+6. Owner invites 1–2 staff via email from Team page
+7. Walk through dashboard: visits this month, insights, **Open scanner** (works before approval too)
 
 ### With staff (15 min)
 

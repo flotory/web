@@ -20,6 +20,10 @@
     },
     "android": {
       "package": "com.flotory.mobile",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#081233",
         "foregroundImage": "./assets/android-icon-foreground.png",

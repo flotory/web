@@ -10,7 +10,7 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 | Account | Email | `is_admin` | What you get |
 |---------|--------|------------|----------------|
-| **Super admin** | `admin@flotory.com` | yes | Owner-style UI for every venue + **Activity log** in the sidebar |
+| **Super admin** | `admin@flotory.com` | yes | Owner-style UI for every venue + **Venue listings** + **Activity log** in the sidebar |
 | **Venue owner** | `owner@example.com` | no | Normal owner (dashboard, rewards, team, scanner) — **no** activity log |
 | **Staff** | `staff@example.com` | no | Scanner + customers for Demo Cafe |
 | **Customer** | `customer@example.com` | no | Wallet / guest flows |
@@ -19,8 +19,8 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 ### Activity log in the UI
 
-- Sidebar nav: **Activity log** (second item, admins only)
-- Direct URL: `/admin/activity`
+- Sidebar nav: **Venue listings** (approve/reject owner submissions), **Activity log**
+- Direct URLs: `/admin/venues`, `/admin/activity`
 - Same owner workspace layout as dashboard (left sidebar on desktop)
 
 ### Verify you are admin

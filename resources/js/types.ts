@@ -1,5 +1,7 @@
 export type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
 
+export type VenueListingStatus = 'draft' | 'pending_review' | 'published' | 'rejected'
+
 export interface Venue {
   id: number
   name: string
@@ -21,6 +23,10 @@ export interface Venue {
   } | null
   phone?: string | null
   website?: string | null
+  status?: VenueListingStatus | null
+  review_note?: string | null
+  submitted_at?: string | null
+  published_at?: string | null
   archived?: boolean
   deleted_at?: string | null
   customers_count?: number

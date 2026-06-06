@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AdminActivityController;
 use App\Http\Controllers\Api\AdminPaletteController;
+use App\Http\Controllers\Api\AdminVenueReviewController;
+use App\Http\Controllers\Api\VenueListingController;
 use App\Http\Controllers\Api\PublicAppConfigController;
 use App\Http\Controllers\Api\PublicPaletteController;
 use App\Http\Controllers\Api\AuthController;
@@ -44,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/venues/current', [VenueController::class, 'current']);
     Route::get('/venues/{venue}', [VenueController::class, 'show']);
     Route::post('/venues/{venue}/select', [VenueController::class, 'select']);
+    Route::get('/venues/{venue}/listing', [VenueListingController::class, 'show']);
+    Route::post('/venues/{venue}/listing/submit', [VenueListingController::class, 'submit']);
     Route::post('/venues/{venue}/logo', [VenueController::class, 'uploadLogo']);
     Route::delete('/venues/{venue}/logo', [VenueController::class, 'destroyLogo']);
     Route::post('/venues/{venue}/cover', [VenueController::class, 'uploadCover']);
@@ -91,6 +95,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/activity', [AdminActivityController::class, 'index']);
+        Route::get('/venues', [AdminVenueReviewController::class, 'index']);
+        Route::post('/venues/{venue}/approve', [AdminVenueReviewController::class, 'approve']);
+        Route::post('/venues/{venue}/reject', [AdminVenueReviewController::class, 'reject']);
+        Route::post('/venues/{venue}/unpublish', [AdminVenueReviewController::class, 'unpublish']);
         Route::get('/palette', [AdminPaletteController::class, 'show']);
         Route::patch('/palette', [AdminPaletteController::class, 'update']);
         Route::post('/palette/reset', [AdminPaletteController::class, 'reset']);

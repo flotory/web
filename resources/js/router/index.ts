@@ -23,6 +23,7 @@ import SettingsPage from '@/pages/SettingsPage.vue'
 import StaffInvitePage from '@/pages/StaffInvitePage.vue'
 import AdminActivityPage from '@/pages/AdminActivityPage.vue'
 import AdminPalettePage from '@/pages/AdminPalettePage.vue'
+import AdminVenuesPage from '@/pages/AdminVenuesPage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -64,6 +65,7 @@ const router = createRouter({
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
+    { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false } },

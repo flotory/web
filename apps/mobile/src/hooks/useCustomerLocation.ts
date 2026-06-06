@@ -1,5 +1,6 @@
 import * as Location from 'expo-location'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState, Linking, Platform } from 'react-native'
 
 export type CustomerLocationStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'unavailable'
 
@@ -8,7 +9,14 @@ export interface CustomerCoordinates {
   longitude: number
 }
 
-export function useCustomerLocation() {
+interface UseCustomerLocationOptions {
+  /** Prompt the OS location dialog when permission has not been decided yet. */
+  autoRequest?: boolean
+}
+
+export function useCustomerLocation(options: UseCustomerLocationOptions = {}) {
+  const autoRequest = options.autoRequest ?? false
+  const autoRequestedRef = useRef(false)
   const [status, setStatus] = useState<CustomerLocationStatus>('idle')
   const [coords, setCoords] = useState<CustomerCoordinates | null>(null)
 
@@ -29,7 +37,7 @@ export function useCustomerLocation() {
 
     try {
       const permission = await Location.requestForegroundPermissionsAsync()
-      if (permission.status !== 'granted') {
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
         setCoords(null)
         setStatus('denied')
         return
@@ -47,7 +55,7 @@ export function useCustomerLocation() {
 
     try {
       const permission = await Location.getForegroundPermissionsAsync()
-      if (permission.status !== 'granted') {
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
         setCoords(null)
         setStatus('denied')
         return
@@ -60,36 +68,57 @@ export function useCustomerLocation() {
     }
   }, [readPosition])
 
-  useEffect(() => {
-    let cancelled = false
-
-    void (async () => {
-      try {
-        const permission = await Location.getForegroundPermissionsAsync()
-        if (cancelled) {
-          return
-        }
-
-        if (permission.status === 'granted') {
-          setStatus('loading')
-          await readPosition()
-          return
-        }
-
-        if (permission.status === 'denied') {
-          setStatus('denied')
-        }
-      } catch {
-        if (!cancelled) {
-          setStatus('unavailable')
-        }
-      }
-    })()
-
-    return () => {
-      cancelled = true
+  const openLocationSettings = useCallback(async () => {
+    if (Platform.OS === 'ios') {
+      await Linking.openURL('app-settings:')
+      return
     }
-  }, [readPosition])
+
+    await Linking.openSettings()
+  }, [])
+
+  const syncPermission = useCallback(async () => {
+    try {
+      const permission = await Location.getForegroundPermissionsAsync()
+
+      if (permission.status === Location.PermissionStatus.GRANTED) {
+        setStatus('loading')
+        await readPosition()
+        return
+      }
+
+      if (permission.status === Location.PermissionStatus.DENIED) {
+        setCoords(null)
+        setStatus('denied')
+        return
+      }
+
+      setCoords(null)
+      setStatus('idle')
+
+      if (autoRequest && !autoRequestedRef.current) {
+        autoRequestedRef.current = true
+        await requestLocation()
+      }
+    } catch {
+      setCoords(null)
+      setStatus('unavailable')
+    }
+  }, [autoRequest, readPosition, requestLocation])
+
+  useEffect(() => {
+    void syncPermission()
+  }, [syncPermission])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        void syncPermission()
+      }
+    })
+
+    return () => subscription.remove()
+  }, [syncPermission])
 
   return {
     status,
@@ -97,5 +126,6 @@ export function useCustomerLocation() {
     hasLocation: coords !== null,
     requestLocation,
     refreshLocation,
+    openLocationSettings,
   }
 }

@@ -31,16 +31,48 @@ class DatabaseSeeder extends Seeder
         );
 
         $venues = collect([
-            ['name' => 'Demo Cafe', 'slug' => 'demo-cafe', 'category' => 'cafe', 'address' => '12 Market Street, Toruń'],
-            ['name' => 'Harbor Coffee', 'slug' => 'harbor-coffee', 'category' => 'cafe', 'address' => '8 Harbor Road, Gdańsk'],
-            ['name' => 'North Star Burgers', 'slug' => 'north-star-burgers', 'category' => 'restaurant'],
-            ['name' => 'Olive Street Kitchen', 'slug' => 'olive-street-kitchen', 'category' => 'restaurant'],
+            [
+                'name' => 'Demo Cafe',
+                'slug' => 'demo-cafe',
+                'category' => 'cafe',
+                'address' => '12 Market Street, Toruń',
+                'latitude' => 53.0105300,
+                'longitude' => 18.6108600,
+                'status' => Venue::STATUS_PUBLISHED,
+            ],
+            [
+                'name' => 'Harbor Coffee',
+                'slug' => 'harbor-coffee',
+                'category' => 'cafe',
+                'address' => '8 Harbor Road, Gdańsk',
+                'latitude' => 54.3520250,
+                'longitude' => 18.6466380,
+                'status' => Venue::STATUS_PUBLISHED,
+            ],
+            [
+                'name' => 'North Star Burgers',
+                'slug' => 'north-star-burgers',
+                'category' => 'restaurant',
+                'status' => Venue::STATUS_PUBLISHED,
+            ],
+            [
+                'name' => 'Olive Street Kitchen',
+                'slug' => 'olive-street-kitchen',
+                'category' => 'restaurant',
+                'status' => Venue::STATUS_DRAFT,
+            ],
         ])->map(fn (array $data) => Venue::updateOrCreate(
             ['slug' => $data['slug']],
             [
                 'name' => $data['name'],
                 'category' => $data['category'],
                 'address' => $data['address'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
+                'status' => $data['status'],
+                'published_at' => ($data['status'] ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED ? now() : null,
+                'submitted_at' => null,
+                'review_note' => null,
             ],
         ));
 

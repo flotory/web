@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import DashboardActiveCampaignsSection from '@/components/campaigns/DashboardActiveCampaignsSection.vue'
+import VenueListingCard from '@/components/loyalty/VenueListingCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import StatCard from '@/components/loyalty/StatCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -15,6 +16,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
+import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { toast } from '@/lib/toast'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -99,6 +101,18 @@ const selectedVenue = computed(() => {
 const title = computed(() => selectedVenue.value?.name ?? dashboard.value?.venue?.name ?? 'Your venue')
 
 const landingUrl = computed(() => (selectedVenue.value ? buildVenueLandingUrl(selectedVenue.value.slug) : ''))
+
+const listingBadge = computed(() => {
+  const status = selectedVenue.value?.status ?? 'draft'
+  if (status === 'published') {
+    return { label: 'Live for customers', tone: 'green' as const }
+  }
+
+  return {
+    label: listingStatusLabel(status),
+    tone: listingStatusTone(status),
+  }
+})
 
 const conversionOverview = computed(() => {
   const rows = dashboard.value?.milestone_conversions ?? []
@@ -296,7 +310,7 @@ onMounted(loadDashboard)
 
 onMounted(() => {
   if (route.query.onboarding === 'completed') {
-    toast.success('Your venue is live! Share your QR to start collecting stamps.')
+    toast.success('Venue created! Complete your listing to go live for customers.')
     void router.replace({ query: { ...route.query, onboarding: undefined } })
   }
 })
@@ -306,9 +320,9 @@ onMounted(() => {
   <AppShell>
     <PageHeader
       :title="title"
-      badge="Loyalty active"
-      badge-tone="green"
-      description="Your live venue workspace. Invite guests, track returns, and unlock rewards."
+      :badge="listingBadge.label"
+      :badge-tone="listingBadge.tone"
+      description="Run loyalty from your dashboard. Submit your listing when you are ready for customers to discover you."
     >
       <template #leading>
         <div class="grid size-14 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border">
@@ -336,6 +350,12 @@ onMounted(() => {
     />
 
     <template v-else>
+    <VenueListingCard
+      v-if="selectedVenue"
+      :venue-id="selectedVenue.id"
+      @updated="loadDashboard"
+    />
+
     <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
