@@ -43,7 +43,9 @@ const quotaHint = computed(() => {
 
 let autocomplete: google.maps.places.Autocomplete | null = null
 let placeListener: google.maps.MapsEventListener | null = null
+let placesService: google.maps.places.PlacesService | null = null
 let applyingPlace = false
+let suppressInputUntil = 0
 let lastSelectedAddress = ''
 
 function syncInputValue(value: string) {
@@ -54,11 +56,12 @@ function syncInputValue(value: string) {
   inputRef.value.value = value
 }
 
-function applyPlace(place: google.maps.places.PlaceResult) {
+function commitResolvedPlace(place: google.maps.places.PlaceResult) {
   const formatted = place.formatted_address?.trim() ?? ''
   const location = place.geometry?.location
 
   applyingPlace = true
+  suppressInputUntil = Date.now() + 400
 
   if (!formatted || !location) {
     selectionRequired.value = true
@@ -69,32 +72,71 @@ function applyPlace(place: google.maps.places.PlaceResult) {
     return
   }
 
-  lastSelectedAddress = formatted
   address.value = formatted
-  syncInputValue(formatted)
   latitude.value = location.lat()
   longitude.value = location.lng()
   googlePlaceId.value = place.place_id ?? null
   selectionRequired.value = false
-  applyingPlace = false
+
+  void nextTick(() => {
+    lastSelectedAddress = inputRef.value?.value.trim() || formatted
+    applyingPlace = false
+  })
+}
+
+function resolvePlaceDetails(placeId: string) {
+  if (!placesService) {
+    placesService = new google.maps.places.PlacesService(document.createElement('div'))
+  }
+
+  placesService.getDetails(
+    { placeId, fields: ['formatted_address', 'geometry', 'place_id'] },
+    (detail, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && detail) {
+        commitResolvedPlace(detail)
+        return
+      }
+
+      applyingPlace = true
+      selectionRequired.value = true
+      latitude.value = null
+      longitude.value = null
+      googlePlaceId.value = null
+      applyingPlace = false
+    },
+  )
+}
+
+function applyPlace(place: google.maps.places.PlaceResult) {
+  const formatted = place.formatted_address?.trim() ?? ''
+  const location = place.geometry?.location
+
+  if ((!formatted || !location) && place.place_id) {
+    applyingPlace = true
+    suppressInputUntil = Date.now() + 400
+    resolvePlaceDetails(place.place_id)
+    return
+  }
+
+  commitResolvedPlace(place)
 }
 
 function onNativeInput() {
-  if (applyingPlace || !inputRef.value) {
+  if (applyingPlace || Date.now() < suppressInputUntil || !inputRef.value) {
     return
   }
 
-  const nextValue = inputRef.value.value
+  const nextValue = inputRef.value.value.trim()
+
+  if (nextValue === lastSelectedAddress) {
+    return
+  }
+
   address.value = nextValue
-
-  if (nextValue.trim() === lastSelectedAddress.trim()) {
-    return
-  }
-
   latitude.value = null
   longitude.value = null
   googlePlaceId.value = null
-  selectionRequired.value = Boolean(nextValue.trim())
+  selectionRequired.value = Boolean(nextValue)
 }
 
 function validateSelection(): boolean {
@@ -170,9 +212,11 @@ watch(address, (value) => {
     return
   }
 
-  if (!autocompleteReady.value && value.trim() !== lastSelectedAddress.trim()) {
-    latitude.value = null
-    longitude.value = null
+  if (
+    !autocompleteReady.value
+    && value.trim() !== lastSelectedAddress
+    && (latitude.value === null || longitude.value === null)
+  ) {
     googlePlaceId.value = null
     selectionRequired.value = true
   }

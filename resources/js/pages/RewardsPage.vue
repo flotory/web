@@ -389,6 +389,57 @@ async function saveReward() {
   }
 }
 
+function milestoneExistsAt(requiredStamps: number): boolean {
+  return rewards.value.some((reward) => reward.required_stamps === requiredStamps)
+}
+
+async function createRewardFromPreset(
+  templateReward: RewardTemplate['rewards'][number],
+): Promise<boolean> {
+  if (!venue.value || milestoneExistsAt(templateReward.required_stamps)) {
+    return false
+  }
+
+  const body = new FormData()
+  body.append('title', templateReward.title)
+  body.append('required_stamps', String(templateReward.required_stamps))
+  body.append('description', templateReward.description)
+  body.append('active', '1')
+  await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, { method: 'POST', body })
+
+  return true
+}
+
+async function applyTemplateReward(
+  templateReward: RewardTemplate['rewards'][number],
+) {
+  if (!venue.value) return
+
+  if (milestoneExistsAt(templateReward.required_stamps)) {
+    toast.message(`You already have a milestone at ${templateReward.required_stamps} stamps`)
+    return
+  }
+
+  saving.value = true
+  error.value = ''
+
+  try {
+    const created = await createRewardFromPreset(templateReward)
+    if (!created) {
+      return
+    }
+
+    await loadRewards()
+    formOpen.value = false
+    showTemplatePicker.value = false
+    toast.success(`Added "${templateReward.title}" (${templateReward.required_stamps} stamps)`)
+  } catch (exception) {
+    toast.error(exception instanceof ApiError ? exception.message : 'Could not add milestone.')
+  } finally {
+    saving.value = false
+  }
+}
+
 async function applyTemplate(template: RewardTemplate) {
   if (!venue.value) return
   saving.value = true
@@ -397,21 +448,15 @@ async function applyTemplate(template: RewardTemplate) {
 
   try {
     for (const templateReward of template.rewards) {
-      const exists = rewards.value.some((reward) => reward.required_stamps === templateReward.required_stamps)
-      if (exists) continue
-      const body = new FormData()
-      body.append('title', templateReward.title)
-      body.append('required_stamps', String(templateReward.required_stamps))
-      body.append('description', templateReward.description)
-      body.append('active', '1')
-      await api<{ reward: Reward }>(`/venues/${venue.value.id}/rewards`, { method: 'POST', body })
-      created += 1
+      if (await createRewardFromPreset(templateReward)) {
+        created += 1
+      }
     }
     await loadRewards()
     formOpen.value = false
     showTemplatePicker.value = false
     if (created) {
-      toast.success(`${template.name} template applied (${created} milestones)`)
+      toast.success(`Added all ${created} milestones from ${template.name}`)
     } else {
       toast.message('Those milestones already exist')
     }
@@ -594,23 +639,50 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </div>
 
         <div v-if="showTemplatePicker && !editingReward" class="border-b border-border p-5 sm:p-6">
-          <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Smart templates</p>
+          <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Starter packs</p>
+          <p class="mt-1 text-sm text-ink-muted">
+            Add one milestone at a time, or apply the full pack. Each pack is a suggested program — not a single reward.
+          </p>
           <div class="mt-3 grid gap-3 md:grid-cols-3">
-            <button
+            <div
               v-for="template in rewardTemplates"
               :key="template.id"
-              type="button"
-              class="template-card group rounded-2xl border border-border bg-surface-muted p-4 text-left transition hover:-translate-y-0.5 hover:border-accent-border hover:shadow-lg"
-              :disabled="saving"
-              @click="applyTemplate(template)"
+              class="template-card rounded-2xl border border-border bg-surface-muted p-4 text-left"
             >
               <p class="text-2xl">{{ template.emoji }}</p>
               <p class="mt-2 font-black text-ink">{{ template.name }}</p>
               <p class="mt-1 text-xs text-ink-muted">{{ template.description }}</p>
-              <p class="mt-3 text-xs font-semibold text-primary group-hover:text-primary">
-                {{ template.rewards.map((item) => `${item.required_stamps} stamps`).join(' → ') }}
-              </p>
-            </button>
+              <ul class="mt-3 space-y-2">
+                <li
+                  v-for="templateReward in template.rewards"
+                  :key="`${template.id}-${templateReward.required_stamps}`"
+                  class="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2"
+                >
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-bold text-ink">{{ templateReward.title }}</p>
+                    <p class="text-xs text-ink-muted">{{ templateReward.required_stamps }} stamps</p>
+                  </div>
+                  <AppButton
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    :disabled="saving || milestoneExistsAt(templateReward.required_stamps)"
+                    @click="applyTemplateReward(templateReward)"
+                  >
+                    {{ milestoneExistsAt(templateReward.required_stamps) ? 'Added' : 'Add' }}
+                  </AppButton>
+                </li>
+              </ul>
+              <AppButton
+                type="button"
+                size="sm"
+                class="mt-3 w-full"
+                :disabled="saving"
+                @click="applyTemplate(template)"
+              >
+                Add all {{ template.rewards.length }} milestones
+              </AppButton>
+            </div>
           </div>
           <button type="button" class="mt-4 text-sm font-bold text-ink-muted hover:text-ink" @click="showTemplatePicker = false">
             Or build a custom milestone ↓
@@ -789,18 +861,42 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
           <AppButton @click="openCreateForm">Create first milestone</AppButton>
         </div>
         <div class="mt-8 grid gap-3 text-left md:grid-cols-3">
-          <button
+          <div
             v-for="template in rewardTemplates"
             :key="`empty-${template.id}`"
-            type="button"
-            class="rounded-2xl border border-white bg-surface/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            :disabled="saving"
-            @click="applyTemplate(template)"
+            class="rounded-2xl border border-white bg-surface/80 p-4 shadow-sm"
           >
             <p class="text-2xl">{{ template.emoji }}</p>
             <p class="mt-2 font-black text-ink">{{ template.name }}</p>
-            <p class="mt-1 text-xs text-ink-muted">{{ template.rewards[0]?.title }}</p>
-          </button>
+            <p class="mt-1 text-xs text-ink-muted">{{ template.rewards.length }} suggested milestones</p>
+            <ul class="mt-3 space-y-1.5 text-left">
+              <li
+                v-for="templateReward in template.rewards"
+                :key="`empty-${template.id}-${templateReward.required_stamps}`"
+                class="flex items-center justify-between gap-2 text-xs"
+              >
+                <span class="font-semibold text-ink">{{ templateReward.title }}</span>
+                <button
+                  type="button"
+                  class="shrink-0 font-bold text-primary hover:underline disabled:text-ink-soft disabled:no-underline"
+                  :disabled="saving || milestoneExistsAt(templateReward.required_stamps)"
+                  @click="applyTemplateReward(templateReward)"
+                >
+                  {{ milestoneExistsAt(templateReward.required_stamps) ? 'Added' : 'Add' }}
+                </button>
+              </li>
+            </ul>
+            <AppButton
+              type="button"
+              size="sm"
+              variant="secondary"
+              class="mt-3 w-full"
+              :disabled="saving"
+              @click="applyTemplate(template)"
+            >
+              Add all {{ template.rewards.length }}
+            </AppButton>
+          </div>
         </div>
       </section>
 
