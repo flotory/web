@@ -95,7 +95,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
             <span
               v-for="chip in criteriaChips"
               :key="chip"
-              class="rounded-md px-2 py-0.5 text-xs font-semibold text-white/90 ring-1 ring-white/15"
+              class="rounded-md px-2 py-0.5 text-xs font-semibold text-white/90 border border-white/15"
               :style="{ backgroundColor: 'rgba(255,255,255,0.08)' }"
             >
               {{ chip }}

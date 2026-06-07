@@ -168,10 +168,10 @@ onMounted(loadTeam)
     />
 
     <template v-else>
-      <p v-if="statusNote" class="mb-4 rounded-2xl bg-success-bg p-3 text-sm font-semibold text-success-text ring-1 ring-success-border">
+      <p v-if="statusNote" class="mb-4 rounded-2xl bg-success-bg p-3 text-sm font-semibold text-success-text border border-success-border">
         {{ statusNote }}
       </p>
-      <p v-if="error" class="mb-4 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger ring-1 ring-danger/30">
+      <p v-if="error" class="mb-4 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger border border-danger/30">
         {{ error }}
       </p>
 
@@ -194,7 +194,7 @@ onMounted(loadTeam)
                 placeholder="staff@venue.com"
               >
             </div>
-            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-sm font-bold text-ink-muted">Role: Staff</p>
               <p class="mt-1 text-xs font-semibold text-ink-muted">Scanner and customer tools only.</p>
             </div>
@@ -214,7 +214,7 @@ onMounted(loadTeam)
           <AppCard>
             <h2 class="text-xl font-black text-ink">Active team members</h2>
             <div class="mt-5 space-y-2">
-              <div v-for="member in owners" :key="member.id" class="flex items-center justify-between gap-4 rounded-2xl bg-success-bg/80 p-4 ring-1 ring-success-border">
+              <div v-for="member in owners" :key="member.id" class="flex items-center justify-between gap-4 rounded-2xl bg-success-bg/80 p-4 border border-success-border">
                 <div>
                   <p class="font-black text-ink">{{ member.user.name }}</p>
                   <p class="text-sm font-semibold text-ink-muted">{{ member.user.email }}</p>
@@ -222,7 +222,7 @@ onMounted(loadTeam)
                 <AppBadge tone="green">Owner</AppBadge>
               </div>
 
-              <div v-for="member in staffMembers" :key="member.id" class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 ring-1 ring-border">
+              <div v-for="member in staffMembers" :key="member.id" class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 border border-border">
                 <div>
                   <p class="font-black text-ink">{{ member.user.name }}</p>
                   <p class="text-sm font-semibold text-ink-muted">{{ member.user.email }}</p>
@@ -256,7 +256,7 @@ onMounted(loadTeam)
               <div
                 v-for="invitation in pendingInvitations"
                 :key="invitation.id"
-                class="rounded-2xl bg-accent-soft/60 p-4 ring-1 ring-accent-border"
+                class="rounded-2xl bg-accent-soft/60 p-4 border border-accent-border"
               >
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -305,7 +305,7 @@ onMounted(loadTeam)
               <div
                 v-for="invitation in invitationHistory"
                 :key="invitation.id"
-                class="rounded-2xl bg-surface p-4 ring-1 ring-border"
+                class="rounded-2xl bg-surface p-4 border border-border"
               >
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>

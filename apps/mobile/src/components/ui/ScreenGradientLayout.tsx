@@ -59,7 +59,7 @@ export default function ScreenGradientLayout({
   const { height: windowHeight } = useWindowDimensions()
 
   const topPad = paddingTop ?? insets.top + 12
-  const bottomPad = insets.bottom + (tabBarInset ? TAB_BAR_HEIGHT : 0) + space.screenX
+  const bottomPad = insets.bottom + (tabBarInset ? TAB_BAR_HEIGHT + tabBar.scrollBottomPad : 0)
 
   const contentShell: ViewStyle = {
     flexGrow: 1,
@@ -73,7 +73,7 @@ export default function ScreenGradientLayout({
     const body = scrollable ? (
       <ScrollView
         style={styles.transparentScroll}
-        contentContainerStyle={[{ flexGrow: 1, paddingBottom: bottomPad }, contentContainerStyle]}
+        contentContainerStyle={[{ paddingBottom: bottomPad }, contentContainerStyle]}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
         directionalLockEnabled

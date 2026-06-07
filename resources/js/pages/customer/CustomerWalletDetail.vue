@@ -432,11 +432,11 @@ watch(
                   :class="[
                     isGiftStamp(stamp)
                       ? isStampCollected(stamp)
-                        ? 'bg-accent-soft text-accent-active ring-1 ring-accent-border'
-                        : 'bg-surface-muted text-ink-soft ring-1 ring-border'
+                        ? 'bg-accent-soft text-accent-active border border-accent-border'
+                        : 'bg-surface-muted text-ink-soft border border-border'
                       : isStampCollected(stamp)
                         ? 'bg-primary text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.6)]'
-                        : 'bg-surface text-ink-soft ring-1 ring-border',
+                        : 'bg-surface text-ink-soft border border-border',
                     isStampAnimating(stamp) ? 'scale-105 animate-pulse' : '',
                   ]"
                 >

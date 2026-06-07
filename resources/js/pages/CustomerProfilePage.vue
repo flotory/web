@@ -181,7 +181,7 @@ onMounted(loadProfile)
                 class="relative"
               >
                 <span
-                  class="absolute -left-[1.65rem] top-0.5 grid size-6 place-items-center rounded-full bg-surface text-xs ring-2 ring-border"
+                  class="absolute -left-[1.65rem] top-0.5 grid size-6 place-items-center rounded-full bg-surface text-xs border-2 border-border"
                   aria-hidden="true"
                 >
                   {{ timelineIcon(event.type) }}

@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="flex items-center gap-3">
                   <span
-                    class="size-11 shrink-0 rounded-xl ring-1 ring-border"
+                    class="size-11 shrink-0 rounded-xl border border-border"
                     :style="{ backgroundColor: draft[token.key] }"
                   />
                   <input

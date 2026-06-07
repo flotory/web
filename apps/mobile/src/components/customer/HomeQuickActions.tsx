@@ -56,7 +56,7 @@ export default function HomeQuickActions({ actions }: HomeQuickActionsProps) {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name={action.icon} size={22} color={colors.primary} />
+              <Ionicons name={action.icon} size={22} color={colors.accentActive} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={withAppFont({ fontSize: 16, fontWeight: '800', color: colors.ink })}>{action.label}</Text>

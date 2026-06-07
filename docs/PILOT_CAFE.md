@@ -27,7 +27,8 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 - Owner can complete the **listing checklist** and submit for review; admin can approve at `/admin/venues`
 - QR download / print asset works for counter display
 - Staff invitation email delivers (check spam; verify SMTP in production)
-- Scanner flow: scan customer QR → stamp → customer sees update on card
+- Scanner flow: scan customer **My QR** → stamp → customer sees update on wallet
+- Campaign demo: activate a Quiet Day or Happy Hour promo on `/campaigns`
 - Redeem flow: customer taps Claim → staff scans claim QR → customer sees success
 - Wrong-QR drill: customer shows stamp card for reward → staff sees amber warning after stamp
 - You can demo end-to-end in under 5 minutes
@@ -108,7 +109,7 @@ If unlocks but no redeems → redeem UX or staff training gap.
 | Blocker                                   | Fix                                                                      |
 | ----------------------------------------- | ------------------------------------------------------------------------ |
 | Staff didn’t get invite email             | Resend from Team; copy invite link if available                          |
-| Customer confused after join              | Show Card tab; point to stamp count                                      |
+| Customer confused after join              | Show **Wallet** tab; point to stamp count and **My QR** for next visit   |
 | Owner wants POS integration               | Defer — MVP is QR at counter only                                        |
 | Owner wants multiple reward tiers day one | Start with one milestone; add second after first week                    |
 | Wi‑Fi dead zone at counter                | Staff use mobile data; QR works offline for customer join if page cached |

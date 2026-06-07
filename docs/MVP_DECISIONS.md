@@ -2,7 +2,7 @@
 
 Approved product and engineering decisions. **Do not undo or contradict these** without explicit owner approval. **Business invariants are defined in [BUSINESS_RULES.md](./BUSINESS_RULES.md)** — if this file and BUSINESS_RULES conflict, BUSINESS_RULES wins.
 
-Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE.md](./ARCHITECTURE.md) (implementation).
+Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTURE.md) (implementation).
 
 ## Identity and Roles
 
@@ -11,7 +11,7 @@ Related: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (terminology), [ARCHITECTURE
 | No global owner/staff/customer on `users` | `users` has only `is_admin` (boolean). Default `false` for all sign-ups. |
 | Venue ownership in pivot | `venue_users.role`: `owner` or `staff`. Creating a venue adds an `owner` row. |
 | No `owner_user_id` on `venues` | Owners are derived from `venue_users`, not a column on `venues`. |
-| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. Joining creates/fetches this row. Stamp QR is **user-level** (`user_stamp_tokens`) — see [V2.md](./V2.md). |
+| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. Joining creates/fetches this row. Stamp QR is **user-level** (`user_stamp_tokens`) — see [ARCHITECTURE.md](./ARCHITECTURE.md#universal-my-qr). |
 | Multi-hat users | Same user can be owner at A, staff at B, customer at C. |
 | Platform admin | `users.is_admin` bypasses `VenueAccess` membership checks. |
 

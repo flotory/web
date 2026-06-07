@@ -1,11 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient'
 import { type PropsWithChildren, type ReactNode } from 'react'
 import { View, type StyleProp, type ViewStyle } from 'react-native'
 
-import { gradients, media, radius, shadows, space } from '../../theme'
-
-const gradientStart = { x: 0, y: 0 } as const
-const gradientEnd = { x: 1, y: 1 } as const
+import { colors, media, radius, shadows, space } from '../../theme'
 
 interface GradientCardProps extends PropsWithChildren {
   header?: ReactNode
@@ -36,21 +32,18 @@ export default function GradientCard({
           position: 'relative',
           borderRadius: radius.card,
           overflow: 'hidden',
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
           ...shadows.carousel,
         },
         style,
       ]}
     >
       {header}
-      <LinearGradient
-        colors={[...gradients.carouselCard]}
-        locations={[...gradients.carouselCardLocations]}
-        start={gradientStart}
-        end={gradientEnd}
-        style={[{ padding, paddingTop: contentTopPad }, contentStyle]}
-      >
+      <View style={[{ padding, paddingTop: contentTopPad, backgroundColor: colors.surface }, contentStyle]}>
         {children}
-      </LinearGradient>
+      </View>
       {header && overlap ? (
         <View
           pointerEvents="none"

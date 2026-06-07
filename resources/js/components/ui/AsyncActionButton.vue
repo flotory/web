@@ -71,7 +71,7 @@ const classes = computed(() =>
     props.block && 'w-full',
     {
       primary: 'bg-primary text-primary-text shadow-lg shadow-primary/15 hover:bg-primary-soft',
-      secondary: 'bg-surface text-ink ring-1 ring-border hover:bg-surface-muted',
+      secondary: 'bg-surface text-ink border border-border hover:bg-surface-muted',
       ghost: 'bg-transparent text-ink-muted hover:bg-surface-muted hover:text-ink',
     }[props.variant],
     {
@@ -79,8 +79,8 @@ const classes = computed(() =>
       md: 'min-h-11 px-5 text-sm',
       lg: 'min-h-12 px-6 text-base',
     }[props.size],
-    isSuccess.value && props.variant === 'primary' && 'bg-primary-soft ring-1 ring-success/25',
-    isError.value && 'ring-1 ring-danger/30',
+    isSuccess.value && props.variant === 'primary' && 'bg-primary-soft border border-success/25',
+    isError.value && 'border border-danger/30',
     attrs.class as string | undefined,
   ),
 )

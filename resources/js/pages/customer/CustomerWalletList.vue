@@ -117,7 +117,7 @@ onMounted(() => {
             v-model="search"
             type="search"
             placeholder="Search venues"
-            class="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-ink shadow-sm outline-none ring-accent/30 placeholder:text-ink-soft focus:border-accent-border focus:ring-2"
+            class="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-ink shadow-sm outline-none border border-border placeholder:text-ink-soft focus:border-accent-border focus:outline-none"
           >
         </label>
 

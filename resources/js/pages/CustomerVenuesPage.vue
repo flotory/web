@@ -100,7 +100,7 @@ onMounted(loadVenues)
           v-model="search"
           type="search"
           placeholder="Search by name or address"
-          class="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-sm outline-none ring-border transition placeholder:text-ink-soft focus:border-ink-soft focus:ring-2"
+          class="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-sm outline-none border border-border transition placeholder:text-ink-soft focus:border-ink-soft focus:outline-none"
         >
       </label>
 
@@ -130,7 +130,7 @@ onMounted(loadVenues)
           class="rounded-2xl border border-border/80 bg-surface p-4 shadow-sm"
         >
           <div class="flex items-center gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-muted ring-1 ring-border/80">
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-muted border border-border/80">
               <img
                 :src="venueLogoThumbUrl(venue)"
                 :alt="venue.name"

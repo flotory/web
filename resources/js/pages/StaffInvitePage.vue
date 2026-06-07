@@ -174,7 +174,7 @@ async function logoutForInvite() {
             <strong>{{ preview.inviter.name }}</strong> invited you to join as staff on Flotory.
           </p>
 
-          <ul class="mt-4 space-y-2 rounded-2xl bg-surface-muted p-4 text-sm font-semibold text-ink-muted ring-1 ring-border">
+          <ul class="mt-4 space-y-2 rounded-2xl bg-surface-muted p-4 text-sm font-semibold text-ink-muted border border-border">
             <li>Open the scanner</li>
             <li>Add customer stamps</li>
             <li>Help customers redeem rewards</li>
@@ -191,7 +191,7 @@ async function logoutForInvite() {
             </RouterLink>
           </div>
 
-          <div v-else-if="auth.isAuthenticated && emailMatches === false" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active ring-1 ring-accent-border">
+          <div v-else-if="auth.isAuthenticated && emailMatches === false" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active border border-accent-border">
             You are signed in as a different user. Log out, then sign in with <strong>{{ preview.email }}</strong>.
             <AppButton class="mt-4 w-full" variant="secondary" size="sm" @click="logoutForInvite">
               Log out

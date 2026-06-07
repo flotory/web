@@ -2,7 +2,7 @@
 
 Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold venue team memberships (`venue_users`), loyalty cards (`customers`), or both. Business rules live in services; the SPA renders API state.
 
-See [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISIONS.md) for locked decisions.
+See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISIONS.md) for locked decisions.
 
 ## Stack
 
@@ -76,7 +76,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 | Model | Table | Purpose |
 |-------|-------|---------|
 | `User` | `users` | Login identity. `is_admin` for platform admin only. `active_venue_id` for workspace selection. Optional `google_id`, `google_avatar`. |
-| `Venue` | `venues` | Workspace. Slug, category, branding, soft deletes. **No** `owner_user_id`. |
+| `Venue` | `venues` | Workspace. Slug, category, branding, `status` (`draft` \| `pending_review` \| `published`), soft deletes. **No** `owner_user_id`. |
 | `VenueUser` | `venue_users` | Team membership pivot: `role` = `owner` \| `staff`. |
 | `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `qr_token`, `stamps`. |
 | `Reward` | `rewards` | Milestone definition: `required_stamps`, optional image, `active`, `reward_type` (= `milestone`). |
@@ -89,7 +89,7 @@ QR tokens and stamp balances are **per customer row**, not per user globally or 
 
 ## Ownership and Authorization
 
-**Platform:** `users.is_admin === true` bypasses venue membership checks.
+**Platform:** `users.is_admin === true` — system operator only. Platform admins **cannot** use venue owner/staff tools (`VenueAccess::assertNotPlatformAdmin`). Admin UI: `/admin/venues`, `/admin/palette`, `/admin/activity`.
 
 **Venue team:** `venue_users.role`
 
@@ -155,8 +155,9 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 
 ### Owner onboarding
 
-1. Register with owner intent → `/onboarding/create-venue` (5 steps)
-2. Complete → `/dashboard?onboarding=completed`
+1. Register with owner intent → `/onboarding/create-venue` (4 steps: name+slug → category → rewards → QR)
+2. Venue created as `draft` → owner completes listing checklist → submit → admin approve → `published`
+3. Complete wizard → `/dashboard?onboarding=completed`
 
 ### Staff scanner (auto-detect)
 
@@ -164,8 +165,10 @@ One `/scanner` page; camera payload determines the action:
 
 | QR type | Payload | API |
 |---------|---------|-----|
-| **Stamp card** | Customer `qr_token` (UUID) | `POST /api/venues/{venue}/scanner/stamps` |
-| **Reward claim** | `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
+| **Stamp (My QR)** | `flotory:member:{public_token}` from `user_stamp_tokens` | `POST /api/venues/{venue}/scanner/stamps` |
+| **Reward claim** | `flotory:redeem:{token}` or `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
+
+Legacy per-card `customers.qr_token` is deprecated (`LOYALTY_LEGACY_CARD_QR=false` by default).
 
 Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
 
@@ -207,6 +210,7 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 | Mode | Who | Primary routes |
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Campaigns, Analytics, Team, Settings |
+| Platform admin | `users.is_admin = true` | Venue listings, Design palette, Activity log — no owner workspace |
 | Staff workspace | staff-only membership | Scanner, Customers, Account |
 | Customer (web) | No team membership (or `workspace: false` routes) | Wallet, **My QR** (`/my-qr`), **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
 | Customer (mobile) | Same API, Expo app | Home, Wallet, **My QR** (center), Venues, Profile; Rewards and Notifications off-tab |
@@ -294,6 +298,25 @@ Uploaded files are gitignored; directories created at deploy/boot.
 - **Destructive actions:** confirmation modal (delete venue, delete/archive reward)
 - **Cross-page feedback:** `vue-sonner` toaster wired in `App.vue` (infrastructure present; use for global success/error)
 - **Customer reward claim:** `ClaimRewardModal` — claim session QR, poll until staff scan; `RewardRedeemedCelebration` on success
+
+## Universal My QR
+
+Stamp scans use one token per user (`user_stamp_tokens.public_token`), not per venue card.
+
+| Item | Detail |
+| --- | --- |
+| Payload | `flotory:member:{public_token}` |
+| Customer UI | `/my-qr` (web), center tab (mobile) |
+| Scanner | Resolves user → card at scanner venue (auto-join) |
+| Claim QR | Unchanged: `flotory:redeem:{token}` |
+
+| Env | Default | Meaning |
+| --- | --- | --- |
+| `LOYALTY_UNIVERSAL_QR` | `true` | Use `user_stamp_tokens` for stamp scans |
+| `LOYALTY_LEGACY_CARD_QR` | `false` | Accept old per-card `customers.qr_token` |
+| `LOYALTY_LEGACY_CARD_QR_SUNSET_AT` | *(empty)* | Optional ISO datetime to force legacy off |
+
+API: `GET /api/customer/stamp-qr`, `POST /api/venues/{venue}/scanner/scan`. Backfill: `php artisan app:backfill-user-stamp-tokens`.
 
 ## Seeded Demo Data
 

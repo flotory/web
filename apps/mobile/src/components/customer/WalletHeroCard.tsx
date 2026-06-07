@@ -1,28 +1,13 @@
 import { Link } from 'expo-router'
 import { Image, Text, View } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 
 import WalletStampDashes from './WalletStampDashes'
 import PressableCard from '../ui/PressableCard'
 import { formatVenueCategoryLabel } from '../../lib/format'
 import { venueCoverUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
-import { walletCard } from '../../theme'
+import { colors, walletCard } from '../../theme'
 import type { WalletCard } from '../../types/loyalty'
-
-const OVERLAY_BY_CATEGORY: Record<string, readonly [string, string, string]> = {
-  cafe: ['rgba(30,58,138,0.15)', 'rgba(15,23,42,0.55)', 'rgba(15,23,42,0.92)'],
-  restaurant: ['rgba(22,78,54,0.12)', 'rgba(15,23,42,0.5)', 'rgba(12,46,35,0.9)'],
-  bar: ['rgba(127,29,29,0.15)', 'rgba(15,23,42,0.5)', 'rgba(76,17,48,0.9)'],
-  bakery: ['rgba(146,64,14,0.12)', 'rgba(15,23,42,0.48)', 'rgba(69,26,3,0.88)'],
-}
-
-const DEFAULT_OVERLAY = ['rgba(15,23,42,0.08)', 'rgba(15,23,42,0.52)', 'rgba(15,23,42,0.9)'] as const
-
-function overlayColors(category: string | null | undefined): readonly [string, string, string] {
-  const key = category?.toLowerCase() ?? 'cafe'
-  return OVERLAY_BY_CATEGORY[key] ?? DEFAULT_OVERLAY
-}
 
 interface WalletHeroCardProps {
   item: WalletCard
@@ -35,7 +20,6 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
   const toNext = summary?.stamps_to_next ?? Math.max(max - stamps, 0)
   const cover = venueCoverUrl(item.venue ?? undefined)
   const categoryLabel = formatVenueCategoryLabel(item.venue?.category)
-  const gradient = overlayColors(item.venue?.category)
 
   return (
     <Link
@@ -51,7 +35,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
             height: walletCard.height,
             borderRadius: walletCard.radius,
             overflow: 'hidden',
-            backgroundColor: '#1e293b',
+            backgroundColor: colors.primary,
           }}
         >
           {cover ? (
@@ -61,17 +45,14 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
               resizeMode="cover"
             />
           ) : null}
-          <LinearGradient
-            colors={[...gradient]}
-            locations={[0, 0.45, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+          <View
             style={{
               position: 'absolute',
               left: 0,
               right: 0,
               top: 0,
               bottom: 0,
+              backgroundColor: 'rgba(5, 13, 30, 0.72)',
             }}
           />
 
@@ -81,7 +62,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                 style={withAppFont({
                   fontSize: 26,
                   fontWeight: '800',
-                  color: '#FFFFFF',
+                  color: colors.primaryText,
                   letterSpacing: -0.5,
                 })}
                 numberOfLines={1}
@@ -109,7 +90,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                     color: 'rgba(255,255,255,0.9)',
                   })}
                 >
-                  <Text style={{ fontSize: 22, fontWeight: '800' }}>{stamps}</Text>
+                  <Text style={{ fontSize: 22, fontWeight: '800', color: colors.accent }}>{stamps}</Text>
                   {` / ${max} stamps`}
                 </Text>
                 <WalletStampDashes filled={stamps} total={max} />
@@ -119,7 +100,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                   style={withAppFont({
                     fontSize: 40,
                     fontWeight: '800',
-                    color: '#FFFFFF',
+                    color: colors.accent,
                     lineHeight: 42,
                   })}
                 >

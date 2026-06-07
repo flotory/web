@@ -13,7 +13,7 @@ defineProps<{
       class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-primary/25 px-6 backdrop-blur-[2px]"
       aria-live="polite"
     >
-      <div class="celebrate-card relative rounded-[2rem] bg-surface px-8 py-7 text-center shadow-2xl ring-1 ring-accent-border">
+      <div class="celebrate-card relative rounded-[2rem] bg-surface px-8 py-7 text-center shadow-2xl border border-accent-border">
         <div class="mx-auto grid size-20 place-items-center rounded-full bg-accent-soft text-4xl">🎁</div>
         <p class="mt-4 text-xl font-black text-ink">Reward unlocked!</p>
         <p v-if="title" class="mt-1 text-sm font-semibold text-ink-muted">{{ title }}</p>

@@ -128,7 +128,7 @@ onMounted(loadLanding)
 
       <section class="relative mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-md flex-col px-5 pb-8">
         <div class="relative z-10 -mt-8 flex items-center gap-3">
-          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface p-0.5 shadow-md ring-1 ring-border/80">
+          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface p-0.5 shadow-md border border-border/80">
             <img
               :src="venueLogoUrl(landing.venue)"
               :alt="landing.venue.name"

@@ -220,10 +220,12 @@ OAuth preserves onboarding intent:
 
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
-3. 5-step wizard: venue name → category → logo → rewards presets → QR.
-4. Lands on `/dashboard?onboarding=completed` with a success toast and an operational dashboard (KPIs, insights, **Open scanner**).
+3. 4-step wizard: venue name + slug → category → reward presets → QR download.
+4. Lands on `/dashboard?onboarding=completed` with a success toast and operational dashboard (KPIs, insights, **Open scanner**).
 
-Venue owners manage QR download, invite link, and settings under **My Venues → Settings**.
+New venues start as **`draft`**. The printed QR works for **staff scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`. See [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md).
+
+Venue owners manage QR download, listing, and settings under **My Venues → Settings**.
 
 ### Staff (email invitation)
 
@@ -320,7 +322,7 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 
 ### Platform (`users.is_admin`)
 
-- **true** — platform administrator (not seeded by default)
+- **true** — platform administrator (`admin@flotory.com` seeded locally and on deploy with `SEED_DATABASE=1`). Admins review venue listings and manage platform settings — they **cannot** own venues or use owner/staff workspace tools.
 - **false** — default for all sign-ups (owners, staff, and loyalty guests)
 
 ### Per venue (`venue_users.role`)
@@ -334,13 +336,14 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 
 - Guest venue landing page (`/v/:slug`) — **main entry after QR scan**
 - Customer registration/login (email + Google) with intent-based redirects
-- Owner 5-step onboarding wizard and dashboard success state
+- Owner 4-step onboarding wizard and dashboard success state
+- Venue listing workflow: draft → pending review → published (admin approval before public QR join)
 - Owner `/rewards`: 5-column customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
 - Owner `/campaigns`: campaign templates, activation, pause/edit/end actions, and history
 - Owner/staff **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
 - Customer loyalty wallet (`/wallet`) with per-venue cards and journey; universal stamp QR lives at `/my-qr`
 - Customer bottom nav (web): **Wallet**, **My QR**, **Rewards**, Venues, Settings
-- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Profile** — see [docs/MOBILE.md](docs/MOBILE.md)
+- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Profile** — see [apps/mobile/README.md](apps/mobile/README.md)
 - Stamp and reward-unlock animations on the wallet detail view (no persistent banner)
 - Customer rewards wallet (`/customer/rewards`) with tab badge for pending unlocks
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
@@ -375,15 +378,15 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flo
 These files are the source of truth for product, architecture, and MVP decisions (for developers and AI tools):
 
 - [docs/README.md](docs/README.md) — **documentation index** (start here)
-- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) — MVP stage, terminology
 - [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) — canonical product rules
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API
-- [docs/V2.md](docs/V2.md) — universal My QR (config & rollout)
 - [docs/PRODUCT.md](docs/PRODUCT.md) — product overview
-- [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) — long-term SaaS roadmap
+- [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) — shipped phases and what's next
 - [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions
-- [docs/MOBILE.md](docs/MOBILE.md) — Expo app ↔ API
+- [docs/CAMPAIGNS.md](docs/CAMPAIGNS.md) — stamp campaign templates and rules
+- [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md) — platform admin and venue listing approval
 - [docs/PILOT_CAFE.md](docs/PILOT_CAFE.md) — first pilot playbook
+- [apps/mobile/README.md](apps/mobile/README.md) — Expo app setup and API map
 - [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — risks and resolved issues
 
 ## Roadmap

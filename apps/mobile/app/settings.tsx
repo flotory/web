@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import PrimaryButton from '../src/components/ui/PrimaryButton'
+import SecondaryButton from '../src/components/ui/SecondaryButton'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useAuth } from '../src/providers/AuthProvider'
@@ -66,9 +67,9 @@ export default function SettingsScreen() {
           }}
         >
           {[
-            { label: 'Venues', value: String(stats.venues) },
-            { label: 'Stamps', value: String(stats.stamps) },
-            { label: 'Ready', value: String(stats.rewards) },
+            { label: 'Venues', value: String(stats.venues), accent: false },
+            { label: 'Stamps', value: String(stats.stamps), accent: false },
+            { label: 'Ready', value: String(stats.rewards), accent: true },
           ].map((item) => (
             <View
               key={item.label}
@@ -82,7 +83,15 @@ export default function SettingsScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={withAppFont({ fontSize: 22, fontWeight: '800', color: colors.ink })}>{item.value}</Text>
+              <Text
+                style={withAppFont({
+                  fontSize: 22,
+                  fontWeight: '800',
+                  color: item.accent ? colors.accentActive : colors.ink,
+                })}
+              >
+                {item.value}
+              </Text>
               <Text style={{ ...typography.caption, marginTop: 4 }}>{item.label}</Text>
             </View>
           ))}
@@ -94,14 +103,11 @@ export default function SettingsScreen() {
           style={{ marginTop: space.sectionY }}
         />
 
-        <Pressable
+        <SecondaryButton
+          label="Discover venues"
           onPress={() => router.push('/(customer)/venues')}
-          style={{ marginTop: 10, alignItems: 'center', paddingVertical: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="Discover venues"
-        >
-          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>Discover venues</Text>
-        </Pressable>
+          style={{ marginTop: 10 }}
+        />
 
         <View
           style={{

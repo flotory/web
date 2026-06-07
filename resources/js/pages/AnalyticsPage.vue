@@ -194,7 +194,7 @@ onMounted(load)
       description="See whether guests are joining, returning, and redeeming rewards."
     >
       <template #meta>
-        <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted ring-1 ring-border">
+        <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted border border-border">
           {{ scopeLabel }}
         </span>
       </template>
@@ -418,7 +418,7 @@ onMounted(load)
                     {{ customer.venue.name }}
                   </p>
                 </div>
-                <span class="shrink-0 rounded-full bg-accent-soft px-3 py-1 text-sm font-bold tabular-nums text-primary ring-1 ring-accent-border">
+                <span class="shrink-0 rounded-full bg-accent-soft px-3 py-1 text-sm font-bold tabular-nums text-primary border border-accent-border">
                   {{ customer.stamps }} stamps
                 </span>
               </li>

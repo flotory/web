@@ -29,7 +29,7 @@ const mapsUrl = computed(() => buildGoogleMapsSearchUrl(props.address ?? ''))
       :href="mapsUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="mt-3 inline-flex h-9 w-full items-center justify-center rounded-full bg-surface px-4 text-sm font-semibold text-ink ring-1 ring-border transition hover:bg-surface-muted sm:w-auto"
+      class="mt-3 inline-flex h-9 w-full items-center justify-center rounded-full bg-surface px-4 text-sm font-semibold text-ink border border-border transition hover:bg-surface-muted sm:w-auto"
     >
       Open in Maps
     </a>

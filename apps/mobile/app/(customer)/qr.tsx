@@ -7,7 +7,7 @@ import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import StateCard from '../../src/components/ui/StateCard'
 import { useStampQr } from '../../src/hooks/useStampQr'
 import { hapticSuccess } from '../../src/lib/haptics'
-import { colors, radius, space, tabBar, type as typography } from '../../src/theme'
+import { colors, radius, shadows, space, tabBar, type as typography } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
 
 /** Matches `(customer)/_layout.tsx` tab bar height */
@@ -82,11 +82,12 @@ export default function CustomerQrScreen() {
               style={{
                 backgroundColor: colors.surface,
                 borderRadius: radius.card,
-                padding: space.cardPad,
+                padding: space.cardPad + 6,
                 borderWidth: 1,
                 borderColor: colors.border,
                 alignItems: 'center',
                 alignSelf: 'center',
+                ...shadows.md,
               }}
             >
               <QrImage value={data.qr_value} size={260} />

@@ -28,7 +28,7 @@ const emit = defineEmits<{
 <template>
   <component :is="bare ? 'div' : AppCard" :wrapper-class="bare ? undefined : 'border-danger/30 bg-danger-soft/50'">
     <div class="text-center">
-      <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-danger-soft text-danger ring-1 ring-danger/30">
+      <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-danger-soft text-danger">
         <AlertCircle class="size-7" :stroke-width="1.75" aria-hidden="true" />
       </div>
       <h2 class="mt-3 text-lg font-black tracking-tight text-ink">{{ title }}</h2>

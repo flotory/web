@@ -245,7 +245,7 @@ onMounted(loadVenues)
             <h2 class="text-2xl font-black text-ink">Create venue</h2>
             <p class="mt-1 text-sm font-semibold text-ink-muted">Profile details customers and staff will recognize.</p>
           </div>
-          <div class="grid size-16 place-items-center overflow-hidden rounded-3xl bg-surface-muted text-xl font-black text-ink-soft ring-1 ring-border">
+          <div class="grid size-16 place-items-center overflow-hidden rounded-3xl bg-surface-muted text-xl font-black text-ink-soft border border-border">
             {{ name.slice(0, 1) || 'V' }}
           </div>
         </div>
@@ -330,7 +330,7 @@ onMounted(loadVenues)
         <div class="relative p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface text-xl font-black shadow-sm ring-2 ring-white -mt-10">
+            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface text-xl font-black shadow-sm border-2 border-white -mt-10">
               <img :src="venueLogoThumbUrl(venue)" :alt="venue.name" class="size-full object-cover">
             </div>
             <div>
@@ -346,7 +346,7 @@ onMounted(loadVenues)
           </div>
           <div class="relative">
             <button type="button" class="rounded-xl bg-surface-muted px-3 py-2 text-sm font-black text-ink-muted hover:bg-border" @click="toggleMenu(venue.id)">⋯</button>
-            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-surface p-2 shadow-xl ring-1 ring-border">
+            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-surface p-2 shadow-xl border border-border">
               <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
               <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
             </div>
@@ -354,20 +354,20 @@ onMounted(loadVenues)
         </div>
 
         <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+          <div class="rounded-xl bg-surface p-3 border border-border">
             <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◎ Guests</p>
             <p class="mt-1 text-sm font-black text-ink">{{ venue.customers_count ?? 0 }}</p>
           </div>
-          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+          <div class="rounded-xl bg-surface p-3 border border-border">
             <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">↻ Visits</p>
             <p class="mt-1 text-sm font-black text-ink">{{ venue.visits_count ?? 0 }}</p>
           </div>
-          <div class="rounded-xl bg-surface p-3 ring-1 ring-border">
+          <div class="rounded-xl bg-surface p-3 border border-border">
             <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◈ Rewards</p>
             <p class="mt-1 text-sm font-black text-ink">{{ venue.rewards_count ?? 0 }}</p>
           </div>
-          <div class="grid place-items-center rounded-xl bg-surface p-3 ring-1 ring-border">
-            <div class="inline-flex rounded-lg bg-surface p-1 ring-1 ring-border">
+          <div class="grid place-items-center rounded-xl bg-surface p-3 border border-border">
+            <div class="inline-flex rounded-lg bg-surface p-1 border border-border">
               <QrcodeVue :value="buildVenueLandingUrl(venue.slug)" :size="42" level="M" render-as="canvas" :margin="1" />
             </div>
           </div>

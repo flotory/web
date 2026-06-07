@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Download, ExternalLink, Gift, Megaphone, ScanLine, ShieldCheck, Star, UserPlus, UsersRound } from '@lucide/vue'
+import { Check, Download, Gift, Megaphone, ScanLine, ShieldCheck, Star, UserPlus, UsersRound } from '@lucide/vue'
 import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -218,18 +218,18 @@ function activityIconComponent(type: DashboardActivity['type']): Component {
 function activityIconClasses(type: DashboardActivity['type']) {
   switch (type) {
     case 'stamp':
-      return 'bg-success-bg text-success ring-success-border'
+      return 'bg-success-bg text-success-text'
     case 'reward_unlocked':
     case 'reward_redeemed':
-      return 'bg-accent-soft text-accent-active ring-accent-border'
+      return 'bg-accent-soft text-accent-active'
     case 'customer_joined':
-      return 'bg-accent-soft text-primary ring-accent-border'
+      return 'bg-accent-soft text-primary'
     case 'reward_created':
-      return 'bg-accent-soft text-primary ring-accent-border'
+      return 'bg-accent-soft text-primary'
     case 'campaign_activated':
-      return 'bg-rose-50 text-rose-600 ring-rose-100'
+      return 'bg-rose-50 text-rose-600'
     default:
-      return 'bg-surface-muted text-ink-muted ring-border'
+      return 'bg-surface-muted text-ink-muted'
   }
 }
 
@@ -324,7 +324,7 @@ onMounted(() => {
       description="Run loyalty from your dashboard. Submit your listing when you are ready for customers to discover you."
     >
       <template #leading>
-        <div class="grid size-14 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-border">
+        <div class="grid size-14 place-items-center overflow-hidden rounded-2xl bg-surface shadow-sm border border-border">
           <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
       </template>
@@ -364,25 +364,19 @@ onMounted(() => {
         <PageSection title="Venue QR" description="Scan to join and collect stamps" />
 
         <div class="mt-4 flex flex-1 flex-col items-center justify-center">
-          <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-surface-muted p-3 ring-1 ring-border">
-            <div id="dashboard-qr" class="mx-auto grid place-items-center rounded-2xl bg-surface p-2 ring-1 ring-border [&_canvas]:block">
+          <div class="w-full max-w-[12.5rem] rounded-[1.4rem] bg-surface-muted p-3 border border-border">
+            <div id="dashboard-qr" class="mx-auto grid place-items-center rounded-2xl bg-surface p-2 border border-border [&_canvas]:block">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="132" level="M" render-as="canvas" :margin="2" />
             </div>
             <p class="mt-3 text-center text-xs font-semibold text-ink-muted">Ready for tables</p>
           </div>
         </div>
 
-        <div class="mt-5 grid gap-2">
+        <div class="mt-5">
           <AppButton size="lg" class="w-full" :disabled="!canOpenActions" @click="downloadQrPng">
             <Download class="size-4" />
             Download QR
           </AppButton>
-          <RouterLink :to="landingUrl || '/my-venues'" class="inline-flex w-full">
-            <AppButton size="lg" variant="secondary" class="w-full" :disabled="!canOpenActions">
-              <ExternalLink class="size-4" />
-              Preview customer experience
-            </AppButton>
-          </RouterLink>
         </div>
       </AppCard>
 
@@ -404,11 +398,11 @@ onMounted(() => {
           <div
             v-for="item in recentActivityRows"
             :key="`${item.type}-${item.title}-${item.occurred_at}`"
-            class="group flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink-muted ring-1 ring-border transition hover:-translate-y-0.5 hover:bg-surface hover:shadow-md"
+            class="group flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink-muted border border-border transition hover:-translate-y-0.5 hover:bg-surface hover:shadow-md"
           >
             <p class="flex min-w-0 items-center gap-2">
               <span
-                class="grid size-6 shrink-0 place-items-center rounded-full ring-1"
+                class="grid size-6 shrink-0 place-items-center rounded-full"
                 :class="activityIconClasses(item.type)"
               >
                 <component :is="activityIconComponent(item.type)" class="size-3.5" :stroke-width="2.5" aria-hidden="true" />
@@ -429,7 +423,7 @@ onMounted(() => {
             <li
               v-for="(insight, index) in insights.slice(0, 3)"
               :key="`${insight.text}-${index}`"
-              class="flex gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-medium leading-snug ring-1 ring-border/80"
+              class="flex gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-medium leading-snug border border-border/80"
               :class="insightToneClass(insight.tone)"
             >
               <span class="text-ink-soft" aria-hidden="true">•</span>
@@ -455,17 +449,17 @@ onMounted(() => {
         <div>
           <PageSection title="Analytics preview" description="Monthly visits and reward performance from this venue." />
           <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Visits</p>
               <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
               <p class="text-xs font-semibold text-ink-muted">this month</p>
             </div>
-            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Claim rate</p>
               <p class="mt-1 text-2xl font-black text-ink">{{ conversionOverview.rate }}%</p>
               <p class="text-xs font-semibold text-ink-muted">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
             </div>
-            <div class="rounded-2xl bg-surface-muted p-3 ring-1 ring-border">
+            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Returning</p>
               <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
               <p class="text-xs font-semibold text-ink-muted">repeat guests</p>
@@ -475,7 +469,7 @@ onMounted(() => {
             Open full analytics →
           </RouterLink>
         </div>
-        <div class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border">
+        <div class="rounded-2xl bg-surface-muted p-4 border border-border">
           <div class="mb-3 flex items-center justify-between gap-3">
             <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Last 6 months</p>
             <p class="text-xs font-semibold text-ink-muted">{{ maxMonthlyVisits }} peak visits</p>
@@ -516,7 +510,7 @@ onMounted(() => {
         <div
           v-for="summary in dashboard.venue_summaries"
           :key="summary.venue_id"
-          class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border"
+          class="rounded-2xl bg-surface-muted p-4 border border-border"
         >
           <p class="font-black text-ink">{{ summary.venue_name }}</p>
           <p class="mt-2 text-sm font-semibold text-ink-muted">

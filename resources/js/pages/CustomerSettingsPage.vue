@@ -69,7 +69,7 @@ async function logout() {
       <p class="mt-1 text-sm text-ink-muted">Your account details and sign-in preferences.</p>
 
       <AppCard class="mt-6">
-        <div v-if="auth.user" class="rounded-2xl bg-surface-muted p-4 ring-1 ring-border">
+        <div v-if="auth.user" class="rounded-2xl bg-surface-muted p-4 border border-border">
           <p class="text-xs font-black uppercase tracking-wide text-ink-soft">Account</p>
           <p class="mt-1 font-black text-ink">{{ auth.user.name }}</p>
           <p class="text-sm font-semibold text-ink-muted">{{ auth.user.email }}</p>

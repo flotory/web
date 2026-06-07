@@ -80,7 +80,7 @@ async function submit() {
           Set a new password for <strong>{{ email || 'your account' }}</strong>.
         </p>
 
-        <div v-if="!linkValid" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active ring-1 ring-accent-border">
+        <div v-if="!linkValid" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active border border-accent-border">
           This reset link is invalid or expired.
           <RouterLink to="/forgot-password" class="mt-3 block font-bold text-accent-active underline">
             Request a new link

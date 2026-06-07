@@ -850,7 +850,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         v-if="!loading && !sortedOwnerRewards.length && !needsVenuePick && canEditRewards"
         class="mt-6 overflow-hidden rounded-3xl border border-dashed border-accent-border bg-gradient-to-br from-accent-soft via-surface to-cyan-50 p-8 text-center shadow-inner"
       >
-        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-primary ring-1 ring-accent-border/80">
+        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-primary border border-accent-border/80">
           <Gift class="size-7" :stroke-width="1.75" aria-hidden="true" />
         </div>
         <h2 class="mt-4 text-3xl font-black text-ink">Create your first reward</h2>

@@ -19,7 +19,7 @@ const emit = defineEmits<{
       :class="
         modelValue === option.id
           ? 'bg-primary text-primary-text shadow-sm'
-          : 'bg-surface text-ink-muted ring-1 ring-border hover:bg-surface-muted hover:text-ink'
+          : 'bg-surface text-ink-muted border border-border hover:bg-surface-muted hover:text-ink'
       "
       @click="emit('update:modelValue', option.id)"
     >

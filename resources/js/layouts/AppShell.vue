@@ -196,7 +196,7 @@ async function logout() {
           <RouterLink :to="homePath">
             <FlotoryLogo />
           </RouterLink>
-          <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm ring-1 ring-border" @click="logout">
+          <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border" @click="logout">
             Logout
           </button>
         </div>
@@ -240,7 +240,7 @@ async function logout() {
           <span
             v-if="'badge' in item && item.badge"
             :class="[
-              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-accent px-1 py-px text-[10px] font-black leading-none text-ink ring-2 ring-primary',
+              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-accent px-1 py-px text-[10px] font-black leading-none text-ink border-2 border-primary',
               item.to === '/customer/rewards' && rewardBadgePulsing ? 'reward-badge-pop' : '',
             ]"
           >

@@ -83,7 +83,7 @@ async function submit() {
           />
         </form>
 
-        <div v-else class="mt-6 rounded-2xl bg-success-bg p-4 text-sm font-semibold text-success-text ring-1 ring-success-border">
+        <div v-else class="mt-6 rounded-2xl bg-success-bg p-4 text-sm font-semibold text-success-text border border-success-border">
           {{ message }}
         </div>
 

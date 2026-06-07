@@ -89,7 +89,7 @@ onMounted(loadRewards)
             <img
               :src="rewardThumbUrl(item.reward)"
               :alt="item.reward.title"
-              class="size-16 shrink-0 rounded-2xl object-cover ring-1 ring-border/80"
+              class="size-16 shrink-0 rounded-2xl object-cover border border-border/80"
             >
             <div class="min-w-0 flex-1">
               <p class="truncate font-black text-ink">{{ item.reward.title }}</p>
@@ -101,7 +101,7 @@ onMounted(loadRewards)
                   v-if="item.customer.venue"
                   :src="venueLogoThumbUrl(item.customer.venue)"
                   :alt="item.customer.venue.name"
-                  class="size-5 rounded-md object-cover ring-1 ring-border/80"
+                  class="size-5 rounded-md object-cover border border-border/80"
                 >
                 <p class="truncate text-sm text-ink-muted">{{ item.customer.venue?.name }}</p>
               </div>

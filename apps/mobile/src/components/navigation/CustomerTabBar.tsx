@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 
 import TabBarQrButton from './TabBarQrButton'
 import { buildTabBarSurfacePath } from './tabBarShape'
@@ -10,7 +10,6 @@ import { fonts } from '../../lib/typography'
 import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../theme'
 
 const HIDDEN_TABS = new Set(['notifications'])
-const GRADIENT_ID = 'tabBarSurfaceGradient'
 
 const TAB_LABELS: Record<string, string> = {
   home: 'Home',
@@ -41,13 +40,6 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
     notchWidth: 78,
     notchDepth: 16,
   })
-  const cx = width / 2
-  const notchGlowPath = [
-    `M ${cx - 52} 0`,
-    `Q ${cx - 20} ${tabBarQr.lift + 18} ${cx} ${tabBarQr.lift + 20}`,
-    `Q ${cx + 20} ${tabBarQr.lift + 18} ${cx + 52} 0`,
-    'Z',
-  ].join(' ')
 
   const visibleRoutes = state.routes.filter((route) => !HIDDEN_TABS.has(route.name))
 
@@ -72,30 +64,11 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
           style={{ position: 'absolute', left: 0, top: 0 }}
           pointerEvents="none"
         >
-          <Defs>
-            <LinearGradient id={GRADIENT_ID} x1="0" y1="0" x2="0" y2="1">
-              {tabBarSurface.gradient.map((stopColor, index) => (
-                <Stop
-                  key={stopColor}
-                  offset={tabBarSurface.gradientStops[index]}
-                  stopColor={stopColor}
-                />
-              ))}
-            </LinearGradient>
-          </Defs>
-
-          <Path d={notchGlowPath} fill={tabBarSurface.notchGlow} />
           <Path
             d={surfacePath}
-            fill={`url(#${GRADIENT_ID})`}
+            fill={tabBarSurface.fill}
             stroke={tabBarSurface.border}
             strokeWidth={1}
-          />
-          <Path
-            d={`M 1 0.5 L ${width - 1} 0.5`}
-            stroke={tabBarSurface.topHighlight}
-            strokeWidth={1}
-            strokeLinecap="round"
           />
         </Svg>
 

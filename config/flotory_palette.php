@@ -1,65 +1,65 @@
 <?php
 
 /**
- * Flotory Option 3 — restrained premium palette (navy + gold + cream).
+ * Flotory premium hospitality palette — navy, gold, ivory, cream.
  * Admin overrides are stored in platform_settings and merged at runtime.
  */
 return [
-    // Brand — 4 core visible colors
-    'primary' => '#081233',
-    'primary_soft' => '#0C1A45',
+    // Brand
+    'primary' => '#050D1E',
+    'primary_soft' => '#0A1628',
     'primary_text' => '#FFFFFF',
-    'accent' => '#D6B15E',
-    'accent_soft' => '#E8D8A8',
-    'accent_border' => '#D6B15E',
-    'accent_active' => '#B78D2F',
+    'accent' => '#D7A35D',
+    'accent_soft' => '#F3E0B9',
+    'accent_border' => '#D7A35D',
+    'accent_active' => '#B8873E',
 
     // Surfaces
-    'bg' => '#F7F2E8',
-    'bg_gradient_start' => '#FAF7F0',
-    'bg_gradient_end' => '#F7F2E8',
+    'bg' => '#FCFAF6',
+    'bg_gradient_start' => '#FCFAF6',
+    'bg_gradient_end' => '#FCFAF6',
     'surface' => '#FFFFFF',
-    'surface_muted' => '#EEF1F6',
+    'surface_muted' => '#F5EFE4',
     'surface_elevated' => '#FFFFFF',
-    'border' => '#E2E8F0',
-    'workspace_bg' => '#F3F6FA',
-    'workspace_bg_gradient_start' => '#F8FAFC',
-    'workspace_bg_gradient_end' => '#EEF2F7',
+    'border' => '#E8E2D8',
+    'workspace_bg' => '#FCFAF6',
+    'workspace_bg_gradient_start' => '#FCFAF6',
+    'workspace_bg_gradient_end' => '#F5EFE4',
 
     // Owner admin shell
-    'sidebar_bg' => '#081233',
-    'sidebar_border' => '#152548',
+    'sidebar_bg' => '#050D1E',
+    'sidebar_border' => '#0A1628',
     'sidebar_text' => '#FFFFFF',
-    'sidebar_text_muted' => '#9AA6BE',
-    'sidebar_hover' => '#0F2248',
-    'nav_active_bg' => '#D6B15E',
-    'nav_active_text' => '#081233',
+    'sidebar_text_muted' => '#A7AFBD',
+    'sidebar_hover' => '#0A1628',
+    'nav_active_bg' => '#D7A35D',
+    'nav_active_text' => '#050D1E',
 
     // Text
-    'ink' => '#081233',
-    'ink_muted' => '#5C6478',
-    'ink_soft' => '#8B93A7',
+    'ink' => '#050D1E',
+    'ink_muted' => '#6D7687',
+    'ink_soft' => '#A7AFBD',
 
-    // Status — rare accents
-    'success' => '#2E7D4F',
-    'success_text' => '#2E7D4F',
-    'success_bg' => '#DFF2E4',
-    'success_border' => '#C8E6D0',
-    'danger' => '#C14E41',
-    'danger_soft' => '#FBE7E3',
+    // Status
+    'success' => '#2E6D4C',
+    'success_text' => '#2E6D4C',
+    'success_bg' => '#BFE4CC',
+    'success_border' => '#A8D4BC',
+    'danger' => '#9E4A44',
+    'danger_soft' => '#F3C7C3',
 
     // Component-specific
-    'campaign_bg' => '#081233',
-    'campaign_border' => '#D6B15E',
-    'reward_ready_accent' => '#D6B15E',
-    'lavender' => '#E8D8A8',
-    'lavender_border' => '#D6B15E',
-    'plum' => '#081233',
-    'progress_track' => '#E9ECF1',
-    'progress_filled' => '#D6B15E',
+    'campaign_bg' => '#050D1E',
+    'campaign_border' => '#D7A35D',
+    'reward_ready_accent' => '#D7A35D',
+    'lavender' => '#F3E0B9',
+    'lavender_border' => '#D7A35D',
+    'plum' => '#050D1E',
+    'progress_track' => '#E8E2D8',
+    'progress_filled' => '#D7A35D',
 
     // Web owner app
-    'link' => '#081233',
-    'chart' => '#D6B15E',
-    'nav_active' => '#D6B15E',
+    'link' => '#050D1E',
+    'chart' => '#D7A35D',
+    'nav_active' => '#D7A35D',
 ];

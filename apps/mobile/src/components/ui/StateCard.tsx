@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
 
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, space, type as typography } from '../../theme'
+import { colors, radius, shadows, space, type as typography } from '../../theme'
 import PrimaryButton from './PrimaryButton'
 
 interface StateCardAction {
@@ -38,6 +38,7 @@ export default function StateCard({
         borderColor: colors.border,
         padding: space.cardPad,
         alignItems: 'center',
+        ...shadows.sm,
       }}
     >
       {icon ? (

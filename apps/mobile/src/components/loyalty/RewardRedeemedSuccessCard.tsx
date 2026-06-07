@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef } from 'react'
 import { Animated, Text, View } from 'react-native'
 
@@ -52,35 +51,25 @@ export default function RewardRedeemedSuccessCard({
         style={{
           borderRadius: radius.card + 4,
           overflow: 'hidden',
-          borderWidth: 1.5,
+          borderWidth: 1,
           borderColor: colors.successBorder,
+          backgroundColor: colors.successBg,
           ...shadows.md,
         }}
       >
-        <LinearGradient
-          colors={['#FFFFFF', colors.successBg, '#D1FAE5']}
-          locations={[0, 0.45, 1]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ paddingHorizontal: 24, paddingTop: 36, paddingBottom: 28, alignItems: 'center' }}
-        >
+        <View style={{ paddingHorizontal: 24, paddingTop: 36, paddingBottom: 28, alignItems: 'center' }}>
           <Animated.View
             style={{
               transform: [{ scale: iconScale }],
               width: 96,
               height: 96,
               borderRadius: 48,
-              backgroundColor: colors.success,
+              backgroundColor: colors.successText,
               alignItems: 'center',
               justifyContent: 'center',
-              shadowColor: colors.success,
-              shadowOpacity: 0.35,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 8,
             }}
           >
-            <Ionicons name="checkmark-circle" size={56} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={56} color={colors.primaryText} />
           </Animated.View>
 
           <Text
@@ -101,7 +90,7 @@ export default function RewardRedeemedSuccessCard({
               marginTop: 10,
               fontSize: 20,
               fontWeight: '700',
-              color: colors.plum,
+              color: colors.ink,
               textAlign: 'center',
               lineHeight: 26,
             })}
@@ -116,7 +105,7 @@ export default function RewardRedeemedSuccessCard({
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 6,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                backgroundColor: colors.surface,
                 borderRadius: 999,
                 paddingHorizontal: 14,
                 paddingVertical: 8,
@@ -141,7 +130,7 @@ export default function RewardRedeemedSuccessCard({
           >
             Staff completed the redemption. Your reward is marked as used in your wallet.
           </Text>
-        </LinearGradient>
+        </View>
       </View>
 
       <View style={{ marginTop: 20 }}>

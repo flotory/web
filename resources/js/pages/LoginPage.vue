@@ -156,7 +156,7 @@ onMounted(() => {
             <p class="text-xs text-white/70">Your loyalty card is waiting</p>
           </div>
         </div>
-        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-surface/5 p-2 ring-1 ring-white/10">
+        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-surface/5 p-2 border border-white/10">
           <img :src="rewardThumbUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
           <p class="text-sm text-white/85">
             {{ landing.milestones[0].title }}

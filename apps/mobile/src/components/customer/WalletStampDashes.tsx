@@ -1,5 +1,7 @@
 import { View } from 'react-native'
 
+import { colors } from '../../theme'
+
 interface WalletStampDashesProps {
   filled: number
   total: number
@@ -19,7 +21,7 @@ export default function WalletStampDashes({ filled, total, maxVisible = 10 }: Wa
             width: 22,
             height: 5,
             borderRadius: 3,
-            backgroundColor: index < filledCount ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)',
+            backgroundColor: index < filledCount ? colors.accent : 'rgba(255,255,255,0.28)',
           }}
         />
       ))}

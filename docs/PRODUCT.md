@@ -2,7 +2,7 @@
 
 ## What Is Flotory?
 
-Flotory is a digital loyalty platform for independent hospitality businesses. Venues place a QR code at the counter or on tables; guests scan to join, collect stamps on a phone-based loyalty card, and unlock milestone rewards. Owners run everything from a web workspace — no separate customer app install.
+Flotory is a digital loyalty platform for independent hospitality businesses. Venues place a QR code at the counter or on tables; guests scan to join, collect stamps on a phone-based loyalty card, and unlock milestone rewards. Owners run everything from a web workspace. Customers can use the **browser** on any phone or the **optional Expo mobile app** — no install required for web join.
 
 **Tagline value:** Turn occasional customers into regulars.
 
@@ -28,7 +28,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 | For owners | For customers |
 |------------|---------------|
-| Live in minutes with QR onboarding | No app download — web card on any phone |
+| Live in minutes with QR onboarding | Browser wallet on any phone; optional mobile app |
 | Staff scanner built for speed | Clear progress toward the next reward |
 | Milestone rewards that drive return visits | Claim QR scanned by staff at the counter |
 | Retention analytics (visits, claims, cycles) | Realtime stamp updates when Reverb is enabled |
@@ -37,7 +37,7 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 1. **Discover** — Guest scans venue QR or opens `/v/{slug}` landing page.
 2. **Join** — Register or sign in (email or Google); auto-joins the venue.
-3. **Collect** — Staff scan the customer QR and award stamps (typically 1 per purchase; venue may award more).
+3. **Collect** — Staff scan the customer's **My QR** (one universal stamp code) and award stamps (typically 1 per purchase; campaigns may multiply).
 4. **Progress** — Customer sees all venue cards on `/wallet` (stamp progress per venue); tap a card for QR and milestone journey; pending earned rewards live on `/customer/rewards` (tab badge).
 5. **Redeem** — Customer taps **Claim** in Rewards, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
 6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.
@@ -45,8 +45,8 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 ## Owner Journey
 
 1. **Sign up** — Homepage → register with `intent=owner` (or Google equivalent).
-2. **Onboard** — 5-step wizard: name → category → logo → reward presets → QR preview.
-3. **Launch** — Download QR PNG, share invite link, place materials in venue.
+2. **Onboard** — 4-step wizard: name + slug → category → reward presets → QR download.
+3. **Launch** — Complete listing checklist (address, branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; scanner works before public approval.
 4. **Operate** — Operational dashboard (KPIs, insights, scanner); `/rewards` for milestones; `/team` for staff.
 5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces current-month KPIs and API insights.
 
@@ -65,7 +65,9 @@ What ships today:
 - Public venue landing (`/v/:slug`) — primary QR entry
 - Email + Google auth with intent-based redirects (owner vs customer)
 - Password reset (forgot / reset flows)
-- Owner 5-step onboarding wizard
+- Owner 4-step onboarding wizard
+- Venue listing workflow (`draft` → `pending_review` → `published`) with admin approval
+- Stamp campaigns (Bring Back, Quiet Day, Happy Hour, VIP) on `/campaigns`
 - Multi-venue owner workspace (`/my-venues`) with soft delete
 - Venue settings: slug, category, logo, cover, contact fields, QR download
 - Milestone rewards CRUD with images (archive / reactivate / purge)
@@ -79,6 +81,8 @@ What ships today:
 - Optional realtime stamp updates via Reverb
 - Owner operational dashboard (visits this month, returning guests, rewards unlocked, repeat rate, activity, insights) and `/analytics` for trends
 - Staff-only simplified nav (Scanner, Customers, Account)
+- Platform admin: venue listing review, design palette, activity log (`/admin/*`) — see [ADMIN_ACCESS.md](./ADMIN_ACCESS.md)
+- Customer mobile app (Expo): Home, Wallet, My QR, Venues, Profile
 
 **Venue categories in product:** cafe, bar, restaurant, bakery.
 

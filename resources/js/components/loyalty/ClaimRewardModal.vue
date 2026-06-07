@@ -181,7 +181,7 @@ watch(latestRedeem, (payload) => {
     @click.self="emit('close')"
   >
     <div
-      class="w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-surface shadow-[0_24px_80px_-20px_rgba(15,23,42,0.35)] ring-1 ring-border/80"
+      class="w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-surface shadow-[0_24px_80px_-20px_rgba(15,23,42,0.35)] border border-border/80"
       role="dialog"
       aria-labelledby="claim-reward-title"
     >
@@ -194,7 +194,7 @@ watch(latestRedeem, (payload) => {
 
       <div class="px-5 py-6">
         <p v-if="loading" class="text-center text-sm font-medium text-ink-muted">Preparing your code…</p>
-        <p v-else-if="error" class="rounded-2xl bg-danger-soft p-3 text-center text-sm font-semibold text-danger ring-1 ring-danger/30">{{ error }}</p>
+        <p v-else-if="error" class="rounded-2xl bg-danger-soft p-3 text-center text-sm font-semibold text-danger border border-danger/30">{{ error }}</p>
 
         <template v-else-if="session?.status === 'pending'">
           <p class="text-center text-lg font-black tracking-tight text-ink">Show this to staff</p>
@@ -204,12 +204,12 @@ watch(latestRedeem, (payload) => {
 
           <div class="relative mx-auto mt-6 w-fit">
             <div class="absolute -inset-3 rounded-[1.35rem] bg-gradient-to-br from-primary/15 to-primary-soft/10 blur-md" aria-hidden="true" />
-            <div class="relative mx-auto w-fit rounded-2xl bg-surface p-3.5 shadow-sm ring-1 ring-border [&_canvas]:block">
+            <div class="relative mx-auto w-fit rounded-2xl bg-surface p-3.5 shadow-sm border border-border [&_canvas]:block">
               <QrcodeVue v-if="qrValue" :value="qrValue" :size="216" level="M" render-as="canvas" :margin="2" />
             </div>
           </div>
 
-          <div class="mt-6 rounded-2xl bg-surface-muted px-4 py-3 ring-1 ring-border">
+          <div class="mt-6 rounded-2xl bg-surface-muted px-4 py-3 border border-border">
             <p class="text-center text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Expires in</p>
             <p class="mt-0.5 text-center text-4xl font-black tabular-nums tracking-tight text-ink">
               {{ expiresLabel }}
@@ -218,14 +218,14 @@ watch(latestRedeem, (payload) => {
         </template>
 
         <template v-else-if="session?.status === 'claimed'">
-          <div class="rounded-2xl bg-success-bg px-4 py-5 text-center ring-1 ring-success-border">
+          <div class="rounded-2xl bg-success-bg px-4 py-5 text-center border border-success-border">
             <p class="text-lg font-black text-success-text">Reward redeemed</p>
             <p class="mt-1 text-sm text-success-text/80">You can close this screen.</p>
           </div>
         </template>
 
         <template v-else-if="session?.status === 'expired'">
-          <div class="rounded-2xl bg-surface-muted px-4 py-5 text-center ring-1 ring-border">
+          <div class="rounded-2xl bg-surface-muted px-4 py-5 text-center border border-border">
             <p class="text-lg font-black text-ink">Code expired</p>
             <p class="mt-1 text-sm text-ink-muted">Generate a fresh code for staff.</p>
             <AppButton class="mt-4 w-full" size="lg" @click="startSession">New code</AppButton>

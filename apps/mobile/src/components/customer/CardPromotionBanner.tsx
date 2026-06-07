@@ -36,7 +36,7 @@ export default function CardPromotionBanner({ promotion }: CardPromotionBannerPr
           justifyContent: 'center',
         }}
       >
-        <Text style={{ fontSize: 16 }}>🔥</Text>
+        <Ionicons name="flash" size={18} color={colors.accentActive} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.ink })} numberOfLines={1}>

@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { Platform, View } from 'react-native'
 
 import { colors, shadows, tabBarQr } from '../../theme'
@@ -68,45 +67,31 @@ export default function TabBarQrButton({ focused }: TabBarQrButtonProps) {
     >
       <View
         style={{
-          width: size + 8,
-          height: size + 8,
-          borderRadius: radius + 6,
+          width: size + 6,
+          height: size + 6,
+          borderRadius: radius + 4,
           backgroundColor: colors.accent,
           alignItems: 'center',
           justifyContent: 'center',
-          ...(Platform.OS === 'ios' ? shadows.button : { elevation: 6 }),
+          ...(Platform.OS === 'ios' ? shadows.sm : { elevation: 2 }),
         }}
       >
         <View
           style={{
-            width: size + 4,
-            height: size + 4,
-            borderRadius: radius + 4,
-            backgroundColor: colors.bgGradientStart,
+            width: size,
+            height: size,
+            borderRadius: radius,
+            backgroundColor: focused ? colors.primarySoft : colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
-          <LinearGradient
-            colors={focused ? [colors.primarySoft, colors.primary, colors.primarySoft] : [colors.primary, colors.primarySoft, colors.primary]}
-            locations={[0, 0.55, 1]}
-            start={{ x: 0.15, y: 0 }}
-            end={{ x: 0.85, y: 1 }}
-            style={{
-              width: size,
-              height: size,
-              borderRadius: radius,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
-          >
-            <ScannerCorner top={0} left={0} />
-            <ScannerCorner top={0} right={0} />
-            <ScannerCorner bottom={0} left={0} />
-            <ScannerCorner bottom={0} right={0} />
-            <Ionicons name="qr-code" size={tabBarQr.iconSize} color={colors.primaryText} />
-          </LinearGradient>
+          <ScannerCorner top={0} left={0} />
+          <ScannerCorner top={0} right={0} />
+          <ScannerCorner bottom={0} left={0} />
+          <ScannerCorner bottom={0} right={0} />
+          <Ionicons name="qr-code" size={tabBarQr.iconSize} color={colors.primaryText} />
         </View>
       </View>
     </View>

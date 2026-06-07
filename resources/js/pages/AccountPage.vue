@@ -79,7 +79,7 @@ function goBack() {
       </p>
 
       <AppCard class="mt-6">
-        <div v-if="auth.user" class="mb-5 rounded-2xl bg-surface-muted p-4 ring-1 ring-border">
+        <div v-if="auth.user" class="mb-5 rounded-2xl bg-surface-muted p-4 border border-border">
           <p class="text-xs font-black uppercase tracking-wide text-ink-soft">Signed in as</p>
           <p class="mt-1 font-black text-ink">{{ auth.user.name }}</p>
           <p class="text-sm font-semibold text-ink-muted">{{ auth.user.email }}</p>
@@ -145,7 +145,7 @@ function goBack() {
           </AppButton>
         </form>
 
-        <p v-if="isStaff" class="mt-5 rounded-2xl bg-surface-muted p-3 text-xs font-semibold leading-relaxed text-ink-muted ring-1 ring-border">
+        <p v-if="isStaff" class="mt-5 rounded-2xl bg-surface-muted p-3 text-xs font-semibold leading-relaxed text-ink-muted border border-border">
           Forgot your password?
           <RouterLink to="/forgot-password" class="font-bold text-ink underline">
             Request a reset link by email

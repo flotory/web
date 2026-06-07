@@ -53,7 +53,7 @@ export default function WalletScreen() {
             justifyContent: 'center',
           }}
         >
-          <Ionicons name="add" size={22} color={colors.bg} />
+          <Ionicons name="add" size={22} color={colors.primaryText} />
         </Pressable>
       </View>
       {cardList.length > 0 ? (

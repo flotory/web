@@ -61,7 +61,7 @@ onMounted(() => {
       <template v-else>
         <AppCard wrapper-class="w-full rounded-3xl border border-border bg-surface/95 p-6 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)]">
           <div class="grid place-items-center rounded-2xl bg-surface-muted p-5">
-            <div class="w-fit rounded-2xl bg-surface p-3 ring-1 ring-border [&_canvas]:block">
+            <div class="w-fit rounded-2xl bg-surface p-3 border border-border [&_canvas]:block">
               <QrcodeVue
                 :value="qrValue"
                 :size="220"

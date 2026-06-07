@@ -171,7 +171,7 @@ function setMultiplier(value: number) {
             <input
               v-model="name"
               type="text"
-              class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-ink outline-none ring-accent focus:ring-2"
+              class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-accent focus:outline-none"
             />
           </label>
 
@@ -212,7 +212,7 @@ function setMultiplier(value: number) {
                     :class="
                       (config.days_of_week ?? []).includes(day.iso)
                         ? 'bg-primary-soft text-white'
-                        : 'bg-surface-muted text-ink-muted ring-1 ring-border'
+                        : 'bg-surface-muted text-ink-muted border border-border'
                     "
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
@@ -244,7 +244,7 @@ function setMultiplier(value: number) {
                     :class="
                       (config.days_of_week ?? []).includes(day.iso)
                         ? 'bg-sky-600 text-white'
-                        : 'bg-surface-muted text-ink-muted ring-1 ring-border'
+                        : 'bg-surface-muted text-ink-muted border border-border'
                     "
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
@@ -305,7 +305,7 @@ function setMultiplier(value: number) {
                   :class="
                     (config.stamp_multiplier ?? 2) === value
                       ? 'bg-primary text-white'
-                      : 'bg-surface-muted text-ink-muted ring-1 ring-border'
+                      : 'bg-surface-muted text-ink-muted border border-border'
                   "
                   @click="setMultiplier(value)"
                 >
@@ -314,7 +314,7 @@ function setMultiplier(value: number) {
               </div>
             </div>
 
-            <label class="flex items-center gap-3 rounded-2xl bg-surface-muted px-4 py-3 ring-1 ring-border">
+            <label class="flex items-center gap-3 rounded-2xl bg-surface-muted px-4 py-3 border border-border">
               <input v-model="pushEnabled" type="checkbox" class="size-4 rounded border-border" />
               <span class="text-sm font-semibold text-ink-muted">Notify customers via mobile push when available</span>
             </label>

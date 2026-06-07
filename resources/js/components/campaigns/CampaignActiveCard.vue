@@ -17,7 +17,7 @@ const emit = defineEmits<{
 
 <template>
   <article
-    class="flex h-full flex-col overflow-hidden rounded-3xl border border-success-border/80 bg-gradient-to-br from-surface to-success-bg/70 shadow-lg shadow-primary/5 ring-1 ring-success-border"
+    class="flex h-full flex-col overflow-hidden rounded-3xl border border-success-border/80 bg-gradient-to-br from-surface to-success-bg/70 shadow-lg shadow-primary/5"
   >
     <div class="flex items-start gap-4 border-b border-success-border/80 px-6 py-5">
       <div class="flex min-w-0 flex-1 items-start gap-4">
@@ -56,7 +56,7 @@ const emit = defineEmits<{
         <span
           v-for="chip in campaign.schedule_chips"
           :key="chip"
-          class="inline-flex items-center justify-center rounded-full bg-surface px-3 py-1 text-center text-xs font-bold leading-none text-ink-muted ring-1 ring-border"
+          class="inline-flex items-center justify-center rounded-full bg-surface px-3 py-1 text-center text-xs font-bold leading-none text-ink-muted"
         >
           {{ chip }}
         </span>

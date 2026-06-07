@@ -19,19 +19,19 @@ const props = withDefaults(
 
 const boxClass = computed(() =>
   cn(
-    'grid shrink-0 place-items-center rounded-2xl ring-1',
+    'grid shrink-0 place-items-center rounded-2xl',
     {
       sm: 'size-10',
       md: 'size-12',
       lg: 'size-14',
     }[props.size],
     {
-      slate: 'bg-surface-muted text-ink-muted ring-border/80',
-      amber: 'bg-accent-soft text-accent-active ring-accent-border/80',
-      emerald: 'bg-success-bg text-success-text ring-success-border/80',
-      violet: 'bg-accent-soft text-primary ring-accent-border/80',
-      sky: 'bg-surface-muted text-ink-muted ring-border/80',
-      indigo: 'bg-accent-soft text-primary ring-accent-border/80',
+      slate: 'bg-surface-muted text-ink-muted',
+      amber: 'bg-accent-soft text-accent-active',
+      emerald: 'bg-success-bg text-success-text',
+      violet: 'bg-accent-soft text-primary',
+      sky: 'bg-surface-muted text-ink-muted',
+      indigo: 'bg-accent-soft text-primary',
     }[props.tone],
   ),
 )

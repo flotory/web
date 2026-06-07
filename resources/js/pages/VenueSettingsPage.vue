@@ -310,7 +310,7 @@ onMounted(loadVenue)
 
           <AppCard>
             <div class="grid place-items-center text-center">
-              <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-surface-muted ring-1 ring-border">
+              <div class="grid size-32 place-items-center overflow-hidden rounded-[2rem] bg-surface-muted border border-border">
                 <img :src="venueLogoUrl(venue)" :alt="venue.name" class="size-full object-cover">
               </div>
 
@@ -343,7 +343,7 @@ onMounted(loadVenue)
           <p class="mt-2 text-sm font-semibold text-ink-muted">
             Customers use this link to join your loyalty program. It updates when you change the slug (save to apply).
           </p>
-          <p class="mt-4 break-all rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink ring-1 ring-border">
+          <p class="mt-4 break-all rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink border border-border">
             {{ landingUrl || 'Save a slug to generate your public link' }}
           </p>
           <div class="mt-4 flex flex-wrap gap-2">

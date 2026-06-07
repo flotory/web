@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import type { ComponentProps } from 'react'
 import { useMemo } from 'react'
 import { StyleSheet, View, useWindowDimensions } from 'react-native'
@@ -20,7 +19,6 @@ const STICKERS: readonly { name: IconName; size: number; rotate: number }[] = [
   { name: 'ice-cream-outline', size: 18, rotate: -10 },
   { name: 'storefront-outline', size: 20, rotate: 13 },
   { name: 'wine-outline', size: 17, rotate: -6 },
-  { name: 'sparkles-outline', size: 16, rotate: 10 },
   { name: 'ribbon-outline', size: 17, rotate: -11 },
 ]
 
@@ -36,7 +34,7 @@ const VARIANTS: Record<WallpaperVariant, VariantConfig> = {
     baseColor: colors.bg,
     tileW: 76,
     tileH: 76,
-    iconColors: ['rgba(15, 23, 42, 0.07)'],
+    iconColors: ['rgba(5, 13, 30, 0.04)'],
   },
   warm: {
     baseColor: screenBackground.warm.base,
@@ -51,10 +49,10 @@ const VARIANTS: Record<WallpaperVariant, VariantConfig> = {
     ],
   },
   dots: {
-    baseColor: '#F8FAFC',
+    baseColor: colors.bg,
     tileW: 28,
     tileH: 28,
-    iconColors: ['rgba(15, 23, 42, 0.07)'],
+    iconColors: ['rgba(5, 13, 30, 0.05)'],
   },
 }
 
@@ -69,48 +67,8 @@ const WARM_WATERMARKS: readonly { name: IconName; leftRatio: number; topRatio: n
 ]
 
 function WarmAmbientLayer({ minHeight, width }: { minHeight: number; width: number }) {
-  const blobs = useMemo(
-    () => [
-      { size: 260, left: width * 0.52, top: minHeight * 0.04, color: screenBackground.warm.blobLight },
-      { size: 200, left: -56, top: minHeight * 0.28, color: screenBackground.warm.blobMoss },
-      { size: 140, left: width * 0.18, top: minHeight * 0.58, color: screenBackground.warm.blobWarm },
-      { size: 100, left: width * 0.78, top: minHeight * 0.72, color: screenBackground.warm.blobWarm },
-    ],
-    [minHeight, width],
-  )
-
   return (
     <>
-      <LinearGradient
-        colors={[...screenBackground.warm.wash]}
-        locations={[0, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-      {blobs.map((blob, index) => (
-        <View
-          key={`blob-${index}`}
-          style={{
-            position: 'absolute',
-            left: blob.left,
-            top: blob.top,
-            width: blob.size,
-            height: blob.size,
-            borderRadius: blob.size / 2,
-            backgroundColor: blob.color,
-          }}
-        />
-      ))}
-      <LinearGradient
-        colors={['transparent', screenBackground.warm.vignette, 'transparent']}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
       {WARM_WATERMARKS.map((mark, index) => (
         <View
           key={`wm-${index}`}
@@ -121,7 +79,7 @@ function WarmAmbientLayer({ minHeight, width }: { minHeight: number; width: numb
             transform: [{ rotate: `${mark.rotate}deg` }],
           }}
         >
-          <Ionicons name={mark.name} size={mark.size} color="rgba(8, 18, 51, 0.04)" />
+          <Ionicons name={mark.name} size={mark.size} color="rgba(5, 13, 30, 0.03)" />
         </View>
       ))}
     </>
@@ -200,7 +158,7 @@ function StickerTiles({
 function DotGrid({ minHeight, variant }: { minHeight: number; variant: WallpaperVariant }) {
   const { width } = useWindowDimensions()
   const { tileW, tileH, iconColors } = VARIANTS[variant]
-  const dotColor = iconColors[0] ?? 'rgba(15, 23, 42, 0.06)'
+  const dotColor = iconColors[0] ?? 'rgba(5, 13, 30, 0.04)'
 
   const dots = useMemo(() => {
     const cols = Math.ceil(width / tileW) + 1
@@ -252,9 +210,9 @@ export default function ScreenStickerBackground({ minHeight }: ScreenStickerBack
       {variant === 'warm' ? <WarmAmbientLayer minHeight={minHeight} width={width} /> : null}
       {variant === 'dots' ? (
         <DotGrid minHeight={minHeight} variant={variant} />
-      ) : (
+      ) : variant === 'stickers' ? (
         <StickerTiles minHeight={minHeight} variant={variant} />
-      )}
+      ) : null}
     </View>
   )
 }

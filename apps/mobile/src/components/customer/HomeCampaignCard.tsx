@@ -72,7 +72,7 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
           fontSize: 7,
           fontWeight: '800',
           letterSpacing: 0.8,
-          color: dark ? 'rgba(214,177,94,0.88)' : colors.inkMuted,
+          color: dark ? colors.accent : colors.inkMuted,
         })}
       >
         STAMPS
@@ -122,29 +122,6 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
         }}
       >
         <View style={{ flex: 1 }}>
-          <View
-            style={{
-              position: 'absolute',
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              backgroundColor: 'rgba(255,255,255,0.04)',
-              top: -28,
-              right: 32,
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              width: 72,
-              height: 72,
-              borderRadius: 36,
-              backgroundColor: 'rgba(255,255,255,0.03)',
-              bottom: 24,
-              left: -16,
-            }}
-          />
-
           <View style={{ flex: 1, flexDirection: 'row', padding: 18, gap: 12 }}>
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'space-between' }}>
               <View>
@@ -172,7 +149,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                     marginTop: 5,
                     fontSize: featured ? 20 : 18,
                     fontWeight: '800',
-                    color: '#FFFFFF',
+                    color: colors.primaryText,
                     lineHeight: featured ? 25 : 23,
                     letterSpacing: -0.3,
                   })}

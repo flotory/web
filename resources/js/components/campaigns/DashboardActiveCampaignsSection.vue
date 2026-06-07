@@ -73,7 +73,7 @@ onUnmounted(() => {
           <h2 class="text-xl font-black text-ink">Active campaigns</h2>
           <span
             v-if="campaigns.length"
-            class="inline-flex size-6 items-center justify-center rounded-full bg-surface-muted text-xs font-bold text-ink-muted ring-1 ring-border"
+            class="inline-flex size-6 items-center justify-center rounded-full bg-surface-muted text-xs font-bold text-ink-muted border border-border"
           >
             {{ countLabel }}
           </span>

@@ -143,7 +143,7 @@ onMounted(load)
               class="group rounded-2xl border border-border/80 bg-surface p-5 shadow-sm shadow-border/40 transition hover:border-border hover:shadow-md"
             >
               <div class="flex gap-4">
-                <div class="size-14 shrink-0 overflow-hidden rounded-xl bg-surface-muted ring-1 ring-border/80">
+                <div class="size-14 shrink-0 overflow-hidden rounded-xl bg-surface-muted border border-border/80">
                   <img
                     :src="venueLogoThumbUrl(venue)"
                     :alt="venue.name"

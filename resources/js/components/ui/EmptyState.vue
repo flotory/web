@@ -32,7 +32,7 @@ withDefaults(
       <div
         v-if="icon"
         :class="[
-          'mx-auto grid place-items-center rounded-2xl bg-surface-muted text-ink-muted ring-1 ring-border/80',
+          'mx-auto grid place-items-center rounded-2xl bg-surface-muted text-ink-muted',
           compact ? 'size-12' : 'size-14',
           icon ? 'mt-0' : '',
         ]"

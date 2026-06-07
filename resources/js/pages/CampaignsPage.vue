@@ -148,7 +148,7 @@ const {
                 <span class="sr-only">Sort campaigns</span>
                 <select
                   v-model="historySort"
-                  class="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink outline-none ring-accent focus:ring-2"
+                  class="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink outline-none focus:border-accent focus:outline-none"
                 >
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>

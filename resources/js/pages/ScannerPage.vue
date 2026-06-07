@@ -424,7 +424,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
         :description="venue ? `At ${venue.name}: stamp card adds stamps. Claim screen redeems rewards.` : 'Designed for a fast cashier flow.'"
       >
         <template v-if="venue" #meta>
-          <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted ring-1 ring-border">
+          <span class="rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-ink-muted border border-border">
             {{ venue.name }}
           </span>
         </template>
@@ -554,7 +554,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
             >
           </div>
 
-          <div class="rounded-[1.5rem] bg-surface-muted p-4 ring-1 ring-border">
+          <div class="rounded-[1.5rem] bg-surface-muted p-4 border border-border">
             <div class="flex items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-black text-ink">Customer fallback</p>
@@ -570,7 +570,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
               placeholder="Search by name or email"
             >
 
-            <div v-if="selectedCustomer" class="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-success-bg p-3 ring-1 ring-success-border">
+            <div v-if="selectedCustomer" class="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-success-bg p-3 border border-success-border">
               <div>
                 <p class="font-black text-success-text">{{ selectedCustomer.user?.name ?? 'Customer' }}</p>
                 <p class="text-sm font-semibold text-success-text">{{ selectedCustomer.stamps }} current stamps</p>
@@ -581,7 +581,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
             </div>
 
             <div v-else class="mt-3 space-y-2">
-              <p v-if="customerLoadError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger ring-1 ring-danger/30">
+              <p v-if="customerLoadError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger border border-danger/30">
                 {{ customerLoadError }}
                 <button type="button" class="ml-2 font-black underline" @click="loadCustomers">Retry</button>
               </p>
@@ -590,7 +590,7 @@ watch(activeScannerVenueId, (venueId, previous) => {
                 :key="item.id"
                 type="button"
                 :disabled="isBusy"
-                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface p-3 text-left ring-1 ring-border transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface p-3 text-left border border-border transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
                 @click="selectCustomerForFallback(item)"
               >
                 <span>
@@ -625,8 +625,8 @@ watch(activeScannerVenueId, (venueId, previous) => {
         </div>
 
         <div v-else-if="status === 'success' && !pendingClaimWarning" class="p-5">
-          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-accent-soft p-3 ring-1 ring-accent-border">
-            <img :src="rewardThumbUrl(redeemedReward)" alt="" class="size-12 rounded-xl object-cover ring-1 ring-white">
+          <div v-if="redeemedReward" class="mb-4 flex items-center gap-3 rounded-2xl bg-accent-soft p-3 border border-accent-border">
+            <img :src="rewardThumbUrl(redeemedReward)" alt="" class="size-12 rounded-xl object-cover border border-white">
             <div>
               <p class="font-black text-ink">{{ redeemedReward.title }}</p>
               <p class="text-sm font-semibold text-primary">Marked as used</p>

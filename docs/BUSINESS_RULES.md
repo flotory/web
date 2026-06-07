@@ -91,7 +91,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **R5.** Archiving or deleting a reward must **never silently delete** unlock rows customers already earned.
 
-**R6.** Purging an archived reward must **not** cascade-delete customer unlocks ([resolved in product — see KNOWN_RISKS](../KNOWN_RISKS.md)).
+**R6.** Purging an archived reward must **not** cascade-delete customer unlocks ([resolved in product — see KNOWN_RISKS](./KNOWN_RISKS.md)).
 
 **R7.** Customers must be able to distinguish: available to earn, unlocked and redeemable, already claimed, or no longer offered.
 
@@ -180,7 +180,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 ## Customer rules
 
-**U1.** Customers enroll by scanning venue QR or joining via `/v/{slug}` landing.
+**U1.** Customers enroll by scanning venue QR or joining via `/v/{slug}` landing. **Public join requires the venue to be `published`.** Scanner auto-join at the counter may enroll guests before publication (staff context only).
 
 **U2.** **One loyalty card per (user, venue)**. Re-join returns the existing card.
 
@@ -190,7 +190,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **U5.** Customers interact only with venues where they are enrolled.
 
-**U6.** Primary surfaces: **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Discover** (find/join venues), **Profile/Settings**.
+**U6.** Primary surfaces: **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Venues** (find/join published venues; mobile label matches web `/venues`), **Profile/Settings**.
 
 **U7.** Unclaimed rewards stay visible in **Rewards** until staff scans the claim QR.
 

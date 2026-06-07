@@ -53,8 +53,8 @@ export default function CustomerHomeScreen() {
       <View style={{ paddingHorizontal: space.screenX }}>
         <HomeScreenHeader
           pretitle={`Hi, ${firstName}`}
-          title={heroProgressTitle(headerStampsLeft, headerRewardTitle)}
-          subtitle={heroProgressSubtitle(headerStampsLeft, headerRewardTitle)}
+          title={headerStampsLeft > 0 ? heroProgressTitle(headerStampsLeft, headerRewardTitle) : undefined}
+          subtitle={headerStampsLeft > 0 ? heroProgressSubtitle(headerStampsLeft, headerRewardTitle) : undefined}
           onNotificationsPress={() => {
             hapticLightTap()
             router.push('/(customer)/notifications')

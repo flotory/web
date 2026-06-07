@@ -95,13 +95,13 @@ function TicketCompactAction({
         paddingVertical: 9,
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: colors.border,
-        backgroundColor: colors.bgGradientStart,
+        borderColor: colors.accentBorder,
+        backgroundColor: 'transparent',
       }, style]}
     >
-      <Ionicons name={icon} size={15} color={colors.ink} />
+      <Ionicons name={icon} size={15} color={colors.accentActive} />
       <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>{label}</Text>
-      <Ionicons name="chevron-forward" size={15} color={colors.ink} />
+      <Ionicons name="chevron-forward" size={15} color={colors.inkSoft} />
     </View>
   )
 }
@@ -195,7 +195,7 @@ function RewardIllustration({
       ) : showPhoto && logo ? (
         <Image source={{ uri: logo }} style={{ width: 88, height: 88 }} resizeMode="cover" />
       ) : (
-        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={colors.accentActive} />
+        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={colors.accent} />
       )}
     </View>
   )
@@ -352,7 +352,7 @@ export default function HomeRewardTicketCard({
             <Ionicons
               name={isReady ? 'qr-code-outline' : 'cafe-outline'}
               size={13}
-              color={colors.ink}
+              color={isReady ? colors.accentActive : colors.inkMuted}
             />
             <Text
               style={withAppFont({

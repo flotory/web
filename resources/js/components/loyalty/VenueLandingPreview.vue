@@ -125,11 +125,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
   const draft = slot.milestone?.isDraft
 
   if (draft) {
-    return 'border-dashed border-accent-border bg-accent-soft/40 ring-1 ring-accent-border/60'
+    return 'border-dashed border-accent-border bg-accent-soft/40 border border-accent-border/60'
   }
 
   if (selected) {
-    return 'border-accent bg-surface shadow-lg shadow-accent-soft/60 ring-2 ring-accent/50'
+    return 'border-accent bg-surface shadow-lg shadow-accent-soft/60 border-2 border-accent/50'
   }
 
   if (slot.filled) {
@@ -238,7 +238,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
             </span>
 
             <span
-              class="absolute right-1.5 top-1.5 rounded-full bg-surface font-bold tabular-nums text-ink shadow-sm ring-1 ring-border/90"
+              class="absolute right-1.5 top-1.5 rounded-full bg-surface font-bold tabular-nums text-ink shadow-sm border border-border/90"
               :class="isProminent ? 'px-2 py-0.5 text-[11px] sm:text-xs' : 'px-1.5 py-0.5 text-[9px]'"
             >
               {{ slot.milestone.required_stamps }} {{ slot.milestone.required_stamps === 1 ? 'stamp' : 'stamps' }}
@@ -267,8 +267,8 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           :class="[
             isProminent ? 'size-10 sm:size-11' : 'size-9 sm:size-10',
             slot.filled
-              ? 'border-accent-border bg-accent-soft text-accent-active shadow-sm ring-1 ring-accent-border/60'
-              : 'border-dashed border-border bg-surface-muted/90 text-ink-muted ring-1 ring-border/50',
+              ? 'border-accent-border bg-accent-soft text-accent-active shadow-sm border border-accent-border/60'
+              : 'border-dashed border-border bg-surface-muted/90 text-ink-muted border border-border/50',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
           ]"
           :aria-label="`Stamp ${slot.position}`"

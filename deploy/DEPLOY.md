@@ -86,17 +86,16 @@ This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **np
 Open the **latest** run on `main`, not an old failed one:
 
 - [Actions → Tests workflow](https://github.com/flotory/web/actions/workflows/tests.yml)
-- Latest green commits: `72ee379`, `0c97214`, `7548b98` (Google auth tests fixed; Node action warnings addressed)
-
-Run **#31** failed on `54bceca` only (tests still expected `/card` instead of `/wallet`). That is fixed on `main`; newer runs should show **success**.
-
 ### Post-deploy checks
 
 - https://flotory.com loads the SPA
 - Owner login: `owner@example.com` / `password`
+- Admin login: `admin@flotory.com` / `password` → `/admin/venues`
 - Google sign-in (if `GOOGLE_CLIENT_SECRET` is set on the server)
-- Guest venue landing: `https://flotory.com/v/{venue-slug}` (QR entry point)
+- Guest venue landing: `https://flotory.com/v/demo-cafe` (published venue QR entry)
 - Owner **Rewards** (`/rewards`): loyalty card grid loads; **Create milestone** saves; tap a gift slot to edit
+- Owner **Campaigns** (`/campaigns`): templates load; activate/pause a test campaign
+- Listing flow: submit a draft venue from owner dashboard; approve as admin; confirm `/v/{slug}` returns 200
 
 If migrations were added locally, they run automatically via `deploy.sh` on the server.
 

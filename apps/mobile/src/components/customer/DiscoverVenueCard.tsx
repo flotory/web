@@ -37,9 +37,9 @@ const PILL_STYLES = {
     icon: 'gift' as const,
   },
   progress: {
-    backgroundColor: colors.lavender,
-    borderColor: colors.lavenderBorder,
-    textColor: colors.primarySoft,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accentBorder,
+    textColor: colors.ink,
     icon: 'ticket-outline' as const,
   },
   catalog: {
@@ -132,8 +132,8 @@ export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress 
                 paddingVertical: 5,
               }}
             >
-              <Ionicons name="checkmark-circle" size={13} color={colors.primarySoft} />
-              <Text style={withAppFont({ fontSize: 11, fontWeight: '700', color: colors.primarySoft })}>Joined</Text>
+              <Ionicons name="checkmark-circle" size={13} color={colors.accentActive} />
+              <Text style={withAppFont({ fontSize: 11, fontWeight: '700', color: colors.ink })}>Joined</Text>
             </View>
           ) : null}
           <View

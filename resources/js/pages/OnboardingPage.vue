@@ -322,7 +322,7 @@ onMounted(async () => {
               :class="selectedRewards.includes(preset.id) ? 'border-success-border bg-success-bg text-ink' : 'border-border bg-surface-muted text-ink-muted hover:bg-surface-muted'"
               @click="toggleReward(preset.id)"
             >
-              <img :src="preset.image" :alt="preset.title" class="size-16 shrink-0 rounded-xl object-cover ring-1 ring-border">
+              <img :src="preset.image" :alt="preset.title" class="size-16 shrink-0 rounded-xl object-cover border border-border">
               <span>
                 <p class="font-bold">{{ preset.title }}</p>
                 <p class="mt-1 text-xs">{{ preset.description }}</p>
@@ -338,10 +338,10 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="step === 4" class="space-y-4">
-          <h2 class="text-2xl font-black text-ink">Your venue is live. Print your QR.</h2>
-          <p class="text-sm text-ink-muted">Place this on tables and counters so customers can join instantly.</p>
+          <h2 class="text-2xl font-black text-ink">Your QR is ready. Print and place it.</h2>
+          <p class="text-sm text-ink-muted">Staff can scan guests right away. Customers can join via this QR after you complete the listing checklist and we approve your venue.</p>
           <div class="grid gap-4 rounded-3xl border border-border bg-surface-muted p-5 sm:grid-cols-[auto_1fr] sm:items-center">
-            <div class="mx-auto w-fit rounded-2xl bg-surface p-3 ring-1 ring-border [&_canvas]:block">
+            <div class="mx-auto w-fit rounded-2xl bg-surface p-3 border border-border [&_canvas]:block">
               <QrcodeVue v-if="landingUrl" :value="landingUrl" :size="170" level="M" render-as="canvas" :margin="2" />
             </div>
             <div class="text-center sm:text-left">
