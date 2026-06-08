@@ -5,9 +5,10 @@
 ```
 Mac: edit code → git commit → ./deploy/push-prod.sh
                               ↓
-                    local CI (PHPUnit + npm build + Vitest)
+                    local CI (PHPUnit + build + Vitest + mobile + Playwright*)
                               ↓
-                         git push → GitHub Actions (PHPUnit + Frontend build + Vitest + Mobile typecheck)
+                         git push → GitHub Actions (PHPUnit + Frontend + Playwright + Mobile)
+                              * Playwright in local CI when PHP is installed; always on GitHub
                               ↓
                     wait until CI is green (GITHUB_TOKEN)
                               ↓
@@ -27,7 +28,7 @@ Emergency bypass (avoid unless prod is down): `SKIP_CI_GATE=1 ./deploy/push-prod
 
 In GitHub → **Settings → Branches → Branch protection rules** for `main`:
 
-- Require status checks: **PHPUnit** and **Frontend build**
+- Require status checks: **PHPUnit**, **Frontend build**, **Playwright smoke**, **Mobile typecheck**
 - Require branches to be up to date before merging (if you use PRs)
 
 That blocks merging broken code; `push-prod.sh` blocks deploying it.
@@ -79,7 +80,7 @@ Run the same checks without deploying:
 ./scripts/ci-local.sh
 ```
 
-This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **npm run test:unit**, and **mobile typecheck**.
+This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **npm run test:unit**, **mobile typecheck**, **mobile unit tests**, and **Playwright** (when PHP is available). See [docs/TESTING.md](../docs/TESTING.md).
 
 ### CI status (read this if Actions looks “broken”)
 

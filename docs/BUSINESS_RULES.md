@@ -317,7 +317,7 @@ Rules are enforced by:
 | `CampaignEngine` / `CampaignService` | C1–C7, C11                                              |
 | `VenueStaffInvitationService`        | I1–I9                                                   |
 | `VenueAccess` + policies             | O1–O8, Z1–Z6                                            |
-| Feature tests                        | `tests/Feature/`*, `tests/Unit/CampaignServiceTest.php` |
+| Feature tests                        | `tests/Feature/`*, `tests/Unit/CampaignServiceTest.php` — see [TESTING.md](./TESTING.md) |
 
 
 When adding a feature, add or update a rule here **before** merge, then add a test that proves the invariant.

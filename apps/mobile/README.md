@@ -42,6 +42,15 @@ npm --prefix apps/mobile run start
 
 Without matching keys, the app still detects new stamps via polling (fast on Home/My QR/card, slower elsewhere) and opens your venue card with animation.
 
+## Automated checks in CI
+
+On every push to `main`, GitHub runs:
+
+- `npm run typecheck --prefix apps/mobile`
+- `npm run test:unit -- apps/mobile/src` (from repo root, after `npm ci`)
+
+Shared unit tests live beside mobile libs (`src/lib/*.test.ts`). See [docs/TESTING.md](../../docs/TESTING.md).
+
 ## Mobile E2E Smoke Tests
 
 We use [Maestro](https://maestro.mobile.dev/) for local mobile smoke tests. These are intentionally small and manual-first.

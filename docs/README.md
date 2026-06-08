@@ -25,6 +25,8 @@ Small, focused docs — one topic per file. Start here.
 
 Local dev, deploy, demo accounts: root [README.md](../README.md) and [deploy/DEPLOY.md](../deploy/DEPLOY.md).
 
+Testing & CI gates: [TESTING.md](./TESTING.md).
+
 Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 ---

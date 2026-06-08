@@ -62,12 +62,12 @@ git commit -m "Describe your change"
 
 That script:
 
-1. Runs local PHPUnit + frontend build (same as CI)  
+1. Runs local CI (`./scripts/ci-local.sh`) — PHPUnit, frontend build, Vitest, mobile typecheck, Playwright when PHP is available  
 2. Pushes `main` to GitHub  
 3. Waits for GitHub Actions **Tests** to pass (`GITHUB_TOKEN` in `deploy/config.secrets.sh`)  
 4. SSHs to the droplet and runs `git pull` + `deploy/deploy.sh`
 
-Broken tests no longer reach production unless you explicitly use `SKIP_CI_GATE=1`.
+Broken tests no longer reach production unless you explicitly use `SKIP_CI_GATE=1`. See [docs/TESTING.md](docs/TESTING.md) for coverage details and manual checklists.
 
 Manual server deploy (without pushing from Mac):
 
@@ -173,16 +173,21 @@ docker compose exec app php artisan app:ensure-local-demo
 
 Avoid `docker compose down -v` unless you intend to delete the MySQL volume (that removes all local data).
 
-**E2E tests** (Playwright, app must be running on port 8000 with demo seed):
+**Tests** — full local gate (same as deploy pre-check):
 
 ```bash
-docker compose exec app php artisan app:ensure-local-demo --with-demo-data
-npm install
-npx playwright install chromium
-npm run test:e2e
+./scripts/ci-local.sh
 ```
 
-Covers route smoke, owner campaigns, staff stamp fallback, and customer claim → staff redeem. GitHub Actions runs this suite against a seeded SQLite app.
+**E2E only** (Playwright — matches GitHub Actions; needs PHP 8.4+ locally or use Docker for PHPUnit separately):
+
+```bash
+npm ci
+npm run build
+./scripts/e2e-local.sh
+```
+
+Covers login render, route smoke, owner campaigns, staff stamp fallback, and customer claim → staff redeem. Details: [docs/TESTING.md](docs/TESTING.md).
 
 Run pending migrations only:
 
@@ -427,6 +432,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flo
 These files are the source of truth for product, architecture, and MVP decisions (for developers and AI tools):
 
 - [docs/README.md](docs/README.md) — **documentation index** (start here)
+- [docs/TESTING.md](docs/TESTING.md) — CI gates, local commands, coverage gaps
 - [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) — canonical product rules
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack, domain model, API
 - [docs/PRODUCT.md](docs/PRODUCT.md) — product overview
