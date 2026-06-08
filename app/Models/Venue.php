@@ -95,6 +95,11 @@ class Venue extends Model
         return $this->hasMany(Visit::class);
     }
 
+    public function setupFiles(): HasMany
+    {
+        return $this->hasMany(VenueSetupFile::class);
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'venue_users')

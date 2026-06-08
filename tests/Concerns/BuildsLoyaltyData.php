@@ -9,6 +9,7 @@ use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\UserStampToken;
 use App\Models\Venue;
+use App\Models\VenueSetupFile;
 use App\Models\VenueUser;
 use App\Models\Visit;
 use App\Support\LoyaltyQr;
@@ -104,6 +105,44 @@ trait BuildsLoyaltyData
             'claimed_at' => null,
             'claimed_by' => null,
         ], $attributes));
+    }
+
+    protected function createVenueSetupFile(Venue $venue, ?User $uploader = null, array $attributes = []): VenueSetupFile
+    {
+        $uploader ??= $this->createUser();
+
+        return VenueSetupFile::query()->create(array_merge([
+            'venue_id' => $venue->id,
+            'uploaded_by_user_id' => $uploader->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'owner-setup.png',
+            'path' => '/uploads/venue-setup/'.$venue->id.'/owner-setup.png',
+            'mime_type' => 'image/png',
+            'byte_size' => 1024,
+        ], $attributes));
+    }
+
+    /**
+     * Venue that satisfies the owner listing checklist and can be approved by admin (final logo applied).
+     */
+    protected function createListingReadyVenue(array $attributes = [], ?User $owner = null): Venue
+    {
+        $owner ??= $this->createUser();
+
+        $venue = $this->createVenue(array_merge([
+            'status' => Venue::STATUS_DRAFT,
+            'category' => 'cafe',
+            'address' => '12 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'logo' => '/uploads/venue-logos/demo.png',
+        ], $attributes));
+
+        $this->attachMember($venue, $owner, 'owner');
+        $this->createReward($venue);
+        $this->createVenueSetupFile($venue, $owner);
+
+        return $venue->fresh();
     }
 
     protected function createVisit(Customer $customer, User $staff, array $attributes = []): Visit

@@ -33,6 +33,12 @@ export const useAuthStore = defineStore('auth', {
         body: { ...payload, device_name: 'browser' },
       })
 
+      if (!response?.user || !response?.token) {
+        throw new Error(
+          'Login response was invalid. Open http://localhost:8000 (not the Vite port :5173) when developing locally.',
+        )
+      }
+
       this.setSession(response.user, response.token)
     },
     async register(payload: {

@@ -16,7 +16,7 @@ CURSOR_SOURCE = Path(
     '79bc3b73-7051-4f74-8bee-cf139d115603.png'
 )
 
-NAVY = (8, 18, 51, 255)
+NAVY = (5, 13, 30, 255)
 WHITE = (255, 255, 255, 255)
 
 WEB_ICONS = ROOT / 'public' / 'icons'

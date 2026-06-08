@@ -5,6 +5,10 @@ import { useAuth } from '../src/providers/AuthProvider'
 export default function IndexScreen() {
   const { token, role } = useAuth()
 
+  if (token && role === null) {
+    return null
+  }
+
   if (!token) {
     return <Redirect href="/login" />
   }

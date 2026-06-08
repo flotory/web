@@ -240,8 +240,11 @@ watch(address, (value) => {
     <p v-if="quotaHint" class="mt-2 text-xs font-semibold" :class="quotaRemaining === 0 ? 'text-danger' : 'text-ink-muted'">
       {{ quotaHint }}
     </p>
-    <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-ink-muted">
-      Google address search is not configured. Add `GOOGLE_MAPS_API_KEY` to the server environment.
+    <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-amber-800">
+      Google address search is not configured. Add <code class="rounded bg-amber-100 px-1">GOOGLE_MAPS_API_KEY</code> to
+      <code class="rounded bg-amber-100 px-1">.env.secrets</code>, run
+      <code class="rounded bg-amber-100 px-1">./scripts/setup-local.sh</code>, then restart Docker
+      (<code class="rounded bg-amber-100 px-1">docker compose up --build</code>).
     </p>
     <p v-else-if="loadError" class="mt-2 text-xs font-semibold text-danger">
       {{ loadError }}

@@ -17,6 +17,9 @@ export type ReviewVenue = {
   archived?: boolean
   active_rewards_count: number
   customers_count: number
+  setup_files_count: number
+  final_logo_applied: boolean
+  final_cover_applied: boolean
   owner?: { id: number; name: string; email: string } | null
   listing: VenueListingSnapshot
 }

@@ -9,9 +9,10 @@ use Illuminate\Console\Command;
 
 class EnsureLocalDemoCommand extends Command
 {
-    protected $signature = 'app:ensure-local-demo';
+    protected $signature = 'app:ensure-local-demo
+                            {--with-demo-data : Also refresh full demo venues, cards, visits, and unlocks}';
 
-    protected $description = 'Ensure demo login accounts exist (owner@example.com / password) and seed full demo data when needed';
+    protected $description = 'Ensure demo login accounts exist (owner@example.com / password) without resetting the database';
 
     public function handle(): int
     {
@@ -26,18 +27,20 @@ class EnsureLocalDemoCommand extends Command
             '--force' => true,
         ]);
 
-        $this->call('db:seed', [
-            '--class' => DemoCampaignsSeeder::class,
-            '--force' => true,
-        ]);
+        if ($this->option('with-demo-data')) {
+            $this->call('db:seed', [
+                '--class' => DemoCampaignsSeeder::class,
+                '--force' => true,
+            ]);
 
-        $this->info('Refreshing demo loyalty data (venues, per-venue cards, visits, unlocks)…');
-        $this->call('db:seed', [
-            '--class' => DatabaseSeeder::class,
-            '--force' => true,
-        ]);
+            $this->info('Refreshing demo loyalty data (venues, per-venue cards, visits, unlocks)…');
+            $this->call('db:seed', [
+                '--class' => DatabaseSeeder::class,
+                '--force' => true,
+            ]);
+        }
 
-        $this->info('Demo login: owner@example.com / password');
+        $this->info('Demo logins ready: admin@flotory.com, owner@example.com, staff@example.com, customer@example.com — password: password');
 
         return self::SUCCESS;
     }

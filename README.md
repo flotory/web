@@ -98,7 +98,7 @@ Open **http://localhost:8000** on that computer.
 | File | Committed? | Purpose |
 |------|------------|---------|
 | `.env.example` | Yes | Shared template (`localhost`, same on all machines) |
-| `.env.secrets` | No | `GOOGLE_CLIENT_SECRET` — copy manually to each computer |
+| `.env.secrets` | No | `GOOGLE_CLIENT_SECRET`, `GOOGLE_MAPS_API_KEY` — copy manually to each computer |
 | `.env` | No | Generated locally by `setup-local.sh` |
 
 **Sync code:** `git pull` / `git push` on `main`  
@@ -130,36 +130,53 @@ Open:
 
 **Important:** For Google OAuth and post-login redirects, set `FRONTEND_URL=http://localhost:8000` in `.env` (the Laravel app URL, not the Vite dev server). OAuth callbacks still use `APP_URL`.
 
-Reset database after schema changes:
+Apply new migrations without wiping your data:
+
+```bash
+docker compose exec app php artisan migrate --force
+```
+
+**Your local database persists** in the Docker volume `mysql_data`. Restarting containers does **not** reset it. Demo login accounts are re-ensured on each app start (passwords reset to `password` if those emails already exist).
+
+Only reset the database when you explicitly want a clean slate:
 
 ```bash
 docker compose exec app php artisan migrate:fresh --seed
 ```
 
-**Demo login** (re-applied on every app container start when `APP_ENV=local` in Laravel config):
+Refresh demo loyalty sample data (visits, cards, campaigns) without a full DB wipe:
+
+```bash
+docker compose exec app php artisan app:ensure-local-demo --with-demo-data
+```
+
+**Demo login** (accounts ensured on every app container start when `APP_ENV=local`):
 
 | Email | Password |
 |-------|----------|
+| `admin@flotory.com` | `password` |
 | `owner@example.com` | `password` |
 | `staff@example.com` | `password` |
 | `customer@example.com` | `password` |
+
+If you see **“Unable to log in”** or **“Could not reach the Flotory server”** on local, the browser never reached Laravel (Docker not running, or wrong URL). Use **http://localhost:8000** and run `docker compose up`.
 
 If you see **“The provided credentials are incorrect”** on local:
 
 1. Use **http://localhost:8000** (not the Vite port `:5173`).
 2. Use demo email **`owner@example.com`** and password **`password`** (not your production password).
-3. After `migrate:fresh` or `docker compose down -v`, demo users are removed until you re-seed:
+3. Restore demo accounts without wiping the database:
 
 ```bash
 docker compose exec app php artisan app:ensure-local-demo
 ```
 
-Or restart the app container (entrypoint runs the same command on boot). `migrate:fresh` in local also re-runs demo accounts automatically.
+Avoid `docker compose down -v` unless you intend to delete the MySQL volume (that removes all local data).
 
 **E2E tests** (Playwright, app must be running on port 8000 with demo seed):
 
 ```bash
-docker compose exec app php artisan app:ensure-local-demo
+docker compose exec app php artisan app:ensure-local-demo --with-demo-data
 npm install
 npx playwright install chromium
 npm run test:e2e
@@ -203,6 +220,36 @@ php artisan reverb:start --host=0.0.0.0 --port=8080
    ```
 4. Run migrations (adds `google_id` / `google_avatar` on `users`).
 
+## Google Maps (venue address autocomplete)
+
+Address fields use the **Places API** in the browser. The key is **not** committed to git — store it in `.env.secrets` (same as OAuth secret):
+
+```bash
+# .env.secrets
+GOOGLE_MAPS_API_KEY=your-browser-restricted-key
+```
+
+Then merge into `.env` and restart:
+
+```bash
+./scripts/setup-local.sh
+docker compose up --build
+```
+
+In [Google Cloud Console](https://console.cloud.google.com/):
+
+1. Enable **Maps JavaScript API** and **Places API**
+2. Create an API key restricted to HTTP referrers: `http://localhost:8000/*` (and your production domain later)
+
+Verify:
+
+```bash
+curl -s http://localhost:8000/api/public/app-config
+# Should return {"google_maps_key":"AIza..."} — not null
+```
+
+If you see “Google address search is not configured”, the key is missing from `.env` or Docker was not restarted after adding it.
+
 OAuth preserves onboarding intent:
 
 - **Customer** (from venue QR): returns to loyalty card after sign-in.
@@ -225,7 +272,9 @@ OAuth preserves onboarding intent:
 
 New venues start as **`draft`**. The printed QR works for **staff scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`. See [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md).
 
-Venue owners manage QR download, listing, and settings under **My Venues → Settings**.
+**Listing workflow:** owners upload raw files at **My Venues → Files & docs** (logo, menus, PDFs — any helpful material). They complete address, category, and rewards, then submit for review. A Flotory admin opens **Venue listings → Review & set up**, crops logo/cover from owner files, applies final app sizes, then approves.
+
+Venue owners manage QR download, listing, and settings under **My Venues**. Branding uploads for owners are on **Files & docs**, not venue settings.
 
 ### Staff (email invitation)
 

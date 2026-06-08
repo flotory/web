@@ -19,9 +19,15 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 ### Activity log in the UI
 
-- Sidebar nav: **Venue listings** (approve/reject owner submissions), **Activity log**
-- Direct URLs: `/admin/venues`, `/admin/activity`
+- Sidebar nav: **Venue listings** (approve/reject owner submissions), **Manage venues**, **Activity log**
+- Direct URLs: `/admin/venues`, `/admin/manage-venues`, `/admin/activity`
 - Dedicated platform sidebar (left on desktop) — not the owner dashboard
+
+### Venue listing setup (owner files → admin crop → approve)
+
+Owners upload raw branding and documents on **Files & docs** (`/my-venues/:id/setup-files`) before submitting for review. They do not crop to final app sizes.
+
+When a venue is **pending review**, open **Venue listings** → **Review & set up** (`/admin/manage-venues/:id`). Crop logo (512×512) and optional cover (1400×700) from owner files in the **Owner setup files** section at the bottom of the page. **Approve** only works after a final logo has been applied.
 
 ### Verify you are admin
 

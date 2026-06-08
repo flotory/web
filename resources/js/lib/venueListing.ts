@@ -49,7 +49,11 @@ export function listingItemPath(venueId: number, key: string): string {
     return '/rewards'
   }
 
-  if (key === 'brand' || key === 'address' || key === 'category') {
+  if (key === 'setup_files' || key === 'logo_source' || key === 'supporting_files') {
+    return `/my-venues/${venueId}/setup-files`
+  }
+
+  if (key === 'address' || key === 'category') {
     return `/my-venues/${venueId}/settings`
   }
 

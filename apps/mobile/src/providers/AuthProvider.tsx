@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const stored = await getToken()
         if (!stored) return
-        setToken(stored)
         await hydrateSession(stored)
+        setToken(stored)
       } catch {
         await clearToken()
         setToken(null)
@@ -67,8 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await saveToken(payload.token)
-      setToken(payload.token)
       await hydrateSession(payload.token)
+      setToken(payload.token)
     } catch (exception) {
       await clearToken()
       setToken(null)
@@ -92,8 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await saveToken(payload.token)
-      setToken(payload.token)
       await hydrateSession(payload.token)
+      setToken(payload.token)
     } catch (exception) {
       await clearToken()
       setToken(null)

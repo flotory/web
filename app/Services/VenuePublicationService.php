@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 
 class VenuePublicationService
 {
+    public function __construct(private VenueSetupFileService $setupFiles) {}
+
     /**
      * @return list<array{key: string, label: string, complete: bool, hint: string}>
      */
@@ -30,10 +32,10 @@ class VenuePublicationService
                 'hint' => 'Choose cafe, restaurant, bar, or bakery.',
             ],
             [
-                'key' => 'brand',
-                'label' => 'Logo or cover image',
-                'complete' => filled($venue->logo) || filled($venue->cover_image),
-                'hint' => 'Upload a logo or cover photo.',
+                'key' => 'setup_files',
+                'label' => 'Setup files',
+                'complete' => $this->setupFiles->hasAnyFiles($venue),
+                'hint' => 'Upload your logo, photos, menus, or any files that help us set up your venue.',
             ],
             [
                 'key' => 'rewards',
@@ -115,6 +117,12 @@ class VenuePublicationService
         if (! $this->snapshot($venue)['ready_to_submit']) {
             throw ValidationException::withMessages([
                 'listing' => 'Venue no longer meets listing requirements.',
+            ]);
+        }
+
+        if (! filled($venue->logo)) {
+            throw ValidationException::withMessages([
+                'listing' => 'Apply a cropped logo from the owner setup files before approving.',
             ]);
         }
 

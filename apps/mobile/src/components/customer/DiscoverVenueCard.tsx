@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
 import type { ComponentProps } from 'react'
-import { Image, Platform, Text, View } from 'react-native'
+import { Image, Platform, Pressable, Text, View } from 'react-native'
 
 import type { DiscoverVenue } from '../../lib/customerData'
 import { discoverVenuePill } from '../../lib/discoverVenuePill'
 import { formatVenueCategoryLabel } from '../../lib/format'
 import { venueCoverUrl } from '../../lib/media'
+import { openVenueInMaps } from '../../lib/openMaps'
 import type { WalletCard } from '../../types/loyalty'
 import PressableCard from '../ui/PressableCard'
 import { colors, radius, shadows } from '../../theme'
@@ -56,6 +57,16 @@ export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress 
   const joined = (venue.joined_count ?? 0) > 0
   const status = discoverVenuePill(joined, venue.rewards_count, card)
   const pillStyle = PILL_STYLES[status.tone]
+  const canOpenMaps = Boolean(distanceLabel)
+
+  function handleDirections() {
+    void openVenueInMaps({
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      address: venue.address,
+      label: venue.name,
+    })
+  }
 
   return (
     <PressableCard
@@ -158,6 +169,31 @@ export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress 
               {status.label}
             </Text>
           </View>
+          {canOpenMaps ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open directions to ${venue.name}`}
+              onPress={handleDirections}
+              hitSlop={6}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                backgroundColor: colors.surfaceMuted,
+                borderRadius: 999,
+                paddingHorizontal: 9,
+                paddingVertical: 5,
+                borderWidth: 1,
+                borderColor: colors.border,
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <Ionicons name="map-outline" size={13} color={colors.primarySoft} />
+              <Text style={withAppFont({ fontSize: 11, fontWeight: '700', color: colors.primarySoft })}>
+                Directions
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </PressableCard>

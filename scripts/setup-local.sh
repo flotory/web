@@ -34,6 +34,13 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   merge_secret "$key" "$value"
 done < .env.secrets
 
+if ! grep -q '^GOOGLE_MAPS_API_KEY=.\+' .env 2>/dev/null; then
+  echo ""
+  echo "WARNING: GOOGLE_MAPS_API_KEY is empty — venue address autocomplete will not work."
+  echo "  Add your browser Maps key to .env.secrets, then re-run: ./scripts/setup-local.sh"
+  echo "  Enable: Maps JavaScript API + Places API. Referrer: http://localhost:8000/*"
+fi
+
 echo ""
 echo "Local URLs (same on every computer):"
 echo "  App:   http://localhost:8000"

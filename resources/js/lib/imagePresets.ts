@@ -1,4 +1,4 @@
-export type ImagePresetId = 'square'
+export type ImagePresetId = 'square' | 'cover'
 
 export interface ImagePreset {
   id: ImagePresetId
@@ -25,6 +25,18 @@ export const IMAGE_PRESETS: Record<ImagePresetId, ImagePreset> = {
     maxFileSizeBytes: 5 * 1024 * 1024,
     accept: 'image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif',
     helpText: 'Drag to reposition. The image is saved as a square.',
+  },
+  cover: {
+    id: 'cover',
+    label: 'Cover',
+    aspectRatio: 2,
+    outputWidth: 1400,
+    outputHeight: 700,
+    outputMime: 'image/jpeg',
+    outputQuality: 0.9,
+    maxFileSizeBytes: 5 * 1024 * 1024,
+    accept: 'image/png,image/jpeg,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif',
+    helpText: 'Drag to reposition. Saved as a 2:1 cover for wallet and discover.',
   },
 }
 

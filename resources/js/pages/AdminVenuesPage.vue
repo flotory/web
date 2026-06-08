@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Check, Store, X } from '@lucide/vue'
+import { Check, FolderOpen, Store, X } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import ListingChecklist from '@/components/loyalty/ListingChecklist.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -14,6 +15,7 @@ import { useVenueReviewQueue } from '@/composables/useVenueReviewQueue'
 import { formatShortDate } from '@/lib/formatDate'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 
+const router = useRouter()
 const statusFilter = ref<'pending_review' | 'published' | 'draft' | 'rejected' | ''>('pending_review')
 
 const {
@@ -35,6 +37,10 @@ const {
   unpublishVenue,
   setStatusFilter,
 } = useVenueReviewQueue(statusFilter)
+
+function canApprove(venue: (typeof venues.value)[number]): boolean {
+  return venue.final_logo_applied && venue.listing.ready_to_submit
+}
 
 onMounted(loadVenues)
 </script>
@@ -82,6 +88,9 @@ onMounted(loadVenues)
               <h2 class="text-xl font-black text-ink">{{ venue.name }}</h2>
               <AppBadge :tone="listingStatusTone(venue.status)">{{ listingStatusLabel(venue.status) }}</AppBadge>
               <AppBadge v-if="venue.archived" tone="amber">Archived</AppBadge>
+              <AppBadge v-if="venue.setup_files_count > 0" tone="blue">
+                {{ venue.setup_files_count }} owner file{{ venue.setup_files_count === 1 ? '' : 's' }}
+              </AppBadge>
             </div>
             <p class="mt-2 text-sm font-medium text-ink-muted">
               {{ venue.address || 'No address yet' }}
@@ -93,12 +102,20 @@ onMounted(loadVenues)
               {{ venue.active_rewards_count }} rewards · {{ venue.customers_count }} customers
               <span v-if="venue.submitted_at"> · Submitted {{ formatShortDate(venue.submitted_at) }}</span>
             </p>
+            <p v-if="venue.status === 'pending_review'" class="mt-2 text-xs font-semibold" :class="venue.final_logo_applied ? 'text-success' : 'text-danger'">
+              {{ venue.final_logo_applied ? 'Final logo applied — ready to approve' : 'Crop logo from owner files before approving' }}
+            </p>
           </div>
 
           <div class="flex flex-wrap gap-2">
+            <AppButton variant="secondary" @click="router.push(`/admin/manage-venues/${venue.id}`)">
+              <FolderOpen class="size-4" />
+              Review &amp; set up
+            </AppButton>
             <AppButton
               v-if="venue.status === 'pending_review'"
-              :disabled="actingId === venue.id"
+              :disabled="actingId === venue.id || !canApprove(venue)"
+              :title="canApprove(venue) ? 'Approve listing' : 'Apply a cropped logo from owner files first'"
               @click="approveVenue(venue)"
             >
               <Check class="size-4" />

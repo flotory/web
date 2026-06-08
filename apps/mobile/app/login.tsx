@@ -9,7 +9,7 @@ import { useAuth } from '../src/providers/AuthProvider'
 import { colors } from '../src/theme'
 
 export default function LoginScreen() {
-  const { signIn, signUp, token, booting } = useAuth()
+  const { signIn, signUp, token, role, booting } = useAuth()
   const [isRegisterMode, setIsRegisterMode] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -21,7 +21,7 @@ export default function LoginScreen() {
     return null
   }
 
-  if (token) {
+  if (token && role !== null) {
     return <Redirect href="/" />
   }
 

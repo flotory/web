@@ -11,6 +11,10 @@ import { colors } from '../../src/theme'
 export default function CustomerTabsLayout() {
   const { token, role } = useAuth()
 
+  if (token && role === null) {
+    return null
+  }
+
   if (!token) {
     return <Redirect href="/login" />
   }

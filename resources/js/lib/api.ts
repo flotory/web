@@ -28,6 +28,14 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback
 }
 
+function requestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `req-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const auth = useAuthStore()
   const headers = new Headers(options.headers)
@@ -45,7 +53,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
 
   if (!headers.has(REQUEST_ID_HEADER)) {
-    headers.set(REQUEST_ID_HEADER, crypto.randomUUID())
+    headers.set(REQUEST_ID_HEADER, requestId())
   }
 
   // PHP does not populate uploaded files on PUT/PATCH — use POST + method spoofing.
@@ -55,12 +63,20 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     method = 'POST'
   }
 
-  const response = await fetch(`/api${path}`, {
-    ...options,
-    method,
-    headers,
-    body,
-  })
+  let response: Response
+  try {
+    response = await fetch(`/api${path}`, {
+      ...options,
+      method,
+      headers,
+      body,
+    })
+  } catch {
+    throw new ApiError(
+      'Could not reach the Flotory server. If you are developing locally, open http://localhost:8000 and run `docker compose up`.',
+      0,
+    )
+  }
 
   const responseRequestId = response.headers.get(REQUEST_ID_HEADER)
   if (responseRequestId) {

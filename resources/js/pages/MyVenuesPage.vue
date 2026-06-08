@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Search, Store } from '@lucide/vue'
+import { FileUp, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
@@ -346,8 +346,9 @@ onMounted(loadVenues)
           </div>
           <div class="relative">
             <button type="button" class="rounded-xl bg-surface-muted px-3 py-2 text-sm font-black text-ink-muted hover:bg-border" @click="toggleMenu(venue.id)">⋯</button>
-            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-40 rounded-2xl bg-surface p-2 shadow-xl border border-border">
-              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
+            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-44 rounded-2xl bg-surface p-2 shadow-xl border border-border">
+              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`); menuVenueId = null">Files & docs</button>
+              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
               <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
             </div>
           </div>
@@ -373,8 +374,12 @@ onMounted(loadVenues)
           </div>
         </div>
 
-        <div class="mt-4 grid gap-2 sm:grid-cols-3">
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
           <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
+          <AppButton class="w-full" size="sm" variant="secondary" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`)">
+            <FileUp class="size-4" />
+            Files & docs
+          </AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/scanner?venue_id=${venue.id}`)">Open scanner</AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>

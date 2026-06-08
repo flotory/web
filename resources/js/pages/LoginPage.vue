@@ -52,7 +52,9 @@ async function submit() {
   try {
     await auth.login({ email: email.value, password: password.value })
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Unable to log in. Please try again.'
+    error.value = exception instanceof ApiError || exception instanceof Error
+      ? exception.message
+      : 'Unable to log in. Please try again.'
     loading.value = false
     return
   }

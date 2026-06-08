@@ -18,7 +18,7 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_list_pending_venues_with_pagination_meta(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $this->createCompleteDraftVenue(['status' => Venue::STATUS_PENDING_REVIEW, 'name' => 'Pending One']);
+        $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW, 'name' => 'Pending One']);
 
         Sanctum::actingAs($admin);
 
@@ -26,6 +26,19 @@ class AdminVenueReviewControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('venues.0.status', Venue::STATUS_PENDING_REVIEW);
+    }
+
+    public function test_admin_review_queue_includes_setup_file_metadata(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+
+        Sanctum::actingAs($admin);
+
+        $this->getJson('/api/admin/venues?status=pending_review')
+            ->assertOk()
+            ->assertJsonPath('venues.0.setup_files_count', 1)
+            ->assertJsonPath('venues.0.final_logo_applied', true);
     }
 
     public function test_non_admin_cannot_access_venue_review_queue(): void
@@ -39,7 +52,7 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_approve_pending_venue(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createCompleteDraftVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
 
         Sanctum::actingAs($admin);
 
@@ -66,7 +79,7 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_unpublish_with_note(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createCompleteDraftVenue(['status' => Venue::STATUS_PUBLISHED]);
+        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PUBLISHED]);
 
         Sanctum::actingAs($admin);
 
@@ -87,21 +100,5 @@ class AdminVenueReviewControllerTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $service->approve($venue, $admin);
-    }
-
-    private function createCompleteDraftVenue(array $attributes = []): Venue
-    {
-        $venue = $this->createVenue(array_merge([
-            'status' => Venue::STATUS_DRAFT,
-            'category' => 'cafe',
-            'address' => '12 Market Street, Torun',
-            'latitude' => 53.0101,
-            'longitude' => 18.6101,
-            'logo' => '/uploads/venue-logos/demo.png',
-        ], $attributes));
-
-        $this->createReward($venue);
-
-        return $venue->fresh();
     }
 }

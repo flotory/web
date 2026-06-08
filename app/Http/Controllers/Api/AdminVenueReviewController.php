@@ -21,6 +21,7 @@ class AdminVenueReviewController extends Controller
             ->withCount([
                 'rewards as active_rewards_count' => fn ($builder) => $builder->where('active', true),
                 'customers',
+                'setupFiles as setup_files_count',
             ])
             ->with([
                 'memberships' => fn ($builder) => $builder
@@ -117,6 +118,9 @@ class AdminVenueReviewController extends Controller
             'archived' => $venue->trashed(),
             'active_rewards_count' => $venue->active_rewards_count ?? 0,
             'customers_count' => $venue->customers_count ?? 0,
+            'setup_files_count' => $venue->setup_files_count ?? 0,
+            'final_logo_applied' => filled($venue->logo),
+            'final_cover_applied' => filled($venue->cover_image),
             'owner' => $ownerMembership?->user ? [
                 'id' => $ownerMembership->user->id,
                 'name' => $ownerMembership->user->name,

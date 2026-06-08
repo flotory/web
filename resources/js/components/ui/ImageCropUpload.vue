@@ -93,6 +93,32 @@ async function initCropper() {
   })
 }
 
+async function openWithUrl(url: string, filename: string) {
+  if (props.disabled) {
+    return
+  }
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error('fetch failed')
+    }
+
+    const blob = await response.blob()
+    if (!ALLOWED_IMAGE_MIME_TYPES.includes(blob.type as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])) {
+      toast.error('Only image files can be cropped for the app.')
+      return
+    }
+
+    revokeSourceUrl()
+    sourceName.value = filename
+    objectUrl.value = URL.createObjectURL(blob)
+    dialogOpen.value = true
+  } catch {
+    toast.error('Could not open this file for cropping.')
+  }
+}
+
 async function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -156,7 +182,7 @@ onUnmounted(() => {
   closeDialog()
 })
 
-defineExpose({ openPicker })
+defineExpose({ openPicker, openWithUrl })
 </script>
 
 <template>

@@ -23,8 +23,12 @@ import SettingsPage from '@/pages/SettingsPage.vue'
 import StaffInvitePage from '@/pages/StaffInvitePage.vue'
 import AdminActivityPage from '@/pages/AdminActivityPage.vue'
 import AdminPalettePage from '@/pages/AdminPalettePage.vue'
+import AdminManageVenuesPage from '@/pages/AdminManageVenuesPage.vue'
+import AdminVenueEditPage from '@/pages/AdminVenueEditPage.vue'
 import AdminVenuesPage from '@/pages/AdminVenuesPage.vue'
 import TeamPage from '@/pages/TeamPage.vue'
+import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
+import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -56,6 +60,8 @@ const router = createRouter({
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id/design', name: 'venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/cafes', redirect: '/wallet' },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
@@ -68,6 +74,9 @@ const router = createRouter({
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/manage-venues', name: 'admin-manage-venues', component: AdminManageVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/manage-venues/:id', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/manage-venues/:id/design', name: 'admin-venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false } },

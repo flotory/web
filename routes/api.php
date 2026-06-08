@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Api\AdminActivityController;
 use App\Http\Controllers\Api\AdminPaletteController;
+use App\Http\Controllers\Api\AdminVenueManagementController;
 use App\Http\Controllers\Api\AdminVenueReviewController;
+use App\Http\Controllers\Api\AdminVenueSetupFileController;
+use App\Http\Controllers\Api\VenueSetupFileController;
 use App\Http\Controllers\Api\VenueListingController;
 use App\Http\Controllers\Api\PublicAppConfigController;
 use App\Http\Controllers\Api\PublicPaletteController;
@@ -48,6 +51,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue}/select', [VenueController::class, 'select']);
     Route::get('/venues/{venue}/listing', [VenueListingController::class, 'show']);
     Route::post('/venues/{venue}/listing/submit', [VenueListingController::class, 'submit']);
+    Route::get('/venues/{venue}/setup-files', [VenueSetupFileController::class, 'index']);
+    Route::post('/venues/{venue}/setup-files', [VenueSetupFileController::class, 'store']);
+    Route::delete('/venues/{venue}/setup-files/{setupFile}', [VenueSetupFileController::class, 'destroy']);
     Route::post('/venues/{venue}/logo', [VenueController::class, 'uploadLogo']);
     Route::delete('/venues/{venue}/logo', [VenueController::class, 'destroyLogo']);
     Route::post('/venues/{venue}/cover', [VenueController::class, 'uploadCover']);
@@ -99,6 +105,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/venues/{venue}/approve', [AdminVenueReviewController::class, 'approve']);
         Route::post('/venues/{venue}/reject', [AdminVenueReviewController::class, 'reject']);
         Route::post('/venues/{venue}/unpublish', [AdminVenueReviewController::class, 'unpublish']);
+        Route::get('/manage-venues', [AdminVenueManagementController::class, 'index']);
+        Route::get('/manage-venues/{venue}', [AdminVenueManagementController::class, 'show']);
+        Route::put('/manage-venues/{venue}', [AdminVenueManagementController::class, 'update']);
+        Route::post('/manage-venues/{venue}/logo', [AdminVenueManagementController::class, 'uploadLogo']);
+        Route::delete('/manage-venues/{venue}/logo', [AdminVenueManagementController::class, 'destroyLogo']);
+        Route::post('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'uploadCover']);
+        Route::delete('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'destroyCover']);
+        Route::get('/manage-venues/{venue}/setup-files', [AdminVenueSetupFileController::class, 'index']);
         Route::get('/palette', [AdminPaletteController::class, 'show']);
         Route::patch('/palette', [AdminPaletteController::class, 'update']);
         Route::post('/palette/reset', [AdminPaletteController::class, 'reset']);
