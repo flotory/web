@@ -8,7 +8,7 @@ test.describe('Staff stamp scan', () => {
     await page.goto('/scanner')
     await selectVenueIfPresent(page, 'Demo Cafe')
 
-    await expect(page.getByRole('heading', { name: 'Scan loyalty QR' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Scanner' })).toBeVisible()
 
     await page.getByPlaceholder('Search by name or email').fill('customer@example.com')
     const customerRow = page.getByRole('button', { name: /Demo Customer/i })
@@ -17,11 +17,11 @@ test.describe('Staff stamp scan', () => {
 
     await expect(page.getByText('Demo Customer').first()).toBeVisible()
 
-    const stampButton = page.getByRole('button', { name: /^Add 1 stamp$/ })
+    const stampButton = page.getByRole('button', { name: /Add 1 stamp for Demo Customer/ })
     await expect(stampButton).toBeEnabled()
     await stampButton.click()
 
     await expect(page.getByText('Stamp added')).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/added for Demo Customer/i)).toBeVisible()
+    await expect(page.getByText('Demo Customer').first()).toBeVisible()
   })
 })

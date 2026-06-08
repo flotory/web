@@ -39,6 +39,9 @@ if ! command -v npm >/dev/null 2>&1; then
 fi
 npm ci
 
+echo "==> Local CI: mobile install (shared unit tests import mobile sources)"
+npm ci --prefix apps/mobile
+
 echo "==> Local CI: frontend typecheck + build"
 npm run build
 
@@ -46,7 +49,6 @@ echo "==> Local CI: frontend unit tests"
 npm run test:unit
 
 echo "==> Local CI: mobile typecheck"
-npm ci --prefix apps/mobile
 npm run typecheck --prefix apps/mobile
 
 echo "==> Local CI passed (backend + frontend + mobile)."

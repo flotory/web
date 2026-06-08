@@ -22,7 +22,7 @@ test.describe('Web route smoke', () => {
     await page.goto('/scanner')
     await selectVenueIfPresent(page, 'Demo Cafe')
 
-    await expect(page.getByRole('heading', { name: 'Scan loyalty QR' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Scanner' })).toBeVisible()
   })
 
   test('owner routes load', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('Web route smoke', () => {
     await expect(page.getByRole('heading', { name: /Demo Cafe|Your venue/ })).toBeVisible()
 
     await page.goto('/rewards')
-    await expect(page.getByRole('heading', { name: 'Rewards Journey' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Rewards', exact: true })).toBeVisible()
 
     await page.goto('/campaigns')
     await expect(page.getByRole('heading', { name: 'Campaigns', exact: true })).toBeVisible()

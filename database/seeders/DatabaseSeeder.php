@@ -260,6 +260,8 @@ class DatabaseSeeder extends Seeder
 
         Artisan::call('app:backfill-user-stamp-tokens');
 
+        $this->call(DemoCampaignsSeeder::class);
+
         if (filter_var(env('SEED_DEMO_SCALE', false), FILTER_VALIDATE_BOOLEAN)) {
             $this->call(DemoScaleSeeder::class);
         }
