@@ -5,12 +5,31 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "${ROOT}"
 
-run_php_tests() {
+ensure_app_key() {
+  if [[ ! -f .env ]]; then
+    cp .env.example .env
+  fi
+
+  if grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
+    return
+  fi
+
   if command -v php >/dev/null 2>&1; then
-    if [[ ! -f .env ]]; then
-      cp .env.example .env
-      php artisan key:generate --force
-    fi
+    php artisan key:generate --force
+    return
+  fi
+
+  if docker compose ps app --status running -q 2>/dev/null | grep -q .; then
+    docker compose exec -T app php artisan key:generate --force
+  else
+    docker compose run --rm --no-deps app php artisan key:generate --force
+  fi
+}
+
+run_php_tests() {
+  ensure_app_key
+
+  if command -v php >/dev/null 2>&1; then
     php artisan test
     return
   fi
