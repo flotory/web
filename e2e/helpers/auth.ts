@@ -17,6 +17,7 @@ export async function selectVenueIfPresent(page: Page, venueName: string): Promi
     return
   }
 
+  await expect(select).toBeVisible({ timeout: 10_000 })
   await select.selectOption({ label: venueName })
 }
 

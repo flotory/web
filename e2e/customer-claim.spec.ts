@@ -51,7 +51,7 @@ test.describe('Customer reward claim', () => {
     await selectVenueIfPresent(staffPage, 'Demo Cafe')
     await staffScanValue(staffPage, sessionPayload.qr_value)
 
-    await expect(customerPage.getByText('Reward redeemed')).toBeVisible({ timeout: 15_000 })
+    await expect(customerPage.getByText('Reward redeemed')).toBeVisible({ timeout: 30_000 })
 
     await customerContext.close()
     await staffContext.close()

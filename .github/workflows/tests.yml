@@ -113,41 +113,13 @@ jobs:
         run: npm run build
 
       - name: Prepare seeded app
-        run: |
-          cp .env.example .env
-          {
-            echo "APP_ENV=production"
-            echo "APP_DEBUG=false"
-            echo "APP_URL=http://127.0.0.1:8000"
-            echo "FRONTEND_URL=http://127.0.0.1:8000"
-            echo "DB_CONNECTION=sqlite"
-            echo "DB_DATABASE=${{ github.workspace }}/database/database.sqlite"
-            echo "SESSION_DRIVER=file"
-            echo "CACHE_STORE=file"
-            echo "QUEUE_CONNECTION=sync"
-            echo "MAIL_MAILER=log"
-            echo "BROADCAST_CONNECTION=log"
-          } >> .env
-          rm -f public/hot
-          touch database/database.sqlite
-          php artisan key:generate --force
-          php artisan migrate:fresh --seed --force
-          test -f public/build/manifest.json
+        run: chmod +x scripts/e2e-prepare.sh && ./scripts/e2e-prepare.sh
 
       - name: Start Laravel server
         run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &
 
       - name: Wait for Laravel server
-        run: |
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:8000/login >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Laravel server did not start"
-          sed -n '1,160p' storage/logs/e2e-server.log || true
-          exit 1
+        run: chmod +x scripts/e2e-wait-for-app.sh && ./scripts/e2e-wait-for-app.sh
 
       - name: Run Playwright smoke tests
         env:
@@ -184,3 +156,9 @@ jobs:
       - name: Typecheck
         working-directory: apps/mobile
         run: npm run typecheck
+
+      - name: Install root dependencies for shared unit tests
+        run: npm ci
+
+      - name: Mobile unit tests
+        run: npm run test:unit -- apps/mobile/src
