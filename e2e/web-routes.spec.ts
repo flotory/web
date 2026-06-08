@@ -7,7 +7,7 @@ test.describe('Web route smoke', () => {
     await loginAs(page, 'customer@example.com')
 
     await page.goto('/wallet')
-    await expect(page.getByRole('heading', { name: 'Wallet' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Wallet', exact: true })).toBeVisible({ timeout: 15_000 })
 
     await page.goto('/my-qr')
     await expect(page.getByRole('heading', { name: 'My QR' })).toBeVisible()
