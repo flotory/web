@@ -36,6 +36,17 @@ trait BuildsLoyaltyData
         ], $attributes));
     }
 
+    protected function createPublishedVenue(array $attributes = []): Venue
+    {
+        return $this->createVenue(array_merge([
+            'status' => Venue::STATUS_PUBLISHED,
+            'published_at' => now(),
+            'address' => '12 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+        ], $attributes));
+    }
+
     protected function attachMember(Venue $venue, User $user, string $role = 'owner'): VenueUser
     {
         return VenueUser::query()->create([

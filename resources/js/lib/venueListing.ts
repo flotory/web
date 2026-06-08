@@ -18,7 +18,7 @@ export interface VenueListingSnapshot {
   items: VenueListingItem[]
 }
 
-export function listingStatusLabel(status: VenueListingStatus): string {
+export function listingStatusLabel(status: VenueListingStatus | null | undefined): string {
   switch (status) {
     case 'published':
       return 'Live for customers'
@@ -31,7 +31,7 @@ export function listingStatusLabel(status: VenueListingStatus): string {
   }
 }
 
-export function listingStatusTone(status: VenueListingStatus): 'green' | 'amber' | 'blue' | 'slate' {
+export function listingStatusTone(status: VenueListingStatus | null | undefined): 'green' | 'amber' | 'blue' | 'slate' {
   switch (status) {
     case 'published':
       return 'green'

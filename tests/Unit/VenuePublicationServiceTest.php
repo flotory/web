@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Models\Reward;
 use App\Models\Venue;
 use App\Services\VenuePublicationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,7 +43,7 @@ class VenuePublicationServiceTest extends TestCase
     public function test_submit_moves_ready_venue_to_pending_review(): void
     {
         $owner = $this->createUser();
-        $venue = $this->createCompleteDraftVenue();
+        $venue = $this->createListingReadyVenue();
 
         $updated = $this->service->submitForReview($venue, $owner);
 
@@ -55,7 +54,7 @@ class VenuePublicationServiceTest extends TestCase
     public function test_admin_approval_publishes_venue_for_customers(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createCompleteDraftVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
 
         $published = $this->service->approve($venue, $admin);
 
@@ -76,28 +75,12 @@ class VenuePublicationServiceTest extends TestCase
     public function test_admin_rejection_returns_venue_to_owner_with_note(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createCompleteDraftVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
 
         $rejected = $this->service->reject($venue, $admin, 'Please add a clearer storefront photo.');
 
         $this->assertSame(Venue::STATUS_REJECTED, $rejected->status);
         $this->assertSame('Please add a clearer storefront photo.', $rejected->review_note);
         $this->assertFalse($this->service->isPublic($rejected));
-    }
-
-    private function createCompleteDraftVenue(array $attributes = []): Venue
-    {
-        $venue = $this->createVenue(array_merge([
-            'status' => Venue::STATUS_DRAFT,
-            'category' => 'cafe',
-            'address' => '12 Market Street, Torun',
-            'latitude' => 53.0101,
-            'longitude' => 18.6101,
-            'logo' => '/uploads/venue-logos/demo.png',
-        ], $attributes));
-
-        $this->createReward($venue);
-
-        return $venue->fresh();
     }
 }

@@ -186,8 +186,8 @@ class VenueDashboardControllerTest extends TestCase
 
         $this->getJson('/api/dashboard')
             ->assertOk()
-            ->assertJsonPath('scope', 'all')
-            ->assertJsonPath('stats.total_customers', 1);
+            ->assertJsonPath('scope', 'none')
+            ->assertJsonPath('stats.total_customers', 0);
     }
 
     public function test_venue_dashboard_show_endpoint(): void

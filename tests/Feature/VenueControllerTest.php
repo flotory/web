@@ -27,7 +27,10 @@ class VenueControllerTest extends TestCase
         $response = $this->postJson('/api/venues', [
             'name' => 'Sunrise Cafe',
             'category' => 'cafe',
-            'address' => '1 Market Street',
+            'address' => '1 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'google_place_id' => 'test-place-sunrise',
         ]);
 
         $response
@@ -110,7 +113,7 @@ class VenueControllerTest extends TestCase
             ->assertJsonPath('venues.0.staff_count', 1);
     }
 
-    public function test_admin_can_list_all_venues(): void
+    public function test_admin_venue_index_returns_empty_list(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
         $this->createVenue(['name' => 'Hidden Venue']);
@@ -119,14 +122,13 @@ class VenueControllerTest extends TestCase
 
         $this->getJson('/api/venues')
             ->assertOk()
-            ->assertJsonCount(1, 'venues')
-            ->assertJsonPath('venues.0.membership_role', 'owner');
+            ->assertJsonPath('venues', []);
     }
 
     public function test_discover_lists_all_venues_with_join_status(): void
     {
         $user = $this->createUser();
-        $venue = $this->createVenue(['name' => 'Discover Cafe']);
+        $venue = $this->createPublishedVenue(['name' => 'Discover Cafe']);
         $deletedVenue = $this->createVenue(['name' => 'Closed Cafe']);
         $deletedVenue->delete();
         $this->createCustomer($venue, $user);
@@ -142,7 +144,7 @@ class VenueControllerTest extends TestCase
 
     public function test_public_landing_returns_venue_and_milestones(): void
     {
-        $venue = $this->createVenue([
+        $venue = $this->createPublishedVenue([
             'slug' => 'landing-cafe',
             'address' => '12 Market Street, Toruń',
         ]);

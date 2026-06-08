@@ -19,7 +19,7 @@ import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { venueCoverUrl, venueHasCustomCover, venueHasCustomLogo, venueLogoUrl } from '@/lib/venueMedia'
-import type { VenueCategory } from '@/types'
+import type { Venue, VenueCategory } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -59,9 +59,8 @@ const publicSlug = computed(() => slug.value.trim() || venue.value?.slug || '')
 const landingUrl = computed(() => (publicSlug.value ? buildVenueLandingUrl(publicSlug.value) : ''))
 const apiBase = computed(() => `/admin/manage-venues/${venueId.value}`)
 
-function onBrandingUpdated(updated: AdminManageVenue) {
+function onBrandingUpdated(updated: Venue) {
   if (!venue.value) {
-    hydrateForm(updated)
     return
   }
 
