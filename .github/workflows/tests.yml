@@ -109,11 +109,14 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Build assets
+        run: npm run build
+
       - name: Prepare seeded app
         run: |
           cp .env.example .env
           {
-            echo "APP_ENV=local"
+            echo "APP_ENV=production"
             echo "APP_DEBUG=false"
             echo "APP_URL=http://127.0.0.1:8000"
             echo "FRONTEND_URL=http://127.0.0.1:8000"
@@ -123,13 +126,13 @@ jobs:
             echo "CACHE_STORE=file"
             echo "QUEUE_CONNECTION=sync"
             echo "MAIL_MAILER=log"
+            echo "BROADCAST_CONNECTION=log"
           } >> .env
+          rm -f public/hot
           touch database/database.sqlite
           php artisan key:generate --force
           php artisan migrate:fresh --seed --force
-
-      - name: Build assets
-        run: npm run build
+          test -f public/build/manifest.json
 
       - name: Start Laravel server
         run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &

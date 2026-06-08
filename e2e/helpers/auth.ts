@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test'
 
 export async function loginAs(page: Page, email: string, password = 'password'): Promise<void> {
   await page.goto('/login')
+  await expect(page.locator('#email')).toBeVisible({ timeout: 30_000 })
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
   await page.locator('button[type="submit"]').click()
