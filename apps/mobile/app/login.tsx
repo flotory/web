@@ -1,69 +1,24 @@
 import { Redirect } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 
 import GoogleLogo from '../src/components/ui/GoogleLogo'
 import SecondaryButton from '../src/components/ui/SecondaryButton'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
-import { resolveGoogleIdToken, useGoogleSignIn } from '../src/hooks/useGoogleSignIn'
-import { ApiError, apiRequest } from '../src/lib/api'
-import { GOOGLE_WEB_CLIENT_ID } from '../src/lib/config'
+import { ApiError } from '../src/lib/api'
+import { startGoogleBrowserSignIn } from '../src/lib/googleBrowserAuth'
 import { withAppFont } from '../src/lib/typography'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors } from '../src/theme'
 
 export default function LoginScreen() {
-  const { signIn, signUp, signInWithGoogle, token, role, booting } = useAuth()
-  const [googleClientId, setGoogleClientId] = useState(GOOGLE_WEB_CLIENT_ID)
-  const { request, response, promptAsync, ready } = useGoogleSignIn(googleClientId)
+  const { signIn, signUp, signInWithOAuthToken, token, role, booting } = useAuth()
   const [isRegisterMode, setIsRegisterMode] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const processedGoogleToken = useRef<string | null>(null)
-
-  useEffect(() => {
-    void apiRequest<{ google_oauth_client_id?: string | null }>('/public/app-config')
-      .then((config) => {
-        if (config.google_oauth_client_id) {
-          setGoogleClientId(config.google_oauth_client_id)
-        }
-      })
-      .catch(() => undefined)
-  }, [])
-
-  useEffect(() => {
-    if (!response) {
-      return
-    }
-
-    if (response.type === 'cancel' || response.type === 'dismiss') {
-      setSubmitting(false)
-      return
-    }
-
-    if (response.type === 'error') {
-      setSubmitting(false)
-      setError('Google sign-in could not be completed. Try again or use email and password.')
-      return
-    }
-
-    const idToken = resolveGoogleIdToken(response)
-    if (!idToken) {
-      setSubmitting(false)
-      setError('Google sign-in did not return a token. Try again.')
-      return
-    }
-
-    if (processedGoogleToken.current === idToken) {
-      return
-    }
-
-    processedGoogleToken.current = idToken
-    void completeGoogleSignIn(idToken)
-  }, [response])
 
   if (booting) {
     return null
@@ -71,18 +26,6 @@ export default function LoginScreen() {
 
   if (token && role !== null) {
     return <Redirect href="/" />
-  }
-
-  async function completeGoogleSignIn(idToken: string) {
-    setSubmitting(true)
-    setError('')
-    try {
-      await signInWithGoogle(idToken)
-    } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Google sign-in failed.')
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   async function handleAuth() {
@@ -102,18 +45,23 @@ export default function LoginScreen() {
   }
 
   async function handleGooglePress() {
-    if (!ready || !request) {
-      setError('Google sign-in is not configured yet.')
-      return
-    }
-
     setSubmitting(true)
     setError('')
     try {
-      await promptAsync()
-    } catch {
+      const result = await startGoogleBrowserSignIn()
+      if (result.status === 'cancelled') {
+        return
+      }
+      if (result.status === 'error') {
+        setError(result.message)
+        return
+      }
+
+      await signInWithOAuthToken(result.oauthToken)
+    } catch (exception) {
+      setError(exception instanceof ApiError ? exception.message : 'Google sign-in failed.')
+    } finally {
       setSubmitting(false)
-      setError('Google sign-in could not be started.')
     }
   }
 
@@ -130,7 +78,7 @@ export default function LoginScreen() {
         label={submitting ? 'Connecting Google...' : 'Continue with Google'}
         leading={<GoogleLogo size={20} />}
         onPress={handleGooglePress}
-        disabled={submitting || !ready}
+        disabled={submitting}
         testID="login-google-button"
       />
 

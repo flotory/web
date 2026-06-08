@@ -39,6 +39,7 @@ class GoogleAuthControllerTest extends TestCase
             'venue_slug' => 'demo-cafe',
             'redirect' => '/card',
             'intent' => 'owner',
+            'mobile' => false,
         ], session('google_auth.intent'));
     }
 
@@ -147,6 +148,7 @@ class GoogleAuthControllerTest extends TestCase
             'venue_slug' => null,
             'redirect' => '/wallet',
             'intent' => null,
+            'mobile' => false,
         ], session('google_auth.intent'));
     }
 
@@ -180,6 +182,72 @@ class GoogleAuthControllerTest extends TestCase
 
         $user = User::query()->where('email', 'guest@example.com')->firstOrFail();
         $this->assertSame('Guest', $user->name);
+    }
+
+    public function test_redirect_stores_mobile_intent(): void
+    {
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('redirect')
+            ->once()
+            ->andReturn(redirect('https://accounts.google.com/o/oauth2/auth'));
+
+        $this->get('/auth/google/redirect?mobile=1');
+
+        $this->assertTrue(session('google_auth.intent')['mobile']);
+    }
+
+    public function test_callback_redirects_mobile_app_with_token(): void
+    {
+        $googleUser = Mockery::mock(SocialiteUser::class);
+        $googleUser->shouldReceive('getId')->andReturn('google-mobile-1');
+        $googleUser->shouldReceive('getName')->andReturn('Mobile Google');
+        $googleUser->shouldReceive('getEmail')->andReturn('mobile.google@example.com');
+        $googleUser->shouldReceive('getAvatar')->andReturn(null);
+
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('user')
+            ->once()
+            ->andReturn($googleUser);
+
+        $response = $this
+            ->withSession([
+                'google_auth.intent' => [
+                    'mobile' => true,
+                ],
+            ])
+            ->get('/auth/google/callback');
+
+        $response->assertRedirect();
+        $location = (string) $response->headers->get('Location');
+        $this->assertStringStartsWith('flotory://login?', $location);
+        $this->assertStringContainsString('oauth_token=', $location);
+    }
+
+    public function test_callback_redirects_mobile_app_with_error_when_google_fails(): void
+    {
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('user')
+            ->once()
+            ->andThrow(new \Exception('OAuth failed'));
+
+        $response = $this
+            ->withSession([
+                'google_auth.intent' => [
+                    'mobile' => true,
+                ],
+            ])
+            ->get('/auth/google/callback');
+
+        $response->assertRedirect('flotory://login?error=google_auth_failed');
     }
 
     public function test_redirect_sanitizes_relative_paths_without_leading_slash(): void

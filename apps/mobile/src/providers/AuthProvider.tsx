@@ -12,6 +12,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
   signInWithGoogle: (idToken: string) => Promise<void>
+  signInWithOAuthToken: (token: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -83,6 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await establishSession(payload.token)
   }
 
+  async function signInWithOAuthToken(sessionToken: string) {
+    await establishSession(sessionToken)
+  }
+
   async function signIn(email: string, password: string) {
     const payload = await apiRequest<AuthResponse>('/auth/login', {
       method: 'POST',
@@ -118,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, signIn, signUp, signInWithGoogle, signOut }),
+    () => ({ booting, token, user, role, signIn, signUp, signInWithGoogle, signInWithOAuthToken, signOut }),
     [booting, token, user, role],
   )
 

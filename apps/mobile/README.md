@@ -46,19 +46,16 @@ Without matching keys, the app still detects new stamps via polling (fast on Hom
 
 Login screen: **Continue with Google** (same accounts as the website).
 
-1. Uses the public `GOOGLE_CLIENT_ID` from `/api/public/app-config` (or `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`).
-2. Expo opens Google OAuth, returns an `id_token`.
-3. App posts to `POST /api/auth/google` and stores the Sanctum token.
+Uses the **same web OAuth flow** as [flotory.com](https://flotory.com):
 
-**Google Cloud Console** (same OAuth client as web, or a dedicated mobile client):
+1. In-app browser opens `https://flotory.com/auth/google/redirect?mobile=1`
+2. Google authenticates via the existing web OAuth client (no separate iOS/Android client required)
+3. Server redirects back to `flotory://login?oauth_token=...`
+4. App stores the Sanctum token and opens Home
 
-- Authorized redirect URIs must include your Expo/native redirect, e.g.:
-  - `flotory://` (custom scheme in `app.json`)
-  - For dev builds: `com.googleusercontent.apps.<CLIENT_ID_PREFIX>:/oauth2redirect`
-- iOS bundle id: `com.flotory.mobile`
-- Android package: `com.flotory.mobile`
+No extra Google Cloud redirect URIs beyond the web callback (`https://flotory.com/auth/google/callback`).
 
-If Google returns “redirect_uri_mismatch”, add the redirect URI printed in the Expo dev logs when you tap **Continue with Google**.
+`POST /api/auth/google` (id_token) remains available for future native Google SDK integration.
 
 ## Automated checks in CI
 

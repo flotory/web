@@ -19,6 +19,7 @@ class GoogleAuthController extends Controller
             'venue_slug' => $this->sanitizeVenueSlug($request->query('venue_slug')),
             'redirect' => $this->sanitizeRedirect($request->query('redirect')),
             'intent' => $this->sanitizeIntent($request->query('intent')),
+            'mobile' => $this->sanitizeMobile($request->query('mobile')),
         ]);
 
         return Socialite::driver('google')->redirect();
@@ -31,6 +32,12 @@ class GoogleAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable) {
+            if ($this->isMobileIntent($intent)) {
+                return redirect($this->buildMobileLoginUrl([
+                    'error' => 'google_auth_failed',
+                ]));
+            }
+
             return redirect($this->buildFrontendPath('/login', [
                 'error' => 'google_auth_failed',
                 'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null),
@@ -57,7 +64,14 @@ class GoogleAuthController extends Controller
             ])->save();
         }
 
-        $token = $user->createToken('google-oauth-web')->plainTextToken;
+        $tokenName = $this->isMobileIntent($intent) ? 'google-oauth-mobile' : 'google-oauth-web';
+        $token = $user->createToken($tokenName)->plainTextToken;
+
+        if ($this->isMobileIntent($intent)) {
+            return redirect($this->buildMobileLoginUrl([
+                'oauth_token' => $token,
+            ]));
+        }
 
         $ownerIntent = $this->sanitizeIntent($intent['intent'] ?? null);
 
@@ -107,5 +121,29 @@ class GoogleAuthController extends Controller
     private function sanitizeIntent(mixed $intent): ?string
     {
         return $intent === 'owner' ? 'owner' : null;
+    }
+
+    private function sanitizeMobile(mixed $mobile): bool
+    {
+        return in_array($mobile, ['1', 'true', true, 1], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $intent
+     */
+    private function isMobileIntent(array $intent): bool
+    {
+        return ($intent['mobile'] ?? false) === true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     */
+    private function buildMobileLoginUrl(array $query): string
+    {
+        $params = array_filter($query, static fn ($value): bool => filled($value));
+        $queryString = http_build_query($params);
+
+        return $queryString === '' ? 'flotory://login' : "flotory://login?{$queryString}";
     }
 }
