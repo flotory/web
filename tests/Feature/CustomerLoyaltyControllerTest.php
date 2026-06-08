@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
@@ -15,7 +16,7 @@ class CustomerLoyaltyControllerTest extends TestCase
     public function test_customer_can_join_a_venue_only_once(): void
     {
         $user = $this->createUser();
-        $venue = $this->createVenue();
+        $venue = $this->createVenue(['status' => Venue::STATUS_PUBLISHED]);
 
         Sanctum::actingAs($user);
 

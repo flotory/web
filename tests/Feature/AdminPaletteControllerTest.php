@@ -16,8 +16,8 @@ class AdminPaletteControllerTest extends TestCase
     {
         $this->getJson('/api/public/palette')
             ->assertOk()
-            ->assertJsonPath('palette.primary', '#081233')
-            ->assertJsonPath('palette.accent', '#D6B15E');
+            ->assertJsonPath('palette.primary', '#050D1E')
+            ->assertJsonPath('palette.accent', '#D7A35D');
     }
 
     public function test_admin_can_read_palette_catalog(): void
@@ -58,7 +58,7 @@ class AdminPaletteControllerTest extends TestCase
 
         $this->postJson('/api/admin/palette/reset')
             ->assertOk()
-            ->assertJsonPath('current.primary', '#081233')
+            ->assertJsonPath('current.primary', '#050D1E')
             ->assertJsonPath('overrides', []);
 
         $this->assertDatabaseMissing('platform_settings', [
