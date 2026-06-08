@@ -42,6 +42,24 @@ npm --prefix apps/mobile run start
 
 Without matching keys, the app still detects new stamps via polling (fast on Home/My QR/card, slower elsewhere) and opens your venue card with animation.
 
+## Google sign-in
+
+Login screen: **Continue with Google** (same accounts as the website).
+
+1. Uses the public `GOOGLE_CLIENT_ID` from `/api/public/app-config` (or `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`).
+2. Expo opens Google OAuth, returns an `id_token`.
+3. App posts to `POST /api/auth/google` and stores the Sanctum token.
+
+**Google Cloud Console** (same OAuth client as web, or a dedicated mobile client):
+
+- Authorized redirect URIs must include your Expo/native redirect, e.g.:
+  - `flotory://` (custom scheme in `app.json`)
+  - For dev builds: `com.googleusercontent.apps.<CLIENT_ID_PREFIX>:/oauth2redirect`
+- iOS bundle id: `com.flotory.mobile`
+- Android package: `com.flotory.mobile`
+
+If Google returns “redirect_uri_mismatch”, add the redirect URI printed in the Expo dev logs when you tap **Continue with Google**.
+
 ## Automated checks in CI
 
 On every push to `main`, GitHub runs:

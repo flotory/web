@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { type ReactNode } from 'react'
 import { Pressable, Text, View, type ViewStyle } from 'react-native'
 
 import { hapticLightTap } from '../../lib/haptics'
@@ -12,6 +13,10 @@ interface SecondaryButtonProps {
   style?: ViewStyle
   haptic?: boolean
   icon?: keyof typeof Ionicons.glyphMap
+  leading?: ReactNode
+  /** `surface` = white fill for OAuth-style CTAs */
+  variant?: 'outline' | 'surface'
+  testID?: string
 }
 
 export default function SecondaryButton({
@@ -21,9 +26,15 @@ export default function SecondaryButton({
   style,
   haptic = true,
   icon,
+  leading,
+  variant = 'outline',
+  testID,
 }: SecondaryButtonProps) {
+  const isSurface = variant === 'surface'
+
   return (
     <Pressable
+      testID={testID}
       onPress={() => {
         if (haptic) hapticLightTap()
         onPress?.()
@@ -33,17 +44,17 @@ export default function SecondaryButton({
     >
       <View
         style={{
-          backgroundColor: 'transparent',
+          backgroundColor: isSurface ? colors.surface : 'transparent',
           borderRadius: radius.button,
           borderWidth: 1.5,
-          borderColor: colors.accentBorder,
+          borderColor: isSurface ? colors.border : colors.accentBorder,
           paddingVertical: 13,
           alignItems: 'center',
           opacity: disabled ? 0.55 : 1,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {icon ? <Ionicons name={icon} size={20} color={colors.ink} /> : null}
+          {leading ?? (icon ? <Ionicons name={icon} size={20} color={colors.ink} /> : null)}
           <Text style={withAppFont({ color: colors.ink, fontWeight: '700', fontSize: 16 })}>{label}</Text>
         </View>
       </View>

@@ -92,7 +92,8 @@ Open the **latest** run on `main`, not an old failed one:
 - https://flotory.com loads the SPA
 - Owner login: `owner@example.com` / `password`
 - Admin login: `admin@flotory.com` / `password` → `/admin/venues`
-- Google sign-in (if `GOOGLE_CLIENT_SECRET` is set on the server)
+- Google sign-in on web (if `GOOGLE_CLIENT_SECRET` is set on the server)
+- Mobile app: **Continue with Google** on login (requires this deploy for `POST /api/auth/google`)
 - Guest venue landing: `https://flotory.com/v/demo-cafe` (published venue QR entry)
 - Owner **Rewards** (`/rewards`): loyalty card grid loads; **Create milestone** saves; tap a gift slot to edit
 - Owner **Campaigns** (`/campaigns`): templates load; activate/pause a test campaign

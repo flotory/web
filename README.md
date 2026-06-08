@@ -225,6 +225,8 @@ php artisan reverb:start --host=0.0.0.0 --port=8080
    ```
 4. Run migrations (adds `google_id` / `google_avatar` on `users`).
 
+**Mobile app** uses the same Google account via `POST /api/auth/google` (Expo Auth Session + `id_token`). Setup: [apps/mobile/README.md](apps/mobile/README.md#google-sign-in).
+
 ## Google Maps (venue address autocomplete)
 
 Address fields use the **Places API** in the browser. The key is **not** committed to git — store it in `.env.secrets` (same as OAuth secret):

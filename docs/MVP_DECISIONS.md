@@ -57,6 +57,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 |----------|--------|
 | Sanctum bearer tokens | SPA stores token; API uses `auth:sanctum`. |
 | Google OAuth via web routes | Session redirect flow; frontend receives `oauth_token` on login page. |
+| Google OAuth on mobile | `POST /api/auth/google` with verified Google `id_token`; Expo Auth Session on device. |
 | Password reset | Email link to SPA `/reset-password`; no security-through-obscurity on forgot-password response. |
 | Redirect sanitization | Post-auth redirects limited to internal paths (`redirect.ts`). |
 

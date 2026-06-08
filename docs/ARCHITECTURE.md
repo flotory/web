@@ -10,7 +10,7 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 |-------|------------|
 | API | Laravel 12, PHP 8.3+, MySQL |
 | Auth | Laravel Sanctum (bearer tokens) |
-| OAuth | Laravel Socialite (Google) via web routes |
+| OAuth | Laravel Socialite (Google) via web routes; mobile via `POST /api/auth/google` + `id_token` verify |
 | Realtime | Laravel Reverb + Echo (optional; stamp events) |
 | Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |
 | Uploads | Local filesystem under `public/uploads/` |
@@ -142,6 +142,7 @@ Web routes (session-backed):
 
 - `GET /auth/google/redirect` — stores `venue_slug`, `redirect`, `intent` in session
 - `GET /auth/google/callback` — upserts user, issues token, redirects to `FRONTEND_URL/login?oauth_token=...`
+- `POST /api/auth/google` — mobile: verify Google `id_token`, upsert user, return Sanctum token
 
 Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal paths only).
 

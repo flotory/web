@@ -53,7 +53,8 @@
         {
           "locationWhenInUsePermission": "Flotory uses your location to show nearby venues and distances."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

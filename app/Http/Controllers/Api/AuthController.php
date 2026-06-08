@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GoogleAuthRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
+use App\Services\GoogleIdTokenVerifier;
+use App\Services\GoogleOAuthUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -29,6 +32,27 @@ class AuthController extends Controller
             'user' => $user->load('activeVenue'),
             'token' => $user->createToken($request->string('device_name', 'web')->toString())->plainTextToken,
         ], 201);
+    }
+
+    public function google(
+        GoogleAuthRequest $request,
+        GoogleIdTokenVerifier $verifier,
+        GoogleOAuthUserService $googleUsers,
+    ): JsonResponse {
+        $profile = $verifier->verify($request->string('id_token')->toString());
+
+        if ($profile === null) {
+            throw ValidationException::withMessages([
+                'id_token' => 'Google sign-in could not be verified.',
+            ]);
+        }
+
+        $user = $googleUsers->findOrCreate($profile)->load('activeVenue');
+
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken($request->string('device_name', 'flotory-mobile')->toString())->plainTextToken,
+        ]);
     }
 
     public function login(LoginRequest $request): JsonResponse

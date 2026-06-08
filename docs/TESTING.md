@@ -14,7 +14,7 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 | Web build + types | **7/10** | Vue/TS compiles; production bundle builds |
 | Web unit (Vitest) | **4.5/10** | Pure helpers (QR, campaigns, listing labels, mobile libs) |
 | Web e2e (Playwright) | **6.5/10** | Critical browser flows on seeded demo data |
-| Mobile (Expo) | **4/10** | Typecheck + shared unit tests; Maestro smokes are manual |
+| Mobile (Expo) | **4.5/10** | Typecheck + shared unit tests; `POST /api/auth/google` covered in PHPUnit; Maestro/Google device flow manual |
 | Realtime (Reverb) | **2/10** | Server events tested; live UI animations not automated |
 
 **We are not bug-free.** PHPUnit and Playwright cover the main contracts; mobile device UX, Google OAuth/Maps in prod, and odd edge cases still need human verification after big changes.
@@ -109,7 +109,8 @@ Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` (guarded by `Datab
 | Area | Why manual |
 | ---- | ---------- |
 | Mobile app on device/simulator | No automated device e2e in CI |
-| Google sign-in / Maps | OAuth callback and API keys differ per environment |
+| Mobile Google sign-in | PHPUnit mocks token verify; real device needs correct Google redirect URIs (`flotory://`, see [apps/mobile/README.md](../apps/mobile/README.md)) |
+| Web Google sign-in / Maps | Web OAuth callback and API keys differ per environment |
 | Reverb live updates | Stamp/redeem celebrations over WebSocket |
 | Admin listing review UI | Partial API coverage; visual checklist flow |
 | Pilot venue onboarding | Real address, photos, admin approval |
