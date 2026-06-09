@@ -5,6 +5,7 @@ import CampaignsPage from '@/pages/CampaignsPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
 import CustomerProfilePage from '@/pages/CustomerProfilePage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
+import BookDemoPage from '@/pages/BookDemoPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import MobileAppPage from '@/pages/MobileAppPage.vue'
@@ -55,6 +56,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'landing', component: LandingPage },
+    { path: '/book-demo', name: 'book-demo', component: BookDemoPage, meta: { guest: true } },
+    { path: '/demo', redirect: '/book-demo' },
     { path: '/app', name: 'mobile-app', component: MobileAppPage, meta: { guest: true } },
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
@@ -228,6 +231,7 @@ router.beforeEach(async (to) => {
     && auth.isAuthenticated
     && to.name !== 'venue-landing'
     && to.name !== 'mobile-app'
+    && to.name !== 'book-demo'
     && !to.meta.inviteFlow
   ) {
     await workspace.bootstrap()

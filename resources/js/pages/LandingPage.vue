@@ -83,6 +83,9 @@ onBeforeUnmount(() => {
         <FlotoryLogo size="lg" inverted />
       </RouterLink>
       <div class="flex items-center gap-2">
+        <RouterLink to="/book-demo">
+          <AppButton variant="ghost" class="text-white border border-white/20 hover:bg-surface/10 hover:text-white">Book a demo</AppButton>
+        </RouterLink>
         <RouterLink to="/login">
           <AppButton variant="ghost" class="text-white border border-white/20 hover:bg-surface/10 hover:text-white">Log in</AppButton>
         </RouterLink>
@@ -109,12 +112,18 @@ onBeforeUnmount(() => {
           <RouterLink to="/register?intent=owner">
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
           </RouterLink>
+          <RouterLink to="/book-demo?utm_source=landing&utm_campaign=hero">
+            <AppButton size="lg" variant="ghost" class="w-full text-white border border-white/20 hover:bg-surface/10 hover:text-white sm:w-auto">
+              Book a demo
+            </AppButton>
+          </RouterLink>
           <a href="#how-it-works">
             <AppButton size="lg" variant="ghost" class="w-full text-white border border-white/20 hover:bg-surface/10 hover:text-white sm:w-auto">
               See how it works
             </AppButton>
           </a>
         </div>
+        <p class="text-sm font-semibold text-ink-soft">15-minute walkthrough — no signup required.</p>
       </div>
 
       <div class="relative floating-phone">
@@ -299,6 +308,9 @@ onBeforeUnmount(() => {
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <RouterLink to="/register?intent=owner">
             <AppButton size="lg" variant="secondary" class="btn-glow">Start free</AppButton>
+          </RouterLink>
+          <RouterLink to="/book-demo?utm_source=landing&utm_campaign=footer">
+            <AppButton size="lg" variant="ghost" class="text-white border border-white/25 hover:bg-surface/10 hover:text-white">Book a demo</AppButton>
           </RouterLink>
           <RouterLink to="/login">
             <AppButton size="lg" variant="ghost" class="text-white border border-white/25 hover:bg-surface/10 hover:text-white">Log in</AppButton>

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AdminVenueSetupFileController;
 use App\Http\Controllers\Api\VenueSetupFileController;
 use App\Http\Controllers\Api\VenueListingController;
 use App\Http\Controllers\Api\PublicAppConfigController;
+use App\Http\Controllers\Api\PublicDemoBookingController;
 use App\Http\Controllers\Api\PublicPaletteController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BroadcastAuthController;
@@ -32,6 +33,9 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLanding']);
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
 Route::get('/public/app-config', [PublicAppConfigController::class, 'show']);
+Route::get('/public/demo-booking', [PublicDemoBookingController::class, 'show']);
+Route::post('/public/demo-leads', [PublicDemoBookingController::class, 'store'])
+    ->middleware('throttle:8,1');
 
 Route::get('/invites/{token}', [StaffInvitationController::class, 'show']);
 Route::post('/invites/{token}/register', [StaffInvitationController::class, 'register']);
