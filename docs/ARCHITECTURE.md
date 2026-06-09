@@ -253,6 +253,7 @@ Workspace store auto-selects the first active venue when none is chosen (MVP sin
 
 - `POST /api/auth/register`, `/login`, `/forgot-password`, `/reset-password`
 - `GET /api/public/venues/{slug}/landing`
+- `GET /api/public/demo-booking` — `{ calendly_url }` for `/book-demo` (env: `FLOTORY_DEMO_CALENDLY_URL`)
 - `GET /api/invites/{token}`, `POST /api/invites/{token}/register`
 
 **Authenticated**

@@ -34,8 +34,6 @@ Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLand
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
 Route::get('/public/app-config', [PublicAppConfigController::class, 'show']);
 Route::get('/public/demo-booking', [PublicDemoBookingController::class, 'show']);
-Route::post('/public/demo-leads', [PublicDemoBookingController::class, 'store'])
-    ->middleware('throttle:8,1');
 
 Route::get('/invites/{token}', [StaffInvitationController::class, 'show']);
 Route::post('/invites/{token}/register', [StaffInvitationController::class, 'register']);

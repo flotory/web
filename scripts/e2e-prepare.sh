@@ -35,6 +35,7 @@ CACHE_STORE=file
 QUEUE_CONNECTION=sync
 MAIL_MAILER=log
 SANCTUM_STATEFUL_DOMAINS=127.0.0.1,127.0.0.1:8000,localhost,localhost:8000
+FLOTORY_DEMO_CALENDLY_URL=https://calendly.com/flotoryapp/30min
 EOF
 
 rm -f public/hot "${DB_PATH}"

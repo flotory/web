@@ -165,6 +165,16 @@ New venues start as **`draft`**. Staff can use the **mobile scanner** immediatel
 
 Full journeys: **[docs/PRODUCT.md](docs/PRODUCT.md)** · admin approval: **[docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)**.
 
+### Owner demo booking (marketing)
+
+Prospects book a walkthrough at **`/book-demo`** (also `/demo`) — Calendly iframe only, no Flotory signup. Set the event URL in `.env`:
+
+```env
+FLOTORY_DEMO_CALENDLY_URL=https://calendly.com/flotoryapp/30min
+```
+
+Local verify: `curl -s http://localhost:8000/api/public/demo-booking` should return `calendly_url`. In Calendly **Embed → Domain restrictions**, allow `localhost` for local iframe tests.
+
 ## Phone Testing
 
 Google sign-in **does not work** on a LAN IP (`192.168.x.x`). Use **email/password** on your phone, or stay on `localhost` on your laptop.
