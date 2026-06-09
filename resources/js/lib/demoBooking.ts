@@ -18,6 +18,19 @@ export type DemoLeadPayload = {
 }
 
 const CALENDLY_SCRIPT_ID = 'flotory-calendly-widget'
+const CALENDLY_STYLE_ID = 'flotory-calendly-styles'
+
+export function loadCalendlyEmbedStyles(): void {
+  if (typeof document === 'undefined' || document.getElementById(CALENDLY_STYLE_ID)) {
+    return
+  }
+
+  const link = document.createElement('link')
+  link.id = CALENDLY_STYLE_ID
+  link.rel = 'stylesheet'
+  link.href = 'https://assets.calendly.com/assets/external/widget.css'
+  document.head.appendChild(link)
+}
 
 export function appendUtmToCalendlyUrl(baseUrl: string, query: Record<string, string | undefined>): string {
   try {
@@ -45,6 +58,8 @@ export function loadCalendlyEmbedScript(): Promise<void> {
   if (existing) {
     return Promise.resolve()
   }
+
+  loadCalendlyEmbedStyles()
 
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')

@@ -100,7 +100,17 @@ async function loadBookingConfig() {
     embedError.value = 'Booking is temporarily unavailable. Share your details below and we will email you.'
   } finally {
     loading.value = false
+    await scheduleCalendlyMount()
   }
+}
+
+async function scheduleCalendlyMount() {
+  if (!calendlyEmbedUrl.value || loading.value) {
+    return
+  }
+
+  await nextTick()
+  await mountCalendlyWidget()
 }
 
 async function submitLead() {
@@ -140,8 +150,8 @@ async function submitLead() {
   }
 }
 
-watch(calendlyEmbedUrl, () => {
-  void mountCalendlyWidget()
+watch([calendlyEmbedUrl, loading], () => {
+  void scheduleCalendlyMount()
 })
 
 onMounted(loadBookingConfig)
@@ -278,7 +288,19 @@ onMounted(loadBookingConfig)
             class="mt-4 min-h-[700px] w-full overflow-hidden rounded-2xl border border-border/70 bg-surface"
           />
 
-          <p v-else class="mt-4 rounded-2xl border border-dashed border-border px-4 py-5 text-sm font-semibold text-ink-muted">
+          <p v-if="calendlyEmbedUrl && !loading && !embedError" class="mt-3 text-center text-sm font-semibold text-ink-muted">
+            Calendar not loading?
+            <a
+              :href="calendlyEmbedUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-bold text-ink underline decoration-accent/60 underline-offset-2"
+            >
+              Open Calendly in a new tab
+            </a>
+          </p>
+
+          <p v-else-if="!calendlyEmbedUrl && !loading" class="mt-4 rounded-2xl border border-dashed border-border px-4 py-5 text-sm font-semibold text-ink-muted">
             Online booking is not configured yet. Submit the form above and we will email you to schedule.
           </p>
         </section>
