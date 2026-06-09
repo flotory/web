@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
@@ -11,8 +11,7 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
 import {
-  appendUtmToCalendlyUrl,
-  loadCalendlyEmbedScript,
+  buildCalendlyEmbedUrl,
   type DemoBookingConfig,
   type DemoVenueType,
 } from '@/lib/demoBooking'
@@ -22,9 +21,10 @@ const submitAction = useAsyncAction()
 
 const loading = ref(true)
 const calendlyUrl = ref<string | null>(null)
-const embedError = ref('')
+const configError = ref('')
 const formError = ref('')
 const formSuccess = ref('')
+const prefillVersion = ref(0)
 
 const name = ref('')
 const email = ref('')
@@ -33,7 +33,6 @@ const city = ref('')
 const venueType = ref<DemoVenueType | ''>('')
 const message = ref('')
 const companyWebsite = ref('')
-const widgetHost = ref<HTMLElement | null>(null)
 
 const demoBullets = [
   'How guests join from your table QR',
@@ -49,68 +48,35 @@ const venueTypeOptions: Array<{ id: DemoVenueType; label: string }> = [
   { id: 'other', label: 'Other' },
 ]
 
-const calendlyEmbedUrl = computed(() => {
+const calendlyIframeUrl = computed(() => {
   if (!calendlyUrl.value) {
     return null
   }
 
-  return appendUtmToCalendlyUrl(calendlyUrl.value, {
+  // prefillVersion bumps after the optional form is saved so Calendly can prefill once.
+  void prefillVersion.value
+
+  return buildCalendlyEmbedUrl(calendlyUrl.value, {
     utm_source: typeof route.query.utm_source === 'string' ? route.query.utm_source : 'flotory',
     utm_campaign: typeof route.query.utm_campaign === 'string' ? route.query.utm_campaign : 'book-demo',
-    name: name.value.trim() || undefined,
-    email: email.value.trim() || undefined,
+    embedHost: typeof window !== 'undefined' ? window.location.hostname : undefined,
+    name: prefillVersion.value > 0 ? name.value.trim() || undefined : undefined,
+    email: prefillVersion.value > 0 ? email.value.trim() || undefined : undefined,
   })
 })
 
-async function mountCalendlyWidget() {
-  if (!calendlyEmbedUrl.value || !widgetHost.value) {
-    return
-  }
-
-  try {
-    await loadCalendlyEmbedScript()
-    await nextTick()
-
-    const calendly = (window as Window & {
-      Calendly?: { initInlineWidget: (options: { url: string; parentElement: HTMLElement }) => void }
-    }).Calendly
-
-    if (!calendly) {
-      throw new Error('Calendly unavailable')
-    }
-
-    widgetHost.value.replaceChildren()
-    calendly.initInlineWidget({
-      url: calendlyEmbedUrl.value,
-      parentElement: widgetHost.value,
-    })
-  } catch {
-    embedError.value = 'Could not load the booking calendar. Email us at team@flotory.com and we will set up a time.'
-  }
-}
-
 async function loadBookingConfig() {
   loading.value = true
-  embedError.value = ''
+  configError.value = ''
 
   try {
     const response = await api<DemoBookingConfig>('/public/demo-booking', { includeAuth: false })
     calendlyUrl.value = response.calendly_url
   } catch {
-    embedError.value = 'Booking is temporarily unavailable. Share your details below and we will email you.'
+    configError.value = 'Booking is temporarily unavailable. Share your details below and we will email you.'
   } finally {
     loading.value = false
-    await scheduleCalendlyMount()
   }
-}
-
-async function scheduleCalendlyMount() {
-  if (!calendlyEmbedUrl.value || loading.value) {
-    return
-  }
-
-  await nextTick()
-  await mountCalendlyWidget()
 }
 
 async function submitLead() {
@@ -138,6 +104,7 @@ async function submitLead() {
         })
 
         formSuccess.value = response.message
+        prefillVersion.value += 1
       } catch (exception) {
         formError.value = exception instanceof ApiError
           ? exception.message
@@ -149,10 +116,6 @@ async function submitLead() {
     // Button shows Failed.
   }
 }
-
-watch([calendlyEmbedUrl, loading], () => {
-  void scheduleCalendlyMount()
-})
 
 onMounted(loadBookingConfig)
 </script>
@@ -280,18 +243,21 @@ onMounted(loadBookingConfig)
           <p class="mt-1 text-sm text-ink-muted">Choose a slot that works for you. We will meet on Google Meet or Zoom.</p>
 
           <p v-if="loading" class="mt-4 text-sm font-semibold text-ink-muted">Loading calendar...</p>
-          <p v-else-if="embedError" class="mt-4 text-sm font-semibold text-ink-muted">{{ embedError }}</p>
+          <p v-else-if="configError" class="mt-4 text-sm font-semibold text-ink-muted">{{ configError }}</p>
 
-          <div
-            v-else-if="calendlyEmbedUrl"
-            ref="widgetHost"
-            class="mt-4 min-h-[700px] w-full overflow-hidden rounded-2xl border border-border/70 bg-surface"
+          <iframe
+            v-else-if="calendlyIframeUrl"
+            :key="calendlyIframeUrl"
+            :src="calendlyIframeUrl"
+            title="Book a Flotory demo on Calendly"
+            class="mt-4 min-h-[700px] w-full rounded-2xl border border-border/70 bg-surface"
+            style="min-height: 700px; border: 0;"
           />
 
-          <p v-if="calendlyEmbedUrl && !loading && !embedError" class="mt-3 text-center text-sm font-semibold text-ink-muted">
-            Calendar not loading?
+          <p v-if="calendlyIframeUrl && !loading" class="mt-3 text-center text-sm font-semibold text-ink-muted">
+            Prefer a full-page calendar?
             <a
-              :href="calendlyEmbedUrl"
+              :href="calendlyIframeUrl"
               target="_blank"
               rel="noopener noreferrer"
               class="font-bold text-ink underline decoration-accent/60 underline-offset-2"
@@ -300,7 +266,7 @@ onMounted(loadBookingConfig)
             </a>
           </p>
 
-          <p v-else-if="!calendlyEmbedUrl && !loading" class="mt-4 rounded-2xl border border-dashed border-border px-4 py-5 text-sm font-semibold text-ink-muted">
+          <p v-else-if="!calendlyIframeUrl && !loading" class="mt-4 rounded-2xl border border-dashed border-border px-4 py-5 text-sm font-semibold text-ink-muted">
             Online booking is not configured yet. Submit the form above and we will email you to schedule.
           </p>
         </section>

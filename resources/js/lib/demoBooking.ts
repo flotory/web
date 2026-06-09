@@ -17,21 +17,6 @@ export type DemoLeadPayload = {
   company_website?: string
 }
 
-const CALENDLY_SCRIPT_ID = 'flotory-calendly-widget'
-const CALENDLY_STYLE_ID = 'flotory-calendly-styles'
-
-export function loadCalendlyEmbedStyles(): void {
-  if (typeof document === 'undefined' || document.getElementById(CALENDLY_STYLE_ID)) {
-    return
-  }
-
-  const link = document.createElement('link')
-  link.id = CALENDLY_STYLE_ID
-  link.rel = 'stylesheet'
-  link.href = 'https://assets.calendly.com/assets/external/widget.css'
-  document.head.appendChild(link)
-}
-
 export function appendUtmToCalendlyUrl(baseUrl: string, query: Record<string, string | undefined>): string {
   try {
     const url = new URL(baseUrl)
@@ -48,26 +33,21 @@ export function appendUtmToCalendlyUrl(baseUrl: string, query: Record<string, st
   }
 }
 
-export function loadCalendlyEmbedScript(): Promise<void> {
-  if (typeof document === 'undefined') {
-    return Promise.resolve()
-  }
-
-  const existing = document.getElementById(CALENDLY_SCRIPT_ID)
-
-  if (existing) {
-    return Promise.resolve()
-  }
-
-  loadCalendlyEmbedStyles()
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.id = CALENDLY_SCRIPT_ID
-    script.src = 'https://assets.calendly.com/assets/external/widget.js'
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Could not load Calendly.'))
-    document.head.appendChild(script)
+export function buildCalendlyEmbedUrl(
+  baseUrl: string,
+  options: {
+    utm_source?: string
+    utm_campaign?: string
+    embedHost?: string
+    name?: string
+    email?: string
+  },
+): string {
+  return appendUtmToCalendlyUrl(baseUrl, {
+    utm_source: options.utm_source,
+    utm_campaign: options.utm_campaign,
+    embed_domain: options.embedHost,
+    name: options.name,
+    email: options.email,
   })
 }
