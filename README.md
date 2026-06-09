@@ -12,88 +12,33 @@ The MVP focuses on venue QR onboarding, digital stamp cards, a fast staff scanne
 - Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
 - Monolith architecture for VPS deployment
 
-## Production deploy flow
+## Production deploy
 
-Git is the source of truth. The server pulls from GitHub; your Mac runs one deploy command.
-
-### Current production
-
-- Domain: `https://flotory.com`
-- Redirect: `https://www.flotory.com` → `https://flotory.com`
-- Droplet IP: `64.226.84.118`
-- App path on server: `/var/www/web`
-- GitHub repo: `git@github.com:flotory/web.git`
-
-### One-time setup
-
-1. **Server bootstrap**:
-   ```bash
-   ssh root@YOUR_IP 'bash -s' < deploy/setup-server.sh
-   ```
-
-2. **Git deploy on the server** (generates a deploy key — add it in GitHub):
-   ```bash
-   ssh root@YOUR_IP 'bash -s' < deploy/setup-git-deploy.sh
-   ```
-   GitHub → repo **Settings → Deploy keys → Add** → paste the printed public key (read-only).
-
-3. **Production `.env` on the server** (only once):
-   ```bash
-   ssh root@YOUR_IP
-   cp /var/www/web/deploy/env.production.example /var/www/web/.env
-   # Edit passwords, APP_URL, GOOGLE_CLIENT_SECRET, Reverb keys
-   SEED_DATABASE=1 /var/www/web/deploy/deploy.sh
-   ```
-
-4. **Local config**:
-   ```bash
-   cp deploy/config.example.sh deploy/config.sh
-   ```
-
-See [deploy/DEPLOY.md](deploy/DEPLOY.md) for the full production checklist.
-
-### Every code change (normal flow)
+Ship from your Mac:
 
 ```bash
-git add .
 git commit -m "Describe your change"
 ./deploy/push-prod.sh
 ```
 
-That script:
+That runs local CI, pushes `main`, waits for GitHub **Tests**, then deploys to **https://flotory.com** (droplet `64.226.84.118`, app at `/var/www/web`).
 
-1. Runs local CI (`./scripts/ci-local.sh`) — PHPUnit, frontend build, Vitest, mobile typecheck, Playwright when PHP is available  
-2. Pushes `main` to GitHub  
-3. Waits for GitHub Actions **Tests** to pass (`GITHUB_TOKEN` in `deploy/config.secrets.sh`)  
-4. SSHs to the droplet and runs `git pull` + `deploy/deploy.sh`
+**Full checklist** — one-time server bootstrap, production `.env`, post-deploy verification, manual pull, emergency deploy: **[deploy/DEPLOY.md](deploy/DEPLOY.md)**.
 
-Broken tests no longer reach production unless you explicitly use `SKIP_CI_GATE=1`. See [docs/TESTING.md](docs/TESTING.md) for coverage details and manual checklists.
+Test gates and coverage: **[docs/TESTING.md](docs/TESTING.md)**.
 
-Manual server deploy (without pushing from Mac):
-
-```bash
-ssh root@YOUR_IP 'cd /var/www/web && ./deploy/pull-and-deploy.sh'
-```
-
-- App: port 80 via Nginx → Laravel on `127.0.0.1:8000`  
-- Reverb/WebSocket proxy: `/app/` → `127.0.0.1:8080`
-- HTTPS certs: Let's Encrypt via Certbot (auto-renew with `certbot.timer`)
-
-## Local Setup
+## Local setup (Docker)
 
 Portable defaults use **`localhost` only** — same on every Mac/PC. Do not put your Wi‑Fi IP in `.env` unless you are doing optional phone testing (Google sign-in will not work on a LAN IP).
 
-### New machine (or second computer)
-
 ```bash
-git clone git@github.com:flotory/web.git
-cd web
-cp .env.secrets.example .env.secrets   # once — paste GOOGLE_CLIENT_SECRET from your password manager
+git clone git@github.com:flotory/web.git && cd web
+cp .env.secrets.example .env.secrets   # GOOGLE_CLIENT_SECRET + GOOGLE_MAPS_API_KEY
 ./scripts/setup-local.sh
 docker compose up --build
 ```
 
-Open **http://localhost:8000** on that computer.
+Open **http://localhost:8000** (not `:5173` for login or OAuth). Vite HMR: http://localhost:5173.
 
 | File | Committed? | Purpose |
 |------|------------|---------|
@@ -101,99 +46,30 @@ Open **http://localhost:8000** on that computer.
 | `.env.secrets` | No | `GOOGLE_CLIENT_SECRET`, `GOOGLE_MAPS_API_KEY` — copy manually to each computer |
 | `.env` | No | Generated locally by `setup-local.sh` |
 
-**Sync code:** `git pull` / `git push` on `main`  
-**Never commit:** `.env`, `.env.secrets`
+**Never commit:** `.env`, `.env.secrets`. Each machine has its own `APP_KEY` and database.
 
-Each machine can have its own `APP_KEY` (Docker generates one on first boot). Local databases are separate per machine.
-
-### Docker (recommended)
-
-Compose uses project name **`flotory`** (`name:` in `docker-compose.yml`), so containers are `flotory-app-1`, `flotory-mysql-1`, etc., even if your clone folder is still named `Loyalty`.
+Compose project name is **`flotory`** (`flotory-app-1`, `flotory-mysql-1`, …). Data persists in volume **`mysql_data`** — restarting containers is safe; **`docker compose down -v`** deletes all local data.
 
 ```bash
-cp .env.secrets.example .env.secrets   # add secret, then:
-./scripts/setup-local.sh
-docker compose up --build
+docker compose exec app php artisan migrate --force                    # pending migrations
+docker compose exec app php artisan app:ensure-local-demo                # restore demo logins
+docker compose exec app php artisan app:ensure-local-demo --with-demo-data  # sample visits/campaigns
+docker compose exec app php artisan migrate:fresh --seed                 # full reset (destructive)
 ```
 
-Or manually:
+Set `FRONTEND_URL=http://localhost:8000` for Google OAuth (Laravel app URL, not the Vite dev server).
+
+**Login issues?** Use http://localhost:8000 and [demo accounts](#demo-accounts) (`password`). If auth still fails after a corrupted `.env`:
 
 ```bash
-cp .env.example .env
-docker compose up --build
-```
-
-Open:
-
-- App: http://localhost:8000
-- Vite HMR (dev): http://localhost:5173
-
-**Important:** For Google OAuth and post-login redirects, set `FRONTEND_URL=http://localhost:8000` in `.env` (the Laravel app URL, not the Vite dev server). OAuth callbacks still use `APP_URL`.
-
-Apply new migrations without wiping your data:
-
-```bash
-docker compose exec app php artisan migrate --force
-```
-
-**Your local database persists** in the Docker volume `mysql_data`. Restarting containers does **not** reset it. Demo login accounts are re-ensured on each app start (passwords reset to `password` if those emails already exist).
-
-Only reset the database when you explicitly want a clean slate:
-
-```bash
-docker compose exec app php artisan migrate:fresh --seed
-```
-
-Refresh demo loyalty sample data (visits, cards, campaigns) without a full DB wipe:
-
-```bash
-docker compose exec app php artisan app:ensure-local-demo --with-demo-data
-```
-
-**Demo login** (accounts ensured on every app container start when `APP_ENV=local`):
-
-| Email | Password |
-|-------|----------|
-| `admin@flotory.com` | `password` |
-| `owner@example.com` | `password` |
-| `staff@example.com` | `password` |
-| `customer@example.com` | `password` |
-
-If you see **“Unable to log in”** or **“Could not reach the Flotory server”** on local, the browser never reached Laravel (Docker not running, or wrong URL). Use **http://localhost:8000** and run `docker compose up`.
-
-If you see **“The provided credentials are incorrect”** on local:
-
-1. Use **http://localhost:8000** (not the Vite port `:5173`).
-2. Use demo email **`owner@example.com`** and password **`password`** (not your production password).
-3. Restore demo accounts without wiping the database:
-
-```bash
+./scripts/restore-docker-env.sh
+docker compose restart app
 docker compose exec app php artisan app:ensure-local-demo
 ```
 
-Avoid `docker compose down -v` unless you intend to delete the MySQL volume (that removes all local data).
+E2E tests use isolated `.env.e2e` and do not modify your Docker `.env`.
 
-**Tests** — full local gate (same as deploy pre-check):
-
-```bash
-./scripts/ci-local.sh
-```
-
-**E2E only** (Playwright — matches GitHub Actions; needs PHP 8.4+ locally or use Docker for PHPUnit separately):
-
-```bash
-npm ci
-npm run build
-./scripts/e2e-local.sh
-```
-
-Covers login render, route smoke, owner campaigns, staff stamp fallback, and customer claim → staff redeem. Details: [docs/TESTING.md](docs/TESTING.md).
-
-Run pending migrations only:
-
-```bash
-docker compose exec app php artisan migrate --force
-```
+**Tests:** **[docs/TESTING.md](docs/TESTING.md)** — `./scripts/ci-local.sh` mirrors CI; `./scripts/e2e-local.sh` or `./scripts/run-e2e-smoke.sh` for Playwright only.
 
 ### Native
 
@@ -262,7 +138,7 @@ OAuth preserves onboarding intent:
 - **Owner** (`intent=owner` from homepage): continues to `/onboarding/create-venue`.
 - **Customers and staff** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
-## Onboarding Flows
+## Onboarding flows
 
 ### Customer (QR scan → mobile app)
 
@@ -275,22 +151,19 @@ OAuth preserves onboarding intent:
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. 4-step wizard: venue name + slug → category → reward presets → QR download.
-4. Lands on `/dashboard?onboarding=completed` with a success toast and operational dashboard (KPIs, insights).
+4. Lands on `/dashboard?onboarding=completed` with operational dashboard (KPIs, insights).
 
-New venues start as **`draft`**. Staff can use the **mobile scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`. See [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md).
+New venues start as **`draft`**. Staff can use the **mobile scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`.
 
-**Listing workflow:** owners upload raw files at **My Venues → Files & docs** (logo, menus, PDFs — any helpful material). They complete address, category, and rewards, then submit for review. A Flotory admin opens **Venue listings → Review & set up**, crops logo/cover from owner files, applies final app sizes, then approves.
-
-Venue owners manage QR download, listing, and settings under **My Venues**. Branding uploads for owners are on **Files & docs**, not venue settings.
+**Listing workflow:** owners upload raw files at **My Venues → Files & docs**. Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner files, then approve.
 
 ### Staff (email invitation → mobile app)
 
 1. Owner opens **Team** (web) and invites staff by email.
-2. Staff receives an invitation email with a link to `/invite/{token}`.
-3. New staff create an account on the invite page; existing users sign in and accept.
-4. After acceptance, staff open the **Flotory mobile app** for scanner and floor tools.
+2. Staff opens `/invite/{token}` on web, creates account or signs in, accepts.
+3. Staff use the **Flotory mobile app** for scanner and floor tools.
 
-No temporary passwords or shared credentials — each staff member sets their own password during registration or uses their existing login.
+Full journeys: **[docs/PRODUCT.md](docs/PRODUCT.md)** · admin approval: **[docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)**.
 
 ## Phone Testing
 
@@ -313,12 +186,13 @@ Then open `http://YOUR_MAC_IP:8000` on your phone while both devices are on the 
 
 The app includes PWA metadata and mobile icons. On iPhone, open Safari, tap Share, then Add to Home Screen.
 
-## Demo Accounts
+## Demo accounts
 
-All seeded accounts use password: **`password`**
+All seeded accounts use password **`password`** (re-ensured on each Docker app start when `APP_ENV=local`).
 
 | Account | Email | What to test |
 |--------|--------|----------------|
+| **Platform admin** | `admin@flotory.com` | Venue listings, **Manage venues**, design palette, activity log |
 | **Venue owner** | `owner@example.com` | Web: My Venues, dashboard, rewards, campaigns, team, analytics |
 | **Staff** | `staff@example.com` | Mobile app scanner at Demo Cafe (staff membership) |
 | **Customer** | `customer@example.com` | Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues, Rewards |
@@ -339,37 +213,7 @@ php artisan db:seed --class=DemoScaleSeeder
 
 Scale accounts use password **`password`** and emails like `scale-owner-{slug}@demo.flotory.test`, `scale-guest-{n}@demo.flotory.test`. Includes visits, milestone unlocks, and claimed rewards.
 
-### Quick test paths
-
-**Owner workspace (web)**
-
-1. Log in as `owner@example.com`
-2. Download QR from dashboard (**Download QR**) or venue settings
-3. Manage rewards, campaigns, team, and customers from the sidebar
-
-**Staff + customer (mobile Expo)**
-
-1. `npm --prefix apps/mobile run start` with `EXPO_PUBLIC_API_BASE_URL` pointing at your API
-2. Log in as `staff@example.com` — open **Scanner**; scan or search for `customer@example.com` and add stamps
-3. Log in as `customer@example.com` — tabs: **Home**, **Wallet**, center **My QR**, **Venues**, **Profile**
-
-**Customer rewards (mobile)**
-
-1. Earned rewards appear on **Rewards**; tap **Claim** and show the claim QR to staff
-2. Staff scan the claim QR in the mobile app; customer screen updates when the reward is used
-
-**Team (staff invitation)**
-
-1. Log in as `owner@example.com` (web)
-2. Open **Team** → invite staff by email
-3. Invitee opens the link in the email (`/invite/{token}`)
-4. New users create an account; existing users sign in and accept the invitation
-5. Accepted staff open the **Flotory mobile app** for scanning
-
-**QR onboarding (guest)**
-
-1. Open the venue public link from QR: `/v/your-venue-slug`
-2. Tap **Open in Flotory app** and join in the mobile app
+Role-specific walkthroughs (owner web, mobile scanner, claim/redeem, team invite): **[docs/PILOT_CAFE.md](docs/PILOT_CAFE.md)**.
 
 ## Roles
 
@@ -385,39 +229,17 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 
 Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be owner, staff, and customer at different venues. Scanner routes require an active `venue_users` row for the target venue.
 
-## MVP Scope
+## MVP scope
 
-- Guest venue bridge (`/v/:slug`) — QR entry opens mobile app
-- Owner web dashboard: onboarding, my-venues, rewards, campaigns, analytics, team, customers CRM
-- Owner 4-step onboarding wizard and dashboard success state
-- Venue listing workflow: draft → pending review → published (admin approval before public QR join)
-- Owner `/rewards`: customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
-- Owner `/campaigns`: campaign templates, activation, pause/edit/end actions, and history
-- Owner **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
-- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Rewards**, **Profile** — see [apps/mobile/README.md](apps/mobile/README.md)
-- Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
-- Single-venue-focused dashboard (auto-selects first venue)
-- Venue settings, logo upload, QR download PNG, soft delete
-- Team invite/remove (`/team`); staff accept on web (`/invite/{token}`)
-- Mobile staff scanner: auto-detect stamp card vs claim QR; add stamps (1–5 or custom); redeem rewards; pending-reward warning after stamp scans
-- Customer search fallback when QR scan fails (mobile)
-- Customer **Claim** flow: claim-session QR, staff scan redeem, poll until claimed (mobile)
-- Realtime stamp updates on customer devices (Reverb)
-- Operational owner dashboard per venue: monthly visits, returning guests, rewards unlocked, repeat rate, recent activity, API insights
-- Venue address in settings (optional; shown on venue bridge when set)
+Full feature list: **[docs/PRODUCT.md](docs/PRODUCT.md)**.
 
-## Progression And QR Model
+Highlights: venue QR bridge → mobile app, owner web dashboard (venues, rewards, campaigns, CRM), listing approval workflow, mobile staff scanner + customer wallet, Reverb realtime ([apps/mobile/README.md](apps/mobile/README.md)).
 
-- A customer has **one loyalty card per venue** they join (`customers` row per `user_id` + `venue_id`).
-- Customers show one universal **My QR** for stamps; the scanner applies the stamp to the venue currently selected by staff. Legacy per-card QR tokens remain available for backward compatibility.
-- Staff scan in the context of **one venue** (`POST /api/venues/{venue}/scanner/stamps`).
-- `VenueAccess::requireAccess` enforces membership before scanner operations.
-- If a legacy card QR belongs to another venue, the API rejects the request.
-- Milestones unlock at thresholds and can be claimed once per cycle.
-- Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
-- Customers redeem from **Rewards → Claim** (per-unlock claim QR) in the mobile app. Staff scan in the mobile app redeems that unlock. Stamp card QR is stamps only. FIFO applies when multiple unlocks exist for the same milestone type via legacy/manual redeem APIs.
+## Progression and QR
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.
+Canonical loyalty rules (stamps, milestones, claim QR, FIFO): **[docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md)**.
+
+API routes, models, and flows: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Documentation
 

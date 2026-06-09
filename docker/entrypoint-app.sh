@@ -7,6 +7,11 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
+# E2E scripts used to overwrite .env with sqlite — restore Docker mysql settings without wiping mysql_data.
+if [ -f scripts/ensure-docker-env.sh ]; then
+  sh scripts/ensure-docker-env.sh || exit 1
+fi
+
 mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/venue-setup public/uploads/reward-milestones storage/framework/cache storage/logs
 chmod -R 775 public/uploads storage 2>/dev/null || true
 

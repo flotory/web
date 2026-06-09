@@ -67,11 +67,11 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 4. Flotory admin approves at **Venue listings** — venue goes live in customer Discover
 5. Download / print QR → place at register and on a table tent
 6. Owner invites 1–2 staff via email from Team page
-7. Walk through dashboard: visits this month, insights, **Open scanner** (works before approval too)
+7. Walk through dashboard: visits this month, insights, **Mobile app** link (owners/staff scan from the Expo app — works before listing approval too)
 
 ### With staff (15 min)
 
-1. Staff accepts invite → opens Scanner on phone
+1. Staff accepts invite on web → opens **Flotory mobile app** → Scanner
 2. Practice scan: owner’s personal phone as “customer” (join via QR, then scan)
 3. Show +1 vs +2 stamps; explain 5-second double-scan protection
 4. Practice redeem: customer taps Claim in Rewards → staff scans claim QR
@@ -109,7 +109,7 @@ If unlocks but no redeems → redeem UX or staff training gap.
 | Blocker                                   | Fix                                                                      |
 | ----------------------------------------- | ------------------------------------------------------------------------ |
 | Staff didn’t get invite email             | Resend from Team; copy invite link if available                          |
-| Customer confused after join              | Show **Wallet** tab; point to stamp count and **My QR** for next visit   |
+| Customer confused after join              | Show **Wallet** tab in mobile app; point to stamp count and **My QR** for next visit |
 | Owner wants POS integration               | Defer — MVP is QR at counter only                                        |
 | Owner wants multiple reward tiers day one | Start with one milestone; add second after first week                    |
 | Wi‑Fi dead zone at counter                | Staff use mobile data; QR works offline for customer join if page cached |

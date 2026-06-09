@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
@@ -95,5 +97,80 @@ class AdminVenueManagementControllerTest extends TestCase
             'name' => 'Blocked',
             'category' => 'cafe',
         ])->assertForbidden();
+    }
+
+    public function test_admin_can_upload_and_remove_logo_and_cover(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createVenue(['slug' => 'admin-media-cafe']);
+
+        Sanctum::actingAs($admin);
+
+        $logoResponse = $this->post("/api/admin/manage-venues/{$venue->id}/logo", [
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ], ['Accept' => 'application/json']);
+
+        $logoResponse
+            ->assertOk()
+            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/venue-logos/'))
+            ->assertJsonPath('venue.logo_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
+
+        $logoPath = public_path(ltrim($logoResponse->json('venue.logo'), '/'));
+        $this->assertFileExists($logoPath);
+        $this->assertFileExists(public_path(ltrim($logoResponse->json('venue.logo_thumb'), '/')));
+
+        $coverResponse = $this->post("/api/admin/manage-venues/{$venue->id}/cover", [
+            'cover' => UploadedFile::fake()->image('cover.jpg'),
+        ], ['Accept' => 'application/json']);
+
+        $coverResponse
+            ->assertOk()
+            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/venue-covers/'))
+            ->assertJsonPath('venue.cover_image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
+
+        $this->deleteJson("/api/admin/manage-venues/{$venue->id}/logo")
+            ->assertOk()
+            ->assertJsonPath('venue.logo', null);
+
+        $this->deleteJson("/api/admin/manage-venues/{$venue->id}/cover")
+            ->assertOk()
+            ->assertJsonPath('venue.cover_image', null);
+
+        File::delete($logoPath);
+    }
+
+    public function test_admin_logo_upload_replaces_existing_local_file(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createVenue(['slug' => 'admin-replace-logo']);
+        $venue->forceFill(['logo' => '/uploads/venue-logos/old.png'])->save();
+
+        $directory = public_path('uploads/venue-logos');
+        File::ensureDirectoryExists($directory);
+        File::put("{$directory}/old.png", 'old');
+
+        Sanctum::actingAs($admin);
+
+        $this->post("/api/admin/manage-venues/{$venue->id}/logo", [
+            'logo' => UploadedFile::fake()->image('new-logo.png'),
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $this->assertFileDoesNotExist("{$directory}/old.png");
+    }
+
+    public function test_admin_destroy_logo_skips_external_paths(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createVenue(['slug' => 'admin-external-logo']);
+        $venue->forceFill([
+            'logo' => 'https://cdn.example.com/logo.png',
+            'logo_thumb' => '/uploads/other/logo.png',
+        ])->save();
+
+        Sanctum::actingAs($admin);
+
+        $this->deleteJson("/api/admin/manage-venues/{$venue->id}/logo")
+            ->assertOk()
+            ->assertJsonPath('venue.logo', null);
     }
 }

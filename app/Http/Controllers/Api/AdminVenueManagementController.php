@@ -5,19 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminUpdateVenueRequest;
 use App\Models\Venue;
-use App\Services\ImageThumbnailService;
 use App\Services\VenueAddressUpdateService;
+use App\Services\VenueBrandingService;
 use App\Services\VenuePublicationService;
 use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 class AdminVenueManagementController extends Controller
 {
     public function __construct(
-        private ImageThumbnailService $images,
+        private VenueBrandingService $branding,
         private VenueAddressUpdateService $venueAddresses,
         private VenuePublicationService $publication,
     ) {}
@@ -131,29 +129,11 @@ class AdminVenueManagementController extends Controller
     {
         $venue = $this->resolveVenue($venue);
 
-        $validated = $request->validate([
+        $request->validate([
             'logo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
         ]);
 
-        $this->deleteLocalLogo($venue);
-
-        $file = $request->file('logo');
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'png');
-        $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$extension;
-        $directory = public_path('uploads/venue-logos');
-
-        File::ensureDirectoryExists($directory);
-        $stored = $this->images->storeWithThumbnail(
-            $file,
-            $directory,
-            $filename,
-            ImageThumbnailService::THUMB_MAX_LOGO,
-        );
-
-        $venue->forceFill([
-            'logo' => $stored['path'],
-            'logo_thumb' => $stored['thumb_path'],
-        ])->save();
+        $this->branding->applyLogo($venue, $request->file('logo'));
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),
@@ -164,12 +144,7 @@ class AdminVenueManagementController extends Controller
     {
         $venue = $this->resolveVenue($venue);
 
-        $this->deleteLocalLogo($venue);
-
-        $venue->forceFill([
-            'logo' => null,
-            'logo_thumb' => null,
-        ])->save();
+        $this->branding->clearLogo($venue);
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),
@@ -184,25 +159,7 @@ class AdminVenueManagementController extends Controller
             'cover' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
         ]);
 
-        $this->deleteLocalCover($venue);
-
-        $file = $request->file('cover');
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-        $filename = Str::slug($venue->slug).'-cover-'.Str::lower(Str::random(12)).'.'.$extension;
-        $directory = public_path('uploads/venue-covers');
-
-        File::ensureDirectoryExists($directory);
-        $stored = $this->images->storeWithThumbnail(
-            $file,
-            $directory,
-            $filename,
-            ImageThumbnailService::THUMB_MAX_COVER,
-        );
-
-        $venue->forceFill([
-            'cover_image' => $stored['path'],
-            'cover_image_thumb' => $stored['thumb_path'],
-        ])->save();
+        $this->branding->applyCover($venue, $request->file('cover'));
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),
@@ -213,12 +170,7 @@ class AdminVenueManagementController extends Controller
     {
         $venue = $this->resolveVenue($venue);
 
-        $this->deleteLocalCover($venue);
-
-        $venue->forceFill([
-            'cover_image' => null,
-            'cover_image_thumb' => null,
-        ])->save();
+        $this->branding->clearCover($venue);
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),
@@ -300,33 +252,4 @@ class AdminVenueManagementController extends Controller
         ]);
     }
 
-    private function deleteLocalLogo(Venue $venue): void
-    {
-        foreach ([$venue->logo, $venue->logo_thumb] as $path) {
-            if (! $path || ! str_starts_with($path, '/uploads/venue-logos/')) {
-                continue;
-            }
-
-            File::delete(public_path(ltrim($path, '/')));
-        }
-
-        if ($venue->logo) {
-            $this->images->deleteThumbnailFor($venue->logo);
-        }
-    }
-
-    private function deleteLocalCover(Venue $venue): void
-    {
-        foreach ([$venue->cover_image, $venue->cover_image_thumb] as $path) {
-            if (! $path || ! str_starts_with($path, '/uploads/venue-covers/')) {
-                continue;
-            }
-
-            File::delete(public_path(ltrim($path, '/')));
-        }
-
-        if ($venue->cover_image) {
-            $this->images->deleteThumbnailFor($venue->cover_image);
-        }
-    }
 }

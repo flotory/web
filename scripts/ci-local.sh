@@ -75,24 +75,8 @@ npm run test:unit -- apps/mobile/src
 
 if command -v php >/dev/null 2>&1; then
   echo "==> Local CI: Playwright smoke"
-  chmod +x scripts/e2e-prepare.sh scripts/e2e-wait-for-app.sh
-  if ! npx playwright --version >/dev/null 2>&1; then
-    npx playwright install chromium
-  fi
-  ./scripts/e2e-prepare.sh
-  php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &
-  E2E_SERVER_PID=$!
-  cleanup_e2e_server() {
-    if kill -0 "${E2E_SERVER_PID}" 2>/dev/null; then
-      kill "${E2E_SERVER_PID}" 2>/dev/null || true
-    fi
-  }
-  trap cleanup_e2e_server EXIT
-  export PLAYWRIGHT_BASE_URL=http://127.0.0.1:8000
-  ./scripts/e2e-wait-for-app.sh
-  npm run test:e2e
-  cleanup_e2e_server
-  trap - EXIT
+  chmod +x scripts/run-e2e-smoke.sh
+  ./scripts/run-e2e-smoke.sh --install-browser
 else
   echo "    (skipping Playwright — install PHP locally or run: ./scripts/e2e-local.sh)"
 fi

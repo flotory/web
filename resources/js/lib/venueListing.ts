@@ -49,7 +49,7 @@ export function listingItemPath(venueId: number, key: string): string {
     return '/rewards'
   }
 
-  if (key === 'setup_files' || key === 'logo_source' || key === 'supporting_files') {
+  if (key === 'setup_files') {
     return `/my-venues/${venueId}/setup-files`
   }
 

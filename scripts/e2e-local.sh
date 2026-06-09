@@ -18,29 +18,8 @@ fi
 echo "==> E2E local: install dependencies"
 composer install --no-interaction --prefer-dist --no-progress
 npm ci
-npx playwright install chromium
 
 echo "==> E2E local: build frontend"
 npm run build
 
-echo "==> E2E local: prepare sqlite app"
-"${ROOT}/scripts/e2e-prepare.sh"
-
-echo "==> E2E local: start Laravel server"
-php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &
-SERVER_PID=$!
-
-cleanup() {
-  if kill -0 "${SERVER_PID}" 2>/dev/null; then
-    kill "${SERVER_PID}" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT
-
-export PLAYWRIGHT_BASE_URL=http://127.0.0.1:8000
-"${ROOT}/scripts/e2e-wait-for-app.sh"
-
-echo "==> E2E local: Playwright smoke tests"
-npm run test:e2e
-
-echo "==> E2E local passed."
+exec "${ROOT}/scripts/run-e2e-smoke.sh" --install-browser

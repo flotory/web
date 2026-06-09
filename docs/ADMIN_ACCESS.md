@@ -1,6 +1,6 @@
 # Super admin access
 
-Flotory super admins (`users.is_admin = true`) control the **platform only** — venue listings, design palette, and activity log. They do **not** own venues, join teams, or use owner tools (scanner, rewards, dashboard).
+Flotory super admins (`users.is_admin = true`) control the **platform only** — venue listings, manage venues, design palette, and activity log. They do **not** own venues, join teams, or use owner tools (rewards, dashboard, mobile scanner).
 
 There is no separate admin URL or login form — use `/login` with an admin account.
 
@@ -10,10 +10,10 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 | Account | Email | `is_admin` | What you get |
 |---------|--------|------------|----------------|
-| **Super admin** | `admin@flotory.com` | yes | **Venue listings**, **Design palette**, **Activity log** only — no scanner or My Venues |
-| **Venue owner** | `owner@example.com` | no | Normal owner (dashboard, rewards, team, scanner) — **no** activity log |
-| **Staff** | `staff@example.com` | no | Scanner + customers for Demo Cafe |
-| **Customer** | `customer@example.com` | no | Wallet / guest flows |
+| **Super admin** | `admin@flotory.com` | yes | **Venue listings**, **Manage venues**, **Design palette**, **Activity log** — no My Venues or owner dashboard |
+| **Venue owner** | `owner@example.com` | no | Web: dashboard, rewards, team, customers CRM. Mobile: scanner at counter — **no** activity log |
+| **Staff** | `staff@example.com` | no | Mobile app scanner at Demo Cafe (web: invite accept + account only) |
+| **Customer** | `customer@example.com` | no | Mobile app: wallet, My QR, rewards claim (`/v/:slug` on web opens app bridge) |
 
 **Common mistake:** logging in as `owner@example.com` and expecting the activity log. That user is intentionally not an admin.
 

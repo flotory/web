@@ -25,13 +25,13 @@ app/
   Http/Controllers/Auth/       Google OAuth
   Http/Requests/               Form validation
   Models/                    Eloquent domain models
-  Services/                  LoyaltyStampService, VenueStaffInvitationService
+  Services/                  LoyaltyStampService, VenueBrandingService, VenueSetupFileService, VenueStaffInvitationService
   Support/                   VenueAccess authorization
 
 resources/js/
-  components/                UI + loyalty (SwipeToRedeem, VenueFilter, …)
+  components/                UI + loyalty (VenueFilter, listing, admin setup files, …)
   composables/               useAsyncAction, useVenueTeam
-  layouts/                   AppShell (owner vs staff vs customer nav)
+  layouts/                   AppShell (owner workspace + platform admin nav)
   lib/                       api, onboarding, redirect, toast, realtime
   pages/                     Route-level Vue pages
   router/                    Guards (auth, ownerOnly, workspace)
@@ -89,14 +89,14 @@ QR tokens and stamp balances are **per customer row**, not per user globally or 
 
 ## Ownership and Authorization
 
-**Platform:** `users.is_admin === true` — system operator only. Platform admins **cannot** use venue owner/staff tools (`VenueAccess::assertNotPlatformAdmin`). Admin UI: `/admin/venues`, `/admin/palette`, `/admin/activity`.
+**Platform:** `users.is_admin === true` — system operator only. Platform admins **cannot** use venue owner/staff tools (`VenueAccess::assertNotPlatformAdmin`). Admin UI: `/admin/venues`, `/admin/manage-venues`, `/admin/palette`, `/admin/activity`.
 
 **Venue team:** `venue_users.role`
 
 | Role | Access |
 |------|--------|
-| `owner` | Dashboard, analytics, rewards, settings, team, venues, scanner, customers |
-| `staff` | Scanner, customers (read), staff redemption, account |
+| `owner` | Web: dashboard, analytics, rewards, settings, team, my-venues, customers CRM. Mobile: scanner at counter. |
+| `staff` | Web: `/invite/{token}` accept, `/account`. Mobile: scanner, staff redemption. |
 
 **Loyalty:** `customers` row = participation at that venue (any signed-in user can join).
 
@@ -213,7 +213,7 @@ Wallet detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appea
 | Mode | Who | Primary routes |
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Campaigns, Analytics, Team, Settings |
-| Platform admin | `users.is_admin = true` | Venue listings, Design palette, Activity log — no owner workspace |
+| Platform admin | `users.is_admin = true` | Venue listings, Manage venues, Design palette, Activity log — no owner workspace |
 | Staff / customer (web) | No owner membership | `/app` mobile download bridge; `/invite/{token}` for staff accept; `/account` for password |
 
 **Mobile app — customers and staff**
@@ -260,7 +260,8 @@ Workspace store auto-selects the first active venue when none is chosen (MVP sin
 
 - Auth: `/auth/me`, `/logout`, `/password`
 - `POST /api/broadcasting/auth`
-- Venues: CRUD, select, logo/cover upload, join, **discover**, customers, dashboard
+- Venues: CRUD, select, owner setup-files, join, **discover**, customers, dashboard
+- Admin: manage-venues (update, logo/cover apply from cropped setup files), listing review
 - Rewards: nested CRUD + archive/reactivate/purge
 - Campaigns: templates, nested campaign CRUD, preview, activate/pause/end
 - Scanner: lookup, stamps, **redeem** (claim QR token)
@@ -279,7 +280,7 @@ Full list: `routes/api.php`.
 | Venue cover | `/uploads/venue-covers/` | `{name}-thumb.jpg` (640px max) → `cover_image_thumb` |
 | Reward image | `/uploads/reward-milestones/` | `{name}-thumb.jpg` (320px max) → `image_thumb` |
 
-Upload handlers use `ImageThumbnailService` (PHP GD) to store full-size originals plus JPEG thumbnails. List/card UI loads thumbs via `rewardThumbUrl`, `venueLogoThumbUrl`, and `venueCoverThumbUrl`; detail/hero views use full URLs with thumb fallback.
+Upload handlers use `ImageThumbnailService` (PHP GD) to store full-size originals plus JPEG thumbnails. Final venue logo/cover paths are applied by admins via `VenueBrandingService` (`POST /api/admin/manage-venues/{venue}/logo|cover`) after cropping owner setup files. List/card UI loads thumbs via `rewardThumbUrl`, `venueLogoThumbUrl`, and `venueCoverThumbUrl`; detail/hero views use full URLs with thumb fallback.
 
 Backfill existing uploads: `php artisan media:generate-thumbs` (runs on deploy).
 

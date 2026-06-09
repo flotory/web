@@ -55,10 +55,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/venues/{venue}/setup-files', [VenueSetupFileController::class, 'index']);
     Route::post('/venues/{venue}/setup-files', [VenueSetupFileController::class, 'store']);
     Route::delete('/venues/{venue}/setup-files/{setupFile}', [VenueSetupFileController::class, 'destroy']);
-    Route::post('/venues/{venue}/logo', [VenueController::class, 'uploadLogo']);
-    Route::delete('/venues/{venue}/logo', [VenueController::class, 'destroyLogo']);
-    Route::post('/venues/{venue}/cover', [VenueController::class, 'uploadCover']);
-    Route::delete('/venues/{venue}/cover', [VenueController::class, 'destroyCover']);
     Route::get('/venues/{venue}/customers', [VenueCustomerController::class, 'index']);
     Route::get('/venues/{venue}/customers/{customer}', [VenueCustomerController::class, 'show']);
     Route::patch('/venues/{venue}/customers/{customer}', [VenueCustomerController::class, 'update']);

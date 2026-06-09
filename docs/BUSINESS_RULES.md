@@ -190,7 +190,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **U5.** Customers interact only with venues where they are enrolled.
 
-**U6.** Primary surfaces: **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Venues** (find/join published venues; mobile label matches web `/venues`), **Profile/Settings**.
+**U6.** Primary surfaces (**mobile app**): **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Venues** (find/join published venues), **Profile/Settings**. Web `/wallet`, `/scanner`, etc. redirect to `/app`.
 
 **U7.** Unclaimed rewards stay visible in **Rewards** until staff scans the claim QR.
 
@@ -256,7 +256,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **Y9.** When staff scan a stamp card but claim QR was needed, show **pending claim warning** ([S8](#s8-stamp-scan-warning-when-unclaimed-rewards)).
 
-**Y10.** Owner dashboard focuses on **operations** (KPIs, insights, scanner, QR) — not a post-launch setup tutorial.
+**Y10.** Owner dashboard focuses on **operations** (KPIs, insights, QR download, mobile-app CTA) — not a post-launch setup tutorial. Counter scanning is in the **mobile app**.
 
 ---
 

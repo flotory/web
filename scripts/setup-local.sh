@@ -5,15 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-merge_secret() {
-  local key="$1"
-  local value="$2"
-  if grep -q "^${key}=" .env 2>/dev/null; then
-    perl -pi -e "s/^\Q${key}\E=.*/${key}=${value}/" .env
-  else
-    echo "${key}=${value}" >> .env
-  fi
-}
+# shellcheck source=scripts/lib/env-merge.sh
+source "${ROOT}/scripts/lib/env-merge.sh"
 
 if [[ ! -f .env.secrets ]]; then
   cp .env.secrets.example .env.secrets
@@ -27,12 +20,9 @@ else
   echo "Using existing .env (pass --force to recreate from .env.example)"
 fi
 
-while IFS= read -r line || [[ -n "$line" ]]; do
-  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
-  key="${line%%=*}"
-  value="${line#*=}"
-  merge_secret "$key" "$value"
-done < .env.secrets
+env_merge_from_secrets .env.secrets .env
+env_merge_save_docker_backup .env
+echo "Saved .env.docker.backup (auto-restored on Docker start if .env is corrupted — see scripts/restore-docker-env.sh)."
 
 if ! grep -q '^GOOGLE_MAPS_API_KEY=.\+' .env 2>/dev/null; then
   echo ""

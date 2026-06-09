@@ -112,19 +112,10 @@ jobs:
       - name: Build assets
         run: npm run build
 
-      - name: Prepare seeded app
-        run: chmod +x scripts/e2e-prepare.sh && ./scripts/e2e-prepare.sh
-
-      - name: Start Laravel server
-        run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/e2e-server.log 2>&1 &
-
-      - name: Wait for Laravel server
-        run: chmod +x scripts/e2e-wait-for-app.sh && ./scripts/e2e-wait-for-app.sh
-
       - name: Run Playwright smoke tests
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:8000
-        run: npm run test:e2e
+        run: chmod +x scripts/run-e2e-smoke.sh && ./scripts/run-e2e-smoke.sh
 
       - name: Upload Laravel E2E log
         if: failure()

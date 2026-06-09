@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Prepare a clean SQLite-backed Laravel app for Playwright (matches GitHub Actions e2e job).
+# Uses .env.e2e only — never overwrites your Docker .env (mysql_data stays intact).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,7 +18,7 @@ fi
 
 DB_PATH="${ROOT}/database/e2e.sqlite"
 
-cat > .env <<EOF
+cat > .env.e2e <<EOF
 APP_NAME=Flotory
 APP_ENV=production
 APP_KEY=
@@ -39,9 +40,10 @@ EOF
 rm -f public/hot "${DB_PATH}"
 touch "${DB_PATH}"
 
-php artisan key:generate --force
-php artisan config:clear
-php artisan view:clear
-php artisan migrate:fresh --seed --force
+php artisan key:generate --env=e2e --force
+php artisan config:clear --env=e2e
+php artisan view:clear --env=e2e
+php artisan migrate:fresh --seed --force --env=e2e
 
-echo "==> E2E app ready (sqlite: ${DB_PATH})"
+echo "==> E2E app ready (sqlite: ${DB_PATH}, --env=e2e)"
+echo "    Your Docker .env was NOT modified."

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
@@ -290,7 +289,7 @@ class VenueControllerTest extends TestCase
             ->assertJsonPath('customers.0.stamps', 4);
     }
 
-    public function test_owner_can_upload_and_remove_logo_and_cover(): void
+    public function test_owner_logo_and_cover_routes_are_not_available(): void
     {
         $owner = $this->createUser();
         $venue = $this->createVenue(['slug' => 'media-cafe']);
@@ -298,74 +297,18 @@ class VenueControllerTest extends TestCase
 
         Sanctum::actingAs($owner);
 
-        $logoResponse = $this->post("/api/venues/{$venue->id}/logo", [
+        $logoPost = $this->post("/api/venues/{$venue->id}/logo", [
             'logo' => UploadedFile::fake()->image('logo.png'),
         ], ['Accept' => 'application/json']);
+        $this->assertContains($logoPost->status(), [404, 405]);
 
-        $logoResponse
-            ->assertOk()
-            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/venue-logos/'))
-            ->assertJsonPath('venue.logo_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
-
-        $logoPath = public_path(ltrim($logoResponse->json('venue.logo'), '/'));
-        $this->assertFileExists($logoPath);
-        $this->assertFileExists(public_path(ltrim($logoResponse->json('venue.logo_thumb'), '/')));
-
-        $coverResponse = $this->post("/api/venues/{$venue->id}/cover", [
+        $coverPost = $this->post("/api/venues/{$venue->id}/cover", [
             'cover' => UploadedFile::fake()->image('cover.jpg'),
         ], ['Accept' => 'application/json']);
+        $this->assertContains($coverPost->status(), [404, 405]);
 
-        $coverResponse
-            ->assertOk()
-            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/venue-covers/'))
-            ->assertJsonPath('venue.cover_image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
-
-        $this->deleteJson("/api/venues/{$venue->id}/logo")
-            ->assertOk()
-            ->assertJsonPath('venue.logo', null);
-
-        $this->deleteJson("/api/venues/{$venue->id}/cover")
-            ->assertOk()
-            ->assertJsonPath('venue.cover_image', null);
-
-        File::delete($logoPath);
-    }
-
-    public function test_logo_upload_replaces_existing_local_file(): void
-    {
-        $owner = $this->createUser();
-        $venue = $this->createVenue(['slug' => 'replace-logo']);
-        $this->attachMember($venue, $owner, 'owner');
-        $venue->forceFill(['logo' => '/uploads/venue-logos/old.png'])->save();
-
-        $directory = public_path('uploads/venue-logos');
-        File::ensureDirectoryExists($directory);
-        File::put("{$directory}/old.png", 'old');
-
-        Sanctum::actingAs($owner);
-
-        $this->post("/api/venues/{$venue->id}/logo", [
-            'logo' => UploadedFile::fake()->image('new-logo.png'),
-        ], ['Accept' => 'application/json'])->assertOk();
-
-        $this->assertFileDoesNotExist("{$directory}/old.png");
-    }
-
-    public function test_destroy_logo_skips_external_paths(): void
-    {
-        $owner = $this->createUser();
-        $venue = $this->createVenue(['slug' => 'external-logo']);
-        $this->attachMember($venue, $owner, 'owner');
-        $venue->forceFill([
-            'logo' => 'https://cdn.example.com/logo.png',
-            'logo_thumb' => '/uploads/other/logo.png',
-        ])->save();
-
-        Sanctum::actingAs($owner);
-
-        $this->deleteJson("/api/venues/{$venue->id}/logo")
-            ->assertOk()
-            ->assertJsonPath('venue.logo', null);
+        $this->assertContains($this->deleteJson("/api/venues/{$venue->id}/logo")->status(), [404, 405]);
+        $this->assertContains($this->deleteJson("/api/venues/{$venue->id}/cover")->status(), [404, 405]);
     }
 }
 

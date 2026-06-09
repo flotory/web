@@ -29,7 +29,7 @@ Runs on every push to `main` and on pull requests. Badge: [![Tests](https://gith
 | --- | -------------------- | ------- |
 | **PHPUnit** | `php artisan test` | ~254 feature + unit tests (MySQL not required; in-memory/SQLite per test) |
 | **Frontend build** | `npm ci` → `npm run build` → `npm run test:unit` | Typecheck, Vite production build, Vitest |
-| **Playwright smoke** | Build assets → `scripts/e2e-prepare.sh` → `npm run test:e2e` | Browser smokes on SQLite + demo seed |
+| **Playwright smoke** | Build assets → `scripts/run-e2e-smoke.sh` | Browser smokes on SQLite + demo seed (`--env=e2e`) |
 | **Mobile typecheck** | `npm ci` (apps/mobile) → typecheck + mobile Vitest via root |
 
 Deploy from Mac (`./deploy/push-prod.sh`) waits for this workflow to pass on the pushed commit (unless `SKIP_CI_GATE=1`).
@@ -73,11 +73,11 @@ npm run test:unit -- apps/mobile/src # mobile-only
 npm ci
 npm run build
 ./scripts/e2e-local.sh
-# or, if app already running on :8000 with demo seed:
-npm run test:e2e
+# or, after build, smoke only:
+./scripts/run-e2e-smoke.sh
 ```
 
-E2e uses a **dedicated** `.env` via `scripts/e2e-prepare.sh` (`APP_ENV=production`, SQLite, fresh seed). Do not rely on your Docker MySQL volume for CI-style e2e.
+E2e uses a **dedicated** `.env.e2e` via `scripts/e2e-prepare.sh` (called by `run-e2e-smoke.sh`). SQLite, fresh seed, `php artisan serve --env=e2e`. Your Docker `.env` and MySQL volume are **not** modified. If `.env` was corrupted, run `./scripts/restore-docker-env.sh` then `docker compose restart app`.
 
 ### Mobile
 
@@ -123,7 +123,7 @@ Post-deploy checklist: [deploy/DEPLOY.md § Post-deploy checks](../deploy/DEPLOY
 
 1. **Business rule** → update [BUSINESS_RULES.md](./BUSINESS_RULES.md), then add a PHPUnit test in `tests/Feature/` or `tests/Unit/`.
 2. **Pure JS/TS helper** → Vitest next to the module (`*.test.ts`).
-3. **Critical user journey (web)** → Playwright in `e2e/`; use `exact: true` for headings when a loading state can substring-match (e.g. Wallet vs “Loading your wallet…”).
+3. **Critical user journey (web)** → Playwright in `e2e/`; use `exact: true` for headings when a loading state can substring-match (e.g. Dashboard vs a loading placeholder).
 4. **Mobile screen** → prefer hook/unit tests in `apps/mobile/src/lib/`; Maestro for full tap flows when stable.
 
 ---

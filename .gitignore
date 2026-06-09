@@ -14,6 +14,8 @@
 !/public/uploads/venue-covers/.gitkeep
 /.env
 /.env.backup
+/.env.docker.backup
+/.env.e2e
 /.env.secrets
 /.env.local
 /deploy/config.sh
