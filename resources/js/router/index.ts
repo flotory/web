@@ -229,7 +229,13 @@ router.beforeEach(async (to) => {
     return { path: MOBILE_APP_PATH }
   }
 
-  if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing' && !to.meta.inviteFlow) {
+  if (
+    to.meta.guest
+    && auth.isAuthenticated
+    && to.name !== 'venue-landing'
+    && to.name !== 'mobile-app'
+    && !to.meta.inviteFlow
+  ) {
     await workspace.bootstrap()
 
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
@@ -253,9 +259,12 @@ router.beforeEach(async (to) => {
       return { path: '/onboarding/create-venue' }
     }
 
-    return {
-      path: ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+    const destination = ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
+    if (destination === to.path) {
+      return true
     }
+
+    return { path: destination }
   }
 })
 
