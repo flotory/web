@@ -56,6 +56,7 @@ class VenueStaffRedemptionControllerTest extends TestCase
         Sanctum::actingAs($customerUser);
 
         $this->postJson("/api/venues/{$venue->id}/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertForbidden();
+            ->assertNotFound()
+            ->assertJsonPath('message', 'This venue is not in your workspace.');
     }
 }

@@ -28,6 +28,7 @@ import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
+import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
 import { hasOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import {
@@ -206,6 +207,18 @@ router.beforeEach(async (to) => {
       }
 
       return { path: home }
+    }
+
+    if (
+      to.name === 'venue-settings'
+      || to.name === 'venue-design'
+      || to.name === 'venue-setup-files'
+    ) {
+      const venueId = Number(to.params.id)
+
+      if (!isOwnerVenueInWorkspace(venueId, workspace.activeVenues)) {
+        return { path: '/my-venues' }
+      }
     }
   }
 

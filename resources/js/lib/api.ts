@@ -24,8 +24,36 @@ export class ApiError extends Error {
   }
 }
 
+const VENUE_ACCESS_DENIED_MESSAGE = 'This venue is not in your workspace.'
+
+function normalizeApiMessage(message: string, status: number): string {
+  if (/No query results for model \[App\\Models\\Venue\]/i.test(message)) {
+    return VENUE_ACCESS_DENIED_MESSAGE
+  }
+
+  if (status === 403 && message === 'Forbidden') {
+    return 'You do not have permission to manage this venue.'
+  }
+
+  return message
+}
+
+export function isVenueAccessDenied(error: unknown): boolean {
+  if (!(error instanceof ApiError)) {
+    return false
+  }
+
+  return error.status === 404
+    || error.message === VENUE_ACCESS_DENIED_MESSAGE
+    || /No query results for model \[App\\Models\\Venue\]/i.test(error.message)
+}
+
 export function apiErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof ApiError ? error.message : fallback
+  if (!(error instanceof ApiError)) {
+    return fallback
+  }
+
+  return normalizeApiMessage(error.message, error.status)
 }
 
 function requestId(): string {
@@ -95,7 +123,8 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
       ? Object.values(fieldErrors).flat().find((message) => typeof message === 'string' && message.length > 0)
       : undefined
 
-    const message = firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`
+    const rawMessage = firstFieldMessage ?? payload.message ?? `API request failed with status ${response.status}`
+    const message = normalizeApiMessage(String(rawMessage), response.status)
 
     throw new ApiError(message, response.status, fieldErrors ?? {}, responseRequestId ?? undefined)
   }

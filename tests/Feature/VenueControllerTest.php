@@ -79,7 +79,17 @@ class VenueControllerTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->getJson("/api/venues/{$venue->id}")
-            ->assertForbidden();
+            ->assertNotFound()
+            ->assertJsonPath('message', 'This venue is not in your workspace.');
+    }
+
+    public function test_show_returns_friendly_message_for_missing_venue_id(): void
+    {
+        Sanctum::actingAs($this->createUser());
+
+        $this->getJson('/api/venues/999999')
+            ->assertNotFound()
+            ->assertJsonPath('message', 'This venue is not in your workspace.');
     }
 
     public function test_member_can_list_their_venues(): void

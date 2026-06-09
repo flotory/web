@@ -8,7 +8,8 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, isVenueAccessDenied } from '@/lib/api'
+import { VENUE_ACCESS_DENIED_MESSAGE } from '@/lib/venueWorkspace'
 import {
   DESIGN_CANVAS,
   MOBILE_PREVIEW_FRAMES,
@@ -45,6 +46,7 @@ const mobileCoverFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) =>
 const mobileLogoFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'logo-ticket-fallback'))
 const mobileRewardFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'reward-ticket'))
 
+const webCoverFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id === 'web-wallet-strip' || frame.id === 'web-landing-cover'))
 const webLogoFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('logo')))
 const webRewardFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('reward')))
 
@@ -67,7 +69,11 @@ async function loadPage() {
       (left, right) => left.required_stamps - right.required_stamps,
     )
   } catch (exception) {
-    error.value = exception instanceof ApiError ? exception.message : 'Could not load venue previews.'
+    error.value = isVenueAccessDenied(exception)
+      ? VENUE_ACCESS_DENIED_MESSAGE
+      : exception instanceof ApiError
+        ? exception.message
+        : 'Could not load venue previews.'
   } finally {
     loading.value = false
   }
@@ -96,7 +102,12 @@ onMounted(loadPage)
 
     <AppCard v-else-if="error" wrapper-class="mb-5">
       <p class="text-sm font-bold text-danger">{{ error }}</p>
-      <AppButton class="mt-4" @click="loadPage">Retry</AppButton>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <AppButton v-if="!isAdmin && error === VENUE_ACCESS_DENIED_MESSAGE" @click="router.push('/my-venues')">
+          Back to My Venues
+        </AppButton>
+        <AppButton v-else variant="secondary" @click="loadPage">Try again</AppButton>
+      </div>
     </AppCard>
 
     <div v-else-if="venue" class="space-y-5">
@@ -145,11 +156,28 @@ onMounted(loadPage)
           </div>
         </div>
 
+        <div class="mt-8 border-t border-border pt-6">
+          <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Web</p>
+          <div class="flex flex-wrap gap-6">
+            <DesignPreviewFrame
+              v-for="frame in webCoverFrames"
+              :key="frame.id"
+              :label="frame.label"
+              :platform="frame.platform"
+              :width="frame.width"
+              :height="frame.height"
+              :border-radius="frame.borderRadius"
+              :mirrors="frame.mirrors"
+              :image-src="coverSrc"
+              :max-display-width="220"
+            />
+          </div>
+        </div>
       </AppCard>
 
       <AppCard>
         <h2 class="text-xl font-black text-ink">Venue logo</h2>
-        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown in the mobile app and as a fallback on reward tickets.</p>
+        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown on web discover, landing, and as a fallback on reward tickets.</p>
 
         <div class="mt-5">
           <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>

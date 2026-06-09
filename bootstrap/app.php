@@ -2,12 +2,15 @@
 
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Models\Venue;
 use App\Support\AuditLog;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -38,5 +41,27 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return null;
+        });
+
+        $exceptions->renderable(function (NotFoundHttpException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $previous = $exception->getPrevious();
+
+            if (! $previous instanceof ModelNotFoundException) {
+                return null;
+            }
+
+            $model = (string) $previous->getModel();
+
+            if ($model !== Venue::class && ! str_ends_with($model, '\\Venue')) {
+                return null;
+            }
+
+            return response()->json([
+                'message' => 'This venue is not in your workspace.',
+            ], 404);
         });
     })->create();

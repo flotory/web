@@ -48,4 +48,20 @@ class VenueAccessTest extends TestCase
         $this->assertFalse(VenueAccess::canAccess($user, $venue, ['owner']));
         $this->assertTrue(VenueAccess::canAccess($user, $venue, ['owner', 'staff']));
     }
+
+    public function test_require_access_aborts_with_not_found_for_non_member(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue();
+
+        $this->expectExceptionMessage('This venue is not in your workspace.');
+
+        try {
+            VenueAccess::requireAccess($user, $venue, ['owner']);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(404, $exception->getStatusCode());
+
+            throw $exception;
+        }
+    }
 }

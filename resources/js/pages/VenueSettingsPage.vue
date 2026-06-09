@@ -11,7 +11,8 @@ import PhoneInput from '@/components/ui/PhoneInput.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, isVenueAccessDenied } from '@/lib/api'
+import { VENUE_ACCESS_DENIED_MESSAGE } from '@/lib/venueWorkspace'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
@@ -79,6 +80,9 @@ async function loadVenue() {
     hydrateForm(response.venue)
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not load venue.'
+    if (isVenueAccessDenied(exception)) {
+      error.value = VENUE_ACCESS_DENIED_MESSAGE
+    }
   } finally {
     loading.value = false
   }
@@ -184,7 +188,12 @@ onMounted(loadVenue)
 
     <AppCard v-else-if="error && !venue">
       <p class="text-sm font-bold text-danger">{{ error }}</p>
-      <AppButton class="mt-4" @click="loadVenue">Retry</AppButton>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <AppButton v-if="error === VENUE_ACCESS_DENIED_MESSAGE" @click="router.push('/my-venues')">
+          Back to My Venues
+        </AppButton>
+        <AppButton v-else variant="secondary" @click="loadVenue">Try again</AppButton>
+      </div>
     </AppCard>
 
     <div v-else-if="venue" class="grid gap-5">

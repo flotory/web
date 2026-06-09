@@ -9,7 +9,8 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { api, apiErrorMessage } from '@/lib/api'
+import { api, apiErrorMessage, isVenueAccessDenied } from '@/lib/api'
+import { VENUE_ACCESS_DENIED_MESSAGE } from '@/lib/venueWorkspace'
 import { listingStatusLabel } from '@/lib/venueListing'
 import { toast } from '@/lib/toast'
 import type { Venue } from '@/types'
@@ -73,7 +74,9 @@ async function loadPage() {
     venue.value = venueResponse.venue
     files.value = filesResponse.files
   } catch (exception) {
-    error.value = apiErrorMessage(exception, 'Could not load setup files.')
+    error.value = isVenueAccessDenied(exception)
+      ? VENUE_ACCESS_DENIED_MESSAGE
+      : apiErrorMessage(exception, 'Could not load setup files.')
   } finally {
     loading.value = false
   }
@@ -154,7 +157,12 @@ onMounted(loadPage)
 
     <AppCard v-else-if="error && !files.length" wrapper-class="mb-5">
       <p class="text-sm font-bold text-danger">{{ error }}</p>
-      <AppButton class="mt-4" @click="loadPage">Retry</AppButton>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <AppButton v-if="error === VENUE_ACCESS_DENIED_MESSAGE" @click="router.push('/my-venues')">
+          Back to My Venues
+        </AppButton>
+        <AppButton v-else variant="secondary" @click="loadPage">Try again</AppButton>
+      </div>
     </AppCard>
 
     <div v-else class="space-y-5">

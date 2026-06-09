@@ -54,7 +54,19 @@ class VenueAccess
      */
     public static function requireAccess(User $user, Venue $venue, array $roles = []): void
     {
-        abort_unless(self::canAccess($user, $venue, $roles), 403);
+        if (self::isAdmin($user)) {
+            abort(403, 'Platform admins cannot use venue owner tools.');
+        }
+
+        $membership = self::membership($user, $venue);
+
+        if (! $membership) {
+            abort(404, 'This venue is not in your workspace.');
+        }
+
+        if ($roles !== [] && ! in_array($membership->role, $roles, true)) {
+            abort(403, 'You do not have permission to manage this venue.');
+        }
     }
 
     public static function requireVenueModel(Venue $venue, Model $model, string $venueKey = 'venue_id'): void
