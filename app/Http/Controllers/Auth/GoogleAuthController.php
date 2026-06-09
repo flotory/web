@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\WebLoginGateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,6 +14,8 @@ use Throwable;
 
 class GoogleAuthController extends Controller
 {
+    public function __construct(private WebLoginGateService $webLoginGate) {}
+
     public function redirect(Request $request): RedirectResponse
     {
         $request->session()->put('google_auth.intent', [
@@ -64,16 +67,26 @@ class GoogleAuthController extends Controller
             ])->save();
         }
 
-        $tokenName = $this->isMobileIntent($intent) ? 'google-oauth-mobile' : 'google-oauth-web';
-        $token = $user->createToken($tokenName)->plainTextToken;
-
         if ($this->isMobileIntent($intent)) {
+            $token = $user->createToken('google-oauth-mobile')->plainTextToken;
+
             return redirect($this->buildMobileLoginUrl([
                 'oauth_token' => $token,
             ]));
         }
 
         $ownerIntent = $this->sanitizeIntent($intent['intent'] ?? null);
+
+        if (! $this->webLoginGate->mayAuthenticateOnWeb($user) && $ownerIntent !== 'owner') {
+            return redirect($this->buildFrontendPath('/login', [
+                'error' => 'google_auth_failed',
+                'redirect' => $this->sanitizeRedirect($intent['redirect'] ?? null),
+                'venue_slug' => $this->sanitizeVenueSlug($intent['venue_slug'] ?? null),
+                'intent' => $ownerIntent,
+            ]));
+        }
+
+        $token = $user->createToken('google-oauth-web')->plainTextToken;
 
         return redirect($this->buildFrontendPath('/login', [
             'oauth_token' => $token,

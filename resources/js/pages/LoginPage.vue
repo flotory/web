@@ -134,7 +134,7 @@ onMounted(() => {
       <AppBadge tone="blue">{{ isStaffInvite ? 'Staff invitation' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ isStaffInvite ? 'Sign in to join the team' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        {{ isStaffInvite ? 'After login you can accept the invitation and open the Flotory mobile app.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
+        {{ isStaffInvite ? 'After login you can accept the invitation and open the Flotory mobile app.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Venue owners and platform admins only. Customers and staff use the Flotory mobile app.' }}
       </p>
 
       <AppButton

@@ -10,7 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
 import { authFieldClass } from '@/lib/authForm'
-import { MOBILE_APP_PATH } from '@/lib/mobileApp'
+import { mobileAppDeepLink, MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -43,7 +43,7 @@ const name = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
 
-const loginRedirect = computed(() => `/invite/${token.value}`)
+const appDeepLink = mobileAppDeepLink()
 
 async function loadInvite() {
   loading.value = true
@@ -137,9 +137,8 @@ onMounted(async () => {
 })
 
 async function logoutForInvite() {
-  const email = preview.value?.email
   await auth.logout()
-  await router.push({ name: 'login', query: { email, redirect: loginRedirect.value } })
+  await loadInvite()
 }
 </script>
 
@@ -160,8 +159,8 @@ async function logoutForInvite() {
           <p v-if="preview?.venue?.name" class="mt-4 text-sm font-semibold text-ink-muted">
             Venue: <strong>{{ preview.venue.name }}</strong>
           </p>
-          <RouterLink to="/login" class="mt-6 inline-block">
-            <AppButton variant="secondary">Go to login</AppButton>
+          <RouterLink to="/app" class="mt-6 inline-block">
+            <AppButton variant="secondary">Get the mobile app</AppButton>
           </RouterLink>
         </template>
 
@@ -184,17 +183,17 @@ async function logoutForInvite() {
 
           <div v-if="accountExists && !auth.isAuthenticated" class="mt-6 space-y-3">
             <p class="text-sm font-semibold text-ink-muted">
-              An account already exists for <strong>{{ preview.email }}</strong>. Sign in to accept.
+              An account already exists for <strong>{{ preview.email }}</strong>. Open the Flotory mobile app, sign in with that email, then return to this invite link to accept.
             </p>
-            <RouterLink :to="{ name: 'login', query: { email: preview.email, redirect: loginRedirect } }">
-              <AppButton class="w-full" size="lg">Sign in to accept</AppButton>
-            </RouterLink>
+            <a :href="appDeepLink" class="block">
+              <AppButton class="w-full" size="lg">Open Flotory app</AppButton>
+            </a>
           </div>
 
           <div v-else-if="auth.isAuthenticated && emailMatches === false" class="mt-6 rounded-2xl bg-accent-soft p-4 text-sm font-semibold text-accent-active border border-accent-border">
-            You are signed in as a different user. Log out, then sign in with <strong>{{ preview.email }}</strong>.
+            You are signed in on the web as a different user. Log out here, then sign in on the mobile app with <strong>{{ preview.email }}</strong> and open this invite link again.
             <AppButton class="mt-4 w-full" variant="secondary" size="sm" @click="logoutForInvite">
-              Log out
+              Log out on web
             </AppButton>
           </div>
 

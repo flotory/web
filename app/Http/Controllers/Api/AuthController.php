@@ -10,6 +10,7 @@ use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use App\Services\GoogleIdTokenVerifier;
 use App\Services\GoogleOAuthUserService;
+use App\Services\WebLoginGateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,8 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(private WebLoginGateService $webLoginGate) {}
+
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
@@ -64,6 +67,11 @@ class AuthController extends Controller
                 'email' => 'The provided credentials are incorrect.',
             ]);
         }
+
+        $this->webLoginGate->rejectUnlessAllowedOnWeb(
+            $user,
+            $request->string('device_name', 'web')->toString(),
+        );
 
         $user->load('activeVenue');
 

@@ -3,13 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\VenueStaffInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
 {
+    use BuildsLoyaltyData;
     use RefreshDatabase;
 
     public function test_register_creates_a_user_and_token(): void
@@ -42,17 +45,14 @@ class AuthControllerTest extends TestCase
 
     public function test_login_returns_a_token_for_valid_credentials(): void
     {
-        User::query()->create([
-            'name' => 'Grace Hopper',
-            'email' => 'grace@example.com',
-            'password' => 'password',
-            'is_admin' => false,
-        ]);
+        $owner = $this->createUser(['email' => 'grace@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
 
         $response = $this->postJson('/api/auth/login', [
             'email' => 'grace@example.com',
             'password' => 'password',
-            'device_name' => 'phpunit',
+            'device_name' => 'browser',
         ]);
 
         $response
@@ -61,6 +61,113 @@ class AuthControllerTest extends TestCase
             ->assertJsonStructure(['user', 'token']);
 
         $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
+    public function test_web_login_rejects_customer_accounts(): void
+    {
+        $customer = $this->createUser(['email' => 'customer@example.com']);
+        $venue = $this->createVenue();
+        $this->createCustomer($venue, $customer);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'customer@example.com',
+            'password' => 'password',
+            'device_name' => 'browser',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_web_login_rejects_staff_only_accounts(): void
+    {
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $owner = $this->createUser(['email' => 'owner@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $this->attachMember($venue, $staff, 'staff');
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'staff@example.com',
+            'password' => 'password',
+            'device_name' => 'browser',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_mobile_login_allows_customer_accounts(): void
+    {
+        $customer = $this->createUser(['email' => 'customer@example.com']);
+        $venue = $this->createVenue();
+        $this->createCustomer($venue, $customer);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'customer@example.com',
+            'password' => 'password',
+            'device_name' => 'flotory-mobile',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.email', 'customer@example.com');
+
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
+    public function test_web_login_rejects_pending_staff_invitee(): void
+    {
+        $invitee = $this->createUser(['email' => 'pending-staff@example.com']);
+        $owner = $this->createUser(['email' => 'invite-owner@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        VenueStaffInvitation::query()->create([
+            'venue_id' => $venue->id,
+            'email' => 'pending-staff@example.com',
+            'role' => 'staff',
+            'token' => 'invite-token-123',
+            'invited_by' => $owner->id,
+            'status' => \App\Enums\VenueStaffInvitationStatus::Pending,
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'pending-staff@example.com',
+            'password' => 'password',
+            'device_name' => 'browser',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+    }
+
+    public function test_web_login_allows_platform_admin(): void
+    {
+        $this->createUser(['email' => 'admin@flotory.com', 'is_admin' => true]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'admin@flotory.com',
+            'password' => 'password',
+            'device_name' => 'browser',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.email', 'admin@flotory.com');
+    }
+
+    public function test_web_login_allows_venue_owner(): void
+    {
+        $owner = $this->createUser(['email' => 'owner@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'owner@example.com',
+            'password' => 'password',
+            'device_name' => 'browser',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.email', 'owner@example.com');
     }
 
     public function test_login_rejects_invalid_credentials(): void
