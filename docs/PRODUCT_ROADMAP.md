@@ -2,7 +2,7 @@
 
 High-level phases. Detailed rules live in [BUSINESS_RULES.md](./BUSINESS_RULES.md) and [CAMPAIGNS.md](./CAMPAIGNS.md).
 
-**North star today:** first venue → first customer → first redemption → first paying customer ([PILOT_CAFE.md](./PILOT_CAFE.md)).
+**North star today:** first venue → first customer → first redemption → first paying customer.
 
 ## Shipped
 

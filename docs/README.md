@@ -18,7 +18,6 @@ Small, focused docs — one topic per file. Start here.
 | [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign templates, API, owner UI |
 | [ADMIN_ACCESS.md](./ADMIN_ACCESS.md) | Platform admin and venue listing approval |
 | [KNOWN_RISKS.md](./KNOWN_RISKS.md) | Accepted risks and resolved issues |
-| [PILOT_CAFE.md](./PILOT_CAFE.md) | First real venue onboarding playbook |
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Shipped phases + what's next |
 
 ## Operations
@@ -35,7 +34,7 @@ Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 **MVP** — validating product–market fit with real venues.
 
-**Current focus:** first pilot venue ([PILOT_CAFE.md](./PILOT_CAFE.md)) — listing approval → join → stamp → unlock → claim QR → redeem.
+**Current focus:** first pilot venue — listing approval → join → stamp → unlock → claim QR → redeem.
 
 **Not in scope yet:** billing, POS integrations, push delivery (mobile inbox UI exists; Expo push is future), advanced segmentation.
 

@@ -213,7 +213,7 @@ php artisan db:seed --class=DemoScaleSeeder
 
 Scale accounts use password **`password`** and emails like `scale-owner-{slug}@demo.flotory.test`, `scale-guest-{n}@demo.flotory.test`. Includes visits, milestone unlocks, and claimed rewards.
 
-Role-specific walkthroughs (owner web, mobile scanner, claim/redeem, team invite): **[docs/PILOT_CAFE.md](docs/PILOT_CAFE.md)**.
+Role-specific walkthroughs (owner web, mobile scanner, claim/redeem, team invite): **[docs/PRODUCT.md](docs/PRODUCT.md)** and **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Roles
 
@@ -254,7 +254,6 @@ These files are the source of truth for product, architecture, and MVP decisions
 - [docs/MVP_DECISIONS.md](docs/MVP_DECISIONS.md) — locked decisions
 - [docs/CAMPAIGNS.md](docs/CAMPAIGNS.md) — stamp campaign templates and rules
 - [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md) — platform admin and venue listing approval
-- [docs/PILOT_CAFE.md](docs/PILOT_CAFE.md) — first pilot playbook
 - [apps/mobile/README.md](apps/mobile/README.md) — Expo app setup and API map
 - [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — risks and resolved issues
 
