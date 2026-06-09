@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
             </AppButton>
           </a>
         </div>
-        <p class="text-sm font-semibold text-ink-soft">15-minute walkthrough — no signup required.</p>
+        <p class="text-sm font-semibold text-ink-soft">30-minute walkthrough — no signup required.</p>
       </div>
 
       <div class="relative floating-phone">

@@ -156,7 +156,7 @@ onMounted(loadBookingConfig)
 
       <AppCard wrapper-class="rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-8">
         <AppBadge tone="blue">Owner demo</AppBadge>
-        <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">Book a 15-minute walkthrough</h1>
+        <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">Book a 30-minute walkthrough</h1>
         <p class="mt-3 text-sm leading-relaxed text-ink-muted">
           No signup required. See how Flotory works for cafes, bars, and restaurants — then start free whenever you are ready.
         </p>
