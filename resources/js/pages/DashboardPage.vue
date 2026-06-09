@@ -282,7 +282,7 @@ async function loadDashboard() {
     await workspace.bootstrap()
 
     if (!workspace.hasMembership) {
-      await router.push('/onboarding')
+      await router.push({ path: '/my-venues', query: { create: '1' } })
       return
     }
 

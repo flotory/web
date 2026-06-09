@@ -28,7 +28,7 @@ import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
-import { clearOwnerOnboardingIntent, hasOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
+import { hasOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import {
   ADMIN_HOME_PATH,
@@ -66,7 +66,7 @@ const router = createRouter({
     { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/design', name: 'venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -197,11 +197,7 @@ router.beforeEach(async (to) => {
       (to.name === 'onboarding' || to.name === 'onboarding-create-venue')
       && !ownerMember
     ) {
-      if (to.query.intent === 'owner') {
-        markOwnerOnboardingIntent()
-      } else if (!hasOwnerOnboardingIntent()) {
-        return { path: home }
-      }
+      return { path: '/my-venues', query: { create: '1' } }
     }
 
     if (to.name === 'my-venues' && !ownerMember && to.query.intent !== 'owner') {
@@ -257,8 +253,11 @@ router.beforeEach(async (to) => {
     }
 
     if (to.query.intent === 'owner') {
-      markOwnerOnboardingIntent()
-      return { path: '/onboarding/create-venue' }
+      if (hasOwnerMembership(workspace.activeVenues)) {
+        return { path: '/dashboard' }
+      }
+
+      return { path: '/my-venues', query: { create: '1' } }
     }
 
     const destination = ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)

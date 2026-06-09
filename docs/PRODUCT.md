@@ -64,7 +64,7 @@ What ships today:
 
 **Web (owners + platform admin)**
 
-- Owner dashboard, onboarding, my-venues, rewards, campaigns, analytics, team, customers CRM
+- Owner dashboard, my-venues (venue setup), rewards, campaigns, analytics, team, customers CRM
 - Public venue bridge (`/v/:slug`) — QR entry points guests to the mobile app
 - Staff invitation accept flow (`/invite/{token}`)
 - Platform admin: venue listing review, design palette, activity log (`/admin/*`) — see [ADMIN_ACCESS.md](./ADMIN_ACCESS.md)

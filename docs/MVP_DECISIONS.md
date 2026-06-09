@@ -70,7 +70,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Inline validation | Form field errors shown inline from API validation messages. |
 | Dangerous actions | Confirmation modal before delete venue, archive/delete reward, remove team member. |
 | Cross-page feedback | Use `vue-sonner` toast for global success/error (toaster in `App.vue`). |
-| Owner onboarding | Easy signup: **name + slug only** on step 1, then category and starter rewards (4 steps total). Completion redirects to `/dashboard?onboarding=completed` with a toast; venue stays **draft** until listing is approved. |
+| Owner signup | Register with owner intent → **My Venues** create form (`/my-venues?create=1`). Venue stays **draft** until listing checklist is submitted and admin approves. Rewards and campaigns are configured from the owner workspace after the venue exists. |
 | Owner dashboard | Operational KPIs + **listing checklist** until published: Google address (with coordinates), category, setup files, ≥1 active reward → **Submit for listing** → admin approval. Mobile scanner/rewards/team work while draft or pending. |
 | Venue listing status | `venues.status`: `draft` → `pending_review` → `published` (or `rejected`). Customers see venues only when **published** (Discover, `/v/:slug`, join). Existing rows migrated to `published`. |
 | Venue location | Google Places address on web (owner settings / listing checklist); stores `address`, `latitude`, `longitude`. Address updates limited to **3/day** per venue. Mobile: nearby sort uses device GPS + Haversine (free); **Directions** opens native maps. |

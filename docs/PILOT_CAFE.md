@@ -23,7 +23,7 @@ Owner/staff training must match [BUSINESS_RULES.md](./BUSINESS_RULES.md) (stamps
 
 Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
-- Owner can sign up, complete onboarding, and create at least one milestone reward
+- Owner can sign up, create a venue, and configure at least one milestone reward
 - Owner can complete the **listing checklist** and submit for review; admin can approve at `/admin/venues`
 - QR download / print asset works for counter display
 - Staff invitation email delivers (check spam; verify SMTP in production)
@@ -61,7 +61,7 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 
 ### With the owner (30 min)
 
-1. Owner creates account → quick onboarding (venue name, category, starter rewards)
+1. Owner creates account → **My Venues** (create venue: name, address, contact)
 2. Set realistic first milestone (e.g. **5 stamps = free drink**) — not too high
 3. Complete **listing checklist** on dashboard: Google address, logo/cover, active reward → **Submit for listing**
 4. Flotory admin approves at **Venue listings** — venue goes live in customer Discover

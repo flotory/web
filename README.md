@@ -133,9 +133,9 @@ curl -s http://localhost:8000/api/public/app-config
 
 If you see “Google address search is not configured”, the key is missing from `.env` or Docker was not restarted after adding it.
 
-OAuth preserves onboarding intent:
+OAuth preserves owner signup intent:
 
-- **Owner** (`intent=owner` from homepage): continues to `/onboarding/create-venue`.
+- **Owner** (`intent=owner` from homepage): continues to `/my-venues?create=1` (create first venue).
 - **Customers and staff** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding flows
@@ -150,8 +150,8 @@ OAuth preserves onboarding intent:
 
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
-3. 4-step wizard: venue name + slug → category → reward presets → QR download.
-4. Lands on `/dashboard?onboarding=completed` with operational dashboard (KPIs, insights).
+3. Lands on **My Venues** with the create form open — add venue name, address, and details.
+4. Opens **Dashboard** once the venue exists; configure rewards, listing, and team from the owner workspace.
 
 New venues start as **`draft`**. Staff can use the **mobile scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`.
 

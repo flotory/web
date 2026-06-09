@@ -154,11 +154,11 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 2. Join in mobile app → register/login
 3. `POST /api/venues/{slug}/join` → mobile wallet
 
-### Owner onboarding
+### Owner signup
 
-1. Register with owner intent → `/onboarding/create-venue` (4 steps: name+slug → category → rewards → QR)
+1. Register with owner intent → `/my-venues?create=1` (create first venue: name, slug, address, contact)
 2. Venue created as `draft` → owner completes listing checklist → submit → admin approve → `published`
-3. Complete wizard → `/dashboard?onboarding=completed`
+3. Owner workspace: dashboard, rewards, campaigns, team — legacy `/onboarding/*` routes redirect to My Venues
 
 ### Staff scanner (auto-detect — mobile app)
 
@@ -223,7 +223,7 @@ Wallet detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appea
 | Customer | Home, Wallet, **My QR** (center), Venues, Profile; Rewards claim flow |
 | Staff / owner at counter | Scanner (venue-scoped), customer search fallback |
 
-Router guards (web): `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
+Router guards (web): `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (My Venues for new owners).
 
 Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only and pure customers → `/app`.
 
@@ -233,9 +233,9 @@ Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only and pure 
 |-------|------|------|
 | `/v/:slug` | Venue app bridge (QR entry) | Guest |
 | `/app` | Mobile app download / open | Guest, staff, customer |
-| `/onboarding/create-venue` | Onboarding wizard | New owner |
+| `/my-venues`, `/my-venues/:id/settings` | Venue list, create venue, settings | Owner |
 | `/dashboard` | Operational dashboard (KPIs, insights) | Owner |
-| `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
+| `/onboarding/*` | Legacy redirect → My Venues | New owner |
 | `/rewards` | Milestone CRUD | Owner |
 | `/campaigns` | Campaign templates, activation, history | Owner |
 | `/customers` | Retention list | Owner |

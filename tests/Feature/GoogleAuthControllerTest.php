@@ -216,7 +216,7 @@ class GoogleAuthControllerTest extends TestCase
             ])
             ->get('/auth/google/callback');
 
-        $this->assertStringContainsString('redirect=%2Fonboarding%2Fcreate-venue', $response->headers->get('Location'));
+        $this->assertStringContainsString('redirect=%2Fmy-venues%3Fcreate%3D1', $response->headers->get('Location'));
 
         $user = User::query()->where('email', 'guest@example.com')->firstOrFail();
         $this->assertSame('Guest', $user->name);

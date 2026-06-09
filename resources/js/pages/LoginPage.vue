@@ -9,8 +9,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
-import { resolvePostLoginDestination } from '@/lib/venueRoles'
+import { clearOwnerOnboardingIntent } from '@/lib/ownerIntent'
+import { hasOwnerMembership, ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -29,12 +29,21 @@ const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : nu
 const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 const postAuthPath = computed(() => {
   if (authIntent.value === 'owner') {
-    return '/onboarding/create-venue'
+    return '/my-venues?create=1'
   }
 
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
   return redirect
 })
+
+function ownerPostAuthDestination() {
+  if (hasOwnerMembership(workspace.activeVenues)) {
+    return '/dashboard'
+  }
+
+  clearOwnerOnboardingIntent()
+  return ownerVenueSetupLocation()
+}
 
 function continueWithGoogle() {
   window.location.href = buildGoogleAuthUrlWithIntent(null, postAuthPath.value ?? undefined, authIntent.value)
@@ -58,8 +67,7 @@ async function submit() {
     await workspace.bootstrap(true)
 
     if (authIntent.value === 'owner') {
-      markOwnerOnboardingIntent()
-      await router.push('/onboarding/create-venue')
+      await router.push(ownerPostAuthDestination())
       return
     }
 
@@ -75,10 +83,6 @@ async function submit() {
 }
 
 onMounted(() => {
-  if (authIntent.value === 'owner') {
-    markOwnerOnboardingIntent()
-  }
-
   const oauthToken = typeof route.query.oauth_token === 'string' ? route.query.oauth_token : null
   if (oauthToken) {
     oauthLoading.value = true
@@ -88,8 +92,7 @@ onMounted(() => {
         await workspace.bootstrap(true)
 
         if (authIntent.value === 'owner') {
-          markOwnerOnboardingIntent()
-          await router.replace('/onboarding/create-venue')
+          await router.replace(ownerPostAuthDestination())
           return
         }
 

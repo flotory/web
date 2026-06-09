@@ -41,7 +41,7 @@ Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 ## What Flotory does
 
-Venues get a QR-driven digital stamp card. Customers join via scan (once **published**), collect **stamps** with one universal **My QR**, and claim unlocked perks with a separate **claim QR**. Owners run a 4-step onboarding, submit a **listing** for admin approval, configure rewards and stamp **campaigns**, invite staff, and view analytics.
+Venues get a QR-driven digital stamp card. Customers join via scan (once **published**), collect **stamps** with one universal **My QR**, and claim unlocked perks with a separate **claim QR**. Owners register on the web, create their first venue in **My Venues**, submit a **listing** for admin approval, configure rewards and stamp **campaigns**, invite staff, and view analytics.
 
 ## Terminology
 

@@ -3,7 +3,12 @@ import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { isOwnerWorkspacePath, isSafeInternalRedirect } from '@/lib/redirect'
 import type { Venue } from '@/types'
 
-export const OWNER_ONBOARDING_PATH = '/onboarding/create-venue'
+/** Where new owners land to create their first venue (replaces the legacy onboarding wizard). */
+export const OWNER_VENUE_SETUP_PATH = '/my-venues'
+
+export function ownerVenueSetupLocation(): { path: string; query: { create: string } } {
+  return { path: OWNER_VENUE_SETUP_PATH, query: { create: '1' } }
+}
 
 export const ADMIN_HOME_PATH = '/admin/venues'
 
@@ -68,7 +73,7 @@ export function ownerBootstrapPath(
   const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
 
   if (home === MOBILE_APP_PATH && hasOwnerOnboardingIntent()) {
-    return OWNER_ONBOARDING_PATH
+    return `${OWNER_VENUE_SETUP_PATH}?create=1`
   }
 
   return home
@@ -106,7 +111,7 @@ export function resolvePostLoginDestination(
   }
 
   if (isOwnerWorkspacePath(safe) && !hasTeam && hasOwnerOnboardingIntent()) {
-    return OWNER_ONBOARDING_PATH
+    return `${OWNER_VENUE_SETUP_PATH}?create=1`
   }
 
   return safe

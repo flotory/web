@@ -9,8 +9,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
-import { resolvePostLoginDestination } from '@/lib/venueRoles'
+import { clearOwnerOnboardingIntent } from '@/lib/ownerIntent'
+import { ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -46,7 +46,7 @@ const loginLink = computed(() => {
 })
 
 function continueWithGoogle() {
-  const nextPath = authIntent.value === 'owner' ? '/onboarding/create-venue' : undefined
+  const nextPath = authIntent.value === 'owner' ? '/my-venues?create=1' : undefined
   window.location.href = buildGoogleAuthUrlWithIntent(null, nextPath, authIntent.value)
 }
 
@@ -65,8 +65,8 @@ async function submit() {
     await workspace.bootstrap(true)
 
     if (authIntent.value === 'owner') {
-      markOwnerOnboardingIntent()
-      await router.push('/onboarding/create-venue')
+      clearOwnerOnboardingIntent()
+      await router.push(ownerVenueSetupLocation())
       return
     }
 
@@ -86,10 +86,6 @@ async function submit() {
 }
 
 onMounted(() => {
-  if (authIntent.value === 'owner') {
-    markOwnerOnboardingIntent()
-  }
-
   if (isStaffInvite.value) {
     void router.replace(loginLink.value)
     return

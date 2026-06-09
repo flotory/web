@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { FileUp, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
@@ -25,6 +25,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 
@@ -193,7 +194,13 @@ function closeDeleteModal() {
   deleteVenueTarget.value = null
 }
 
-onMounted(loadVenues)
+onMounted(async () => {
+  await loadVenues()
+
+  if (route.query.create === '1' || activeVenues.value.length === 0) {
+    openCreateForm()
+  }
+})
 </script>
 
 <template>
