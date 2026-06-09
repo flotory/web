@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking'
 import * as WebBrowser from 'expo-web-browser'
 
-import { API_BASE_URL } from './config'
+import { webAppOrigin } from './config'
 
 const MOBILE_GOOGLE_RETURN_URL = 'flotory://login'
 
@@ -9,11 +9,6 @@ export type GoogleBrowserAuthResult =
   | { status: 'success'; oauthToken: string }
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
-
-/** Web app origin derived from the API base URL (e.g. https://flotory.com). */
-export function webAppOrigin(): string {
-  return API_BASE_URL.replace(/\/api\/?$/, '')
-}
 
 export function googleOAuthStartUrl(): string {
   return `${webAppOrigin()}/auth/google/redirect?mobile=1`

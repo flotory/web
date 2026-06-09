@@ -1,5 +1,9 @@
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://flotory.com/api'
 
+export function webAppOrigin(): string {
+  return API_BASE_URL.replace(/\/api\/?$/, '')
+}
+
 /** Public Google OAuth web client id (same as GOOGLE_CLIENT_ID on the API). */
 export const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
