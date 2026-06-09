@@ -3,7 +3,9 @@ import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { MARKETING_HOME_PATH } from '@/lib/brand'
+import { marketingCardClass } from '@/lib/marketingPage'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -49,14 +51,13 @@ async function submit() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
-    <section class="mx-auto w-full max-w-md">
+  <MarketingPageShell>
       <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
-        <FlotoryLogo inverted size="lg" />
+        <FlotoryLogo size="lg" />
       </RouterLink>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-        <AppBadge tone="blue">Account recovery</AppBadge>
+      <AppCard :wrapper-class="marketingCardClass">
+        <AppBadge tone="amber">Account recovery</AppBadge>
         <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">Forgot password?</h1>
         <p class="mt-2 text-sm leading-relaxed text-ink-muted">
           Enter your email and we will send a secure link to reset your password.
@@ -93,6 +94,5 @@ async function submit() {
           <RouterLink to="/login" class="font-bold text-ink">Back to login</RouterLink>
         </p>
       </AppCard>
-    </section>
-  </main>
+  </MarketingPageShell>
 </template>

@@ -154,6 +154,18 @@ body {
   background: radial-gradient(circle at top, var(--flotory-primary) 0%, #020617 55%);
 }
 
+.bg-marketing-page {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -8%, color-mix(in srgb, var(--flotory-accent-soft) 55%, transparent), transparent 62%),
+    linear-gradient(180deg, var(--flotory-bg-gradient-start) 0%, var(--flotory-workspace-bg-gradient-end) 100%);
+}
+
+.marketing-page-glow {
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--flotory-accent) 14%, transparent), transparent 38%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--flotory-accent-soft) 40%, transparent), transparent 42%);
+}
+
 /* Google Places autocomplete dropdown (attached to document.body) */
 .pac-container {
   z-index: 10000 !important;

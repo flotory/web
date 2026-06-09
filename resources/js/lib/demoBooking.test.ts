@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { appendUtmToCalendlyUrl, buildCalendlyEmbedUrl } from './demoBooking'
+import {
+  appendUtmToCalendlyUrl,
+  buildCalendlyEmbedUrl,
+  calendlyIframeHeightFromMessage,
+} from './demoBooking'
 
 describe('appendUtmToCalendlyUrl', () => {
   it('appends utm parameters to a calendly url', () => {
@@ -19,7 +23,7 @@ describe('appendUtmToCalendlyUrl', () => {
 })
 
 describe('buildCalendlyEmbedUrl', () => {
-  it('includes embed domain for Calendly inline embeds', () => {
+  it('includes inline embed params for Calendly iframe resize', () => {
     const url = buildCalendlyEmbedUrl('https://calendly.com/flotoryapp/30min', {
       utm_source: 'landing',
       utm_campaign: 'hero',
@@ -27,6 +31,23 @@ describe('buildCalendlyEmbedUrl', () => {
     })
 
     expect(url).toContain('embed_domain=localhost')
+    expect(url).toContain('embed_type=Inline')
+    expect(url).toContain('hide_event_type_details=1')
     expect(url).toContain('utm_source=landing')
+  })
+})
+
+describe('calendlyIframeHeightFromMessage', () => {
+  it('reads page height from calendly postMessage payload', () => {
+    expect(
+      calendlyIframeHeightFromMessage({
+        event: 'calendly.page_height',
+        payload: { height: 912.4 },
+      }),
+    ).toBe(913)
+  })
+
+  it('ignores unrelated messages', () => {
+    expect(calendlyIframeHeightFromMessage({ event: 'calendly.event_scheduled' })).toBeNull()
   })
 })

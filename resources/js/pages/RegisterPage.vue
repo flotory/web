@@ -3,7 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { MARKETING_HOME_PATH } from '@/lib/brand'
+import { marketingCardClass } from '@/lib/marketingPage'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -97,14 +99,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
-    <section class="mx-auto w-full max-w-md">
+  <MarketingPageShell>
       <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
-        <FlotoryLogo inverted size="lg" />
+        <FlotoryLogo size="lg" />
       </RouterLink>
 
-      <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <AppBadge tone="green">{{ authIntent === 'owner' ? 'Launch Flotory' : 'Create account' }}</AppBadge>
+      <AppCard :wrapper-class="marketingCardClass">
+      <AppBadge :tone="authIntent === 'owner' ? 'amber' : 'green'">{{ authIntent === 'owner' ? 'Launch Flotory' : 'Create account' }}</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Create your account' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
         {{ authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting stamps.' : 'Venue owners can register here. Guests collect rewards in the Flotory mobile app.' }}
@@ -170,29 +171,28 @@ onMounted(() => {
       </p>
       </AppCard>
 
-      <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
-        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>
-        <p class="mt-2 text-sm leading-relaxed text-white/85">
+      <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-border bg-surface-muted p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-active">Launch loyalty for your venue</p>
+        <p class="mt-2 text-sm leading-relaxed text-ink-muted">
           QR-based loyalty for cafes, bars, and restaurants. Owners run everything from this dashboard — guests and staff use the Flotory mobile app.
         </p>
         <ol class="mt-4 grid gap-2 sm:grid-cols-3">
-          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">1</p>
-            <p class="mt-1 text-sm font-bold text-white">Guests scan your QR</p>
-            <p class="mt-1 text-xs text-white/70">They join in the Flotory app.</p>
+          <li class="rounded-2xl border border-border bg-surface p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-accent-active">1</p>
+            <p class="mt-1 text-sm font-bold text-ink">Guests scan your QR</p>
+            <p class="mt-1 text-xs text-ink-muted">They join in the Flotory app.</p>
           </li>
-          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">2</p>
-            <p class="mt-1 text-sm font-bold text-white">Staff add stamps</p>
-            <p class="mt-1 text-xs text-white/70">Scanner lives in the mobile app.</p>
+          <li class="rounded-2xl border border-border bg-surface p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-accent-active">2</p>
+            <p class="mt-1 text-sm font-bold text-ink">Staff add stamps</p>
+            <p class="mt-1 text-xs text-ink-muted">Scanner lives in the mobile app.</p>
           </li>
-          <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">3</p>
-            <p class="mt-1 text-sm font-bold text-white">Rewards bring them back</p>
-            <p class="mt-1 text-xs text-white/70">Milestones unlock perks guests actually claim.</p>
+          <li class="rounded-2xl border border-border bg-surface p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-accent-active">3</p>
+            <p class="mt-1 text-sm font-bold text-ink">Rewards bring them back</p>
+            <p class="mt-1 text-xs text-ink-muted">Milestones unlock perks guests actually claim.</p>
           </li>
         </ol>
       </div>
-    </section>
-  </main>
+  </MarketingPageShell>
 </template>

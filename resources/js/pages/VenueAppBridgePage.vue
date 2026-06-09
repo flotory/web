@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
+import { marketingCardClass } from '@/lib/marketingPage'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
@@ -54,13 +56,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-auth-gradient px-4 py-10 text-primary-text">
-    <section class="mx-auto w-full max-w-lg">
+  <MarketingPageShell width="lg" padding-y="10">
       <div class="mb-6 inline-flex">
-        <FlotoryLogo inverted size="lg" />
+        <FlotoryLogo size="lg" />
       </div>
 
-      <AppCard wrapper-class="rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-8">
+      <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
         <p v-if="loading" class="text-sm font-semibold text-ink-muted">Loading venue…</p>
 
         <template v-else-if="landing">
@@ -97,6 +98,5 @@ onMounted(async () => {
           <p class="mt-2 text-sm text-ink-muted">{{ error || 'This venue link is unavailable.' }}</p>
         </template>
       </AppCard>
-    </section>
-  </main>
+  </MarketingPageShell>
 </template>
