@@ -13,6 +13,6 @@ createApp(App).use(createPinia()).use(router).mount('#app')
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('/service-worker.js?v=11')
   })
 }

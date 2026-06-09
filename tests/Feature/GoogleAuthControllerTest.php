@@ -43,7 +43,7 @@ class GoogleAuthControllerTest extends TestCase
         ], session('google_auth.intent'));
     }
 
-    public function test_callback_creates_new_user_and_redirects_with_token(): void
+    public function test_callback_creates_new_owner_and_redirects_with_token(): void
     {
         $googleUser = Mockery::mock(SocialiteUser::class);
         $googleUser->shouldReceive('getId')->andReturn('google-123');
@@ -64,7 +64,7 @@ class GoogleAuthControllerTest extends TestCase
                 'google_auth.intent' => [
                     'venue_slug' => 'demo-cafe',
                     'redirect' => '/card',
-                    'intent' => null,
+                    'intent' => 'owner',
                 ],
             ])
             ->get('/auth/google/callback');
@@ -76,6 +76,44 @@ class GoogleAuthControllerTest extends TestCase
             'email' => 'google@example.com',
             'google_id' => 'google-123',
         ]);
+    }
+
+    public function test_callback_rejects_new_web_user_without_owner_intent(): void
+    {
+        $googleUser = Mockery::mock(SocialiteUser::class);
+        $googleUser->shouldReceive('getId')->andReturn('google-customer-123');
+        $googleUser->shouldReceive('getName')->andReturn('Google Customer');
+        $googleUser->shouldReceive('getEmail')->andReturn('customer.google@example.com');
+        $googleUser->shouldReceive('getAvatar')->andReturn(null);
+
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('user')
+            ->once()
+            ->andReturn($googleUser);
+
+        $response = $this
+            ->withSession([
+                'google_auth.intent' => [
+                    'venue_slug' => 'demo-cafe',
+                    'redirect' => '/card',
+                    'intent' => null,
+                ],
+            ])
+            ->get('/auth/google/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=google_auth_failed', $response->headers->get('Location'));
+        $this->assertStringNotContainsString('oauth_token=', $response->headers->get('Location'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'customer.google@example.com',
+            'google_id' => 'google-customer-123',
+        ]);
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
     public function test_callback_updates_existing_user(): void

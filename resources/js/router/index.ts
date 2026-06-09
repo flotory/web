@@ -216,17 +216,19 @@ router.beforeEach(async (to) => {
   if (to.name === 'landing' && auth.isAuthenticated) {
     await workspace.bootstrap()
 
+    let destination = MOBILE_APP_PATH
+
     if (auth.user?.is_admin) {
-      return { path: ADMIN_HOME_PATH }
+      destination = ADMIN_HOME_PATH
+    } else if (hasOwnerOnboardingIntent() || hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues)) {
+      destination = ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId)
     }
 
-    if (hasOwnerOnboardingIntent() || hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues)) {
-      return {
-        path: ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId),
-      }
+    if (destination === to.path) {
+      return true
     }
 
-    return { path: MOBILE_APP_PATH }
+    return { path: destination }
   }
 
   if (

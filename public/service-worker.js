@@ -1,14 +1,20 @@
-const CACHE_NAME = 'flotory-v10'
+const CACHE_NAME = 'flotory-v11'
 const APP_SHELL = [
-  '/dashboard',
-  '/wallet',
   '/login',
+  '/app',
   '/manifest.webmanifest',
   '/favicon.png',
-  '/icons/icon-180.png?v=gold-cream-f-20260605-webpad',
-  '/icons/icon-192.png?v=gold-cream-f-20260605-webpad',
-  '/icons/icon-512.png?v=gold-cream-f-20260605-webpad',
 ]
+
+function isNavigationRequest(request) {
+  if (request.mode === 'navigate') {
+    return true
+  }
+
+  const accept = request.headers.get('accept') ?? ''
+
+  return accept.includes('text/html')
+}
 
 function isCacheableRequest(request) {
   if (request.method !== 'GET') {
@@ -18,6 +24,10 @@ function isCacheableRequest(request) {
   const url = new URL(request.url)
 
   if (url.pathname.startsWith('/api')) {
+    return false
+  }
+
+  if (isNavigationRequest(request)) {
     return false
   }
 
@@ -41,6 +51,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request
 
+  if (isNavigationRequest(request)) {
+    event.respondWith(fetch(request))
+    return
+  }
+
   if (!isCacheableRequest(request)) {
     return
   }
@@ -55,6 +70,6 @@ self.addEventListener('fetch', (event) => {
 
         return response
       })
-      .catch(() => caches.match(request).then((cached) => cached ?? caches.match('/wallet'))),
+      .catch(() => caches.match(request)),
   )
 })
