@@ -8,7 +8,6 @@
 | **This file**                          | **Source of truth** for business invariants, exceptions, and out-of-scope |
 | [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked engineering choices (must not contradict this file)                |
 | [CAMPAIGNS.md](./CAMPAIGNS.md)         | Campaign UI, API paths, and test references                               |
-| [KNOWN_RISKS.md](./KNOWN_RISKS.md)     | Living risk register (status updates; rules are defined here first)       |
 | [PRODUCT.md](./PRODUCT.md)             | Journeys and positioning                                                  |
 
 
@@ -91,7 +90,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **R5.** Archiving or deleting a reward must **never silently delete** unlock rows customers already earned.
 
-**R6.** Purging an archived reward must **not** cascade-delete customer unlocks ([resolved in product — see KNOWN_RISKS](./KNOWN_RISKS.md)).
+**R6.** Purging an archived reward must **not** cascade-delete customer unlocks (enforced in API; purge blocked while unclaimed unlocks exist).
 
 **R7.** Customers must be able to distinguish: available to earn, unlocked and redeemable, already claimed, or no longer offered.
 
@@ -271,7 +270,7 @@ These are **known behaviors**, not bugs, until a rule change is approved and shi
 | **E2**  | R9           | Accepted | New lower milestone does not retro-unlock for existing stamp totals                        | Backfill on create or owner communication                           |
 | **E3**  | X5           | Accepted | Wallet row tapped may not be the unlock consumed (FIFO)                                    | UI explain FIFO, collapse rows, or bind redeem to `unlock_id` in UI |
 | **E4**  | U7 / journey | Accepted | Card journey shows current cycle; older-cycle unlocks mainly in Rewards                    | Cross-cycle indicators on card                                      |
-| **E5**  | R3 / U7      | **Open** | Archived reward may still show in wallet; redeem may fail                                  | Allow redeem of earned unlocks or clear “retired” state             |
+| **E5**  | R3 / U7      | Resolved | Earned unlocks remain redeemable after owner archives the milestone                        | Wallet may show “retired” copy; claim QR and staff redeem work      |
 | **E6**  | L8           | Accepted | All milestones archived → stamps accumulate, no cycle completion                           | Owner warning; optional freeze                                      |
 | **E7**  | R2           | Accepted | Archived threshold still blocks reusing same stamp count until purge                       | Uniqueness on active only or clearer purge UX                       |
 | **E8**  | U1           | Accepted | Soft-deleted venue: no new stamps; redeem may still work                                   | Read-only card, messaging on landing                                |
@@ -281,7 +280,7 @@ These are **known behaviors**, not bugs, until a rule change is approved and shi
 | **E12** | U6           | Accepted | Background card refresh may fail silently                                                  | Reconnect / retry indicator                                         |
 
 
-Detail and history: [KNOWN_RISKS.md](./KNOWN_RISKS.md). Resolving an exception requires updating **this table** and the risk doc together.
+Resolving an exception requires updating **this table** and shipping the fix or an explicit owner/customer UX change.
 
 ---
 

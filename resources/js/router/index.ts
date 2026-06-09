@@ -64,6 +64,7 @@ const router = createRouter({
     { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
     { path: '/onboarding', redirect: { path: '/my-venues', query: { create: '1' } } },
     { path: '/onboarding/create-venue', redirect: { path: '/my-venues', query: { create: '1' } } },
+    { path: '/onboarding/:pathMatch(.*)*', redirect: { path: '/my-venues', query: { create: '1' } } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -204,7 +205,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (to.name === 'landing' && auth.isAuthenticated) {
+  if (to.name === 'landing' && auth.isAuthenticated && to.query.public !== '1') {
     await workspace.bootstrap()
 
     let destination = MOBILE_APP_PATH

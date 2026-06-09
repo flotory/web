@@ -33,7 +33,14 @@ export async function selectVenueIfPresent(page: Page, venueName: string): Promi
   }
 
   await expect(select).toBeVisible({ timeout: 10_000 })
+
+  const campaignsRequest = page.waitForResponse(
+    (response) => response.url().includes('/campaigns') && response.request().method() === 'GET',
+    { timeout: 15_000 },
+  ).catch(() => null)
+
   await select.selectOption({ label: venueName })
+  await campaignsRequest
 }
 
 export async function demoCafeVenueId(page: Page): Promise<number> {

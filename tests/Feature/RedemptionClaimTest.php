@@ -240,6 +240,44 @@ class RedemptionClaimTest extends TestCase
             ]);
     }
 
+    public function test_archived_reward_with_pending_unlock_can_be_claimed(): void
+    {
+        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $staff, 'staff');
+
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 5]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $unlock = RewardUnlock::query()->create([
+            'customer_id' => $customer->id,
+            'reward_id' => $reward->id,
+            'cycle_number' => 1,
+            'unlocked_at' => now(),
+        ]);
+
+        $reward->forceFill(['active' => false])->save();
+
+        Sanctum::actingAs($customerUser);
+
+        $token = $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/claim-session")
+            ->assertCreated()
+            ->assertJsonPath('reward.id', $reward->id)
+            ->json('token');
+
+        Sanctum::actingAs($staff);
+
+        $this->postJson("/api/venues/{$venue->id}/scanner/redeem", [
+            'redemption_token' => $token,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('scan_type', 'redeem')
+            ->assertJsonPath('reward.id', $reward->id);
+
+        $unlock->refresh();
+        $this->assertNotNull($unlock->claimed_at);
+    }
+
     public function test_double_redeem_of_same_token_is_rejected(): void
     {
         $staff = $this->createUser(['email' => 'staff@example.com']);

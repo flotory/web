@@ -6,6 +6,12 @@ import type { Venue } from '@/types'
 
 const FILTER_KEY = 'loyalty_venue_filter'
 
+function firstActiveVenueId(venues: Venue[]): number | null {
+  const active = venues.filter((venue) => !venue.archived)
+
+  return active[0]?.id ?? null
+}
+
 export const useWorkspaceStore = defineStore('workspace', {
   state: () => ({
     venues: [] as Venue[],
@@ -18,29 +24,20 @@ export const useWorkspaceStore = defineStore('workspace', {
       return state.venues.some((venue) => !venue.archived)
     },
     filteredVenue(state): Venue | null {
-      if (state.filterVenueId === null) {
+      const id = state.filterVenueId ?? firstActiveVenueId(state.venues)
+
+      if (id === null) {
         return null
       }
 
-      return state.venues.find((venue) => !venue.archived && venue.id === state.filterVenueId) ?? null
+      return state.venues.find((venue) => !venue.archived && venue.id === id) ?? null
     },
     /** Venue id for pages that need a single venue (rewards, team, etc.). */
     effectiveVenueId(state): number | null {
-      if (state.filterVenueId !== null) {
-        return state.filterVenueId
-      }
-
-      const active = state.venues.filter((venue) => !venue.archived)
-
-      return active.length === 1 ? active[0].id : null
+      return state.filterVenueId ?? firstActiveVenueId(state.venues)
     },
     effectiveVenue(state): Venue | null {
-      const id = state.filterVenueId !== null
-        ? state.filterVenueId
-        : (() => {
-            const active = state.venues.filter((venue) => !venue.archived)
-            return active.length === 1 ? active[0].id : null
-          })()
+      const id = state.filterVenueId ?? firstActiveVenueId(state.venues)
 
       if (id === null) {
         return null
@@ -59,32 +56,46 @@ export const useWorkspaceStore = defineStore('workspace', {
     },
   },
   actions: {
-    async bootstrap(force = false) {
-      if (this.loaded && !force) {
+    ensureVenueFilter() {
+      const active = this.activeVenues
+      const stored = sessionStorage.getItem(FILTER_KEY)
+
+      if (stored) {
+        const id = Number(stored)
+        if (active.some((venue) => venue.id === id)) {
+          this.filterVenueId = id
+          return
+        }
+      }
+
+      if (this.filterVenueId !== null && active.some((venue) => venue.id === this.filterVenueId)) {
+        sessionStorage.setItem(FILTER_KEY, String(this.filterVenueId))
         return
       }
 
-      const response = await api<{ venues: Venue[] }>('/venues')
-      this.venues = response.venues
+      const fallbackId = firstActiveVenueId(this.venues)
+      this.filterVenueId = fallbackId
 
-      const stored = sessionStorage.getItem(FILTER_KEY)
-      const active = this.activeVenues
-      if (stored) {
-        const id = Number(stored)
-        this.filterVenueId = active.some((venue) => venue.id === id) ? id : null
+      if (fallbackId !== null) {
+        sessionStorage.setItem(FILTER_KEY, String(fallbackId))
+      } else {
+        sessionStorage.removeItem(FILTER_KEY)
+      }
+    },
+    async bootstrap(force = false) {
+      if (!this.loaded || force) {
+        const response = await api<{ venues: Venue[] }>('/venues')
+        this.venues = response.venues
+        this.loaded = true
       }
 
-      if (this.filterVenueId === null && active.length > 0) {
-        this.filterVenueId = active[0].id
-        sessionStorage.setItem(FILTER_KEY, String(active[0].id))
-      }
-
-      this.loaded = true
+      this.ensureVenueFilter()
     },
     setFilter(venueId: number | null) {
       this.filterVenueId = venueId
       if (venueId === null) {
         sessionStorage.removeItem(FILTER_KEY)
+        this.ensureVenueFilter()
         return
       }
 

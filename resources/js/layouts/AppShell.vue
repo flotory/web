@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import { MARKETING_HOME_PATH } from '@/lib/brand'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
-import { ADMIN_HOME_PATH } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -29,13 +29,7 @@ const isWorkspace = computed(() => {
   return false
 })
 
-const homePath = computed(() => {
-  if (auth.isAdmin) {
-    return ADMIN_HOME_PATH
-  }
-
-  return '/dashboard'
-})
+const logoPath = MARKETING_HOME_PATH
 
 const nav = computed(() => {
   if (!isWorkspace.value) {
@@ -78,7 +72,7 @@ async function logout() {
     <aside
       class="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar-bg px-4 py-5 md:flex"
     >
-      <RouterLink :to="homePath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover">
+      <RouterLink :to="logoPath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover" aria-label="Flotory home">
         <FlotoryLogo size="lg" inverted />
       </RouterLink>
 
@@ -126,7 +120,7 @@ async function logout() {
     <div class="bg-workspace-gradient min-h-screen">
       <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <RouterLink :to="homePath">
+          <RouterLink :to="logoPath" aria-label="Flotory home">
             <FlotoryLogo />
           </RouterLink>
           <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border" @click="logout">

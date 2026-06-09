@@ -255,7 +255,6 @@ These files are the source of truth for product, architecture, and MVP decisions
 - [docs/CAMPAIGNS.md](docs/CAMPAIGNS.md) — stamp campaign templates and rules
 - [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md) — platform admin and venue listing approval
 - [apps/mobile/README.md](apps/mobile/README.md) — Expo app setup and API map
-- [docs/KNOWN_RISKS.md](docs/KNOWN_RISKS.md) — risks and resolved issues
 
 ## Roadmap
 

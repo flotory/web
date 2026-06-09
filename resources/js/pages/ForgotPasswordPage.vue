@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import { MARKETING_HOME_PATH } from '@/lib/brand'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -50,7 +51,7 @@ async function submit() {
 <template>
   <main class="min-h-screen bg-auth-gradient px-4 py-8 text-primary-text sm:py-12">
     <section class="mx-auto w-full max-w-md">
-      <RouterLink to="/" class="mb-6 inline-flex">
+      <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 

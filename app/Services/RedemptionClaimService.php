@@ -29,12 +29,6 @@ class RedemptionClaimService
 
         $unlock->loadMissing('reward', 'customer.user', 'customer.venue');
 
-        if (! $unlock->reward?->active) {
-            throw ValidationException::withMessages([
-                'unlock' => 'This reward is no longer available.',
-            ]);
-        }
-
         return DB::transaction(function () use ($unlock): RedemptionRequest {
             RedemptionRequest::query()
                 ->where('reward_unlock_id', $unlock->id)

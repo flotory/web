@@ -120,7 +120,13 @@ class LoyaltyStampService
         User $redeemer,
         ?string $claimSessionToken = null,
     ): RewardUnlock {
-        if ($reward->venue_id !== $customer->venue_id || ! $reward->active) {
+        if ($reward->venue_id !== $customer->venue_id) {
+            throw ValidationException::withMessages([
+                'reward' => 'This reward is not available for the scanned customer.',
+            ]);
+        }
+
+        if (! $reward->active && ! $this->hasPendingUnlock($customer, $reward)) {
             throw ValidationException::withMessages([
                 'reward' => 'This reward is not available for the scanned customer.',
             ]);
@@ -318,6 +324,15 @@ class LoyaltyStampService
                 ];
             })->values(),
         ];
+    }
+
+    private function hasPendingUnlock(Customer $customer, Reward $reward): bool
+    {
+        return RewardUnlock::query()
+            ->where('customer_id', $customer->id)
+            ->where('reward_id', $reward->id)
+            ->whereNull('claimed_at')
+            ->exists();
     }
 
     private function milestonesForVenue(Customer $customer): Collection

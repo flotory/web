@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import { MARKETING_HOME_PATH } from '@/lib/brand'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { mobileAppDeepLink } from '@/lib/mobileApp'
@@ -12,7 +13,7 @@ const appDeepLink = mobileAppDeepLink()
 <template>
   <main class="min-h-screen bg-auth-gradient px-4 py-10 text-primary-text">
     <section class="mx-auto w-full max-w-lg">
-      <RouterLink to="/" class="mb-6 inline-flex">
+      <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
         <FlotoryLogo inverted size="lg" />
       </RouterLink>
 

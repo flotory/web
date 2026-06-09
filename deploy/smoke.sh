@@ -45,14 +45,14 @@ check_url() {
 }
 
 # Laravel app must be up (containers may need a few seconds after recreate).
-check_url "${BACKEND_URL}/up" "200" 12 2
-check_url "${BACKEND_URL}/" "200" 3 2
-check_url "${BACKEND_URL}/api/customer/cards" "401" 5 2 "application/json"
+check_url "${BACKEND_URL}/up" "200" 20 3
+check_url "${BACKEND_URL}/" "200" 8 3
+check_url "${BACKEND_URL}/api/customer/cards" "401" 8 3 "application/json"
 
 if [[ -n "${PUBLIC_URL}" ]]; then
-  check_url "${PUBLIC_URL}/" "200" 8 2
-  check_url "${PUBLIC_URL}/manifest.webmanifest" "200" 5 2
-  check_url "${PUBLIC_URL}/api/customer/cards" "401" 5 2 "application/json"
+  check_url "${PUBLIC_URL}/" "200" 15 3
+  check_url "${PUBLIC_URL}/manifest.webmanifest" "200" 8 3
+  check_url "${PUBLIC_URL}/api/customer/cards" "401" 8 3 "application/json"
 fi
 
 echo "==> Smoke checks passed."

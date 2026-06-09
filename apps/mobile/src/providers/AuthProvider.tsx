@@ -11,8 +11,6 @@ interface AuthContextValue {
   role: UserRole | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
-  signInWithGoogle: (idToken: string) => Promise<void>
-  signInWithOAuthToken: (token: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -61,11 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void boot()
   }, [])
 
-  async function establishSession(sessionToken: string) {
+  async function signIn(email: string, password: string) {
+    const payload = await apiRequest<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: { email, password, device_name: 'flotory-mobile' },
+    })
+
     try {
-      await saveToken(sessionToken)
-      await hydrateSession(sessionToken)
-      setToken(sessionToken)
+      await saveToken(payload.token)
+      await hydrateSession(payload.token)
+      setToken(payload.token)
     } catch (exception) {
       await clearToken()
       setToken(null)
@@ -73,28 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRole(null)
       throw exception
     }
-  }
-
-  async function signInWithGoogle(idToken: string) {
-    const payload = await apiRequest<AuthResponse>('/auth/google', {
-      method: 'POST',
-      body: { id_token: idToken, device_name: 'flotory-mobile' },
-    })
-
-    await establishSession(payload.token)
-  }
-
-  async function signInWithOAuthToken(sessionToken: string) {
-    await establishSession(sessionToken)
-  }
-
-  async function signIn(email: string, password: string) {
-    const payload = await apiRequest<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: { email, password, device_name: 'flotory-mobile' },
-    })
-
-    await establishSession(payload.token)
   }
 
   async function signUp(name: string, email: string, password: string) {
@@ -109,7 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     })
 
-    await establishSession(payload.token)
+    try {
+      await saveToken(payload.token)
+      await hydrateSession(payload.token)
+      setToken(payload.token)
+    } catch (exception) {
+      await clearToken()
+      setToken(null)
+      setUser(null)
+      setRole(null)
+      throw exception
+    }
   }
 
   async function signOut() {
@@ -123,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, signIn, signUp, signInWithGoogle, signInWithOAuthToken, signOut }),
+    () => ({ booting, token, user, role, signIn, signUp, signOut }),
     [booting, token, user, role],
   )
 

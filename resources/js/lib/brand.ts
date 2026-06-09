@@ -1,5 +1,8 @@
 export const FLOTORY_APP_NAME = 'Flotory'
 
+/** Marketing homepage; `public=1` lets logged-in users view it instead of workspace redirect. */
+export const MARKETING_HOME_PATH = '/?public=1'
+
 /** Bump when regenerating icons (`npm run icons:generate`) to bust browser + SW cache */
 /** Keep in sync with config/flotory.php */
 export const FLOTORY_ICON_VERSION = 'final-f-large-20260608b'

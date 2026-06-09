@@ -17,7 +17,6 @@ Small, focused docs — one topic per file. Start here.
 | [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked decisions — do not undo without approval |
 | [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign templates, API, owner UI |
 | [ADMIN_ACCESS.md](./ADMIN_ACCESS.md) | Platform admin and venue listing approval |
-| [KNOWN_RISKS.md](./KNOWN_RISKS.md) | Accepted risks and resolved issues |
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Shipped phases + what's next |
 
 ## Operations

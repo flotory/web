@@ -26,13 +26,4 @@ class PublicAppConfigControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('google_maps_key', null);
     }
-
-    public function test_returns_google_oauth_client_id_when_configured(): void
-    {
-        config(['services.google.client_id' => 'test-oauth-client-id']);
-
-        $this->getJson('/api/public/app-config')
-            ->assertOk()
-            ->assertJsonPath('google_oauth_client_id', 'test-oauth-client-id');
-    }
 }

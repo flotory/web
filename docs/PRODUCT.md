@@ -45,8 +45,8 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 ## Owner Journey (web)
 
 1. **Sign up** — Homepage → register with `intent=owner` (or Google equivalent).
-2. **Onboard** — 4-step wizard: name + slug → category → reward presets → QR download.
-3. **Launch** — Complete listing checklist (address, branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; staff scanner works before public approval.
+2. **Create venue** — **My Venues** opens with the create form (`/my-venues?create=1`): name, slug, address, and contact details.
+3. **Launch** — Complete listing checklist (branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; staff scanner works before public approval.
 4. **Operate** — Operational dashboard (KPIs, insights); `/rewards` for milestones; `/team` for staff.
 5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces current-month KPIs and API insights.
 
