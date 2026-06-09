@@ -2,7 +2,7 @@
 
 ## What Is Flotory?
 
-Flotory is a digital loyalty platform for independent hospitality businesses. Venues place a QR code at the counter or on tables; guests scan to join, collect stamps on a phone-based loyalty card, and unlock milestone rewards. Owners run everything from a web workspace. Customers can use the **browser** on any phone or the **optional Expo mobile app** — no install required for web join.
+Flotory is a digital loyalty platform for independent hospitality businesses. Venues place a QR code at the counter or on tables; guests scan to join in the **Flotory mobile app**, collect stamps on a phone-based loyalty card, and unlock milestone rewards. **Owners** run everything from the **web dashboard**. **Customers and staff** use the **Expo mobile app**.
 
 **Tagline value:** Turn occasional customers into regulars.
 
@@ -28,33 +28,33 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 | For owners | For customers |
 |------------|---------------|
-| Live in minutes with QR onboarding | Browser wallet on any phone; optional mobile app |
-| Staff scanner built for speed | Clear progress toward the next reward |
+| Live in minutes with QR onboarding | Mobile app wallet and My QR |
+| Staff scanner in the mobile app | Clear progress toward the next reward |
 | Milestone rewards that drive return visits | Claim QR scanned by staff at the counter |
 | Retention analytics (visits, claims, cycles) | Realtime stamp updates when Reverb is enabled |
 
-## Customer Journey
+## Customer Journey (mobile app)
 
-1. **Discover** — Guest scans venue QR or opens `/v/{slug}` landing page.
+1. **Discover** — Guest scans venue QR → web bridge at `/v/{slug}` → opens Flotory app.
 2. **Join** — Register or sign in (email or Google); auto-joins the venue.
 3. **Collect** — Staff scan the customer's **My QR** (one universal stamp code) and award stamps (typically 1 per purchase; campaigns may multiply).
-4. **Progress** — Customer sees all venue cards on `/wallet` (stamp progress per venue); tap a card for QR and milestone journey; pending earned rewards live on `/customer/rewards` (tab badge).
-5. **Redeem** — Customer taps **Claim** in Rewards, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
+4. **Progress** — Customer sees venue cards on **Wallet**; tap a card for QR and milestone journey; pending earned rewards live on **Rewards**.
+5. **Redeem** — Customer taps **Claim**, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
 6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.
 
-## Owner Journey
+## Owner Journey (web)
 
 1. **Sign up** — Homepage → register with `intent=owner` (or Google equivalent).
 2. **Onboard** — 4-step wizard: name + slug → category → reward presets → QR download.
-3. **Launch** — Complete listing checklist (address, branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; scanner works before public approval.
-4. **Operate** — Operational dashboard (KPIs, insights, scanner); `/rewards` for milestones; `/team` for staff.
+3. **Launch** — Complete listing checklist (address, branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; staff scanner works before public approval.
+4. **Operate** — Operational dashboard (KPIs, insights); `/rewards` for milestones; `/team` for staff.
 5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces current-month KPIs and API insights.
 
-## Staff Journey
+## Staff Journey (mobile app + web invite)
 
-1. **Invite** — Owner sends email invitation from `/team`.
-2. **Accept** — Staff opens `/invite/{token}`, creates account or signs in, joins as `staff`.
-3. **Scan** — `/scanner` (venue-scoped): auto-detect stamp card vs claim QR; search-by-name fallback for stamps only.
+1. **Invite** — Owner sends email invitation from `/team` (web).
+2. **Accept** — Staff opens `/invite/{token}` on the web, creates account or signs in, joins as `staff`.
+3. **Scan** — Mobile app scanner (venue-scoped): auto-detect stamp card vs claim QR; search-by-name fallback for stamps only.
 4. **Award** — Select stamp amount (presets 1–5 or custom 1–100), confirm.
 5. **Assist** — Optionally claim a milestone on behalf of a customer via staff API when needed.
 
@@ -62,27 +62,28 @@ Paper punch cards get lost, are easy to fraud, and give owners no insight into w
 
 What ships today:
 
-- Public venue landing (`/v/:slug`) — primary QR entry
-- Email + Google auth with intent-based redirects (owner vs customer)
-- Password reset (forgot / reset flows)
-- Owner 4-step onboarding wizard
+**Web (owners + platform admin)**
+
+- Owner dashboard, onboarding, my-venues, rewards, campaigns, analytics, team, customers CRM
+- Public venue bridge (`/v/:slug`) — QR entry points guests to the mobile app
+- Staff invitation accept flow (`/invite/{token}`)
+- Platform admin: venue listing review, design palette, activity log (`/admin/*`) — see [ADMIN_ACCESS.md](./ADMIN_ACCESS.md)
+
+**Mobile app (customers + staff)**
+
+- Customer: Home, Wallet, My QR, Venues, Rewards claim, Profile/Settings
+- Staff scanner with QR camera + customer search fallback
+- Scanner auto-detect: stamp card vs claim QR; pending-reward warning after stamp scans
+- Optional realtime stamp updates via Reverb
+
+**Shared API**
+
+- Email + Google auth; password reset
 - Venue listing workflow (`draft` → `pending_review` → `published`) with admin approval
-- Stamp campaigns (Bring Back, Quiet Day, Happy Hour, VIP) on `/campaigns`
-- Multi-venue owner workspace (`/my-venues`) with soft delete
-- Venue settings: slug, category, logo, cover, contact fields, QR download
+- Stamp campaigns (Bring Back, Quiet Day, Happy Hour, VIP)
 - Milestone rewards CRUD with images (archive / reactivate / purge)
 - Team: email invitations, resend, cancel; staff role only
-- Staff scanner with QR camera + customer search fallback
-- Customer loyalty wallet (`/wallet`) listing all joined venues; per-venue detail with journey, stamp/reward animations, and redeem shortcut
-- Customer rewards wallet (`/customer/rewards`) — Claim button, claim QR modal, staff scan to redeem
-- Scanner auto-detect: stamp card (green) vs claim QR (indigo success); pending-reward warning after stamp scans
-- Customer venues list (`/venues`) and settings (`/customer/settings`)
 - Staff-side milestone claim API
-- Optional realtime stamp updates via Reverb
-- Owner operational dashboard (visits this month, returning guests, rewards unlocked, repeat rate, activity, insights) and `/analytics` for trends
-- Staff-only simplified nav (Scanner, Customers, Account)
-- Platform admin: venue listing review, design palette, activity log (`/admin/*`) — see [ADMIN_ACCESS.md](./ADMIN_ACCESS.md)
-- Customer mobile app (Expo): Home, Wallet, My QR, Venues, Profile
 
 **Venue categories in product:** cafe, bar, restaurant, bakery.
 

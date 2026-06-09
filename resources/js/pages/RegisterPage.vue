@@ -7,14 +7,15 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
-import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
+import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { sanitizeRedirect } from '@/lib/redirect'
 import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
+import { resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
-import type { VenueLandingPayload } from '@/lib/onboarding'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const auth = useAuthStore()
+const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -23,27 +24,12 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
-const landing = ref<VenueLandingPayload | null>(null)
 
-const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
-const postAuthPath = computed(() => {
-  if (authIntent.value === 'owner') {
-    return '/onboarding/create-venue'
-  }
-
-  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/wallet')
-})
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 
 const loginLink = computed(() => {
   const query: Record<string, string> = {}
-  if (venueSlug.value) {
-    query.venue_slug = venueSlug.value
-  }
-  if (route.query.redirect && typeof route.query.redirect === 'string') {
-    query.redirect = route.query.redirect
-  }
   if (isStaffInvite.value) {
     query.staff = '1'
   }
@@ -60,7 +46,8 @@ const loginLink = computed(() => {
 })
 
 function continueWithGoogle() {
-  window.location.href = buildGoogleAuthUrlWithIntent(venueSlug.value, postAuthPath.value, authIntent.value)
+  const nextPath = authIntent.value === 'owner' ? '/onboarding/create-venue' : undefined
+  window.location.href = buildGoogleAuthUrlWithIntent(null, nextPath, authIntent.value)
 }
 
 async function submit() {
@@ -75,11 +62,7 @@ async function submit() {
       password_confirmation: password.value,
     })
 
-    if (venueSlug.value) {
-      const result = await completeVenueOnboarding(venueSlug.value)
-      await router.push(`/wallet?venue_id=${result.venueId}`)
-      return
-    }
+    await workspace.bootstrap(true)
 
     if (authIntent.value === 'owner') {
       markOwnerOnboardingIntent()
@@ -87,7 +70,10 @@ async function submit() {
       return
     }
 
-    await router.push(postAuthPath.value)
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    await router.push(
+      resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+    )
   } catch (exception) {
     if (exception instanceof ApiError && exception.message.toLowerCase().includes('already been taken')) {
       error.value = 'This email already has an account — usually from a staff invite. Log in instead.'
@@ -112,14 +98,6 @@ onMounted(() => {
   if (typeof route.query.email === 'string') {
     email.value = route.query.email
   }
-
-  if (venueSlug.value) {
-    fetchVenueLanding(venueSlug.value)
-      .then((payload) => {
-        landing.value = payload
-      })
-      .catch(() => undefined)
-  }
 })
 </script>
 
@@ -131,14 +109,10 @@ onMounted(() => {
       </RouterLink>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <p v-if="landing" class="mb-4 text-sm text-ink-muted">
-        Joining <span class="font-bold text-ink">{{ landing.venue.name }}</span>
-      </p>
-
-      <AppBadge tone="green">{{ venueSlug ? 'Join rewards in seconds' : authIntent === 'owner' ? 'Launch Flotory' : 'Join Flotory' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
+      <AppBadge tone="green">{{ authIntent === 'owner' ? 'Launch Flotory' : 'Create account' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Create your account' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        {{ venueSlug ? 'Create your account and open this venue loyalty card instantly.' : authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting stamps.' : 'Create your account in seconds and keep your loyalty progress in one place.' }}
+        {{ authIntent === 'owner' ? 'Create your account, set up your first venue, and start collecting stamps.' : 'Venue owners can register here. Guests collect rewards in the Flotory mobile app.' }}
       </p>
 
       <AppButton
@@ -194,23 +168,28 @@ onMounted(() => {
           Log in
         </RouterLink>
       </p>
+
+      <p class="mt-4 text-center text-sm text-ink-muted">
+        Guest collecting rewards?
+        <RouterLink to="/app" class="font-bold text-ink">Get the mobile app</RouterLink>
+      </p>
       </AppCard>
 
       <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>
         <p class="mt-2 text-sm leading-relaxed text-white/85">
-          QR-based loyalty for cafes, bars, and restaurants. Set up in minutes — guests use their phone, no app download.
+          QR-based loyalty for cafes, bars, and restaurants. Owners run everything from this dashboard — guests and staff use the Flotory mobile app.
         </p>
         <ol class="mt-4 grid gap-2 sm:grid-cols-3">
           <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">1</p>
             <p class="mt-1 text-sm font-bold text-white">Guests scan your QR</p>
-            <p class="mt-1 text-xs text-white/70">They join instantly from the table.</p>
+            <p class="mt-1 text-xs text-white/70">They join in the Flotory app.</p>
           </li>
           <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">2</p>
             <p class="mt-1 text-sm font-bold text-white">Staff add stamps</p>
-            <p class="mt-1 text-xs text-white/70">Each stamp adds progress in seconds.</p>
+            <p class="mt-1 text-xs text-white/70">Scanner lives in the mobile app.</p>
           </li>
           <li class="rounded-2xl border border-white/10 bg-surface/10 p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-cyan-200/90">3</p>

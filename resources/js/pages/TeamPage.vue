@@ -245,7 +245,7 @@ onMounted(loadTeam)
                 bordered
                 :icon="Users"
                 title="No team members yet"
-                description="Invite staff below — they'll get scanner and customer tools."
+                description="Invite staff below — they'll use the Flotory mobile app for scanning."
               />
             </div>
           </AppCard>

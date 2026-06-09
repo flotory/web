@@ -9,7 +9,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { authFieldClass } from '@/lib/authForm'
-import { staffScannerPath } from '@/lib/venueRoles'
+import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -24,7 +24,7 @@ const confirmPassword = ref('')
 const passwordAction = useAsyncAction()
 const error = ref('')
 
-const isStaff = computed(() => workspace.usesStaffNav)
+const isStaff = computed(() => workspace.isStaffOnlyMember)
 
 async function submit() {
   if (newPassword.value !== confirmPassword.value) {
@@ -61,7 +61,7 @@ async function submit() {
 
 function goBack() {
   if (isStaff.value) {
-    void router.push(staffScannerPath(workspace.effectiveVenueId))
+    void router.push(MOBILE_APP_PATH)
     return
   }
 

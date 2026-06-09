@@ -95,15 +95,15 @@ class GoogleAuthController extends Controller
     private function sanitizeRedirect(mixed $path, ?string $intent = null): string
     {
         if (! is_string($path) || $path === '') {
-            return $intent === 'owner' ? '/onboarding/create-venue' : '/wallet';
+            return $intent === 'owner' ? '/onboarding/create-venue' : '/app';
         }
 
         if (! Str::startsWith($path, '/')) {
-            return '/wallet';
+            return '/app';
         }
 
         if (Str::startsWith($path, ['//', '/api', '/auth/google'])) {
-            return '/wallet';
+            return '/app';
         }
 
         return $path;

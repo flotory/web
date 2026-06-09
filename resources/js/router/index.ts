@@ -2,26 +2,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AnalyticsPage from '@/pages/AnalyticsPage.vue'
 import CampaignsPage from '@/pages/CampaignsPage.vue'
-import CustomerCardPage from '@/pages/customer/CustomerCardPage.vue'
-import CustomerClaimPage from '@/pages/customer/CustomerClaimPage.vue'
-import CustomerHomePage from '@/pages/customer/CustomerHomePage.vue'
-import CustomerMyQrPage from '@/pages/customer/CustomerMyQrPage.vue'
-import CustomerNotificationsPage from '@/pages/customer/CustomerNotificationsPage.vue'
-import CustomerRewardsPage from '@/pages/CustomerRewardsPage.vue'
-import CustomerSettingsPage from '@/pages/CustomerSettingsPage.vue'
-import CustomerVenuesPage from '@/pages/CustomerVenuesPage.vue'
-import CustomerWalletPage from '@/pages/customer/CustomerWalletPage.vue'
-import VenueLandingPage from '@/pages/VenueLandingPage.vue'
 import CustomersPage from '@/pages/CustomersPage.vue'
 import CustomerProfilePage from '@/pages/CustomerProfilePage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
+import MobileAppPage from '@/pages/MobileAppPage.vue'
 import MyVenuesPage from '@/pages/MyVenuesPage.vue'
 import OnboardingPage from '@/pages/OnboardingPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import RewardsPage from '@/pages/RewardsPage.vue'
-import ScannerPage from '@/pages/ScannerPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import StaffInvitePage from '@/pages/StaffInvitePage.vue'
@@ -34,31 +24,45 @@ import TeamPage from '@/pages/TeamPage.vue'
 import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
 import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
+import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
 import { clearOwnerOnboardingIntent, hasOwnerOnboardingIntent, markOwnerOnboardingIntent } from '@/lib/ownerIntent'
+import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import {
   ADMIN_HOME_PATH,
   hasOwnerMembership,
   hasTeamMembership,
   isPlatformAdmin,
+  isStaffOnlyMember,
   ownerBootstrapPath,
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
-  staffScannerPath,
 } from '@/lib/venueRoles'
+
+const REMOVED_CUSTOMER_STAFF_PATHS = [
+  '/home',
+  '/wallet',
+  '/my-qr',
+  '/scanner',
+  '/venues',
+  '/customer/rewards',
+  '/customer/notifications',
+  '/customer/settings',
+]
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'landing', component: LandingPage },
+    { path: '/app', name: 'mobile-app', component: MobileAppPage, meta: { guest: true } },
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { guest: true } },
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { guest: true } },
     { path: '/invite/:token', name: 'staff-invite', component: StaffInvitePage },
-    { path: '/v/:slug', name: 'venue-landing', component: VenueLandingPage, meta: { guest: true } },
+    { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
     { path: '/onboarding', name: 'onboarding', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/onboarding/create-venue', name: 'onboarding-create-venue', component: OnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -66,11 +70,8 @@ const router = createRouter({
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/design', name: 'venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/cafes', redirect: '/home' },
-    { path: '/home', name: 'customer-home', component: CustomerHomePage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
-    { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true } },
+    { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/campaigns', name: 'campaigns', component: CampaignsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -83,14 +84,17 @@ const router = createRouter({
     { path: '/admin/manage-venues/:id', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues/:id/design', name: 'admin-venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
-    { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/card/:cardId', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false, flush: true } },
-    { path: '/claim/:unlockId', name: 'customer-claim', component: CustomerClaimPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/customer/notifications', name: 'customer-notifications', component: CustomerNotificationsPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/venues', name: 'customer-venues', component: CustomerVenuesPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/customer/settings', name: 'customer-settings', component: CustomerSettingsPage, meta: { requiresAuth: true, workspace: false } },
+    { path: '/cafes', redirect: MOBILE_APP_PATH },
+    { path: '/home', redirect: MOBILE_APP_PATH },
+    { path: '/wallet', redirect: MOBILE_APP_PATH },
+    { path: '/my-qr', redirect: MOBILE_APP_PATH },
+    { path: '/scanner', redirect: MOBILE_APP_PATH },
+    { path: '/venues', redirect: MOBILE_APP_PATH },
+    { path: '/customer/rewards', redirect: MOBILE_APP_PATH },
+    { path: '/customer/notifications', redirect: MOBILE_APP_PATH },
+    { path: '/customer/settings', redirect: MOBILE_APP_PATH },
+    { path: '/card/:cardId', redirect: MOBILE_APP_PATH },
+    { path: '/claim/:unlockId', redirect: MOBILE_APP_PATH },
   ],
 })
 
@@ -100,6 +104,14 @@ async function workspaceHomePath() {
   await workspace.bootstrap()
 
   return resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
+}
+
+function isRemovedCustomerStaffPath(path: string): boolean {
+  const base = path.split('?')[0] ?? path
+
+  return REMOVED_CUSTOMER_STAFF_PATHS.some((prefix) => base === prefix || base.startsWith(`${prefix}/`))
+    || base.startsWith('/card/')
+    || base.startsWith('/claim/')
 }
 
 router.beforeEach(async (to) => {
@@ -135,11 +147,16 @@ router.beforeEach(async (to) => {
 
     const teamMember = hasTeamMembership(workspace.activeVenues)
     const ownerMember = hasOwnerMembership(workspace.activeVenues)
+    const staffOnly = isStaffOnlyMember(workspace.activeVenues)
     const home = needsWorkspaceContext
       ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
       : await workspaceHomePath()
 
     const allowWithoutMembership = to.meta.allowWithoutMembership === true
+
+    if (staffOnly && to.meta.ownerOnly) {
+      return { path: MOBILE_APP_PATH }
+    }
 
     const platformAdminRedirect = redirectPlatformAdminFromOwnerRoute()
     if (platformAdminRedirect && needsWorkspaceContext && !to.meta.adminOnly && !allowWithoutMembership) {
@@ -197,7 +214,6 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'landing' && auth.isAuthenticated) {
-    const workspace = useWorkspaceStore()
     await workspace.bootstrap()
 
     if (auth.user?.is_admin) {
@@ -210,15 +226,18 @@ router.beforeEach(async (to) => {
       }
     }
 
-    return true
+    return { path: MOBILE_APP_PATH }
   }
 
   if (to.meta.guest && auth.isAuthenticated && to.name !== 'venue-landing' && !to.meta.inviteFlow) {
-    const workspace = useWorkspaceStore()
     await workspace.bootstrap()
 
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
     if (to.name === 'login' && redirect) {
+      if (isRemovedCustomerStaffPath(redirect)) {
+        return { path: resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId) }
+      }
+
       return {
         path: resolvePostLoginDestination(
           redirect,

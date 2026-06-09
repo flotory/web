@@ -150,9 +150,9 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 
 ### Guest QR landing
 
-1. `GET /v/{slug}` → `GET /api/public/venues/{slug}/landing`
-2. Join → register/login with `venue_slug`
-3. `POST /api/venues/{slug}/join` → `/wallet?venue_id=…`
+1. `GET /v/{slug}` (web bridge) → `GET /api/public/venues/{slug}/landing` → deep link `flotory://v/{slug}`
+2. Join in mobile app → register/login
+3. `POST /api/venues/{slug}/join` → mobile wallet
 
 ### Owner onboarding
 
@@ -160,9 +160,9 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 2. Venue created as `draft` → owner completes listing checklist → submit → admin approve → `published`
 3. Complete wizard → `/dashboard?onboarding=completed`
 
-### Staff scanner (auto-detect)
+### Staff scanner (auto-detect — mobile app)
 
-One `/scanner` page; camera payload determines the action:
+Mobile scanner screen; camera payload determines the action:
 
 | QR type | Payload | API |
 |---------|---------|-----|
@@ -171,18 +171,18 @@ One `/scanner` page; camera payload determines the action:
 
 Legacy per-card `customers.qr_token` is deprecated (`LOYALTY_LEGACY_CARD_QR=false` by default).
 
-Parsed server- and client-side via `App\Support\LoyaltyQr` / `resources/js/lib/loyaltyQr.ts`.
+Parsed server-side via `App\Support\LoyaltyQr`; mobile client helpers in `apps/mobile/src/lib/`.
 
 After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an info banner: ask the customer to open **Rewards → Claim**, not the stamp card).
 
-### Customer reward claim (QR)
+### Customer reward claim (QR — mobile app)
 
-1. `/customer/rewards` → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
+1. Rewards screen → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
 2. Tap **Claim** → `POST /api/customer/rewards/unlocks/{unlock}/claim-session` → short-lived `redemption_requests` row (10 min TTL)
-3. Modal shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
-4. Staff scans claim QR on the same scanner → redeem flow above
+3. Screen shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
+4. Staff scans claim QR on the mobile scanner → redeem flow above
 
-`/wallet` detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear in the claim modal.
+Wallet detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear on the claim screen.
 
 ### Staff claim (manual fallback)
 
@@ -206,43 +206,45 @@ After a **stamp** scan, if the customer has unclaimed unlocks, the response incl
 
 ## Frontend Structure
 
-### Navigation modes (`AppShell`)
+### Navigation modes
+
+**Web (`AppShell`) — owners and platform admin only**
 
 | Mode | Who | Primary routes |
 |------|-----|----------------|
 | Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Campaigns, Analytics, Team, Settings |
 | Platform admin | `users.is_admin = true` | Venue listings, Design palette, Activity log — no owner workspace |
-| Staff workspace | staff-only membership | Scanner, Customers, Account |
-| Customer (web) | No team membership (or `workspace: false` routes) | Wallet, **My QR** (`/my-qr`), **Rewards** (`/customer/rewards`), Venues (`/venues`), Settings (`/customer/settings`) — bottom tab bar only, no top header |
-| Customer (mobile) | Same API, Expo app | Home, Wallet, **My QR** (center), Venues, Profile; Rewards and Notifications off-tab |
+| Staff / customer (web) | No owner membership | `/app` mobile download bridge; `/invite/{token}` for staff accept; `/account` for password |
 
-Router guards: `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
+**Mobile app — customers and staff**
 
-Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only → scanner; customers → card.
+| Who | Primary screens |
+|-----|-----------------|
+| Customer | Home, Wallet, **My QR** (center), Venues, Profile; Rewards claim flow |
+| Staff / owner at counter | Scanner (venue-scoped), customer search fallback |
 
-Customer stamp updates animate on the progress grid; reward unlocks show a brief celebration overlay and bounce the Rewards tab badge. Redeem from **Rewards → Claim** (claim QR for staff) → poll until claimed → success celebration.
+Router guards (web): `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (onboarding).
 
-### Key pages
+Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only and pure customers → `/app`.
+
+### Key web routes
 
 | Route | Page | Role |
 |-------|------|------|
-| `/v/:slug` | Venue landing | Guest |
+| `/v/:slug` | Venue app bridge (QR entry) | Guest |
+| `/app` | Mobile app download / open | Guest, staff, customer |
 | `/onboarding/create-venue` | Onboarding wizard | New owner |
-| `/dashboard` | Operational dashboard (KPIs, insights, scanner) | Owner |
+| `/dashboard` | Operational dashboard (KPIs, insights) | Owner |
 | `/my-venues`, `/my-venues/:id/settings` | Venue list & settings | Owner |
-| `/rewards` | Milestone CRUD on guest stamp grid (click reward → toolbar: Edit / Archive) | Owner |
-| `/campaigns` | Campaign templates, activation, history, and pause/edit/end actions | Owner |
-| `/scanner` | QR scanner | Owner, staff |
-| `/customers` | Retention list (activity filters, last visit, redeems) | Owner, staff |
-| `/customers/:customerId` | Profile: timeline, visits, rewards, notes, birthday | Owner, staff |
+| `/rewards` | Milestone CRUD | Owner |
+| `/campaigns` | Campaign templates, activation, history | Owner |
+| `/customers` | Retention list | Owner |
+| `/customers/:customerId` | Profile: timeline, visits, rewards, notes | Owner |
 | `/analytics` | Retention stats | Owner |
 | `/team` | Invitations & members | Owner |
-| `/wallet` | Loyalty wallet (venue list + per-venue card detail) | Customer |
-| `/my-qr` | Universal customer stamp QR | Customer |
-| `/customer/rewards` | Rewards wallet (pending unlocks) | Customer |
-| `/venues` | Browse/search all venues, join or open card | Customer |
-| `/customer/settings` | Account details + logout | Customer |
 | `/invite/:token` | Accept staff invite | Invitee |
+
+Customer wallet, My QR, rewards claim, and staff scanner live in the **mobile app** — see [apps/mobile/README.md](../apps/mobile/README.md).
 
 Workspace store auto-selects the first active venue when none is chosen (MVP single-venue focus).
 

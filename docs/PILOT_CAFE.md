@@ -27,7 +27,7 @@ Before inviting a café, confirm on [flotory.com](https://flotory.com):
 - Owner can complete the **listing checklist** and submit for review; admin can approve at `/admin/venues`
 - QR download / print asset works for counter display
 - Staff invitation email delivers (check spam; verify SMTP in production)
-- Scanner flow: scan customer **My QR** → stamp → customer sees update on wallet
+- Mobile scanner flow: scan customer **My QR** → stamp → customer sees update in the app wallet
 - Campaign demo: activate a Quiet Day or Happy Hour promo on `/campaigns`
 - Redeem flow: customer taps Claim → staff scans claim QR → customer sees success
 - Wrong-QR drill: customer shows stamp card for reward → staff sees amber warning after stamp

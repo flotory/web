@@ -57,9 +57,6 @@ export const useWorkspaceStore = defineStore('workspace', {
     isOwnerAtEffectiveVenue(): boolean {
       return isVenueOwner(this.effectiveVenue)
     },
-    usesStaffNav(): boolean {
-      return this.isStaffOnlyMember || this.isStaffAtEffectiveVenue
-    },
   },
   actions: {
     async bootstrap(force = false) {

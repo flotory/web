@@ -1,36 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
-import CustomerTabBar from '@/components/customer/CustomerTabBar.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
-import { ADMIN_HOME_PATH, staffScannerPath } from '@/lib/venueRoles'
+import { ADMIN_HOME_PATH } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
-import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useWorkspaceStore } from '@/stores/workspace'
-
-const props = withDefaults(defineProps<{
-  hideCustomerTabBar?: boolean
-}>(), {
-  hideCustomerTabBar: false,
-})
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
-const customerRewards = useCustomerRewardsStore()
-const rewardBadgePulsing = ref(false)
-let rewardBadgePulseTimer: number | undefined
 
 const isWorkspace = computed(() => {
   if (route.meta.adminOnly === true && auth.isAdmin) {
     return true
-  }
-
-  if (route.meta.workspace === false) {
-    return false
   }
 
   if (route.meta.workspace === true) {
@@ -45,34 +30,16 @@ const isWorkspace = computed(() => {
 })
 
 const homePath = computed(() => {
-  if (!isWorkspace.value) {
-    return '/home'
-  }
-
   if (auth.isAdmin) {
     return ADMIN_HOME_PATH
-  }
-
-  if (workspace.usesStaffNav) {
-    return staffScannerPath(workspace.effectiveVenueId)
   }
 
   return '/dashboard'
 })
 
-const showCustomerTabBar = computed(() => !isWorkspace.value && !props.hideCustomerTabBar)
-
 const nav = computed(() => {
   if (!isWorkspace.value) {
     return []
-  }
-
-  if (workspace.usesStaffNav) {
-    return [
-      { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
-      { label: 'Customers', to: '/customers', icon: '◍' },
-      { label: 'Account', to: '/account', icon: '⚙' },
-    ]
   }
 
   if (auth.isAdmin) {
@@ -86,7 +53,6 @@ const nav = computed(() => {
 
   return [
     { label: 'Dashboard', to: '/dashboard', icon: '◈' },
-    { label: 'Scanner', to: staffScannerPath(workspace.effectiveVenueId), routeName: 'scanner', icon: '◎' },
     { label: 'My Venues', to: '/my-venues', icon: '⌂' },
     { label: 'Customers', to: '/customers', icon: '◍' },
     { label: 'Rewards', to: '/rewards', icon: '★' },
@@ -100,42 +66,6 @@ const nav = computed(() => {
 const isNavActive = (item: { to: string; routeName?: string }) =>
   route.path === item.to || (item.routeName ? route.name === item.routeName : false)
 
-const isFlushPage = computed(() => route.meta.flush === true)
-
-watch(
-  () => customerRewards.badgePulseToken,
-  (token) => {
-    if (token === 0) {
-      return
-    }
-
-    rewardBadgePulsing.value = false
-    window.requestAnimationFrame(() => {
-      rewardBadgePulsing.value = true
-    })
-    window.clearTimeout(rewardBadgePulseTimer)
-    rewardBadgePulseTimer = window.setTimeout(() => {
-      rewardBadgePulsing.value = false
-    }, 1500)
-  },
-)
-
-watch(
-  () => auth.isAuthenticated,
-  (authenticated) => {
-    if (authenticated) {
-      workspace.bootstrap().catch(() => undefined)
-      if (!auth.isAdmin) {
-        customerRewards.refresh().catch(() => undefined)
-      }
-    } else {
-      workspace.$reset()
-      customerRewards.clear()
-    }
-  },
-  { immediate: true },
-)
-
 async function logout() {
   await auth.logout()
   workspace.$reset()
@@ -144,9 +74,8 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen" :class="isWorkspace ? 'md:grid md:grid-cols-[272px_1fr]' : 'bg-bg'">
+  <div class="min-h-screen md:grid md:grid-cols-[272px_1fr]">
     <aside
-      v-if="isWorkspace"
       class="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar-bg px-4 py-5 md:flex"
     >
       <RouterLink :to="homePath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover">
@@ -154,7 +83,7 @@ async function logout() {
       </RouterLink>
 
       <div
-        v-if="workspace.hasMembership && (!workspace.usesStaffNav || workspace.activeVenues.length > 1)"
+        v-if="workspace.hasMembership && workspace.activeVenues.length > 1"
         class="mt-5 px-1"
       >
         <VenueFilter variant="sidebar" />
@@ -194,8 +123,8 @@ async function logout() {
       </button>
     </aside>
 
-    <div :class="isWorkspace && 'bg-workspace-gradient min-h-screen'">
-      <header v-if="isWorkspace" class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
+    <div class="bg-workspace-gradient min-h-screen">
+      <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <RouterLink :to="homePath">
             <FlotoryLogo />
@@ -212,23 +141,11 @@ async function logout() {
         </div>
       </header>
 
-      <main
-        :class="[
-          'mx-auto max-w-6xl',
-          isFlushPage
-            ? 'px-0 pt-0 pb-28'
-            : isWorkspace
-              ? 'px-4 py-6 pb-36 md:py-10 md:pb-10'
-              : 'px-0 py-4 pb-28',
-        ]"
-      >
+      <main class="mx-auto max-w-6xl px-4 py-6 pb-36 md:py-10 md:pb-10">
         <slot />
       </main>
 
-      <CustomerTabBar v-if="showCustomerTabBar" />
-
       <nav
-        v-else-if="isWorkspace"
         class="fixed inset-x-4 bottom-4 z-20 mx-auto flex max-w-md gap-2 overflow-x-auto rounded-[1.6rem] border border-sidebar-border bg-sidebar-bg p-2 text-sidebar-text shadow-2xl shadow-primary/30 md:hidden"
       >
         <RouterLink
@@ -246,44 +163,3 @@ async function logout() {
     </div>
   </div>
 </template>
-
-<style scoped>
-@keyframes reward-badge-pop {
-  0%,
-  100% {
-    transform: scale(1) translateY(0);
-  }
-
-  12% {
-    transform: scale(1.45) translateY(-7px);
-  }
-
-  24% {
-    transform: scale(1) translateY(0);
-  }
-
-  36% {
-    transform: scale(1.35) translateY(-5px);
-  }
-
-  48% {
-    transform: scale(1) translateY(0);
-  }
-
-  60% {
-    transform: scale(1.25) translateY(-4px);
-  }
-
-  72% {
-    transform: scale(1) translateY(0);
-  }
-
-  84% {
-    transform: scale(1.15) translateY(-2px);
-  }
-}
-
-.reward-badge-pop {
-  animation: reward-badge-pop 1.4s ease-out;
-}
-</style>

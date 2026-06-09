@@ -7,14 +7,12 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
-import { buildGoogleAuthUrlWithIntent, completeVenueOnboarding, fetchVenueLanding } from '@/lib/onboarding'
+import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { sanitizeRedirect } from '@/lib/redirect'
 import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { VenueLandingPayload } from '@/lib/onboarding'
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
@@ -26,21 +24,20 @@ const password = ref('')
 const loading = ref(false)
 const oauthLoading = ref(false)
 const error = ref('')
-const landing = ref<VenueLandingPayload | null>(null)
 
-const venueSlug = computed(() => (typeof route.query.venue_slug === 'string' ? route.query.venue_slug : null))
+const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
+const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 const postAuthPath = computed(() => {
   if (authIntent.value === 'owner') {
     return '/onboarding/create-venue'
   }
 
-  return sanitizeRedirect(typeof route.query.redirect === 'string' ? route.query.redirect : '/wallet')
+  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+  return redirect
 })
-const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
-const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 
 function continueWithGoogle() {
-  window.location.href = buildGoogleAuthUrlWithIntent(venueSlug.value, postAuthPath.value, authIntent.value)
+  window.location.href = buildGoogleAuthUrlWithIntent(null, postAuthPath.value ?? undefined, authIntent.value)
 }
 
 async function submit() {
@@ -59,12 +56,6 @@ async function submit() {
 
   try {
     await workspace.bootstrap(true)
-
-    if (venueSlug.value) {
-      const result = await completeVenueOnboarding(venueSlug.value)
-      await router.push(`/wallet?venue_id=${result.venueId}`)
-      return
-    }
 
     if (authIntent.value === 'owner') {
       markOwnerOnboardingIntent()
@@ -95,11 +86,6 @@ onMounted(() => {
       .loginWithToken(oauthToken)
       .then(async () => {
         await workspace.bootstrap(true)
-        if (venueSlug.value) {
-          const result = await completeVenueOnboarding(venueSlug.value)
-          await router.replace(`/wallet?venue_id=${result.venueId}`)
-          return
-        }
 
         if (authIntent.value === 'owner') {
           markOwnerOnboardingIntent()
@@ -127,14 +113,6 @@ onMounted(() => {
   if (route.query.error === 'google_auth_failed') {
     error.value = 'Google sign-in could not be completed. Try again, or use email and password below.'
   }
-
-  if (venueSlug.value) {
-    fetchVenueLanding(venueSlug.value)
-      .then((payload) => {
-        landing.value = payload
-      })
-      .catch(() => undefined)
-  }
 })
 </script>
 
@@ -146,10 +124,6 @@ onMounted(() => {
       </RouterLink>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
-      <p v-if="landing" class="mb-4 text-sm text-ink-muted">
-        Joining <span class="font-bold text-ink">{{ landing.venue.name }}</span>
-      </p>
-
       <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-950">
         <p class="font-black">Staff invitation</p>
         <p class="mt-1 font-semibold text-cyan-900">
@@ -157,10 +131,10 @@ onMounted(() => {
         </p>
       </div>
 
-      <AppBadge tone="blue">{{ isStaffInvite ? 'Staff invitation' : venueSlug ? 'Start collecting rewards' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ isStaffInvite ? 'Sign in to join the team' : venueSlug ? 'Join your favorite venue' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <AppBadge tone="blue">{{ isStaffInvite ? 'Staff invitation' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ isStaffInvite ? 'Sign in to join the team' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        {{ isStaffInvite ? 'After login you can accept the invitation and open the scanner.' : venueSlug ? 'Continue in seconds and open your loyalty card instantly.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
+        {{ isStaffInvite ? 'After login you can accept the invitation and open the Flotory mobile app.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Sign in to manage venues, staff, and rewards.' }}
       </p>
 
       <AppButton
@@ -212,11 +186,7 @@ onMounted(() => {
       <p v-if="!isStaffInvite" class="mt-5 text-center text-sm text-ink-muted">
         New here?
         <RouterLink
-          :to="venueSlug
-            ? `/register?venue_slug=${encodeURIComponent(venueSlug)}&redirect=${encodeURIComponent(postAuthPath)}`
-            : authIntent === 'owner'
-              ? '/register?intent=owner'
-              : '/register'"
+          :to="authIntent === 'owner' ? '/register?intent=owner' : '/register'"
           class="font-bold text-ink"
         >
           Create an account
@@ -224,6 +194,11 @@ onMounted(() => {
       </p>
       <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-ink-muted">
         No account yet? Your manager can resend the invitation from the Team page.
+      </p>
+
+      <p class="mt-4 text-center text-sm text-ink-muted">
+        Guest collecting rewards?
+        <RouterLink to="/app" class="font-bold text-ink">Get the mobile app</RouterLink>
       </p>
       </AppCard>
     </section>
