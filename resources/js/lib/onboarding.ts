@@ -22,6 +22,18 @@ export interface VenueLandingPayload {
     image_thumb?: string | null
     required_stamps: number
   }>
+  hero_reward: {
+    id: number
+    title: string
+    description: string | null
+    image: string | null
+    image_thumb?: string | null
+    required_stamps: number
+  } | null
+  social_proof: {
+    members_count: number
+    rewards_claimed_count: number
+  }
 }
 
 export function buildVenueLandingPath(slug: string): string {

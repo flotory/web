@@ -3,11 +3,18 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import CustomerTabBar from '@/components/customer/CustomerTabBar.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
 import { ADMIN_HOME_PATH, staffScannerPath } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useWorkspaceStore } from '@/stores/workspace'
+
+const props = withDefaults(defineProps<{
+  hideCustomerTabBar?: boolean
+}>(), {
+  hideCustomerTabBar: false,
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -39,7 +46,7 @@ const isWorkspace = computed(() => {
 
 const homePath = computed(() => {
   if (!isWorkspace.value) {
-    return '/wallet'
+    return '/home'
   }
 
   if (auth.isAdmin) {
@@ -53,15 +60,11 @@ const homePath = computed(() => {
   return '/dashboard'
 })
 
+const showCustomerTabBar = computed(() => !isWorkspace.value && !props.hideCustomerTabBar)
+
 const nav = computed(() => {
   if (!isWorkspace.value) {
-    return [
-      { label: 'Wallet', to: '/wallet', icon: '◍' },
-      { label: 'My QR', to: '/my-qr', icon: '◎' },
-      { label: 'Rewards', to: '/customer/rewards', icon: '★', badge: customerRewards.pendingCount },
-      { label: 'Venues', to: '/venues', icon: '⌂' },
-      { label: 'Settings', to: '/customer/settings', icon: '⚙' },
-    ]
+    return []
   }
 
   if (workspace.usesStaffNav) {
@@ -216,17 +219,17 @@ async function logout() {
             ? 'px-0 pt-0 pb-28'
             : isWorkspace
               ? 'px-4 py-6 pb-36 md:py-10 md:pb-10'
-              : 'px-4 py-4 pb-28',
+              : 'px-0 py-4 pb-28',
         ]"
       >
         <slot />
       </main>
 
+      <CustomerTabBar v-if="showCustomerTabBar" />
+
       <nav
-        :class="[
-          'fixed inset-x-4 bottom-4 z-20 flex gap-2 overflow-x-auto rounded-[1.6rem] border border-sidebar-border bg-sidebar-bg p-2 text-sidebar-text shadow-2xl shadow-primary/30',
-          isWorkspace ? 'md:hidden' : 'max-w-md mx-auto',
-        ]"
+        v-else-if="isWorkspace"
+        class="fixed inset-x-4 bottom-4 z-20 mx-auto flex max-w-md gap-2 overflow-x-auto rounded-[1.6rem] border border-sidebar-border bg-sidebar-bg p-2 text-sidebar-text shadow-2xl shadow-primary/30 md:hidden"
       >
         <RouterLink
           v-for="item in nav"
@@ -238,15 +241,6 @@ async function logout() {
           ]"
         >
           {{ item.label }}
-          <span
-            v-if="'badge' in item && item.badge"
-            :class="[
-              'absolute -right-0.5 -top-0.5 grid min-w-[1.125rem] place-items-center rounded-full bg-accent px-1 py-px text-[10px] font-black leading-none text-ink border-2 border-primary',
-              item.to === '/customer/rewards' && rewardBadgePulsing ? 'reward-badge-pop' : '',
-            ]"
-          >
-            {{ item.badge }}
-          </span>
         </RouterLink>
       </nav>
     </div>

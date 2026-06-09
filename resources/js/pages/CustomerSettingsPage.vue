@@ -1,59 +1,55 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import CustomerScreen from '@/components/customer/CustomerScreen.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppCard from '@/components/ui/AppCard.vue'
-import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
-import { authFieldClass } from '@/lib/authForm'
-import { api, ApiError } from '@/lib/api'
+import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
+import type { Customer } from '@/types'
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const router = useRouter()
+const cards = ref<Customer[]>([])
+const loading = ref(true)
 
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const passwordAction = useAsyncAction()
-const error = ref('')
+const stats = computed(() => {
+  const venues = cards.value.length
+  const stamps = cards.value.reduce((sum, card) => sum + (card.summary?.stamps ?? card.stamps), 0)
+  const rewards = cards.value.reduce((sum, card) => sum + (card.summary?.pending_rewards_count ?? 0), 0)
+  return { venues, stamps, rewards }
+})
 
-async function submitPassword() {
-  if (newPassword.value !== confirmPassword.value) {
-    error.value = 'New passwords do not match.'
-    return
-  }
+const initials = computed(() =>
+  (auth.user?.name ?? '?')
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase(),
+)
 
+const accountLinks = [
+  { label: 'Discover venues', to: '/venues' },
+  { label: 'Notifications', to: '/customer/notifications' },
+  { label: 'Help', to: null },
+  { label: 'Privacy', to: null },
+  { label: 'About', to: null },
+]
+
+onMounted(async () => {
   try {
-    await passwordAction.run(async () => {
-      error.value = ''
-
-      try {
-        await api<{ message: string }>('/auth/password', {
-          method: 'PUT',
-          body: {
-            current_password: currentPassword.value,
-            password: newPassword.value,
-            password_confirmation: confirmPassword.value,
-          },
-        })
-
-        currentPassword.value = ''
-        newPassword.value = ''
-        confirmPassword.value = ''
-      } catch (exception) {
-        error.value = exception instanceof ApiError ? exception.message : 'Could not update password.'
-        throw exception
-      }
-    })
+    const response = await api<{ cards: Customer[] }>('/customer/cards')
+    cards.value = response.cards
   } catch {
-    // Button shows Failed.
+    cards.value = []
+  } finally {
+    loading.value = false
   }
-}
+})
 
 async function logout() {
   await auth.logout()
@@ -64,74 +60,87 @@ async function logout() {
 
 <template>
   <AppShell>
-    <div class="mx-auto w-full max-w-md">
-      <h1 class="text-2xl font-black tracking-tight text-ink">Settings</h1>
-      <p class="mt-1 text-sm text-ink-muted">Your account details and sign-in preferences.</p>
+    <CustomerScreen>
+      <div class="mx-auto w-full max-w-md pb-4">
+        <h1 class="text-3xl font-black tracking-tight text-ink">Profile</h1>
 
-      <AppCard class="mt-6">
-        <div v-if="auth.user" class="rounded-2xl bg-surface-muted p-4 border border-border">
-          <p class="text-xs font-black uppercase tracking-wide text-ink-soft">Account</p>
-          <p class="mt-1 font-black text-ink">{{ auth.user.name }}</p>
-          <p class="text-sm font-semibold text-ink-muted">{{ auth.user.email }}</p>
+        <div class="mt-7 flex flex-col items-center text-center">
+          <div class="grid size-[84px] place-items-center rounded-full bg-primary text-3xl font-extrabold text-primary-text">
+            {{ initials }}
+          </div>
+          <p class="mt-3.5 text-xl font-bold text-ink">{{ auth.user?.name ?? 'Guest' }}</p>
+          <p class="mt-1 text-sm text-ink-muted">{{ auth.user?.email }}</p>
         </div>
 
-        <form class="mt-5 space-y-4" @submit.prevent="submitPassword">
-          <p class="text-sm font-bold text-ink-muted">Change password</p>
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="current-password">Current password</label>
-            <input
-              id="current-password"
-              v-model="currentPassword"
-              required
-              type="password"
-              autocomplete="current-password"
-              :class="authFieldClass"
+        <div class="mt-7 grid grid-cols-3 gap-2.5">
+          <div
+            v-for="item in [
+              { label: 'Venues', value: stats.venues, accent: false },
+              { label: 'Stamps', value: stats.stamps, accent: false },
+              { label: 'Ready', value: stats.rewards, accent: true },
+            ]"
+            :key="item.label"
+            class="rounded-[22px] border border-border bg-surface py-3.5 text-center shadow-sm"
+          >
+            <p
+              class="text-xl font-extrabold"
+              :class="item.accent ? 'text-accent-active' : 'text-ink'"
             >
+              {{ loading ? '—' : item.value }}
+            </p>
+            <p class="mt-1 text-xs font-semibold text-ink-muted">{{ item.label }}</p>
           </div>
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="new-password">New password</label>
-            <input
-              id="new-password"
-              v-model="newPassword"
-              required
-              minlength="8"
-              type="password"
-              autocomplete="new-password"
-              :class="authFieldClass"
-            >
-          </div>
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="confirm-password">Confirm new password</label>
-            <input
-              id="confirm-password"
-              v-model="confirmPassword"
-              required
-              minlength="8"
-              type="password"
-              autocomplete="new-password"
-              :class="authFieldClass"
-            >
-          </div>
+        </div>
 
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
-
-          <AsyncActionButton
-            class="w-full"
-            block
-            type="submit"
-            idle-label="Update password"
-            loading-label="Saving…"
-            success-label="Saved ✓"
-            :loading="passwordAction.loading"
-            :success="passwordAction.success"
-            :error="passwordAction.error"
-          />
-        </form>
-
-        <AppButton class="mt-5 w-full" variant="secondary" @click="logout">
-          Log out
+        <AppButton
+          class="mt-7 w-full"
+          size="lg"
+          @click="router.push('/my-qr')"
+        >
+          Show My QR
         </AppButton>
-      </AppCard>
-    </div>
+
+        <AppButton
+          class="mt-2.5 w-full"
+          size="lg"
+          variant="secondary"
+          @click="router.push('/venues')"
+        >
+          Discover venues
+        </AppButton>
+
+        <ul class="mt-7 divide-y divide-border rounded-[22px] border border-border bg-surface px-4 shadow-sm">
+          <li
+            v-for="link in accountLinks"
+            :key="link.label"
+          >
+            <button
+              v-if="!link.to"
+              type="button"
+              class="w-full py-3 text-left text-base font-medium text-ink-muted"
+              disabled
+            >
+              {{ link.label }}
+            </button>
+            <button
+              v-else
+              type="button"
+              class="w-full py-3 text-left text-base font-medium text-ink transition hover:text-primary-soft"
+              @click="router.push(link.to)"
+            >
+              {{ link.label }}
+            </button>
+          </li>
+        </ul>
+
+        <AppButton
+          class="mt-7 w-full"
+          variant="secondary"
+          @click="logout"
+        >
+          Sign out
+        </AppButton>
+      </div>
+    </CustomerScreen>
   </AppShell>
 </template>

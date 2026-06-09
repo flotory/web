@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import { ChevronRight, MapPin, Search, Wallet } from '@lucide/vue'
+import { Plus, Search } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
-import AppBadge from '@/components/ui/AppBadge.vue'
+import CustomerScreen from '@/components/customer/CustomerScreen.vue'
+import WalletHeroCard from '@/components/customer/WalletHeroCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
-import { venueCoverUrl } from '@/lib/venueMedia'
 import AppShell from '@/layouts/AppShell.vue'
 import type { Customer } from '@/types'
-
-interface CardsResponse {
-  cards: Customer[]
-  pending_rewards_count: number
-}
 
 const router = useRouter()
 const loading = ref(true)
@@ -27,45 +22,19 @@ const filteredCards = computed(() => {
   const query = search.value.trim().toLowerCase()
   const list = cards.value.filter((card) => card.venue)
 
-  const sorted = [...list].sort((a, b) => {
-    const pendingA = a.summary?.pending_rewards_count ?? 0
-    const pendingB = b.summary?.pending_rewards_count ?? 0
-    if (pendingA !== pendingB) {
-      return pendingB - pendingA
-    }
-
-    return (a.venue?.name ?? '').localeCompare(b.venue?.name ?? '')
-  })
-
   if (!query) {
-    return sorted
+    return list
   }
 
-  return sorted.filter((card) => {
-    const venue = card.venue!
-    const haystack = [venue.name, venue.address, venue.slug].filter(Boolean).join(' ').toLowerCase()
-
-    return haystack.includes(query)
-  })
+  return list.filter((card) => (card.venue?.name ?? '').toLowerCase().includes(query))
 })
-
-function progressPercent(card: Customer): number {
-  const stamps = card.summary?.stamps ?? card.stamps
-  const max = card.summary?.max_stamps ?? 10
-
-  return Math.min(100, Math.round((stamps / max) * 100))
-}
-
-function openCard(card: Customer) {
-  router.push({ name: 'customer-wallet', query: { venue_id: String(card.venue_id) } })
-}
 
 async function loadCards() {
   loading.value = true
   error.value = ''
 
   try {
-    const response = await api<CardsResponse>('/customer/cards')
+    const response = await api<{ cards: Customer[] }>('/customer/cards')
     cards.value = response.cards
   } catch (exception) {
     error.value = apiErrorMessage(exception, 'Could not load your wallet. Please try again.')
@@ -74,115 +43,93 @@ async function loadCards() {
   }
 }
 
-onMounted(() => {
-  loadCards()
-})
+onMounted(loadCards)
 </script>
 
 <template>
   <AppShell>
-    <div class="mx-auto w-full max-w-md px-4 pb-8 pt-4">
-      <header class="mb-5">
-        <h1 class="text-2xl font-black tracking-tight text-ink">Wallet</h1>
-        <p class="mt-1 text-sm text-ink-muted">Progress at each venue — use My QR when you order.</p>
-        <RouterLink to="/my-qr" class="mt-4 block">
-          <AppButton class="w-full">Show My QR</AppButton>
-        </RouterLink>
-      </header>
+    <CustomerScreen>
+      <div class="mx-auto w-full max-w-md pb-4">
+        <div class="flex items-center justify-between">
+          <h1 class="text-[34px] font-extrabold tracking-tight text-ink">Wallet</h1>
+          <button
+            type="button"
+            class="grid size-10 place-items-center rounded-full bg-ink text-primary-text shadow-sm transition hover:bg-primary-soft"
+            aria-label="Discover venues"
+            @click="router.push('/venues')"
+          >
+            <Plus class="size-5" />
+          </button>
+        </div>
 
-      <div v-if="loading" class="py-8">
-        <EmptyState compact title="Loading your wallet…" />
-      </div>
-
-      <div v-else-if="error" class="py-8">
-        <ErrorState :message="error" @retry="loadCards()" />
-      </div>
-
-      <div v-else-if="!cards.length" class="py-8">
-        <EmptyState
-          :icon="Wallet"
-          title="No cards yet"
-          description="Join a venue to collect stamps and unlock rewards."
+        <label
+          v-if="cards.length > 0"
+          class="relative mt-3.5 block"
         >
-          <RouterLink to="/venues">
-            <AppButton>Discover venues</AppButton>
-          </RouterLink>
-        </EmptyState>
-      </div>
-
-      <template v-else>
-        <label class="relative mb-4 block">
-          <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft" />
+          <Search class="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-ink-soft" />
           <input
             v-model="search"
             type="search"
             placeholder="Search venues"
-            class="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-ink shadow-sm outline-none border border-border placeholder:text-ink-soft focus:border-accent-border focus:outline-none"
+            class="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-[15px] text-ink outline-none placeholder:text-ink-soft focus:border-accent-border"
           >
         </label>
 
-        <p v-if="!filteredCards.length" class="rounded-2xl border border-dashed border-border bg-surface/80 p-6 text-center text-sm text-ink-muted">
-          No venues match your search.
-        </p>
+        <div v-if="loading" class="mt-10">
+          <EmptyState compact title="Loading your wallet…" />
+        </div>
 
-        <ul v-else class="space-y-3">
-          <li v-for="card in filteredCards" :key="card.id">
-            <button
-              type="button"
-              class="group w-full overflow-hidden rounded-3xl border border-border/90 bg-surface text-left shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] transition hover:border-accent-border hover:shadow-[0_20px_48px_-24px_rgba(79,70,229,0.22)]"
-              @click="openCard(card)"
-            >
-              <div class="relative h-28 w-full overflow-hidden">
-                <img
-                  v-if="card.venue"
-                  :src="venueCoverUrl(card.venue)"
-                  :alt="card.venue.name"
-                  class="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                >
-                <div class="absolute inset-0 bg-gradient-to-t from-primary/75 via-primary/25 to-transparent" />
-                <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
-                  <div class="min-w-0">
-                    <p class="truncate text-base font-bold text-white">{{ card.venue?.name }}</p>
-                    <p
-                      v-if="card.venue?.address"
-                      class="mt-0.5 flex items-center gap-1 truncate text-xs text-white/85"
-                    >
-                      <MapPin class="size-3 shrink-0" />
-                      {{ card.venue.address }}
-                    </p>
-                  </div>
-                  <AppBadge v-if="(card.summary?.pending_rewards_count ?? 0) > 0" tone="green">
-                    {{ card.summary?.pending_rewards_count }} ready
-                  </AppBadge>
-                </div>
-              </div>
+        <ErrorState
+          v-else-if="error"
+          class="mt-10"
+          :message="error"
+          @retry="loadCards"
+        />
 
-              <div class="space-y-2 px-4 py-3.5">
-                <div class="flex items-center justify-between gap-3 text-sm">
-                  <span class="font-semibold text-ink">
-                    {{ card.summary?.stamps ?? card.stamps }} / {{ card.summary?.max_stamps ?? 10 }} stamps
-                  </span>
-                  <ChevronRight class="size-4 shrink-0 text-ink-soft transition group-hover:translate-x-0.5 group-hover:text-accent" />
-                </div>
-                <div class="h-2 overflow-hidden rounded-full bg-surface-muted">
-                  <div
-                    class="h-full rounded-full bg-primary transition-all"
-                    :style="{ width: `${progressPercent(card)}%` }"
-                  />
-                </div>
-                <p v-if="card.summary?.next_reward_title" class="truncate text-xs text-ink-muted">
-                  <template v-if="(card.summary?.stamps_to_next ?? 0) > 0">
-                    {{ card.summary?.stamps_to_next }} more for {{ card.summary?.next_reward_title }}
-                  </template>
-                  <template v-else>
-                    {{ card.summary?.next_reward_title }} unlocked
-                  </template>
-                </p>
-              </div>
-            </button>
-          </li>
-        </ul>
-      </template>
-    </div>
+        <div
+          v-else-if="!cards.length"
+          class="mt-16 rounded-[22px] border border-border bg-surface p-6 text-center shadow-sm"
+        >
+          <p class="text-3xl">💳</p>
+          <p class="mt-3 text-lg font-extrabold text-ink">No cards yet</p>
+          <p class="mt-2 text-sm text-ink-muted">
+            Discover venues nearby and start collecting visits toward your first reward.
+          </p>
+          <AppButton
+            class="mt-4"
+            @click="router.push('/venues')"
+          >
+            Browse venues
+          </AppButton>
+        </div>
+
+        <div
+          v-else-if="!filteredCards.length"
+          class="mt-10 rounded-[22px] border border-border bg-surface p-6 text-center shadow-sm"
+        >
+          <p class="text-3xl">🔍</p>
+          <p class="mt-3 font-extrabold text-ink">No matches</p>
+          <p class="mt-2 text-sm text-ink-muted">Try a different venue name.</p>
+          <AppButton
+            class="mt-4"
+            variant="secondary"
+            @click="search = ''"
+          >
+            Clear search
+          </AppButton>
+        </div>
+
+        <div
+          v-else
+          class="mt-5 space-y-4"
+        >
+          <WalletHeroCard
+            v-for="card in filteredCards"
+            :key="card.id"
+            :item="card"
+          />
+        </div>
+      </div>
+    </CustomerScreen>
   </AppShell>
 </template>

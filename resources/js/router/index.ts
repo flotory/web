@@ -2,7 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AnalyticsPage from '@/pages/AnalyticsPage.vue'
 import CampaignsPage from '@/pages/CampaignsPage.vue'
+import CustomerCardPage from '@/pages/customer/CustomerCardPage.vue'
+import CustomerClaimPage from '@/pages/customer/CustomerClaimPage.vue'
+import CustomerHomePage from '@/pages/customer/CustomerHomePage.vue'
 import CustomerMyQrPage from '@/pages/customer/CustomerMyQrPage.vue'
+import CustomerNotificationsPage from '@/pages/customer/CustomerNotificationsPage.vue'
 import CustomerRewardsPage from '@/pages/CustomerRewardsPage.vue'
 import CustomerSettingsPage from '@/pages/CustomerSettingsPage.vue'
 import CustomerVenuesPage from '@/pages/CustomerVenuesPage.vue'
@@ -62,7 +66,8 @@ const router = createRouter({
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/design', name: 'venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/cafes', redirect: '/wallet' },
+    { path: '/cafes', redirect: '/home' },
+    { path: '/home', name: 'customer-home', component: CustomerHomePage, meta: { requiresAuth: true, workspace: false } },
     { path: '/scanner', name: 'scanner', component: ScannerPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true } },
     { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true } },
@@ -80,7 +85,9 @@ const router = createRouter({
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/wallet', name: 'customer-wallet', component: CustomerWalletPage, meta: { requiresAuth: true, workspace: false, flush: true } },
     { path: '/my-qr', name: 'customer-my-qr', component: CustomerMyQrPage, meta: { requiresAuth: true, workspace: false } },
-    { path: '/card', redirect: (to) => ({ path: '/wallet', query: to.query }) },
+    { path: '/card/:cardId', name: 'customer-card', component: CustomerCardPage, meta: { requiresAuth: true, workspace: false, flush: true } },
+    { path: '/claim/:unlockId', name: 'customer-claim', component: CustomerClaimPage, meta: { requiresAuth: true, workspace: false } },
+    { path: '/customer/notifications', name: 'customer-notifications', component: CustomerNotificationsPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/customer/rewards', name: 'customer-rewards', component: CustomerRewardsPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/venues', name: 'customer-venues', component: CustomerVenuesPage, meta: { requiresAuth: true, workspace: false } },
     { path: '/customer/settings', name: 'customer-settings', component: CustomerSettingsPage, meta: { requiresAuth: true, workspace: false } },

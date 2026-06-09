@@ -13,8 +13,6 @@ import { sanitizeRedirect } from '@/lib/redirect'
 import { markOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { useAuthStore } from '@/stores/auth'
 import type { VenueLandingPayload } from '@/lib/onboarding'
-import { rewardThumbUrl } from '@/lib/rewardMedia'
-import { venueLogoThumbUrl } from '@/lib/venueMedia'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -133,6 +131,10 @@ onMounted(() => {
       </RouterLink>
 
       <AppCard wrapper-class="w-full rounded-3xl border border-border/20 bg-surface/95 p-6 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)] sm:p-7">
+      <p v-if="landing" class="mb-4 text-sm text-ink-muted">
+        Joining <span class="font-bold text-ink">{{ landing.venue.name }}</span>
+      </p>
+
       <AppBadge tone="green">{{ venueSlug ? 'Join rewards in seconds' : authIntent === 'owner' ? 'Launch Flotory' : 'Join Flotory' }}</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ venueSlug ? 'Your loyalty card is waiting' : authIntent === 'owner' ? 'Launch loyalty in minutes' : 'Start collecting rewards' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
@@ -193,27 +195,6 @@ onMounted(() => {
         </RouterLink>
       </p>
       </AppCard>
-
-      <div v-if="landing" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
-        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Join rewards in seconds</p>
-        <div class="mt-3 flex items-center gap-3">
-          <div class="grid size-12 place-items-center overflow-hidden rounded-xl border border-white/20 bg-surface/10">
-            <img :src="venueLogoThumbUrl(landing.venue)" :alt="landing.venue.name" class="size-full object-cover">
-          </div>
-          <div>
-            <p class="text-lg font-bold leading-tight">{{ landing.venue.name }}</p>
-            <p class="text-xs text-white/70">Start collecting rewards</p>
-          </div>
-        </div>
-        <div v-if="landing.milestones[0]" class="mt-3 flex items-center gap-3 rounded-2xl bg-surface/5 p-2 border border-white/10">
-          <img :src="rewardThumbUrl(landing.milestones[0])" alt="" class="size-12 rounded-lg object-cover">
-          <p class="text-sm text-white/85">
-            {{ landing.milestones[0].title }}
-            <span class="text-cyan-200"> · {{ landing.milestones[0].required_stamps }} stamps</span>
-          </p>
-        </div>
-        <p v-else class="mt-3 text-sm text-white/85">Free perks unlock as you collect more stamps.</p>
-      </div>
 
       <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-white/15 bg-surface/5 p-4 shadow-2xl shadow-black/40 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">Launch loyalty for your venue</p>

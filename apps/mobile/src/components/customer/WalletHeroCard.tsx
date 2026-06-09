@@ -1,10 +1,11 @@
 import { Link } from 'expo-router'
 import { Image, Text, View } from 'react-native'
 
-import WalletStampDashes from './WalletStampDashes'
+import WalletMilestoneSlots from './WalletMilestoneSlots'
 import PressableCard from '../ui/PressableCard'
 import { formatVenueCategoryLabel } from '../../lib/format'
 import { venueCoverUrl } from '../../lib/media'
+import { walletMilestoneProgress } from '../../lib/walletMilestoneProgress'
 import { withAppFont } from '../../lib/typography'
 import { colors, walletCard } from '../../theme'
 import type { WalletCard } from '../../types/loyalty'
@@ -14,10 +15,7 @@ interface WalletHeroCardProps {
 }
 
 export default function WalletHeroCard({ item }: WalletHeroCardProps) {
-  const summary = item.summary
-  const max = Math.max(summary?.max_stamps ?? 10, 1)
-  const stamps = Math.min(summary?.stamps ?? item.stamps, max)
-  const toNext = summary?.stamps_to_next ?? Math.max(max - stamps, 0)
+  const progress = walletMilestoneProgress(item.summary, item.stamps)
   const cover = venueCoverUrl(item.venue ?? undefined)
   const categoryLabel = formatVenueCategoryLabel(item.venue?.category)
 
@@ -56,11 +54,11 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
             }}
           />
 
-          <View style={{ flex: 1, padding: 18, justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
             <View>
               <Text
                 style={withAppFont({
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: '800',
                   color: colors.primaryText,
                   letterSpacing: -0.5,
@@ -71,8 +69,8 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
               </Text>
               <Text
                 style={withAppFont({
-                  marginTop: 4,
-                  fontSize: 14,
+                  marginTop: 2,
+                  fontSize: 13,
                   fontWeight: '600',
                   color: 'rgba(255,255,255,0.82)',
                 })}
@@ -82,39 +80,39 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
+              <View style={{ flex: 1, paddingRight: 10 }}>
                 <Text
                   style={withAppFont({
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: '700',
                     color: 'rgba(255,255,255,0.9)',
                   })}
                 >
-                  <Text style={{ fontSize: 22, fontWeight: '800', color: colors.accent }}>{stamps}</Text>
-                  {` / ${max} stamps`}
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.accent }}>{progress.current}</Text>
+                  {` / ${progress.target} stamps`}
                 </Text>
-                <WalletStampDashes filled={stamps} total={max} />
+                <WalletMilestoneSlots filled={progress.current} milestoneStamp={progress.milestoneStamp} />
               </View>
-              <View style={{ alignItems: 'flex-end', minWidth: 88, marginBottom: 12 }}>
+              <View style={{ alignItems: 'flex-end', minWidth: 72, marginBottom: 8 }}>
                 <Text
                   style={withAppFont({
-                    fontSize: 40,
+                    fontSize: 32,
                     fontWeight: '800',
                     color: colors.accent,
-                    lineHeight: 42,
+                    lineHeight: 34,
                   })}
                 >
-                  {toNext}
+                  {progress.toNext}
                 </Text>
                 <Text
                   style={withAppFont({
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: '600',
                     color: 'rgba(255,255,255,0.75)',
                     textAlign: 'right',
                   })}
                 >
-                  {toNext === 1 ? 'stamp to go' : 'stamps to go'}
+                  {progress.toNext === 1 ? 'stamp to go' : 'stamps to go'}
                 </Text>
               </View>
             </View>

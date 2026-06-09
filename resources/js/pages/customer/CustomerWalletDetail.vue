@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { Check, ChevronLeft, Gift, Wallet } from '@lucide/vue'
+import { ArrowLeft, Check, Gift, Wallet } from '@lucide/vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
+import CardDetailHeader from '@/components/customer/CardDetailHeader.vue'
+import CardPromotionBanner from '@/components/customer/CardPromotionBanner.vue'
+import CardVenueRewardsCarousel from '@/components/customer/CardVenueRewardsCarousel.vue'
+import CustomerScreen from '@/components/customer/CustomerScreen.vue'
+import StampScannedBanner from '@/components/customer/StampScannedBanner.vue'
 import StampRewardCelebration from '@/components/loyalty/StampRewardCelebration.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppCard from '@/components/ui/AppCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
-import { venueCoverUrl } from '@/lib/venueMedia'
+import { stampBannerCopy } from '@/lib/stampLiveUpdate'
 import AppShell from '@/layouts/AppShell.vue'
 import { useCustomerRewardsStore } from '@/stores/customerRewards'
 import { useRealtimeStore } from '@/stores/realtime'
-import type { Customer, Reward, RewardJourney, StampAddedPayload, Visit } from '@/types'
+import type { Customer, Reward, RewardJourney, StampAddedPayload, VenuePromotion, Visit } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +30,9 @@ const nextReward = ref<Reward | null>(null)
 const availableRewards = ref<Reward[]>([])
 const journey = ref<RewardJourney | null>(null)
 const recentVisits = ref<Visit[]>([])
+const promotion = ref<VenuePromotion | null>(null)
+const pendingUnlocks = ref<Array<{ unlock_id: number; reward: Reward }>>([])
+const scanBanner = ref<StampAddedPayload | null>(null)
 const animatingSlots = ref<number[]>([])
 const celebratingReward = ref(false)
 const celebrationTitle = ref('')
@@ -40,6 +47,8 @@ interface CardResponse {
   active_card: Customer | null
   next_reward: Reward | null
   available_rewards: Reward[]
+  pending_unlocks?: Array<{ unlock_id: number; reward: Reward }>
+  promotion?: VenuePromotion | null
   journey: RewardJourney | null
   recent_visits: Visit[]
 }
@@ -60,7 +69,10 @@ const journeyRows = computed(() => {
   }
   return rows
 })
-const readyReward = computed(() => availableRewards.value[0] ?? null)
+const progressTarget = computed(() =>
+  nextReward.value?.required_stamps ?? sortedMilestones.value.at(-1)?.required_stamps ?? journeyMaxStamps.value,
+)
+const scanBannerCopy = computed(() => (scanBanner.value ? stampBannerCopy(scanBanner.value) : null))
 const selectedVenueId = computed(() => {
   const venueId = route.query.venue_id
   return typeof venueId === 'string' ? venueId : null
@@ -119,8 +131,12 @@ async function loadCard(silent = false) {
     card.value = response.active_card
     nextReward.value = response.next_reward
     availableRewards.value = response.available_rewards
+    pendingUnlocks.value = response.pending_unlocks ?? []
+    promotion.value = response.promotion ?? null
     journey.value = response.journey
     recentVisits.value = response.recent_visits
+
+    customerRewards.refresh().catch(() => undefined)
 
     const pendingStamp = realtime.latestStamp
     if (pendingStamp && card.value && pendingStamp.customer.id === card.value.id) {
@@ -298,6 +314,8 @@ function applyStampUpdate(payload: StampAddedPayload) {
   if (!unlockedReward) {
     customerRewards.refresh().catch(() => undefined)
   }
+
+  scanBanner.value = payload
 }
 
 function applyRealtimeStamp(payload: StampAddedPayload) {
@@ -309,10 +327,6 @@ function refreshIfVisible() {
   if (document.visibilityState === 'visible') {
     loadCard(true)
   }
-}
-
-function openClaimRewardsPage() {
-  router.push('/customer/rewards')
 }
 
 function isGiftStamp(stamp: number): boolean {
@@ -327,7 +341,11 @@ function isStampAnimating(stamp: number): boolean {
   return animatingSlots.value.includes(stamp)
 }
 
-function backToWallet() {
+function handleBack() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
   router.push({ name: 'customer-wallet' })
 }
 
@@ -359,64 +377,68 @@ watch(
 </script>
 
 <template>
-  <AppShell>
-    <div class="relative mx-auto w-full max-w-md">
-      <div v-if="loading" class="px-4 py-8">
-        <EmptyState compact title="Loading card…" />
-      </div>
+  <AppShell hide-customer-tab-bar>
+    <StampScannedBanner
+      :visible="Boolean(scanBanner && scanBannerCopy)"
+      :title="scanBannerCopy?.title ?? ''"
+      :subtitle="scanBannerCopy?.subtitle"
+      @dismiss="scanBanner = null"
+    />
 
-      <div v-else-if="error" class="px-4 py-8">
-        <ErrorState :message="error" @retry="loadCard()" />
-      </div>
-
-      <div v-else-if="!card" class="px-4 py-8">
-        <EmptyState
-          :icon="Wallet"
-          title="Card not found"
-          description="This venue is not in your wallet yet."
+    <CustomerScreen>
+      <div class="relative mx-auto w-full max-w-md pb-8">
+        <button
+          type="button"
+          class="mb-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-bold text-ink shadow-sm transition hover:bg-surface-muted"
+          @click="handleBack"
         >
-          <AppButton @click="backToWallet">Back to wallet</AppButton>
-        </EmptyState>
-      </div>
+          <ArrowLeft class="size-4" />
+          Back
+        </button>
 
-      <template v-else>
-        <header v-if="card.venue" class="relative z-10">
-          <div class="relative h-36 w-full overflow-hidden sm:h-40">
-            <img :src="venueCoverUrl(card.venue)" :alt="card.venue.name" class="size-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-primary/85 via-primary/35 to-primary/10" />
-            <button
-              type="button"
-              class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-surface/15 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-surface/25"
-              @click="backToWallet"
-            >
-              <ChevronLeft class="size-4" />
-              Wallet
-            </button>
-            <div class="absolute bottom-4 left-4 right-4">
-              <h1 class="text-2xl font-black tracking-tight text-white">{{ card.venue.name }}</h1>
-              <p class="mt-1 text-sm font-medium text-white/85">Collect stamps. Unlock rewards.</p>
-            </div>
-          </div>
-        </header>
+        <div v-if="loading" class="py-8">
+          <EmptyState compact title="Loading card…" />
+        </div>
 
-        <section class="relative z-10 -mt-4 flex flex-col px-4 pb-8">
-          <AppCard wrapper-class="w-full rounded-3xl border border-accent-border/80 bg-accent-soft/60 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.12)] sm:p-6">
-            <h2 class="text-center text-lg font-black text-ink">One QR for every venue</h2>
-            <p class="mt-1 text-center text-sm text-ink-muted">
-              Open <span class="font-bold text-ink">My QR</span> at the counter — stamps apply to {{ card.venue?.name ?? 'this venue' }}.
-            </p>
-            <RouterLink to="/my-qr" class="mt-4 block">
-              <AppButton class="w-full">Show My QR</AppButton>
-            </RouterLink>
-          </AppCard>
+        <ErrorState
+          v-else-if="error"
+          class="py-8"
+          :message="error"
+          @retry="loadCard()"
+        />
 
-          <AppCard wrapper-class="mt-5 w-full rounded-3xl border border-border bg-surface/95 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.16)] sm:p-6">
-            <div class="flex items-end justify-between gap-3">
-              <div>
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">Your progress</p>
-                <p class="mt-2 text-4xl font-black leading-none text-ink">{{ previewStamps }}</p>
-                <p class="mt-1 text-sm font-medium text-ink-muted">stamps collected</p>
+        <div
+          v-else-if="!card"
+          class="py-8"
+        >
+          <EmptyState
+            :icon="Wallet"
+            title="Card not found"
+            description="This loyalty card may have been removed. Check your wallet or discover a new venue."
+          >
+            <AppButton @click="handleBack">Open wallet</AppButton>
+          </EmptyState>
+        </div>
+
+        <template v-else>
+          <CardDetailHeader :venue="card.venue" />
+
+          <CardPromotionBanner
+            v-if="promotion"
+            :promotion="promotion"
+          />
+
+          <div class="mt-3.5 rounded-[22px] border border-border bg-surface p-[18px] shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="text-[13px] font-semibold text-ink-muted">Your progress</p>
+                <p class="mt-1.5 text-[21px] font-extrabold leading-snug text-ink">
+                  {{ nextReward?.title ?? 'Your next reward' }}
+                </p>
               </div>
+              <span class="shrink-0 rounded-full border border-success-border bg-success-bg px-3 py-1.5 text-[13px] font-extrabold text-success-text">
+                {{ Math.min(previewStamps, progressTarget) }} of {{ progressTarget }}
+              </span>
             </div>
 
             <div class="mt-5 space-y-2.5">
@@ -432,40 +454,48 @@ watch(
                   :class="[
                     isGiftStamp(stamp)
                       ? isStampCollected(stamp)
-                        ? 'bg-accent-soft text-accent-active border border-accent-border'
-                        : 'bg-surface-muted text-ink-soft border border-border'
+                        ? 'border border-accent-border bg-accent-soft text-accent-active'
+                        : 'border border-border bg-surface-muted text-ink-soft'
                       : isStampCollected(stamp)
                         ? 'bg-primary text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.6)]'
-                        : 'bg-surface text-ink-soft border border-border',
+                        : 'border border-border bg-surface text-ink-soft',
                     isStampAnimating(stamp) ? 'scale-105 animate-pulse' : '',
                   ]"
                 >
-                  <Gift v-if="isGiftStamp(stamp)" class="size-4" />
-                  <Check v-else-if="isStampCollected(stamp)" class="size-4" />
+                  <Gift
+                    v-if="isGiftStamp(stamp)"
+                    class="size-4"
+                  />
+                  <Check
+                    v-else-if="isStampCollected(stamp)"
+                    class="size-4"
+                  />
                   <span v-else>{{ stamp }}</span>
                 </div>
               </div>
             </div>
-          </AppCard>
 
-          <AppCard
-            v-if="readyReward"
-            wrapper-class="mt-5 w-full rounded-3xl border border-success-border bg-success-bg/70 p-5 shadow-[0_16px_36px_-24px_rgba(16,185,129,0.35)] sm:p-6"
-          >
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-success-text">Reward ready</p>
-            <h2 class="mt-2 text-2xl font-black text-ink">🎉 {{ readyReward.title }}</h2>
-            <p class="mt-1 text-sm font-medium text-ink-muted">Staff scans your claim QR to redeem.</p>
-            <AppButton
-              class="mt-4 w-full"
-              size="lg"
-              @click="openClaimRewardsPage"
-            >
-              Open claim QR
-            </AppButton>
-          </AppCard>
-        </section>
-      </template>
-    </div>
+            <p class="mt-4 text-sm font-bold text-ink-muted">
+              {{
+                Math.max(progressTarget - previewStamps, 0) === 0
+                  ? 'Ready to claim your reward'
+                  : `${Math.max(progressTarget - previewStamps, 0)} more visit${Math.max(progressTarget - previewStamps, 0) === 1 ? '' : 's'} to go`
+              }}
+            </p>
+          </div>
+
+          <CardVenueRewardsCarousel
+            v-if="card.venue"
+            :venue="card.venue"
+            :milestones="sortedMilestones"
+            :stamps="previewStamps"
+            :card-id="card.id"
+            :venue-id="card.venue_id"
+            :pending-unlocks="pendingUnlocks"
+          />
+        </template>
+      </div>
+    </CustomerScreen>
 
     <Teleport to="body">
       <StampRewardCelebration

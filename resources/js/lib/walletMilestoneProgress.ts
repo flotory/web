@@ -1,4 +1,4 @@
-import type { CardSummary } from '../types/loyalty'
+import type { CustomerCardSummary } from '@/types'
 
 export interface WalletMilestoneProgress {
   current: number
@@ -9,7 +9,7 @@ export interface WalletMilestoneProgress {
 
 /** Progress toward the nearest unreached reward milestone (e.g. 4/5, not 4/10). */
 export function walletMilestoneProgress(
-  summary: CardSummary | null | undefined,
+  summary: CustomerCardSummary | null | undefined,
   fallbackStamps = 0,
 ): WalletMilestoneProgress {
   const stamps = summary?.stamps ?? fallbackStamps

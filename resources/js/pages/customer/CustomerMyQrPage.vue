@@ -42,7 +42,7 @@ onMounted(() => {
 <template>
   <AppShell>
     <div
-      class="mx-auto flex w-full max-w-md flex-col items-center px-4 pb-6 pt-4"
+      class="mx-auto flex w-full max-w-md flex-col items-center px-[18px] pb-6 pt-4"
       :class="loading || error ? 'min-h-[50vh] justify-center' : 'min-h-[calc(100dvh-7.5rem)] justify-center'"
     >
       <header class="mb-6 w-full text-center">

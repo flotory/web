@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRestaurantRequest;
+use App\Models\RewardUnlock;
 use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\ImageThumbnailService;
@@ -93,6 +94,14 @@ class VenueController extends Controller
             ->limit(6)
             ->get(['id', 'title', 'description', 'image', 'image_thumb', 'required_stamps']);
 
+        $heroReward = $milestones->first();
+
+        $membersCount = $venue->customers()->count();
+        $rewardsClaimedCount = RewardUnlock::query()
+            ->whereNotNull('claimed_at')
+            ->whereHas('customer', static fn ($query) => $query->where('venue_id', $venue->id))
+            ->count();
+
         return response()->json([
             'venue' => [
                 'id' => $venue->id,
@@ -102,11 +111,24 @@ class VenueController extends Controller
                 'logo' => $venue->logo,
                 'logo_thumb' => $venue->logo_thumb,
                 'cover_image' => $venue->cover_image,
+                'cover_image_thumb' => $venue->cover_image_thumb,
                 'address' => $venue->address,
                 'latitude' => $venue->latitude,
                 'longitude' => $venue->longitude,
             ],
             'milestones' => $milestones,
+            'hero_reward' => $heroReward ? [
+                'id' => $heroReward->id,
+                'title' => $heroReward->title,
+                'description' => $heroReward->description,
+                'image' => $heroReward->image,
+                'image_thumb' => $heroReward->image_thumb,
+                'required_stamps' => $heroReward->required_stamps,
+            ] : null,
+            'social_proof' => [
+                'members_count' => $membersCount,
+                'rewards_claimed_count' => $rewardsClaimedCount,
+            ],
         ]);
     }
 

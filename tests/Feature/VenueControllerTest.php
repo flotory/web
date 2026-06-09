@@ -160,7 +160,11 @@ class VenueControllerTest extends TestCase
             ->assertJsonPath('venue.slug', 'landing-cafe')
             ->assertJsonPath('venue.address', '12 Market Street, Toruń')
             ->assertJsonCount(1, 'milestones')
-            ->assertJsonPath('milestones.0.title', 'Free Drink');
+            ->assertJsonPath('milestones.0.title', 'Free Drink')
+            ->assertJsonPath('hero_reward.title', 'Free Drink')
+            ->assertJsonPath('hero_reward.required_stamps', 5)
+            ->assertJsonPath('social_proof.members_count', 0)
+            ->assertJsonPath('social_proof.rewards_claimed_count', 0);
     }
 
     public function test_public_landing_returns_not_found_for_missing_slug(): void

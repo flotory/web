@@ -2,8 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import VenueLocationBlock from '@/components/loyalty/VenueLocationBlock.vue'
-import VenueLandingPreview from '@/components/loyalty/VenueLandingPreview.vue'
+import VenueScanRewardHeroCard from '@/components/loyalty/VenueScanRewardHeroCard.vue'
+import VenueScanQuickFacts from '@/components/loyalty/VenueScanQuickFacts.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
@@ -14,7 +14,7 @@ import {
   completeVenueOnboarding,
   fetchVenueLanding,
 } from '@/lib/onboarding'
-import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
+import { venueLogoUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import type { Customer } from '@/types'
 import type { VenueLandingPayload } from '@/lib/onboarding'
@@ -30,10 +30,12 @@ const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
 const memberCard = ref<Customer | null>(null)
 
-const milestones = computed(() => landing.value?.milestones ?? [])
 const joinNextPath = computed(() => `/wallet?venue_id=${landing.value?.venue.id ?? ''}`)
 const isMember = computed(() => Boolean(memberCard.value))
-const previewStamps = computed(() => memberCard.value?.stamps ?? 0)
+const primaryLabel = computed(() => {
+  if (isMember.value) return 'Open my card'
+  return 'Start collecting rewards'
+})
 
 async function loadMembership() {
   memberCard.value = null
@@ -98,15 +100,15 @@ onMounted(loadLanding)
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#f7f8fb] text-ink">
+  <main class="min-h-screen bg-[#FCFAF6] text-ink">
     <div
-      class="pointer-events-none fixed inset-0 opacity-40"
+      class="pointer-events-none fixed inset-0 opacity-60"
       aria-hidden="true"
-      style="background-image: radial-gradient(circle at 1px 1px, rgb(203 213 225 / 0.45) 1px, transparent 0); background-size: 18px 18px;"
+      style="background-image: radial-gradient(circle at 1px 1px, rgba(215, 163, 93, 0.07) 1px, transparent 0); background-size: 22px 22px;"
     />
 
     <div v-if="loading" class="flex min-h-screen flex-col justify-center px-5">
-      <p class="text-center text-sm font-semibold text-ink-muted">Loading rewards...</p>
+      <p class="text-center text-sm font-semibold text-ink-muted">Loading...</p>
     </div>
 
     <div v-else-if="error" class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-5 text-center">
@@ -115,54 +117,49 @@ onMounted(loadLanding)
     </div>
 
     <template v-else-if="landing">
-      <header class="relative w-full">
-        <div class="relative h-20 w-full overflow-hidden sm:h-24">
-          <img
-            :src="venueCoverUrl(landing.venue)"
-            alt=""
-            class="size-full object-cover"
-          >
-          <div class="absolute inset-0 bg-gradient-to-b from-primary/15 via-primary/5 to-[#f7f8fb]" />
-        </div>
-      </header>
-
-      <section class="relative mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-md flex-col px-5 pb-8">
-        <div class="relative z-10 -mt-8 flex items-center gap-3">
-          <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface p-0.5 shadow-md border border-border/80">
+      <section class="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pb-32 pt-10">
+        <!-- 1. Venue -->
+        <div class="flex flex-col items-center text-center">
+          <div class="grid size-20 place-items-center overflow-hidden rounded-3xl border border-border bg-surface p-1 shadow-sm">
             <img
               :src="venueLogoUrl(landing.venue)"
               :alt="landing.venue.name"
-              class="size-full rounded-[14px] object-cover"
+              class="size-full rounded-[22px] object-cover"
             >
           </div>
-          <div class="min-w-0 text-left">
-            <h1 class="truncate text-xl font-black tracking-tight text-ink">{{ landing.venue.name }}</h1>
-            <p class="mt-0.5 text-sm font-medium text-ink-muted">
-              {{ isMember ? 'Your loyalty card at this venue' : 'Earn stamps and unlock rewards.' }}
-            </p>
-          </div>
+          <h1 class="mt-4 text-2xl font-black tracking-tight text-ink">
+            {{ landing.venue.name }}
+          </h1>
         </div>
 
-        <VenueLocationBlock
-          v-if="landing.venue.address"
-          class="mt-5"
-          :address="landing.venue.address"
-        />
-
-        <div class="mt-5 flex-1">
-          <VenueLandingPreview :milestones="milestones" :stamps="previewStamps" />
-
-          <p v-if="!milestones.length" class="mt-4 rounded-2xl border border-dashed border-border bg-surface/80 p-4 text-center text-sm text-ink-muted">
-            Rewards are being set up. Join now and your first stamp is on the way.
-          </p>
+        <!-- 2. Reward -->
+        <div class="mt-8">
+          <VenueScanRewardHeroCard
+            :venue-name="landing.venue.name"
+            :category="landing.venue.category"
+            :hero="landing.hero_reward"
+          />
         </div>
 
-        <div class="sticky bottom-0 mt-6 space-y-3 bg-gradient-to-t from-[#f7f8fb] via-[#f7f8fb] to-transparent pb-2 pt-4">
+        <!-- 3. Quick facts -->
+        <div class="mt-6">
+          <VenueScanQuickFacts
+            :first-reward-stamps="landing.hero_reward?.required_stamps"
+            :milestone-count="landing.milestones.length"
+          />
+        </div>
+
+        <div class="flex-1" />
+      </section>
+
+      <!-- 4. CTA -->
+      <div class="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-[#FCFAF6]/95 px-5 pb-6 pt-4 backdrop-blur-md">
+        <div class="mx-auto w-full max-w-md space-y-2">
           <AsyncActionButton
-            class="w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)]"
+            class="w-full shadow-[0_18px_40px_-20px_rgba(15,23,42,0.3)]"
             block
             size="lg"
-            :idle-label="isMember ? 'Open my card' : 'Join & collect rewards'"
+            :idle-label="primaryLabel"
             loading-label="Joining…"
             success-label="Joined ✓"
             :loading="joinAction.loading"
@@ -171,7 +168,7 @@ onMounted(loadLanding)
             @click="handlePrimaryAction"
           />
 
-          <p v-if="!auth.isAuthenticated" class="text-center text-sm text-ink-muted">
+          <p v-if="!auth.isAuthenticated && !isMember" class="text-center text-sm text-ink-soft">
             Already a member?
             <button
               type="button"
@@ -181,8 +178,10 @@ onMounted(loadLanding)
               Sign in
             </button>
           </p>
+
+          <p v-if="error" class="text-center text-sm font-semibold text-danger">{{ error }}</p>
         </div>
-      </section>
+      </div>
     </template>
   </main>
 </template>

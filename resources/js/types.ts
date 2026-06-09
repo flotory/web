@@ -58,11 +58,13 @@ export interface Customer {
   user?: User & { birthday?: string | null }
   summary?: CustomerCardSummary
   joined_at?: string | null
+  created_at?: string | null
   last_visit_at?: string | null
   visits_count?: number
   rewards_unlocked_count?: number
   rewards_claimed_count?: number
   activity_status?: CustomerActivityStatus
+  recent_visits?: Array<{ id: number; created_at: string }>
 }
 
 export interface CustomerActivitySummary {
@@ -128,6 +130,26 @@ export interface CustomerCardSummary {
   next_reward_title: string | null
   next_reward_stamps: number | null
   stamps_to_next: number | null
+}
+
+export interface VenuePromotion {
+  headline: string
+  message: string
+}
+
+export interface HomeCampaign {
+  campaign_id: number
+  card_id: number
+  venue_id: number
+  venue_name: string
+  name: string
+  template_id: string
+  multiplier: number
+  headline: string
+  message: string
+  applies_now: boolean
+  ends_at?: string | null
+  days_left?: number | null
 }
 
 export interface Reward {

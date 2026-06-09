@@ -184,7 +184,7 @@ export const media = {
 } as const
 
 export const walletCard = {
-  height: 200,
+  height: 168,
   radius: 24,
   gap: 16,
 } as const
