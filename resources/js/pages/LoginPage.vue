@@ -9,7 +9,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { clearOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { hasOwnerMembership, ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -41,7 +40,6 @@ function ownerPostAuthDestination() {
     return '/dashboard'
   }
 
-  clearOwnerOnboardingIntent()
   return ownerVenueSetupLocation()
 }
 

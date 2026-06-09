@@ -97,6 +97,7 @@ Maestro smokes (simulator, manual): see [apps/mobile/README.md](../apps/mobile/R
 | `e2e/login.spec.ts` | Login form renders from built assets |
 | `e2e/web-routes.spec.ts` | Owner dashboard / rewards / campaigns; `/app` and `/v/:slug` bridge pages |
 | `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible |
+| `e2e/owner-signup.spec.ts` | Owner register → My Venues create form; bad venue URL guard |
 
 Customer and staff flows are tested in the mobile app (Maestro/manual) and via PHPUnit API tests — not Playwright.
 

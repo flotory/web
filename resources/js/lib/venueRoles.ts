@@ -1,9 +1,8 @@
-import { hasOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { isOwnerWorkspacePath, isSafeInternalRedirect } from '@/lib/redirect'
 import type { Venue } from '@/types'
 
-/** Where new owners land to create their first venue (replaces the legacy onboarding wizard). */
+/** Where new owners land to create their first venue. */
 export const OWNER_VENUE_SETUP_PATH = '/my-venues'
 
 export function ownerVenueSetupLocation(): { path: string; query: { create: string } } {
@@ -70,13 +69,7 @@ export function ownerBootstrapPath(
   activeVenues: Venue[],
   effectiveVenueId: number | null,
 ): string {
-  const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
-
-  if (home === MOBILE_APP_PATH && hasOwnerOnboardingIntent()) {
-    return `${OWNER_VENUE_SETUP_PATH}?create=1`
-  }
-
-  return home
+  return resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
 }
 
 /** Honors an explicit redirect unless it would send a venue owner to the mobile app by mistake. */
@@ -95,6 +88,10 @@ export function resolvePostLoginDestination(
 
   const safe = isSafeInternalRedirect(redirect) ? redirect : home
 
+  if (safe.startsWith('/onboarding')) {
+    return `${OWNER_VENUE_SETUP_PATH}?create=1`
+  }
+
   if (
     (safe === MOBILE_APP_PATH
       || safe.startsWith('/wallet')
@@ -110,7 +107,7 @@ export function resolvePostLoginDestination(
     return safe.startsWith('/admin/') ? safe : ADMIN_HOME_PATH
   }
 
-  if (isOwnerWorkspacePath(safe) && !hasTeam && hasOwnerOnboardingIntent()) {
+  if (isOwnerWorkspacePath(safe) && !hasTeam) {
     return `${OWNER_VENUE_SETUP_PATH}?create=1`
   }
 

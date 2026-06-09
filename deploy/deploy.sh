@@ -60,7 +60,10 @@ if [[ "${SEED_DATABASE:-}" == "1" ]]; then
 fi
 
 echo "==> Post-deploy smoke checks..."
-bash deploy/smoke.sh "${APP_URL:-http://127.0.0.1}"
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8000}"
+PUBLIC_URL="${PUBLIC_URL:-https://flotory.com}"
+export BACKEND_URL PUBLIC_URL
+bash deploy/smoke.sh
 
 echo "==> Deploy complete."
 docker compose -f docker-compose.prod.yml ps

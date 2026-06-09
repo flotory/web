@@ -108,7 +108,7 @@ If migrations were added locally, they run automatically via `deploy.sh` on the 
 | `push-prod.sh` | Mac | Push to GitHub + remote deploy |
 | `pull-and-deploy.sh` | Server | `git pull` + build |
 | `deploy.sh` | Server | Docker build, migrate, Nginx, smoke checks |
-| `smoke.sh` | Server | Quick post-deploy HTTP health checks |
+| `smoke.sh` | Server | Post-deploy health: Laravel on `:8000` (`/up`, `/`, API 401) + `https://flotory.com` |
 | `setup-git-deploy.sh` | Server | Deploy key + git init (once) |
 | `setup-server.sh` | Server | Docker/Nginx/UFW (once) |
 | `config.sh` | Mac (gitignored) | Droplet IP/user/app path |

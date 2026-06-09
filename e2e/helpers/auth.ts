@@ -9,6 +9,21 @@ export async function loginAs(page: Page, email: string, password = 'password'):
   await page.waitForURL((url) => !url.pathname.endsWith('/login'), { timeout: 15_000 })
 }
 
+export async function registerOwnerAs(
+  page: Page,
+  options: { name: string; email: string; password?: string },
+): Promise<void> {
+  const password = options.password ?? 'password'
+
+  await page.goto('/register?intent=owner')
+  await expect(page.getByRole('heading', { name: 'Launch loyalty in minutes' })).toBeVisible({ timeout: 30_000 })
+  await page.locator('#name').fill(options.name)
+  await page.locator('#email').fill(options.email)
+  await page.locator('#password').fill(password)
+  await page.locator('button[type="submit"]').click()
+  await page.waitForURL((url) => url.pathname === '/my-venues', { timeout: 15_000 })
+}
+
 export async function selectVenueIfPresent(page: Page, venueName: string): Promise<void> {
   const select = page.locator('select').first()
   const count = await select.count()

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_URL="${1:-${APP_URL:-http://127.0.0.1}}"
+# Backend (Laravel container) — required. Bypasses nginx so a dead app fails deploy.
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8000}"
 
-echo "==> Smoke check: ${APP_URL}"
+# Public site through nginx + TLS — set on production deploy (see deploy.sh).
+PUBLIC_URL="${PUBLIC_URL:-}"
+
+echo "==> Smoke check: backend ${BACKEND_URL}"
+if [[ -n "${PUBLIC_URL}" ]]; then
+  echo "==> Smoke check: public ${PUBLIC_URL}"
+fi
 
 check_url() {
   local url="$1"
@@ -37,9 +44,15 @@ check_url() {
   exit 1
 }
 
-# HTTP→HTTPS redirect on production returns 301 for localhost checks.
-check_url "${APP_URL}/" "200" 12 2 "" "301"
-check_url "${APP_URL}/manifest.webmanifest" "200" 5 1 "" "301"
-check_url "${APP_URL}/api/customer/cards" "401" 5 1 "application/json" "301"
+# Laravel app must be up (containers may need a few seconds after recreate).
+check_url "${BACKEND_URL}/up" "200" 12 2
+check_url "${BACKEND_URL}/" "200" 3 2
+check_url "${BACKEND_URL}/api/customer/cards" "401" 5 2 "application/json"
+
+if [[ -n "${PUBLIC_URL}" ]]; then
+  check_url "${PUBLIC_URL}/" "200" 8 2
+  check_url "${PUBLIC_URL}/manifest.webmanifest" "200" 5 2
+  check_url "${PUBLIC_URL}/api/customer/cards" "401" 5 2 "application/json"
+fi
 
 echo "==> Smoke checks passed."

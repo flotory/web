@@ -158,7 +158,7 @@ Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal
 
 1. Register with owner intent → `/my-venues?create=1` (create first venue: name, slug, address, contact)
 2. Venue created as `draft` → owner completes listing checklist → submit → admin approve → `published`
-3. Owner workspace: dashboard, rewards, campaigns, team — legacy `/onboarding/*` routes redirect to My Venues
+3. Owner workspace: dashboard, rewards, campaigns, team
 
 ### Staff scanner (auto-detect — mobile app)
 
@@ -235,7 +235,6 @@ Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only and pure 
 | `/app` | Mobile app download / open | Guest, staff, customer |
 | `/my-venues`, `/my-venues/:id/settings` | Venue list, create venue, settings | Owner |
 | `/dashboard` | Operational dashboard (KPIs, insights) | Owner |
-| `/onboarding/*` | Legacy redirect → My Venues | New owner |
 | `/rewards` | Milestone CRUD | Owner |
 | `/campaigns` | Campaign templates, activation, history | Owner |
 | `/customers` | Retention list | Owner |

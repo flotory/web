@@ -9,7 +9,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
-import { clearOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import { ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -65,7 +64,6 @@ async function submit() {
     await workspace.bootstrap(true)
 
     if (authIntent.value === 'owner') {
-      clearOwnerOnboardingIntent()
       await router.push(ownerVenueSetupLocation())
       return
     }

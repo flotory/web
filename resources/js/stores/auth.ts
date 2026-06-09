@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 
 import { api } from '@/lib/api'
-import { clearOwnerOnboardingIntent } from '@/lib/ownerIntent'
 import type { User } from '@/types'
 
 interface AuthResponse {
@@ -97,7 +96,6 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       this.booted = true
       localStorage.removeItem('auth_token')
-      clearOwnerOnboardingIntent()
     },
   },
 })

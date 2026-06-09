@@ -19,7 +19,6 @@ import { updateCampaignStatus } from '@/lib/campaignActions'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
-import { toast } from '@/lib/toast'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -306,13 +305,6 @@ async function loadDashboard() {
 watch(() => workspace.filterVenueId, loadDashboard)
 
 onMounted(loadDashboard)
-
-onMounted(() => {
-  if (route.query.onboarding === 'completed') {
-    toast.success('Venue created! Complete your listing to go live for customers.')
-    void router.replace({ query: { ...route.query, onboarding: undefined } })
-  }
-})
 </script>
 
 <template>
