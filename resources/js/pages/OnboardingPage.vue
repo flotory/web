@@ -205,7 +205,7 @@ async function openDashboard() {
 async function leaveForCustomerExperience() {
   clearOnboardingDraft()
   clearOwnerOnboardingIntent()
-  await router.push('/wallet')
+  await router.push('/app')
 }
 
 async function logout() {
@@ -272,7 +272,7 @@ onMounted(async () => {
 
         <div v-if="step === 1" class="space-y-4">
           <h2 class="text-2xl font-black text-ink">What’s your venue called?</h2>
-          <p class="text-sm text-ink-muted">This creates your workspace for rewards, scanner, and analytics.</p>
+          <p class="text-sm text-ink-muted">This creates your workspace for rewards, team, and analytics.</p>
           <div>
             <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name</label>
             <input id="venue-name" v-model="venueName" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft focus:bg-surface">

@@ -1,4 +1,23 @@
-const INTERNAL_PATH_PREFIXES = ['/login', '/register', '/v/', '/card', '/wallet', '/home', '/claim/', '/my-qr', '/venues', '/customer/', '/onboarding', '/dashboard', '/my-venues', '/scanner', '/customers', '/rewards', '/analytics', '/team', '/settings', '/account', '/']
+import { MOBILE_APP_PATH } from '@/lib/mobileApp'
+
+const INTERNAL_PATH_PREFIXES = [
+  '/login',
+  '/register',
+  '/v/',
+  '/app',
+  '/onboarding',
+  '/dashboard',
+  '/my-venues',
+  '/customers',
+  '/rewards',
+  '/analytics',
+  '/team',
+  '/settings',
+  '/account',
+  '/admin/',
+  '/invite/',
+  '/',
+]
 
 const OWNER_WORKSPACE_PREFIXES = [
   '/dashboard',
@@ -8,7 +27,6 @@ const OWNER_WORKSPACE_PREFIXES = [
   '/analytics',
   '/team',
   '/settings',
-  '/scanner',
   '/customers',
 ]
 
@@ -30,7 +48,7 @@ export function isSafeInternalRedirect(path: string): boolean {
   return INTERNAL_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`))
 }
 
-export function sanitizeRedirect(path: string | null | undefined, fallback = '/home'): string {
+export function sanitizeRedirect(path: string | null | undefined, fallback = MOBILE_APP_PATH): string {
   if (!path || !isSafeInternalRedirect(path)) {
     return fallback
   }

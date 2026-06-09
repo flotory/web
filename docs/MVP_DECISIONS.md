@@ -75,8 +75,8 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Venue listing status | `venues.status`: `draft` → `pending_review` → `published` (or `rejected`). Customers see venues only when **published** (Discover, `/v/:slug`, join). Existing rows migrated to `published`. |
 | Venue location | Google Places address on web (owner settings / listing checklist); stores `address`, `latitude`, `longitude`. Address updates limited to **3/day** per venue. Mobile: nearby sort uses device GPS + Haversine (free); **Directions** opens native maps. |
 | Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
-| Post-login routing | Owners → dashboard; staff-only → scanner; pure customers → card. |
-| Customer primary surface | **My QR** for stamps (mobile center tab, web `/my-qr`); **Home** for ready rewards, campaigns, and quick actions; **Wallet** for per-venue cards. Claim QR in **Rewards → Claim** (mobile: hidden tab + home tickets). Mobile nav: Home, Wallet, My QR, Venues, Profile; Rewards and Notifications are stack routes off the tab bar. Staff scanner: My QR / claim QR, or `customer_id` fallback. |
+| Post-login routing (web) | Owners → dashboard; staff-only and pure customers → `/app` (mobile app). |
+| Customer primary surface | **Mobile app only**: **My QR** for stamps (center tab); **Home** for ready rewards, campaigns, and quick actions; **Wallet** for per-venue cards. Claim QR in **Rewards → Claim**. Nav: Home, Wallet, My QR, Venues, Profile. Staff scanner (mobile): My QR / claim QR, or `customer_id` fallback. |
 | Owner campaigns surface | `/campaigns` is the owner campaign workspace; dashboard links to it for active campaign management. |
 | Customer retention CRM | `/customers` lists joined date, last visit, visit count, rewards claimed, activity status (active / at-risk / inactive / new) with filters. `/customers/:id` profile adds visit history, reward history, unified timeline, team notes, and optional birthday on the user. |
 

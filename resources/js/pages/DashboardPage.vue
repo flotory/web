@@ -329,10 +329,10 @@ onMounted(() => {
         </div>
       </template>
       <template #actions>
-        <RouterLink :to="selectedVenue ? `/scanner?venue_id=${selectedVenue.id}` : '/scanner'">
+        <RouterLink to="/app">
           <AppButton>
             <ScanLine class="size-4" />
-            Open scanner
+            Mobile app
           </AppButton>
         </RouterLink>
       </template>
@@ -414,7 +414,7 @@ onMounted(() => {
         </div>
         <div v-else class="mt-4 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
           <p class="text-sm font-semibold text-ink-muted">No activity yet.</p>
-          <p class="mt-1 text-xs text-ink-muted">Open the scanner when your first guest arrives.</p>
+          <p class="mt-1 text-xs text-ink-muted">Staff scan guests from the Flotory mobile app.</p>
         </div>
 
         <div class="mt-5 border-t border-border pt-4">

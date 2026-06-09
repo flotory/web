@@ -380,7 +380,7 @@ onMounted(loadVenues)
             <FileUp class="size-4" />
             Files & docs
           </AppButton>
-          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/scanner?venue_id=${venue.id}`)">Open scanner</AppButton>
+          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push('/app')">Mobile app</AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>
         </div>

@@ -10,7 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
 import { authFieldClass } from '@/lib/authForm'
-import { staffScannerPath } from '@/lib/venueRoles'
+import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -73,7 +73,7 @@ async function loadInvite() {
 
 async function finishJoin(venueId: number) {
   await workspace.bootstrap(true)
-  await router.push(staffScannerPath(venueId))
+  await router.push(MOBILE_APP_PATH)
 }
 
 async function acceptInvitation() {
@@ -175,7 +175,7 @@ async function logoutForInvite() {
           </p>
 
           <ul class="mt-4 space-y-2 rounded-2xl bg-surface-muted p-4 text-sm font-semibold text-ink-muted border border-border">
-            <li>Open the scanner</li>
+            <li>Open the mobile app scanner</li>
             <li>Add customer stamps</li>
             <li>Help customers redeem rewards</li>
           </ul>

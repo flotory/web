@@ -45,7 +45,6 @@ const mobileCoverFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) =>
 const mobileLogoFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'logo-ticket-fallback'))
 const mobileRewardFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'reward-ticket'))
 
-const webCoverFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id === 'web-wallet-strip' || frame.id === 'web-landing-cover'))
 const webLogoFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('logo')))
 const webRewardFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('reward')))
 
@@ -146,28 +145,11 @@ onMounted(loadPage)
           </div>
         </div>
 
-        <div class="mt-8 border-t border-border pt-6">
-          <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Web</p>
-          <div class="flex flex-wrap gap-6">
-            <DesignPreviewFrame
-              v-for="frame in webCoverFrames"
-              :key="frame.id"
-              :label="frame.label"
-              :platform="frame.platform"
-              :width="frame.width"
-              :height="frame.height"
-              :border-radius="frame.borderRadius"
-              :mirrors="frame.mirrors"
-              :image-src="coverSrc"
-              :max-display-width="220"
-            />
-          </div>
-        </div>
       </AppCard>
 
       <AppCard>
         <h2 class="text-xl font-black text-ink">Venue logo</h2>
-        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown on web discover, landing, and as a fallback on reward tickets.</p>
+        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown in the mobile app and as a fallback on reward tickets.</p>
 
         <div class="mt-5">
           <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>

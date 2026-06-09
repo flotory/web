@@ -1,14 +1,11 @@
-import { api } from '@/lib/api'
-import type { Customer } from '@/types'
-
-import type { VenueCategory } from '@/types'
+import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 
 export interface VenueLandingPayload {
   venue: {
     id: number
     name: string
     slug: string
-    category?: VenueCategory | null
+    category?: string | null
     logo: string | null
     logo_thumb?: string | null
     cover_image?: string | null
@@ -44,25 +41,7 @@ export function buildVenueLandingUrl(slug: string, origin = typeof window !== 'u
   return `${origin}${buildVenueLandingPath(slug)}`
 }
 
-export function buildAuthRedirectWithVenue(slug: string, nextPath = '/wallet'): string {
-  const params = new URLSearchParams({
-    venue_slug: slug,
-    redirect: nextPath,
-  })
-
-  return `/login?${params.toString()}`
-}
-
-export function buildRegisterRedirectWithVenue(slug: string, nextPath = '/wallet'): string {
-  const params = new URLSearchParams({
-    venue_slug: slug,
-    redirect: nextPath,
-  })
-
-  return `/register?${params.toString()}`
-}
-
-export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/wallet'): string {
+export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = MOBILE_APP_PATH): string {
   const params = new URLSearchParams({
     redirect: nextPath,
   })
@@ -76,7 +55,7 @@ export function buildGoogleAuthUrl(venueSlug: string | null, nextPath = '/wallet
 
 export function buildGoogleAuthUrlWithIntent(
   venueSlug: string | null,
-  nextPath = '/wallet',
+  nextPath = MOBILE_APP_PATH,
   intent: 'owner' | null = null,
 ): string {
   const params = new URLSearchParams({
@@ -92,22 +71,4 @@ export function buildGoogleAuthUrlWithIntent(
   }
 
   return `/auth/google/redirect?${params.toString()}`
-}
-
-export async function fetchVenueLanding(slug: string): Promise<VenueLandingPayload> {
-  return api<VenueLandingPayload>(`/public/venues/${encodeURIComponent(slug)}/landing`)
-}
-
-export async function joinVenueBySlug(slug: string): Promise<{ customer: Customer }> {
-  return api<{ customer: Customer }>(`/venues/${encodeURIComponent(slug)}/join`, {
-    method: 'POST',
-  })
-}
-
-export async function completeVenueOnboarding(slug: string): Promise<{ venueId: number; customerId: number }> {
-  const joined = await joinVenueBySlug(slug)
-  return {
-    venueId: joined.customer.venue_id,
-    customerId: joined.customer.id,
-  }
 }

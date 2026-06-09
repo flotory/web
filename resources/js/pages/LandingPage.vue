@@ -7,10 +7,10 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 
 const trustPoints = [
-  'Browser or app',
+  'Mobile app for guests',
   'Setup in minutes',
   'Easy for staff',
-  'Works on any phone',
+  'Owner web dashboard',
 ]
 
 const flowSteps = [
@@ -22,13 +22,13 @@ const flowSteps = [
   },
   {
     title: 'Guests scan and join',
-    copy: 'They join on any phone in the browser — or use the optional Flotory app if they prefer.',
+    copy: 'They join in the Flotory mobile app after scanning your QR.',
     image:
       'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
   },
   {
     title: 'Staff scan My QR for stamps',
-    copy: 'One guest QR works at every venue they have joined. Open scanner, scan once, confirm — built for rush hour.',
+    copy: 'One guest QR works at every venue they have joined. Staff scan from the mobile app — built for rush hour.',
     image:
       'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
   },
@@ -210,10 +210,10 @@ onBeforeUnmount(() => {
         <AppCard wrapper-class="border-white/10 bg-surface/[0.04]">
           <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft">Staff Experience</p>
           <h2 class="mt-4 text-3xl font-black tracking-tight">Built for busy staff.</h2>
-          <p class="mt-3 text-sm leading-8 text-ink-soft sm:text-base">One tap to open the scanner — built for rush-hour lines.</p>
+          <p class="mt-3 text-sm leading-8 text-ink-soft sm:text-base">Staff use the Flotory mobile app — built for rush-hour lines.</p>
           <div class="mt-6 space-y-3">
             <div class="hover-lift rounded-2xl bg-primary/70 p-4 border border-white/10">
-              <p class="text-sm font-semibold text-primary-text/80">1) Open scanner</p>
+              <p class="text-sm font-semibold text-primary-text/80">1) Open the mobile scanner</p>
             </div>
             <div class="hover-lift rounded-2xl bg-primary/70 p-4 border border-white/10">
               <p class="text-sm font-semibold text-primary-text/80">2) Scan the guest’s My QR</p>

@@ -229,7 +229,7 @@ onMounted(load)
           </li>
           <li class="flex gap-3">
             <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">2</span>
-            <span><strong class="text-ink">Scan visits</strong> — staff award stamps from the scanner.</span>
+            <span><strong class="text-ink">Scan visits</strong> — staff award stamps from the mobile app scanner.</span>
           </li>
           <li class="flex gap-3">
             <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">3</span>
@@ -237,8 +237,8 @@ onMounted(load)
           </li>
         </ol>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-          <RouterLink to="/scanner">
-            <AppButton>Open scanner</AppButton>
+          <RouterLink to="/app">
+            <AppButton>Mobile app</AppButton>
           </RouterLink>
           <RouterLink to="/rewards">
             <AppButton variant="secondary">Set up rewards</AppButton>

@@ -259,36 +259,36 @@ If you see “Google address search is not configured”, the key is missing fro
 
 OAuth preserves onboarding intent:
 
-- **Customer** (from venue QR): returns to loyalty card after sign-in.
 - **Owner** (`intent=owner` from homepage): continues to `/onboarding/create-venue`.
+- **Customers and staff** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding Flows
 
-### Customer (QR scan)
+### Customer (QR scan → mobile app)
 
-1. Guest opens `/v/{venue-slug}` (public landing with rewards preview).
-2. Taps **Join** → register or Google sign-in.
-3. After auth, auto-joins the venue and opens `/wallet`.
+1. Guest scans QR → `/v/{venue-slug}` (web bridge with venue preview).
+2. Taps **Open in Flotory app** → joins in the mobile app (register or Google sign-in).
+3. Collects stamps via **My QR**; redeems from **Rewards → Claim**.
 
-### Owner (homepage)
+### Owner (homepage — web)
 
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. 4-step wizard: venue name + slug → category → reward presets → QR download.
-4. Lands on `/dashboard?onboarding=completed` with a success toast and operational dashboard (KPIs, insights, **Open scanner**).
+4. Lands on `/dashboard?onboarding=completed` with a success toast and operational dashboard (KPIs, insights).
 
-New venues start as **`draft`**. The printed QR works for **staff scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`. See [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md).
+New venues start as **`draft`**. Staff can use the **mobile scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`. See [docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md).
 
 **Listing workflow:** owners upload raw files at **My Venues → Files & docs** (logo, menus, PDFs — any helpful material). They complete address, category, and rewards, then submit for review. A Flotory admin opens **Venue listings → Review & set up**, crops logo/cover from owner files, applies final app sizes, then approves.
 
 Venue owners manage QR download, listing, and settings under **My Venues**. Branding uploads for owners are on **Files & docs**, not venue settings.
 
-### Staff (email invitation)
+### Staff (email invitation → mobile app)
 
-1. Owner opens **Team** and invites staff by email.
+1. Owner opens **Team** (web) and invites staff by email.
 2. Staff receives an invitation email with a link to `/invite/{token}`.
 3. New staff create an account on the invite page; existing users sign in and accept.
-4. After acceptance, staff can use **Scanner** and **Customers** for that venue.
+4. After acceptance, staff open the **Flotory mobile app** for scanner and floor tools.
 
 No temporary passwords or shared credentials — each staff member sets their own password during registration or uses their existing login.
 
@@ -319,9 +319,9 @@ All seeded accounts use password: **`password`**
 
 | Account | Email | What to test |
 |--------|--------|----------------|
-| **Venue owner** | `owner@example.com` | My Venues, dashboard, rewards, campaigns, team, scanner, analytics |
-| **Staff** | `staff@example.com` | Scanner at Demo Cafe only (staff membership) |
-| **Customer** | `customer@example.com` | Web: Wallet, Rewards claim, My QR. Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues |
+| **Venue owner** | `owner@example.com` | Web: My Venues, dashboard, rewards, campaigns, team, analytics |
+| **Staff** | `staff@example.com` | Mobile app scanner at Demo Cafe (staff membership) |
+| **Customer** | `customer@example.com` | Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues, Rewards |
 
 Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
 
@@ -341,38 +341,35 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 
 ### Quick test paths
 
-**Owner / staff workspace**
+**Owner workspace (web)**
 
-1. Log in as `owner@example.com` or `staff@example.com`
-2. Open **Scanner** (header) or **My Venues → Open scanner**
-3. Scan or search for `customer@example.com` and add stamps
-4. Download QR from dashboard (**Download QR**) or venue settings
+1. Log in as `owner@example.com`
+2. Download QR from dashboard (**Download QR**) or venue settings
+3. Manage rewards, campaigns, team, and customers from the sidebar
 
-**Customer (web)**
-
-1. Log in as `customer@example.com`
-2. Open **Wallet** (`/wallet`) or scan the venue QR → `/v/demo-cafe`
-3. Earned rewards appear on **Rewards** (`/customer/rewards`); tap **Claim** and show the claim QR to staff
-4. Staff scan the claim QR on **Scanner**; your phone updates when the reward is used
-
-**Customer (mobile Expo)**
+**Staff + customer (mobile Expo)**
 
 1. `npm --prefix apps/mobile run start` with `EXPO_PUBLIC_API_BASE_URL` pointing at your API
-2. Log in as `customer@example.com` — tabs: **Home** (ready reward tickets + campaigns), **Wallet**, center **My QR**, **Venues**, **Profile**
-3. Tap a ready ticket or open **Rewards** (from quick actions) → **Claim** → show claim QR to staff
+2. Log in as `staff@example.com` — open **Scanner**; scan or search for `customer@example.com` and add stamps
+3. Log in as `customer@example.com` — tabs: **Home**, **Wallet**, center **My QR**, **Venues**, **Profile**
+
+**Customer rewards (mobile)**
+
+1. Earned rewards appear on **Rewards**; tap **Claim** and show the claim QR to staff
+2. Staff scan the claim QR in the mobile app; customer screen updates when the reward is used
 
 **Team (staff invitation)**
 
-1. Log in as `owner@example.com`
+1. Log in as `owner@example.com` (web)
 2. Open **Team** → invite staff by email
 3. Invitee opens the link in the email (`/invite/{token}`)
 4. New users create an account; existing users sign in and accept the invitation
-5. Accepted staff can open **Scanner** and **Customers** for that venue
+5. Accepted staff open the **Flotory mobile app** for scanning
 
 **QR onboarding (guest)**
 
 1. Open the venue public link from QR: `/v/your-venue-slug`
-2. Register as a new customer and confirm auto-join to Demo Cafe
+2. Tap **Open in Flotory app** and join in the mobile app
 
 ## Roles
 
@@ -384,36 +381,30 @@ Scale accounts use password **`password`** and emails like `scale-owner-{slug}@d
 ### Per venue (`venue_users.role`)
 
 - **owner** — full venue control, delete venue (soft delete), manage team
-- **staff** — scanner, customers list, staff redemption
+- **staff** — mobile scanner, staff redemption (web: account + invite accept only)
 
 Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be owner, staff, and customer at different venues. Scanner routes require an active `venue_users` row for the target venue.
 
 ## MVP Scope
 
-- Guest venue landing page (`/v/:slug`) — **main entry after QR scan**
-- Customer registration/login (email + Google) with intent-based redirects
+- Guest venue bridge (`/v/:slug`) — QR entry opens mobile app
+- Owner web dashboard: onboarding, my-venues, rewards, campaigns, analytics, team, customers CRM
 - Owner 4-step onboarding wizard and dashboard success state
 - Venue listing workflow: draft → pending review → published (admin approval before public QR join)
-- Owner `/rewards`: 5-column customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
+- Owner `/rewards`: customer card preview; click a reward → Edit / Archive toolbar; toasts for milestone actions
 - Owner `/campaigns`: campaign templates, activation, pause/edit/end actions, and history
-- Owner/staff **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
-- Customer loyalty wallet (`/wallet`) with per-venue cards and journey; universal stamp QR lives at `/my-qr`
-- Customer bottom nav (web): **Wallet**, **My QR**, **Rewards**, Venues, Settings
-- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Profile** — see [apps/mobile/README.md](apps/mobile/README.md)
-- Stamp and reward-unlock animations on the wallet detail view (no persistent banner)
-- Customer rewards wallet (`/customer/rewards`) with tab badge for pending unlocks
+- Owner **Customers**: retention list (last visit, visits, redeemed, activity filters) and **customer profile** (timeline, visit/reward history, team notes, birthday)
+- Customer mobile app (Expo): **Home**, **Wallet**, center **My QR**, **Venues**, **Rewards**, **Profile** — see [apps/mobile/README.md](apps/mobile/README.md)
 - Multi-venue owner workspace (`/my-venues`) with search, filters, and premium venue cards
 - Single-venue-focused dashboard (auto-selects first venue)
 - Venue settings, logo upload, QR download PNG, soft delete
-- Team invite/remove (`/team`)
-- Staff scanner: auto-detect stamp card vs claim QR; add stamps (1–5 or custom); redeem rewards; pending-reward warning after stamp scans
-- Customer search fallback when QR scan fails
-- Customer **Claim** flow: claim-session QR, staff scan redeem, poll until claimed
-- Staff scanner redeem endpoint + legacy venue-scoped manual redeem API
+- Team invite/remove (`/team`); staff accept on web (`/invite/{token}`)
+- Mobile staff scanner: auto-detect stamp card vs claim QR; add stamps (1–5 or custom); redeem rewards; pending-reward warning after stamp scans
+- Customer search fallback when QR scan fails (mobile)
+- Customer **Claim** flow: claim-session QR, staff scan redeem, poll until claimed (mobile)
 - Realtime stamp updates on customer devices (Reverb)
-- Operational owner dashboard per venue: monthly visits, returning guests, rewards unlocked, repeat rate, recent activity, API insights, primary **Open scanner** CTA
-- Public venue page address + **Open in Maps** (Google Maps search URL; no Maps API)
-- Venue address in settings (optional; shown on `/v/:slug` when set)
+- Operational owner dashboard per venue: monthly visits, returning guests, rewards unlocked, repeat rate, recent activity, API insights
+- Venue address in settings (optional; shown on venue bridge when set)
 
 ## Progression And QR Model
 
@@ -424,8 +415,7 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 - If a legacy card QR belongs to another venue, the API rejects the request.
 - Milestones unlock at thresholds and can be claimed once per cycle.
 - Progress is not spent on claim; when max milestone is reached, cycle completes and progress resets to 0.
-- Customers redeem from **Rewards → Claim** (per-unlock claim QR). Staff scan on `/scanner` redeems that unlock. Stamp card QR is stamps only. FIFO applies when multiple unlocks exist for the same milestone type via legacy/manual redeem APIs.
-- Open scanner for a specific venue: `/scanner?venue_id=<id>`.
+- Customers redeem from **Rewards → Claim** (per-unlock claim QR) in the mobile app. Staff scan in the mobile app redeems that unlock. Stamp card QR is stamps only. FIFO applies when multiple unlocks exist for the same milestone type via legacy/manual redeem APIs.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for API routes, models, and flows.
 

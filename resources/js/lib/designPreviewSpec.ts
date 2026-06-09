@@ -91,42 +91,6 @@ export const MOBILE_PREVIEW_FRAMES: DesignPreviewFrameSpec[] = [
 
 export const WEB_PREVIEW_FRAMES: DesignPreviewFrameSpec[] = [
   {
-    id: 'web-wallet-strip',
-    label: 'Wallet list',
-    platform: 'web',
-    width: 358,
-    height: 112,
-    borderRadius: 22,
-    mirrors: 'CustomerWalletList',
-  },
-  {
-    id: 'web-landing-cover',
-    label: 'Landing cover',
-    platform: 'web',
-    width: 358,
-    height: 96,
-    borderRadius: 16,
-    mirrors: 'VenueLandingPage',
-  },
-  {
-    id: 'web-landing-logo',
-    label: 'Landing logo',
-    platform: 'web',
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    mirrors: 'VenueLandingPage',
-  },
-  {
-    id: 'web-discover-logo',
-    label: 'Discover logo',
-    platform: 'web',
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    mirrors: 'CustomerVenuesPage',
-  },
-  {
     id: 'web-settings-logo',
     label: 'Settings preview',
     platform: 'web',
@@ -143,14 +107,5 @@ export const WEB_PREVIEW_FRAMES: DesignPreviewFrameSpec[] = [
     height: 180,
     borderRadius: 16,
     mirrors: 'RewardsPage',
-  },
-  {
-    id: 'web-reward-list',
-    label: 'Rewards wallet',
-    platform: 'web',
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    mirrors: 'CustomerRewardsPage',
   },
 ]
