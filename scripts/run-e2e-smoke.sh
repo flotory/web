@@ -20,7 +20,7 @@ Usage: ./scripts/run-e2e-smoke.sh [options]
 Options:
   --no-prepare       Skip e2e-prepare.sh (app already seeded)
   --prepare-only     Run e2e-prepare.sh and exit
-  --install-browser  Run npx playwright install chromium if missing
+  --install-browser  Run npx playwright install chromium (local dev only; CI installs browsers in workflow)
 EOF
 }
 
@@ -65,7 +65,8 @@ fi
 
 chmod +x scripts/e2e-prepare.sh scripts/e2e-wait-for-app.sh
 
-if [[ "$INSTALL_BROWSER" -eq 1 ]] || ! npx playwright --version >/dev/null 2>&1; then
+if [[ "$INSTALL_BROWSER" -eq 1 ]]; then
+  echo "==> E2E: install Playwright chromium"
   npx playwright install chromium
 fi
 
@@ -74,18 +75,34 @@ if [[ "$PREPARE" -eq 1 ]]; then
   ./scripts/e2e-prepare.sh
 fi
 
+if [[ ! -f .env.e2e ]]; then
+  echo "ERROR: .env.e2e missing — run ./scripts/e2e-prepare.sh first." >&2
+  exit 1
+fi
+
+if [[ -f .env ]]; then
+  cp .env .env.smoke-backup
+fi
+cp .env.e2e .env
+
 mkdir -p storage/logs
 
-echo "==> E2E: start Laravel server (${PLAYWRIGHT_BASE_URL}, --env=e2e)"
-php artisan serve --host="${E2E_HOST}" --port="${E2E_PORT}" --env=e2e > storage/logs/e2e-server.log 2>&1 &
+echo "==> E2E: start Laravel server (${PLAYWRIGHT_BASE_URL})"
+php artisan serve --host="${E2E_HOST}" --port="${E2E_PORT}" > storage/logs/e2e-server.log 2>&1 &
 E2E_SERVER_PID=$!
 
-cleanup_e2e_server() {
+cleanup_e2e() {
   if kill -0 "${E2E_SERVER_PID}" 2>/dev/null; then
     kill "${E2E_SERVER_PID}" 2>/dev/null || true
   fi
+
+  if [[ -f .env.smoke-backup ]]; then
+    mv -f .env.smoke-backup .env
+  else
+    rm -f .env
+  fi
 }
-trap cleanup_e2e_server EXIT
+trap cleanup_e2e EXIT
 
 echo "==> E2E: wait for app"
 ./scripts/e2e-wait-for-app.sh
@@ -93,7 +110,7 @@ echo "==> E2E: wait for app"
 echo "==> E2E: Playwright smoke tests"
 npm run test:e2e
 
-cleanup_e2e_server
+cleanup_e2e
 trap - EXIT
 
 echo "==> E2E smoke passed."

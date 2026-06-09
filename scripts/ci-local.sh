@@ -40,11 +40,16 @@ run_php_tests() {
     exit 1
   fi
 
-  echo "    (using Docker — php not installed locally)"
+  echo "    (using Docker — php not installed locally; forcing sqlite in-memory for tests)"
+  local docker_test_env=(
+    -e APP_ENV=testing
+    -e DB_CONNECTION=sqlite
+    -e "DB_DATABASE=:memory:"
+  )
   if docker compose ps app --status running -q 2>/dev/null | grep -q .; then
-    docker compose exec -T app php artisan test
+    docker compose exec -T "${docker_test_env[@]}" app php artisan test
   else
-    docker compose run --rm app php artisan test
+    docker compose run --rm "${docker_test_env[@]}" app php artisan test
   fi
 }
 
