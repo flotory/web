@@ -20,14 +20,22 @@ class NfcStampService
 
     public function resolveActiveTag(string $token): NfcTag
     {
+        $normalized = strtolower(trim($token));
+
         $tag = NfcTag::query()
             ->with('venue')
-            ->where('token', $token)
+            ->where('token', $normalized)
             ->first();
 
-        if (! $tag?->active) {
+        if ($tag === null) {
             throw ValidationException::withMessages([
                 'token' => 'This NFC tag is not available.',
+            ]);
+        }
+
+        if (! $tag->active) {
+            throw ValidationException::withMessages([
+                'token' => 'This NFC stand is turned off. Ask the venue to reactivate it in admin.',
             ]);
         }
 

@@ -1,4 +1,5 @@
 import { apiRequest } from './api'
+import { nfcLog } from './nfcReader'
 import type { MilestoneProgress, RewardRef, VenueRef, WalletCard } from '../types/loyalty'
 
 export interface NfcTagPreview {
@@ -26,12 +27,40 @@ export interface NfcStampResponse {
 }
 
 export async function fetchNfcTagPreview(token: string): Promise<NfcTagPreview> {
-  return apiRequest<NfcTagPreview>(`/public/nfc/t/${encodeURIComponent(token)}`)
+  nfcLog('fetchNfcTagPreview: start', { token: `${token.slice(0, 4)}…${token.slice(-4)}` })
+  try {
+    const preview = await apiRequest<NfcTagPreview>(`/public/nfc/t/${encodeURIComponent(token)}`)
+    nfcLog('fetchNfcTagPreview: success', {
+      venue: preview.venue?.name ?? null,
+      tapUrl: preview.tap_url,
+    })
+    return preview
+  } catch (error) {
+    nfcLog('fetchNfcTagPreview: failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    throw error
+  }
 }
 
 export async function submitNfcStamp(token: string, authToken: string): Promise<NfcStampResponse> {
-  return apiRequest<NfcStampResponse>(`/nfc/t/${encodeURIComponent(token)}/stamp`, {
-    method: 'POST',
-    token: authToken,
-  })
+  nfcLog('submitNfcStamp: start', { token: `${token.slice(0, 4)}…${token.slice(-4)}` })
+  try {
+    const response = await apiRequest<NfcStampResponse>(`/nfc/t/${encodeURIComponent(token)}/stamp`, {
+      method: 'POST',
+      token: authToken,
+    })
+    nfcLog('submitNfcStamp: success', {
+      stamps: response.stamps,
+      addedStamps: response.added_stamps,
+      venue: response.venue?.name ?? response.customer.venue?.name ?? null,
+      message: response.message,
+    })
+    return response
+  } catch (error) {
+    nfcLog('submitNfcStamp: failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    throw error
+  }
 }

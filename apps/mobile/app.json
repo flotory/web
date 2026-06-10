@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Flotory Mobile",
+    "name": "Flotory",
     "slug": "flotory-mobile",
+    "newArchEnabled": false,
     "version": "1.0.11",
     "orientation": "portrait",
     "icon": "./assets/flotory-app-icon-padded.png",
@@ -15,7 +16,12 @@
       "bundleIdentifier": "com.flotory.mobile",
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances."
+        "CFBundleDisplayName": "Flotory",
+        "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances.",
+        "NFCReaderUsageDescription": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
+      },
+      "entitlements": {
+        "com.apple.developer.nfc.readersession.formats": ["NDEF"]
       }
     },
     "android": {
@@ -54,7 +60,15 @@
           "locationWhenInUsePermission": "Flotory uses your location to show nearby venues and distances."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
+        }
+      ],
+      "./plugins/withNfc.js",
+      "./plugins/withIosBuildFixes.js"
     ]
   }
 }

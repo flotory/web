@@ -22,6 +22,7 @@ export default function NfcTapScreen() {
 
   const [screenState, setScreenState] = useState<ScreenState>('loading')
   const [venueName, setVenueName] = useState('Venue')
+  const [stampToken, setStampToken] = useState<string | null>(null)
   const [result, setResult] = useState<NfcStampResponse | null>(null)
   const [error, setError] = useState('')
   const autoStampedRef = useRef(false)
@@ -35,22 +36,25 @@ export default function NfcTapScreen() {
 
     try {
       const preview = await fetchNfcTagPreview(resolvedToken)
+      setStampToken(preview.token)
       setVenueName(preview.venue?.name ?? 'Venue')
       setScreenState('ready')
     } catch (exception) {
+      setStampToken(null)
       setError(exception instanceof ApiError ? exception.message : 'This NFC stand is unavailable.')
       setScreenState('error')
     }
   }, [resolvedToken])
 
   const collectStamp = useCallback(async () => {
-    if (!resolvedToken || !authToken) return
+    const tokenForStamp = stampToken ?? resolvedToken
+    if (!tokenForStamp || !authToken) return
 
     setScreenState('stamping')
     setError('')
 
     try {
-      const response = await submitNfcStamp(resolvedToken, authToken)
+      const response = await submitNfcStamp(tokenForStamp, authToken)
       setResult(response)
       setScreenState('success')
       void hapticSuccess()
@@ -58,7 +62,7 @@ export default function NfcTapScreen() {
       setError(exception instanceof ApiError ? exception.message : 'Could not add a stamp right now.')
       setScreenState('error')
     }
-  }, [authToken, resolvedToken])
+  }, [authToken, resolvedToken, stampToken])
 
   useEffect(() => {
     void loadPreview()

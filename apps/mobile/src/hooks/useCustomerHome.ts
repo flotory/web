@@ -169,8 +169,8 @@ export function useCustomerHome() {
     () => [
       {
         id: 'scan',
-        label: 'Scan QR',
-        subtitle: 'Earn stamps',
+        label: 'Collect a stamp',
+        subtitle: 'Tap NFC stand or show QR to staff',
         icon: 'qr-code-outline' as const,
         tint: colors.lavender,
         onPress: () => router.navigate('/(customer)/qr'),

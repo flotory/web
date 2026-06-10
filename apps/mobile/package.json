@@ -25,6 +25,7 @@
     "pusher-js": "^8.5.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-nfc-manager": "^3.16.3",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "4.16.0",
@@ -36,8 +37,10 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild:ios": "expo prebuild --platform ios --clean",
+    "run:ios": "expo run:ios --device",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test:e2e": "maestro test ../../.maestro/mobile"

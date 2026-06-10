@@ -2,13 +2,15 @@ import { useEffect, useRef } from 'react'
 import { Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import NfcStampStatusBanner from '../../src/components/customer/NfcStampStatusBanner'
 import QrImage from '../../src/components/QrImage'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import StateCard from '../../src/components/ui/StateCard'
+import { useNfcStampScan } from '../../src/hooks/useNfcStampScan'
 import { useStampQr } from '../../src/hooks/useStampQr'
 import { hapticSuccess } from '../../src/lib/haptics'
-import { colors, radius, shadows, space, tabBar, type as typography } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
+import { colors, radius, shadows, space, tabBar, type as typography } from '../../src/theme'
 
 /** Matches `(customer)/_layout.tsx` tab bar height */
 const TAB_BAR_HEIGHT = tabBar.height
@@ -17,6 +19,7 @@ export default function CustomerQrScreen() {
   const insets = useSafeAreaInsets()
   const { height: windowHeight } = useWindowDimensions()
   const { data, loading, error, reload } = useStampQr({ refetchOnFocus: true })
+  const { phase, error: nfcError, pauseScan, retryScan } = useNfcStampScan({ enabled: true })
 
   /** Lift QR above geometric center — tab bar makes true center feel too low */
   const qrLift = Math.round(Math.min(72, Math.max(28, windowHeight * 0.06)))
@@ -42,9 +45,9 @@ export default function CustomerQrScreen() {
             alignItems: 'center',
           }}
         >
-          <Text style={{ ...typography.section, textAlign: 'center' }}>My QR</Text>
+          <Text style={{ ...typography.section, textAlign: 'center' }}>Collect a stamp</Text>
           <Text style={{ ...typography.body, marginTop: 6, color: colors.inkMuted, textAlign: 'center' }}>
-            Show this at the counter — staff will stamp your card for this visit.
+            Hold near the NFC stand, or show your QR for staff to scan.
           </Text>
         </View>
       }
@@ -98,6 +101,12 @@ export default function CustomerQrScreen() {
             <Text style={{ ...typography.caption, marginTop: 8, textAlign: 'center', color: colors.inkMuted }}>
               Staff scan here — stamps go to this visit's venue. New venues join automatically on first scan.
             </Text>
+            <NfcStampStatusBanner
+              phase={phase}
+              error={nfcError}
+              onRetry={retryScan}
+              onPause={() => void pauseScan()}
+            />
           </View>
         </View>
       ) : !error && !loading ? (

@@ -9,6 +9,59 @@ Mobile app lives in `apps/mobile` and uses the Laravel API as source of truth.
 - Token auth via `expo-secure-store`
 - API default: `https://flotory.com/api` (override with `EXPO_PUBLIC_API_BASE_URL`)
 
+## NFC stamp stands (native iOS — Xcode)
+
+Flotory supports **two** ways to collect a stamp from a physical NFC stand:
+
+| Method | How it works | Works in Expo Go? |
+|--------|----------------|-------------------|
+| **Tag URL (default)** | Tag is programmed with `https://flotory.com/t/{token}`; iOS opens the app or web bridge | Yes (via system tap) |
+| **In-app NFC scan** | Customer opens **My QR** tab → QR is always visible; Core NFC starts in the background | **No** — needs Xcode build |
+
+Expo Go cannot load `react-native-nfc-manager` (Core NFC). Use a **development build** on a **physical iPhone** (NFC does not work in the Simulator).
+
+`react-native-nfc-manager` v3 requires **legacy architecture** — this app sets `"newArchEnabled": false`. After changing that, run `npm run prebuild:ios` and rebuild in Xcode.
+
+### One-time Xcode setup
+
+1. Install deps and generate the native iOS project:
+
+```bash
+cd apps/mobile
+npm install
+npm run prebuild:ios
+```
+
+2. Open Xcode:
+
+```bash
+open ios/Flotory.xcworkspace
+```
+
+3. In Xcode → **Signing & Capabilities** for target `Flotory`:
+   - Team: your Apple Developer team
+   - Add capability **Near Field Communication Tag Reading** (if not already present from prebuild)
+
+4. In [Apple Developer](https://developer.apple.com/account/resources/identifiers/list) → App ID `com.flotory.mobile`:
+   - Enable **NFC Tag Reading**
+
+5. Run on your iPhone (USB or wireless):
+
+```bash
+npm run run:ios
+```
+
+Or press **Run** in Xcode with your phone selected.
+
+### Test flow
+
+1. Admin creates a tag in **Manage venues → NFC stamp stands** and copies the tap URL.
+2. Program a blank NFC tag (NDEF URI) with that URL, or use the in-app scanner on a pre-programmed stand.
+3. In the app: open the **My QR** tab (center button) — your QR is always shown; hold the phone on the stand when the NFC prompt appears, or let staff scan the QR.
+4. App reads the URI, opens `/t/{token}`, and awards **+1 stamp** via the API.
+
+Tags must contain a Flotory tap URL (`https://flotory.com/t/...` or `flotory://t/...`).
+
 ## Run
 
 From repo root:
