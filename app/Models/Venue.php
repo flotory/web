@@ -100,6 +100,16 @@ class Venue extends Model
         return $this->hasMany(VenueSetupFile::class);
     }
 
+    public function nfcTags(): HasMany
+    {
+        return $this->hasMany(NfcTag::class);
+    }
+
+    public function stampEvents(): HasMany
+    {
+        return $this->hasMany(StampEvent::class);
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'venue_users')

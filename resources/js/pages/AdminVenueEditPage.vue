@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import VenueAdminSetupFiles from '@/components/loyalty/VenueAdminSetupFiles.vue'
+import AdminVenueNfcTags from '@/components/admin/AdminVenueNfcTags.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -318,6 +319,8 @@ onMounted(loadPage)
         :venue-id="venueId"
         @branding-updated="onBrandingUpdated"
       />
+
+      <AdminVenueNfcTags :venue-id="venueId" />
     </div>
   </AppShell>
 </template>

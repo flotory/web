@@ -29,4 +29,24 @@ return [
 
     'legacy_card_qr_sunset_at' => env('LOYALTY_LEGACY_CARD_QR_SUNSET_AT'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Minimum seconds between stamp awards on the same loyalty card
+    |--------------------------------------------------------------------------
+    */
+
+    'stamp_cooldown_seconds' => (int) env('LOYALTY_STAMP_COOLDOWN_SECONDS', 2),
+
+    /*
+    |--------------------------------------------------------------------------
+    | NFC tap stamping
+    |--------------------------------------------------------------------------
+    */
+
+    'nfc' => [
+        'debounce_seconds' => (int) env('LOYALTY_NFC_DEBOUNCE_SECONDS', 2),
+        'max_stamps_per_window' => (int) env('LOYALTY_NFC_MAX_STAMPS_PER_WINDOW', 10),
+        'window_seconds' => (int) env('LOYALTY_NFC_WINDOW_SECONDS', 120),
+    ],
+
 ];

@@ -4,6 +4,7 @@ namespace Tests\Concerns;
 
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
+use App\Models\NfcTag;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
@@ -172,5 +173,15 @@ trait BuildsLoyaltyData
         }
 
         return $visit->refresh();
+    }
+
+    protected function createNfcTag(Venue $venue, array $attributes = []): NfcTag
+    {
+        return NfcTag::query()->create(array_merge([
+            'venue_id' => $venue->id,
+            'token' => NfcTag::generateUniqueToken(),
+            'label' => 'Counter stand',
+            'active' => true,
+        ], $attributes));
     }
 }

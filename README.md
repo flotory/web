@@ -4,7 +4,7 @@
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
-The MVP focuses on venue QR onboarding, digital stamp cards, a fast staff scanner, milestone-based progression rewards, multi-venue workspaces, team memberships, Google sign-in, and retention analytics.
+The MVP focuses on venue QR onboarding, digital stamp cards, a fast staff scanner, **NFC stamp stands** (`https://flotory.com/t/{token}`), milestone-based progression rewards, multi-venue workspaces, team memberships, Google sign-in, and retention analytics.
 
 ## Stack
 

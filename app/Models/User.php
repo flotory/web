@@ -80,6 +80,11 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->hasMany(Visit::class, 'created_by');
     }
 
+    public function stampEvents(): HasMany
+    {
+        return $this->hasMany(StampEvent::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->is_admin;

@@ -21,14 +21,21 @@ class LoyaltyStampService
 {
     public function __construct(private CampaignService $campaigns) {}
 
-    public function addStamp(Customer $customer, User $staff, int $stamps = 1): array
-    {
+    public function addStamp(
+        Customer $customer,
+        User $actor,
+        int $stamps = 1,
+        ?StampAwardContext $context = null,
+    ): array {
+        $context ??= StampAwardContext::staffScan();
         $customer->loadMissing('venue');
         $requestedStamps = max($stamps, 1);
-        $multiplier = $this->campaigns->multiplierFor($customer, $customer->venue);
+        $multiplier = $context->appliesCampaignMultiplier()
+            ? $this->campaigns->multiplierFor($customer, $customer->venue)
+            : 1;
         $stampsToAward = $requestedStamps * $multiplier;
 
-        $result = DB::transaction(function () use ($customer, $staff, $stampsToAward, $requestedStamps, $multiplier): array {
+        $result = DB::transaction(function () use ($customer, $actor, $stampsToAward, $requestedStamps, $multiplier, $context): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $customer->load('user', 'venue');
             $this->guardAgainstDuplicateScan($customer);
@@ -58,7 +65,7 @@ class LoyaltyStampService
 
             $visit = $customer->visits()->create([
                 'venue_id' => $customer->venue_id,
-                'created_by' => $staff->id,
+                'created_by' => $context->recordsStaffOnVisit() ? $actor->id : null,
             ]);
 
             $journey = $this->journeyFor($customer);
@@ -77,6 +84,7 @@ class LoyaltyStampService
                 'current_cycle' => $journey['current_cycle'],
                 'cycle_completed' => $completedCycle,
                 'recent_visits' => $customer->visits()->latest()->limit(5)->get(),
+                'source' => $context->source,
             ];
         });
 
@@ -101,13 +109,14 @@ class LoyaltyStampService
         AuditLog::loyalty(
             'stamp.added',
             $result['customer'],
-            $staff,
+            $actor,
             'success',
             [
                 'status' => 'success',
                 'visit_id' => $result['visit']->id,
                 'added_stamps' => $result['added_stamps'],
                 'cycle_completed' => $result['cycle_completed'],
+                'source' => $result['source'],
             ],
         );
 
@@ -398,8 +407,10 @@ class LoyaltyStampService
 
     private function guardAgainstDuplicateScan(Customer $customer): void
     {
+        $cooldownSeconds = max((int) config('loyalty.stamp_cooldown_seconds', 2), 1);
+
         $recentVisitExists = $customer->visits()
-            ->where('created_at', '>=', now()->sub(CarbonInterval::seconds(5)))
+            ->where('created_at', '>=', now()->sub(CarbonInterval::seconds($cooldownSeconds)))
             ->exists();
 
         if ($recentVisitExists) {

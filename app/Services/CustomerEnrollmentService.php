@@ -20,7 +20,7 @@ class CustomerEnrollmentService
     /**
      * Return existing loyalty card or create one (silent join on first scan).
      */
-    public function findOrJoin(User $user, Venue $venue, ?User $joinedVia = null): Customer
+    public function findOrJoin(User $user, Venue $venue, ?User $joinedVia = null, string $source = 'scanner_auto_join'): Customer
     {
         $customer = Customer::query()->firstOrCreate(
             [
@@ -35,7 +35,7 @@ class CustomerEnrollmentService
         if ($customer->wasRecentlyCreated) {
             AuditLog::loyalty('customer.joined', $customer, $joinedVia ?? $user, 'success', [
                 'status' => 'success',
-                'source' => 'scanner_auto_join',
+                'source' => $source,
             ]);
         }
 

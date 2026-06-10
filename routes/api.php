@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminActivityController;
+use App\Http\Controllers\Api\AdminNfcTagController;
 use App\Http\Controllers\Api\AdminPaletteController;
 use App\Http\Controllers\Api\AdminVenueManagementController;
 use App\Http\Controllers\Api\AdminVenueReviewController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\PublicPaletteController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BroadcastAuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
+use App\Http\Controllers\Api\NfcStampController;
 use App\Http\Controllers\Api\VenueCampaignController;
 use App\Http\Controllers\Api\VenueController;
 use App\Http\Controllers\Api\VenueCustomerController;
@@ -31,6 +33,7 @@ Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLanding']);
+Route::get('/public/nfc/t/{token}', [NfcStampController::class, 'show']);
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
 Route::get('/public/app-config', [PublicAppConfigController::class, 'show']);
 Route::get('/public/demo-booking', [PublicDemoBookingController::class, 'show']);
@@ -64,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue:slug}/join', [CustomerLoyaltyController::class, 'join']);
 
     Route::get('/customer/stamp-qr', [CustomerLoyaltyController::class, 'stampQr']);
+    Route::post('/nfc/t/{token}/stamp', [NfcStampController::class, 'stamp']);
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);
     Route::get('/customer/rewards/wallet', [CustomerLoyaltyController::class, 'wallet']);
     Route::post('/customer/rewards/unlocks/{unlock}/claim-session', [CustomerLoyaltyController::class, 'createClaimSession']);
@@ -111,6 +115,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('/manage-venues/{venue}/logo', [AdminVenueManagementController::class, 'destroyLogo']);
         Route::post('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'uploadCover']);
         Route::delete('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'destroyCover']);
+        Route::get('/manage-venues/{venue}/nfc-tags', [AdminNfcTagController::class, 'index']);
+        Route::post('/manage-venues/{venue}/nfc-tags', [AdminNfcTagController::class, 'store']);
+        Route::patch('/nfc-tags/{nfcTag}', [AdminNfcTagController::class, 'update']);
         Route::get('/manage-venues/{venue}/setup-files', [AdminVenueSetupFileController::class, 'index']);
         Route::get('/palette', [AdminPaletteController::class, 'show']);
         Route::patch('/palette', [AdminPaletteController::class, 'update']);

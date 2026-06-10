@@ -65,6 +65,7 @@ const router = createRouter({
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { guest: true } },
     { path: '/invite/:token', name: 'staff-invite', component: StaffInvitePage },
     { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
+    { path: '/t/:token', name: 'nfc-tap', component: () => import('@/pages/NfcTapBridgePage.vue'), meta: { guest: true } },
     { path: '/onboarding', redirect: { path: '/my-venues', query: { create: '1' } } },
     { path: '/onboarding/create-venue', redirect: { path: '/my-venues', query: { create: '1' } } },
     { path: '/onboarding/:pathMatch(.*)*', redirect: { path: '/my-venues', query: { create: '1' } } },

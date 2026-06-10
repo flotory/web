@@ -49,6 +49,11 @@ class Customer extends Model
         return $this->hasMany(Visit::class);
     }
 
+    public function stampEvents(): HasMany
+    {
+        return $this->hasMany(StampEvent::class);
+    }
+
     public function rewardCycles(): HasMany
     {
         return $this->hasMany(CustomerRewardCycle::class);

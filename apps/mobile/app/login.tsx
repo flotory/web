@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router'
+import { Redirect, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 
@@ -10,6 +10,8 @@ import { colors } from '../src/theme'
 
 export default function LoginScreen() {
   const { signIn, signUp, token, role, booting } = useAuth()
+  const { redirect } = useLocalSearchParams<{ redirect?: string | string[] }>()
+  const redirectPath = Array.isArray(redirect) ? redirect[0] : redirect
   const [isRegisterMode, setIsRegisterMode] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -22,6 +24,10 @@ export default function LoginScreen() {
   }
 
   if (token && role !== null) {
+    if (redirectPath?.startsWith('/')) {
+      return <Redirect href={redirectPath} />
+    }
+
     return <Redirect href="/" />
   }
 

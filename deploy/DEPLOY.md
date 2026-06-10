@@ -95,6 +95,8 @@ Open the **latest** run on `main`, not an old failed one:
 - Google sign-in on web (if `GOOGLE_CLIENT_SECRET` is set on the server)
 - Mobile app: **Continue with Google** on login (requires this deploy for `POST /api/auth/google`)
 - Guest venue landing: `https://flotory.com/v/demo-cafe` (published venue QR entry)
+- NFC tap bridge: `https://flotory.com/t/{token}` (after admin creates a tag on **Manage venues → edit venue**)
+- Mobile NFC deep link: `flotory://t/{token}` → stamp screen with +1 animation
 - Owner demo booking: `https://flotory.com/book-demo` (Calendly iframe; requires `FLOTORY_DEMO_CALENDLY_URL` in server `.env`)
 - Owner **Rewards** (`/rewards`): loyalty card grid loads; **Create milestone** saves; tap a gift slot to edit
 - Owner **Campaigns** (`/campaigns`): templates load; activate/pause a test campaign

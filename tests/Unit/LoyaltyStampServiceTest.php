@@ -65,7 +65,7 @@ class LoyaltyStampServiceTest extends TestCase
         ]);
     }
 
-    public function test_add_stamp_rejects_duplicate_scan_within_five_seconds(): void
+    public function test_add_stamp_rejects_duplicate_scan_within_cooldown_window(): void
     {
         $staff = $this->createUser();
         $customerUser = $this->createUser(['email' => 'guest@example.com']);

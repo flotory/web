@@ -110,13 +110,13 @@ Example: scanner requires `['owner', 'staff']`; team management requires `['owne
 
 ## Loyalty Engine (`LoyaltyStampService`)
 
-**`addStamp(Customer, User $staff, int $stamps)`**
+**`addStamp(Customer, User $actor, int $stamps, ?StampAwardContext $context)`**
 
-1. Reject duplicate scan within 5 seconds (same customer).
-2. Lock customer row; increment stamps (1–100).
+1. Reject duplicate scan within **2 seconds** (same customer card; `loyalty.stamp_cooldown_seconds`).
+2. Lock customer row; increment stamps (1–100). Staff scans may apply campaign multipliers; NFC taps always award exactly **1** stamp.
 3. Unlock milestones at or below current stamp count for active cycle.
 4. If stamps ≥ max active milestone threshold: complete cycle, reset stamps to 0, start next cycle.
-5. Create one `Visit` row (`created_by` = staff).
+5. Create one `Visit` row (`created_by` = staff for scanner; `null` for NFC).
 6. Broadcast `StampAdded` on `private-customer.{customerId}`.
 
 **`redeemReward(Customer, Reward, User $redeemer)`**
@@ -126,6 +126,28 @@ Example: scanner requires `['owner', 'staff']`; team management requires `['owne
 - Wallet UI lists one row per unlock (`unlock_id`), but the API redeems by `reward_id` and always claims the oldest pending unlock first.
 
 **Helpers:** `nextRewardFor`, `availableRewardsFor` (unique reward types with pending unlocks), `pendingUnlocksFor`, `pendingRewardCountFor`, `journeyFor`.
+
+## NFC stamping (`NfcStampService`)
+
+Physical stands ship with an NFC URL: `https://flotory.com/t/{token}` (deep link: `flotory://t/{token}`).
+
+| Table | Purpose |
+|-------|---------|
+| `nfc_tags` | Admin-provisioned stand → venue mapping (`token`, `label`, `active`) |
+| `stamp_events` | Audit log for each NFC tap; powers debounce + burst limits |
+
+**Flow**
+
+1. Customer taps NFC → web bridge or mobile app opens `/t/{token}`.
+2. `GET /api/public/nfc/t/{token}` resolves venue (published only).
+3. Authenticated customer calls `POST /api/nfc/t/{token}/stamp` → **+1 stamp** via `LoyaltyStampService` with `StampAwardContext::nfcTap()`.
+4. Mobile shows “+1 Stamp Added” success state. Staff can ask for multiple taps (e.g. 3 stamps = tap 3 times, ≥2s apart).
+
+**Rate limits** (`config/loyalty.php` → `nfc.*`): 2s debounce per user+tag; max 10 stamps per user+venue per 2 minutes.
+
+**Admin:** `/admin/manage-venues/{id}` → NFC stamp stands (create tag, copy tap URL, activate/deactivate, rotate token).
+
+**Fallback:** Staff scanner still supports bulk stamps (1–100) via customer My QR — unchanged.
 
 ## Authentication
 
