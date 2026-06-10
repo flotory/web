@@ -35,10 +35,10 @@ Portable defaults use **`localhost` only** — same on every Mac/PC. Do not put 
 git clone git@github.com:flotory/web.git && cd web
 cp .env.secrets.example .env.secrets   # GOOGLE_CLIENT_SECRET + GOOGLE_MAPS_API_KEY
 ./scripts/setup-local.sh
-docker compose up --build
+./scripts/docker-up.sh --build
 ```
 
-Open **http://localhost:8000** (not `:5173` for login or OAuth). Vite HMR: http://localhost:5173.
+Open **http://localhost:8000** (not the Vite port for login or OAuth). Vite HMR: usually http://localhost:5173 — if that port is taken by another dev server, `docker-up.sh` starts Vite on **5174+** and prints the URL.
 
 | File | Committed? | Purpose |
 |------|------------|---------|

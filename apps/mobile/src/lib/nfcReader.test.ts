@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractNfcTokenFromUri, normalizeNfcToken } from './nfcReader'
+import { extractNfcTokenFromUri, normalizeNfcToken } from './nfcToken'
 
 describe('normalizeNfcToken', () => {
   it('trims and lowercases tokens', () => {

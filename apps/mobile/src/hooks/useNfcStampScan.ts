@@ -130,6 +130,8 @@ export function useNfcStampScan({ enabled }: UseNfcStampScanOptions) {
       return
     }
 
+    // tabPress is emitted by the bottom tab navigator, not the root navigation event map.
+    // @ts-expect-error Bottom tab event — see react-navigation bottom-tabs TabPressEvent
     const unsubscribe = navigation.addListener('tabPress', () => {
       nfcLog('useNfcStampScan: tabPress', {
         isFocused,

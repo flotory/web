@@ -1,15 +1,13 @@
-import NfcManager, { Ndef, NfcEvents, NfcTech } from 'react-native-nfc-manager'
+import NfcManager, { Ndef, NfcEvents, NfcTech, type NdefRecord } from 'react-native-nfc-manager'
+
+import { extractNfcTokenFromUri, normalizeNfcToken } from './nfcToken'
+
+export { extractNfcTokenFromUri, normalizeNfcToken } from './nfcToken'
 
 const NFC_LOG_PREFIX = '[Flotory NFC]'
 const NFC_SCAN_TIMEOUT_MS = 60_000
 
 let activeSessionId = 0
-
-type NdefRecord = {
-  tnf: number
-  type: number[] | Uint8Array
-  payload: number[] | Uint8Array
-}
 
 export function nfcLog(message: string, data?: unknown): void {
   if (!__DEV__) {
@@ -32,15 +30,23 @@ function maskToken(token: string): string {
   return `${token.slice(0, 4)}…${token.slice(-4)}`
 }
 
-function bytesToHex(bytes: number[] | Uint8Array): string {
-  const view = bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes)
+function bytesToHex(bytes: NdefRecord['type'] | NdefRecord['payload']): string {
+  if (typeof bytes === 'string') {
+    return bytes
+  }
+
+  const view = toUint8Array(bytes)
   return Array.from(view)
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join(' ')
 }
 
-function toUint8Array(bytes: number[] | Uint8Array): Uint8Array {
-  return bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes)
+function toUint8Array(bytes: NdefRecord['payload']): Uint8Array {
+  if (bytes instanceof Uint8Array) {
+    return bytes
+  }
+
+  return Uint8Array.from(bytes as ArrayLike<number>)
 }
 
 function isUriRecord(record: NdefRecord): boolean {
@@ -51,7 +57,7 @@ function isTextRecord(record: NdefRecord): boolean {
   return Ndef.isType(record, Ndef.TNF_WELL_KNOWN, Ndef.RTD_TEXT)
 }
 
-function decodeUriPayload(payload: number[] | Uint8Array): string {
+function decodeUriPayload(payload: NdefRecord['payload']): string {
   const bytes = toUint8Array(payload)
   if (bytes.length === 0) {
     return ''
@@ -65,7 +71,7 @@ function decodeUriPayload(payload: number[] | Uint8Array): string {
   }
 }
 
-function decodeTextPayload(payload: number[] | Uint8Array): string {
+function decodeTextPayload(payload: NdefRecord['payload']): string {
   const bytes = toUint8Array(payload)
   return Ndef.text.decodePayload(bytes)
 }
@@ -91,51 +97,6 @@ function describeNdefRecord(record: NdefRecord, index: number): Record<string, u
   }
 
   return summary
-}
-
-/** Normalize token parsed from URLs / NFC records. */
-export function normalizeNfcToken(token: string): string {
-  return token.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
-}
-
-/** Parse Flotory tap URL from an NFC tag URI record → stamp token */
-export function extractNfcTokenFromUri(uri: string): string | null {
-  const trimmed = uri.trim()
-  if (!trimmed) {
-    nfcLog('extractNfcTokenFromUri: empty input')
-    return null
-  }
-
-  const direct = trimmed.match(/\/t\/([^/?#]+)/i)
-  if (direct?.[1]) {
-    const token = normalizeNfcToken(decodeURIComponent(direct[1]))
-    if (!token) {
-      return null
-    }
-    nfcLog('extractNfcTokenFromUri: matched direct path', { input: trimmed, token: maskToken(token) })
-    return token
-  }
-
-  try {
-    const url = new URL(trimmed)
-    const match = url.pathname.match(/^\/t\/([^/]+)$/i)
-    const token = match?.[1] ? normalizeNfcToken(decodeURIComponent(match[1])) : null
-    if (token === '') {
-      return null
-    }
-    nfcLog('extractNfcTokenFromUri: parsed URL', {
-      input: trimmed,
-      pathname: url.pathname,
-      token: token ? maskToken(token) : null,
-    })
-    return token
-  } catch (error) {
-    nfcLog('extractNfcTokenFromUri: URL parse failed', {
-      input: trimmed,
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return null
-  }
 }
 
 function tokenFromNdefRecords(records: NdefRecord[]): string | null {
