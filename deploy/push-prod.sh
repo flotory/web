@@ -34,20 +34,22 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+if [[ "${SKIP_CI_GATE:-}" != "1" && -z "${GITHUB_TOKEN:-}" ]]; then
+  echo ""
+  echo "ERROR: GITHUB_TOKEN is not set."
+  echo "Deploy requires GitHub Actions to pass after push."
+  echo "  cp deploy/config.secrets.example.sh deploy/config.secrets.sh"
+  echo "  # edit config.secrets.sh — fine-grained token: flotory/web, Actions (read)"
+  echo "Or: export GITHUB_TOKEN=... / install gh and gh auth login"
+  echo "Emergency only: SKIP_CI_GATE=1 ./deploy/push-prod.sh"
+  exit 1
+fi
+
 if [[ "${SKIP_CI_GATE:-}" == "1" ]]; then
   echo "WARNING: SKIP_CI_GATE=1 — skipping local and GitHub CI gates (emergency only)."
+elif [[ "${SKIP_LOCAL_CI:-}" == "1" ]]; then
+  echo "SKIP_LOCAL_CI=1 — skipping local CI; GitHub Actions will run tests after push."
 else
-  if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-    echo ""
-    echo "ERROR: GITHUB_TOKEN is not set."
-    echo "Deploy requires GitHub Actions to pass after push."
-    echo "  cp deploy/config.secrets.example.sh deploy/config.secrets.sh"
-    echo "  # edit config.secrets.sh — fine-grained token: flotory/web, Actions (read)"
-    echo "Or: export GITHUB_TOKEN=... / install gh and gh auth login"
-    echo "Emergency only: SKIP_CI_GATE=1 ./deploy/push-prod.sh"
-    exit 1
-  fi
-
   echo "==> Running local CI (PHPUnit + frontend + mobile)..."
   "${ROOT}/scripts/ci-local.sh"
 fi
