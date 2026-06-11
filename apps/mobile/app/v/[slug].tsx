@@ -79,8 +79,8 @@ export default function VenueJoinScreen() {
       return
     }
 
-    if (role === 'staff') {
-      setError('Staff accounts cannot join customer loyalty cards.')
+    if (role === 'owner') {
+      setError('Venue owner accounts cannot join customer loyalty cards.')
       return
     }
 

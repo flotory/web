@@ -17,7 +17,7 @@ import { rewardImageUrl, venueLogoUrl } from '../../src/lib/media'
 import { redeemUnlock } from '../../src/lib/redeemUnlock'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors, radius, shadows, space } from '../../theme'
+import { colors, radius, shadows, space } from '../../src/theme'
 
 const MEDIA_SIZE = 84
 const MEDIA_RADIUS = 18
