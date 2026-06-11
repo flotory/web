@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -47,5 +48,20 @@ class DatabaseMigrationsTest extends TestCase
 
         $this->assertTrue(Schema::hasTable('nfc_tags'));
         $this->assertFalse(Schema::hasTable('redemption_requests'));
+    }
+
+    public function test_reconcile_consolidated_migrations_marks_existing_schema(): void
+    {
+        $this->artisan('migrate')->assertSuccessful();
+
+        DB::table('migrations')->where('migration', '2026_06_01_000001_create_flotory_schema')->delete();
+
+        $this->artisan('migrate:reconcile-consolidated')->assertSuccessful();
+
+        $this->assertTrue(
+            DB::table('migrations')->where('migration', '2026_06_01_000001_create_flotory_schema')->exists()
+        );
+
+        $this->artisan('migrate')->assertSuccessful();
     }
 }
