@@ -45,10 +45,33 @@ const XCODE_FIX = `
       end
     end`
 
+function readPodfileContents(modResults) {
+  if (typeof modResults === 'string') {
+    return modResults
+  }
+
+  if (modResults && typeof modResults.contents === 'string') {
+    return modResults.contents
+  }
+
+  throw new TypeError('Podfile modResults must be a string or { contents: string }')
+}
+
+function writePodfileContents(modResults, contents) {
+  if (typeof modResults === 'string') {
+    return contents
+  }
+
+  return {
+    ...modResults,
+    contents,
+  }
+}
+
 /** Keep legacy-arch iOS builds on prebuilt RN and patch Xcode 26 native build issues. */
 function withIosBuildFixes(config) {
   return withPodfile(config, (mod) => {
-    let contents = mod.modResults
+    let contents = readPodfileContents(mod.modResults)
 
     if (contents.includes(RCT_USE_RN_DEP_OLD)) {
       contents = contents.replace(RCT_USE_RN_DEP_OLD, RCT_USE_RN_DEP_NEW)
@@ -65,7 +88,7 @@ function withIosBuildFixes(config) {
       )
     }
 
-    mod.modResults = contents
+    mod.modResults = writePodfileContents(mod.modResults, contents)
     return mod
   })
 }

@@ -4,109 +4,89 @@ Approved product and engineering decisions. **Do not undo or contradict these** 
 
 Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTURE.md) (implementation).
 
-## Identity and Roles
+## Identity and roles
 
 | Decision | Detail |
 |----------|--------|
 | No global owner/staff/customer on `users` | `users` has only `is_admin` (boolean). Default `false` for all sign-ups. |
-| Venue ownership in pivot | `venue_users.role`: `owner` or `staff`. Creating a venue adds an `owner` row. |
+| Venue ownership in pivot | `venue_users.role` = `owner` for venue operators. **Staff role and team invites removed** (2026 pivot). |
 | No `owner_user_id` on `venues` | Owners are derived from `venue_users`, not a column on `venues`. |
-| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. Joining creates/fetches this row. Stamp QR is **user-level** (`user_stamp_tokens`) — see [ARCHITECTURE.md](./ARCHITECTURE.md#universal-my-qr). |
-| Multi-hat users | Same user can be owner at A, staff at B, customer at C. |
-| Platform admin | `users.is_admin` bypasses `VenueAccess` membership checks. |
+| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. No per-card QR token. |
+| Multi-hat users | Same user can be owner at venue A and customer at many venues. |
+| Platform admin | `users.is_admin` bypasses venue membership for admin routes only. |
 
-## Language and UX Copy
+## Language and UX copy
 
 | Decision | Detail |
 |----------|--------|
 | Customer-facing | **Stamps**, **Rewards**, **Progress** — never “visits” in customer UI. |
-| Owner analytics | **Visits**, **Customers**, **Loyalty activity** — visits = stamp events recorded in `visits`. |
-| Reward thresholds | Milestones use **`required_stamps` only**. Never visits as requirements. |
-| Multiple stamps per action | Staff may award 1–100 stamps in one scan; still one `visits` row per `addStamp` call. |
+| Owner analytics | **Visits**, **Customers**, **Loyalty activity** — visits = stamp events in `visits`. |
+| Reward thresholds | Milestones use **`required_stamps` only**. |
+| Stamps per NFC tap | **1 base stamp** per tap; campaign multipliers may increase `added_stamps`. |
 
-## Loyalty Rules
-
-| Decision | Detail |
-|----------|--------|
-| Business logic in service | All stamp/unlock/claim/cycle logic in `LoyaltyStampService`. Controllers delegate. |
-| Claims on `reward_unlocks` | Unlock and claim live on the same row (`unlocked_at`, `claimed_at`, `claimed_by`). **No** `reward_redemptions` table. |
-| Stamps not spent on claim | Claiming sets `claimed_at`; stamp balance unchanged. |
-| Cycle completion | When stamps reach the **maximum** active milestone threshold, cycle completes, stamps reset to 0, new `CustomerRewardCycle` starts. |
-| Milestone uniqueness | One active milestone per `required_stamps` value per venue (`reward_type = milestone`). |
-| Duplicate scan guard | Same customer cannot be stamped again within **5 seconds**. |
-| Redeem FIFO | Staff scanner redeem (and legacy `POST .../rewards/{reward}/redeem`) claims the **oldest unclaimed** unlock for that reward (`orderBy cycle_number`). Claim QR is created per `unlock_id` via `claim-session`. |
-| Claim QR | `redemption_requests` table: 10 min TTL, single-use token; QR encodes `/r/{token}`. Scanner auto-detects stamp UUID vs redeem URL. |
-| Stamp-scan warning | `pending_claim_warning` on stamp API when customer has unclaimed unlocks — reduces wrong-QR mistakes at counter. |
-| Scanner venue scoping | Stamp scans apply to the **scanner’s venue** (user resolved from My QR; card auto-created if needed). Legacy per-card `qr_token` optional via `LOYALTY_LEGACY_CARD_QR`. Staff fallback may use `customer_id`. |
-| Archive before purge | Rewards must be archived (`active = false`) before permanent delete. |
-
-## Team and Staff
+## Loyalty rules
 
 | Decision | Detail |
 |----------|--------|
-| Staff onboarding via email invitation | `VenueStaffInvitationService` sends email with link to `/invite/{token}`. **No** temp passwords or auto-created credentials emailed to owners. |
-| Staff role only for invites | Invitations support `staff` only — not co-owner invites in MVP. |
-| Invitation expiry | 7 days; pending/expired invites can be resent (new token). |
-| Email must match | Accepting requires signed-in user email to match invitation email. |
-| Owner protection | Cannot invite/remove/change role of venue owner. |
-| Staff nav | Staff-only members land on web `/app` (mobile download). Scanner and floor tools are **mobile app only**; web keeps invite accept (`/invite/{token}`) and account. |
+| Business logic in service | Stamp/unlock/redeem/cycle logic in `LoyaltyStampService`. Controllers delegate. |
+| Claims on `reward_unlocks` | Unlock and redeem on same row (`unlocked_at`, `claimed_at`, `claimed_by`). |
+| Stamps not spent on redeem | Redeeming sets `claimed_at`; stamp balance unchanged. |
+| Cycle completion | When stamps reach max active milestone, cycle completes, stamps reset to 0. |
+| Milestone uniqueness | One active milestone per `required_stamps` per venue. |
+| Duplicate stamp guard | Same customer cannot be stamped again within cooldown (visits + NFC debounce). |
+| Redeem by unlock | Customer redeems the **specific** `unlock_id` they slide on — not FIFO by reward type. |
+| NFC-only stamps | No staff scanner, no stamp QR, no universal `user_stamp_tokens`. |
+| Archive before purge | Rewards must be archived before permanent delete. |
 
 ## Auth
 
 | Decision | Detail |
 |----------|--------|
-| Sanctum bearer tokens | SPA stores token; API uses `auth:sanctum`. |
-| Google OAuth via web routes | Session redirect flow; frontend receives `oauth_token` on login page. |
-| Google OAuth on mobile | In-app browser → web `/auth/google/redirect?mobile=1` → deep link `flotory://login?oauth_token=...` (same Google client as web). |
-| Password reset | Email link to SPA `/reset-password`; no security-through-obscurity on forgot-password response. |
+| Sanctum bearer tokens | SPA and mobile store token; API uses `auth:sanctum`. |
+| Google OAuth via web routes | Session redirect; mobile uses same flow → deep link with `oauth_token`. |
+| Password reset | Email link to SPA `/reset-password`. |
 | Redirect sanitization | Post-auth redirects limited to internal paths (`redirect.ts`). |
+| Web login | **Owners and platform admins only.** Customers use mobile app. |
 
-## Frontend Behavior
+## Frontend behavior
 
 | Decision | Detail |
 |----------|--------|
 | No business logic in Vue | Display API data; loyalty rules stay in Laravel services. |
-| Save button pattern | Settings/forms use `AsyncActionButton`: **Save** → **Saving…** → **Saved ✓**. |
-| Inline validation | Form field errors shown inline from API validation messages. |
-| Dangerous actions | Confirmation modal before delete venue, archive/delete reward, remove team member. |
-| Cross-page feedback | Use `vue-sonner` toast for global success/error (toaster in `App.vue`). |
-| Owner signup | Register with owner intent → **My Venues** create form (`/my-venues?create=1`). Venue stays **draft** until listing checklist is submitted and admin approves. Rewards and campaigns are configured from the owner workspace after the venue exists. |
-| Owner dashboard | Operational KPIs + **listing checklist** until published: Google address (with coordinates), category, setup files, ≥1 active reward → **Submit for listing** → admin approval. Mobile scanner/rewards/team work while draft or pending. |
-| Venue listing status | `venues.status`: `draft` → `pending_review` → `published` (or `rejected`). Customers see venues only when **published** (Discover, `/v/:slug`, join). Existing rows migrated to `published`. |
-| Venue location | Google Places address on web (owner settings / listing checklist); stores `address`, `latitude`, `longitude`. Address updates limited to **3/day** per venue. Mobile: nearby sort uses device GPS + Haversine (free); **Directions** opens native maps. |
-| Workspace venue selection | Auto-select first active venue when none chosen; MVP dashboard/analytics focus on filtered venue, not an “all venues aggregate” owner view. |
-| Post-login routing (web) | Owners → dashboard; staff-only and pure customers → `/app` (mobile app). |
-| Customer primary surface | **Mobile app only**: **My QR** for stamps (center tab); **Home** for ready rewards, campaigns, and quick actions; **Wallet** for per-venue cards. Claim QR in **Rewards → Claim**. Nav: Home, Wallet, My QR, Venues, Profile. Staff scanner (mobile): My QR / claim QR, or `customer_id` fallback. |
-| Owner campaigns surface | `/campaigns` is the owner campaign workspace; dashboard links to it for active campaign management. |
-| Customer retention CRM | `/customers` lists joined date, last visit, visit count, rewards claimed, activity status (active / at-risk / inactive / new) with filters. `/customers/:id` profile adds visit history, reward history, unified timeline, team notes, and optional birthday on the user. |
+| Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
+| Owner signup | Register with owner intent → **My Venues** create form. |
+| Venue listing status | `draft` → `pending_review` → `published`. Customers join only when **published**. |
+| Post-login routing (web) | Owners → dashboard; non-owners → `/app` (mobile download). |
+| Customer primary surface | **Mobile app only**: Stamp (NFC), Wallet, slide redeem. |
+| Owner campaigns | `/campaigns` workspace; dashboard links for recommendations. |
 
-## Data and Infrastructure
+## Data and infrastructure
 
 | Decision | Detail |
 |----------|--------|
-| Soft delete venues | `venues.deleted_at`; removed from active UI immediately. |
-| Local file uploads | Logos, covers, reward images under `public/uploads/` — not S3 in MVP. Uploads generate JPEG thumbnails (`*-thumb.jpg`); list/card views load thumbs, detail views load full images. |
-| Monolith | Single repo, Laravel + Vue, VPS deploy — no microservices. |
-| Reverb optional | Realtime stamp updates enhance UX but app functions without WebSockets. |
-| Visit timestamps | `visits` has `created_at` only (no `updated_at`). |
+| Consolidated migrations | Two migrations: Laravel infra + `create_flotory_schema`. |
+| Soft delete venues | `venues.deleted_at`. |
+| Local file uploads | Logos, covers, reward images under `public/uploads/`. |
+| Monolith | Single repo, Laravel + Vue + Expo mobile. |
+| Reverb optional | Realtime enhances UX; polling fallback on mobile. |
+| Visit timestamps | `visits` has `created_at` only. |
 
 ## Authorization
 
 | Decision | Detail |
 |----------|--------|
-| Centralized venue checks | Use `VenueAccess::requireAccess()` in controllers — do not ad-hoc membership queries. |
+| Centralized venue checks | `VenueAccess::requireAccess()` in controllers. |
 | Thin controllers/models | Validate → authorize → service → JSON. |
-| Customer endpoints | Customer-scoped routes verify `customer.user_id === auth user`. |
+| Customer endpoints | Verify `customer.user_id === auth user`. |
 
-## Explicitly Not in MVP
+## Explicitly not in MVP
 
 Do not add without approval:
 
 - Billing / subscriptions
-- `reward_redemptions` or visit-based reward thresholds
-- `owner_user_id` or role columns on `users`
+- Staff role, team tab, staff invitations, scanner, claim QR
+- `user_stamp_tokens`, per-card `qr_token`, `redemption_requests`
 - POS integrations
-- Push notifications
-- Full campaign push delivery and ROI analytics (stamp campaigns MVP shipped — [CAMPAIGNS.md](./CAMPAIGNS.md))
+- Campaign push delivery (toggle may exist; delivery not guaranteed)
 - Co-owner invitations
-- HEIC image upload (JPG, PNG, WEBP, GIF only)
+- HEIC upload (JPG, PNG, WEBP, GIF only)

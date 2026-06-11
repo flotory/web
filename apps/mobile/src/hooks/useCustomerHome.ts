@@ -170,8 +170,8 @@ export function useCustomerHome() {
       {
         id: 'scan',
         label: 'Collect a stamp',
-        subtitle: 'Tap NFC stand or show QR to staff',
-        icon: 'qr-code-outline' as const,
+        subtitle: 'Open Stamp tab and tap the NFC stand',
+        icon: 'radio-outline' as const,
         tint: colors.lavender,
         onPress: () => router.navigate('/(customer)/qr'),
       },

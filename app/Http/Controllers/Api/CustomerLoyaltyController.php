@@ -4,34 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\RedemptionRequest;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
-use App\Models\Reward;
 use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
 use App\Services\VenuePublicationService;
-use App\Services\RedemptionClaimService;
-use App\Services\UniversalCustomerQrService;
 use App\Support\AuditLog;
 use App\Support\CustomerAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-
 class CustomerLoyaltyController extends Controller
 {
-    public function stampQr(Request $request, UniversalCustomerQrService $universalQr): JsonResponse
-    {
-        if (! $universalQr->isEnabled()) {
-            return response()->json([
-                'message' => 'Universal customer QR is not enabled.',
-            ], 404);
-        }
-
-        return response()->json($universalQr->ensureForUser($request->user()));
-    }
-
     public function mine(Request $request, LoyaltyStampService $loyalty, CampaignService $campaigns): JsonResponse
     {
         $cards = Customer::query()
@@ -150,7 +133,6 @@ class CustomerLoyaltyController extends Controller
                 'user_id' => $request->user()->id,
             ],
             [
-                'qr_token' => (string) Str::uuid(),
                 'stamps' => 0,
             ],
         );
@@ -202,50 +184,19 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function redeem(Request $request, Customer $customer, Reward $reward, LoyaltyStampService $loyalty): JsonResponse
+    public function redeemUnlock(Request $request, RewardUnlock $unlock, LoyaltyStampService $loyalty): JsonResponse
     {
-        CustomerAccess::requireCustomer($request->user(), $customer);
-
-        $unlock = $loyalty->redeemReward($customer, $reward, $request->user());
-
-        return response()->json($loyalty->redeemApiPayload($customer, $unlock), 201);
-    }
-
-    public function createClaimSession(
-        Request $request,
-        RewardUnlock $unlock,
-        RedemptionClaimService $claims,
-        LoyaltyStampService $loyalty,
-    ): JsonResponse {
         $unlock->load('customer', 'reward');
 
         CustomerAccess::requireUnlock($request->user(), $unlock);
-
         $loyalty->syncEligibleUnlocks($unlock->customer);
-        $unlock = $unlock->fresh(['customer', 'reward']);
 
-        $session = $claims->createClaimSession($unlock);
+        $claimed = $loyalty->redeemUnlock($unlock, $request->user());
 
         return response()->json(
-            $claims->claimSessionPayload($session, $request->root()),
+            $loyalty->redeemApiPayload($unlock->customer, $claimed),
             201,
         );
     }
 
-    public function claimSessionStatus(
-        Request $request,
-        string $token,
-        RedemptionClaimService $claims,
-    ): JsonResponse {
-        $session = RedemptionRequest::query()
-            ->where('token', $token)
-            ->with('rewardUnlock.customer', 'rewardUnlock.reward')
-            ->firstOrFail();
-
-        CustomerAccess::requireClaimSession($request->user(), $session);
-
-        return response()->json(
-            $claims->claimSessionPayload($session, $request->root()),
-        );
-    }
 }

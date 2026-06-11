@@ -27,7 +27,7 @@ class LoyaltyStampService
         int $stamps = 1,
         ?StampAwardContext $context = null,
     ): array {
-        $context ??= StampAwardContext::staffScan();
+        $context ??= StampAwardContext::nfcTap();
         $customer->loadMissing('venue');
         $requestedStamps = max($stamps, 1);
         $multiplier = $context->appliesCampaignMultiplier()
@@ -77,7 +77,7 @@ class LoyaltyStampService
                 'added_stamps' => $stampsToAward,
                 'requested_stamps' => $requestedStamps,
                 'stamp_multiplier' => $multiplier,
-                'active_campaign' => $this->campaigns->scannerContextFor($customer),
+                'active_campaign' => $this->campaigns->promotionForCustomer($customer),
                 'next_reward' => $this->nextRewardFor($customer),
                 'available_rewards' => $this->availableRewardsFor($customer),
                 'milestones' => $journey['milestones'],
@@ -123,50 +123,46 @@ class LoyaltyStampService
         return $result;
     }
 
-    public function redeemReward(
-        Customer $customer,
-        Reward $reward,
-        User $redeemer,
-        ?string $claimSessionToken = null,
-    ): RewardUnlock {
+    public function redeemUnlock(RewardUnlock $unlock, User $redeemer): RewardUnlock
+    {
+        $unlock->loadMissing('customer', 'reward');
+        $customer = $unlock->customer;
+        $reward = $unlock->reward;
+
         if ($reward->venue_id !== $customer->venue_id) {
             throw ValidationException::withMessages([
-                'reward' => 'This reward is not available for the scanned customer.',
+                'reward' => 'This reward is not available.',
             ]);
         }
 
         if (! $reward->active && ! $this->hasPendingUnlock($customer, $reward)) {
             throw ValidationException::withMessages([
-                'reward' => 'This reward is not available for the scanned customer.',
+                'reward' => 'This reward is not available.',
             ]);
         }
 
-        $unlock = DB::transaction(function () use ($customer, $reward, $redeemer): RewardUnlock {
-            $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
-            $unlock = RewardUnlock::query()
-                ->where('customer_id', $customer->id)
-                ->where('reward_id', $reward->id)
-                ->whereNull('claimed_at')
-                ->orderBy('cycle_number')
+        $unlock = DB::transaction(function () use ($unlock, $redeemer, $reward): RewardUnlock {
+            $locked = RewardUnlock::query()
+                ->whereKey($unlock->id)
                 ->lockForUpdate()
-                ->first();
+                ->firstOrFail();
 
-            if (! $unlock) {
+            if ($locked->claimed_at) {
                 throw ValidationException::withMessages([
-                    'reward' => 'This milestone is not unlocked yet.',
+                    'unlock' => 'This reward was already redeemed.',
                 ]);
             }
 
-            $unlock->forceFill([
+            $locked->forceFill([
                 'claimed_at' => now(),
                 'claimed_by' => $redeemer->id,
             ])->save();
 
-            $unlock = $unlock->fresh(['reward']);
+            $locked = $locked->fresh(['reward']);
 
             AuditLog::loyalty(
                 'reward.redeemed',
-                $unlock,
+                $locked,
                 $redeemer,
                 'success',
                 [
@@ -176,14 +172,13 @@ class LoyaltyStampService
                 ],
             );
 
-            return $unlock;
+            return $locked;
         });
 
         try {
             RewardRedeemed::dispatch(
                 $customer->fresh()->load('venue', 'user'),
                 $unlock,
-                $claimSessionToken,
             );
         } catch (Throwable $exception) {
             Log::warning('Reward redeemed but realtime broadcast failed.', [
@@ -415,7 +410,7 @@ class LoyaltyStampService
 
         if ($recentVisitExists) {
             throw ValidationException::withMessages([
-                'qr_token' => 'This loyalty card was stamped just now. Please wait a few seconds before adding more stamps.',
+                'stamp' => 'This loyalty card was stamped just now. Please wait a few seconds before adding more stamps.',
             ]);
         }
     }

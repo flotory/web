@@ -11,24 +11,10 @@ export function ownerVenueSetupLocation(): { path: string; query: { create: stri
 
 export const ADMIN_HOME_PATH = '/admin/venues'
 
-export type VenueMembershipRole = 'owner' | 'staff'
+export type VenueMembershipRole = 'owner'
 
 export function isVenueOwner(venue: Pick<Venue, 'membership_role'> | null | undefined): boolean {
   return venue?.membership_role === 'owner'
-}
-
-export function isVenueStaff(venue: Pick<Venue, 'membership_role'> | null | undefined): boolean {
-  return venue?.membership_role === 'staff'
-}
-
-export function isStaffOnlyMember(venues: Venue[]): boolean {
-  const active = venues.filter((venue) => !venue.archived)
-
-  return active.length > 0 && active.every((venue) => venue.membership_role === 'staff')
-}
-
-export function hasTeamMembership(venues: Venue[]): boolean {
-  return venues.some((venue) => !venue.archived && (venue.membership_role === 'owner' || venue.membership_role === 'staff'))
 }
 
 export function hasOwnerMembership(venues: Venue[]): boolean {
@@ -80,10 +66,10 @@ export function resolvePostLoginDestination(
   effectiveVenueId: number | null,
 ): string {
   const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
-  const hasTeam = hasTeamMembership(activeVenues)
+  const hasOwner = hasOwnerMembership(activeVenues)
 
   if (!redirect) {
-    return hasTeam ? home : ownerBootstrapPath(isAdmin, activeVenues, effectiveVenueId)
+    return hasOwner ? home : ownerBootstrapPath(isAdmin, activeVenues, effectiveVenueId)
   }
 
   const safe = isSafeInternalRedirect(redirect) ? redirect : home
@@ -107,7 +93,7 @@ export function resolvePostLoginDestination(
     return safe.startsWith('/admin/') ? safe : ADMIN_HOME_PATH
   }
 
-  if (isOwnerWorkspacePath(safe) && !hasTeam) {
+  if (isOwnerWorkspacePath(safe) && !hasOwner) {
     return `${OWNER_VENUE_SETUP_PATH}?create=1`
   }
 

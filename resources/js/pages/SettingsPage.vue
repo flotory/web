@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, ExternalLink, Pencil, Plus, Store, UserPlus } from '@lucide/vue'
+import { Copy, ExternalLink, Pencil, Plus, Sparkles, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
@@ -29,8 +29,8 @@ const ownerVenues = computed(() =>
 
 const summary = computed(() => ({
   venues: ownerVenues.value.length,
-  staff: ownerVenues.value.reduce((sum, venue) => sum + (venue.staff_count ?? 0), 0),
   customers: ownerVenues.value.reduce((sum, venue) => sum + (venue.customers_count ?? 0), 0),
+  visits: ownerVenues.value.reduce((sum, venue) => sum + (venue.visits_count ?? 0), 0),
   rewards: ownerVenues.value.reduce((sum, venue) => sum + (venue.rewards_count ?? 0), 0),
 }))
 
@@ -72,7 +72,7 @@ onMounted(load)
     <PageHeader
       title="Workspace"
       badge="Overview"
-      description="A quick snapshot of your venues, team, and loyalty program."
+      description="A quick snapshot of your venues and loyalty program."
     />
 
     <AppCard v-if="loading" wrapper-class="mb-6">
@@ -105,8 +105,8 @@ onMounted(load)
       <template v-else>
         <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <WorkspaceSummaryCard label="Venues" :value="summary.venues" />
-          <WorkspaceSummaryCard label="Staff" :value="summary.staff" />
           <WorkspaceSummaryCard label="Customers" :value="summary.customers" />
+          <WorkspaceSummaryCard label="Visits" :value="summary.visits" />
           <WorkspaceSummaryCard label="Rewards" :value="summary.rewards" />
         </div>
 
@@ -119,10 +119,10 @@ onMounted(load)
                 Create venue
               </AppButton>
             </RouterLink>
-            <RouterLink to="/team">
+            <RouterLink to="/campaigns">
               <AppButton variant="secondary" class="gap-2">
-                <UserPlus class="size-4" :stroke-width="2.2" />
-                Invite staff
+                <Sparkles class="size-4" :stroke-width="2.2" />
+                Campaigns
               </AppButton>
             </RouterLink>
           </div>
@@ -157,7 +157,7 @@ onMounted(load)
                   </div>
                   <p class="mt-0.5 text-sm font-medium text-ink-muted">/{{ venue.slug }}</p>
                   <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
-                    <span><strong class="font-semibold text-ink">{{ venue.staff_count ?? 0 }}</strong> staff</span>
+                    <span><strong class="font-semibold text-ink">{{ venue.visits_count ?? 0 }}</strong> visits</span>
                     <span><strong class="font-semibold text-ink">{{ venue.customers_count ?? 0 }}</strong> customers</span>
                     <span><strong class="font-semibold text-ink">{{ venue.rewards_count ?? 0 }}</strong> rewards</span>
                   </div>

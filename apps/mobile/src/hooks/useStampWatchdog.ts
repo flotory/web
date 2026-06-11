@@ -5,6 +5,7 @@ import { AppState } from 'react-native'
 
 import { buildStampPayloadFromCardDetail } from '../lib/buildStampPayload'
 import { fetchCardDetail, fetchCustomerCardsList, invalidateCustomerCardsList } from '../lib/customerData'
+import { applyStampBaselines, syncStampBaseline } from '../lib/stampAck'
 import { useAuth } from '../providers/AuthProvider'
 import { useRealtime } from '../providers/RealtimeProvider'
 import type { WalletCard } from '../types/loyalty'
@@ -38,6 +39,8 @@ async function detectStampChanges(
   token: string,
   ingestStamp: (payload: ReturnType<typeof buildStampPayloadFromCardDetail>) => void,
 ): Promise<void> {
+  applyStampBaselines(baseline, cards)
+
   for (const card of cards) {
     const previous = baseline.get(card.id)
     const isNewCard = previous === undefined
@@ -47,9 +50,8 @@ async function detectStampChanges(
     }
 
     const previousStamps = isNewCard ? 0 : previous
-    const stampsChanged = isNewCard || card.stamps !== previousStamps
 
-    if (stampsChanged && (card.stamps > previousStamps || card.stamps < previousStamps)) {
+    if (card.stamps > previousStamps) {
       const detail = await fetchCardDetail(token, String(card.venue_id), true)
       const payload = buildStampPayloadFromCardDetail(previousStamps, detail)
 
@@ -60,6 +62,7 @@ async function detectStampChanges(
     }
 
     baseline.set(card.id, card.stamps)
+    syncStampBaseline(card.id, card.stamps)
   }
 }
 
@@ -103,6 +106,7 @@ export function useStampWatchdog() {
       if (fastPoll) {
         if (!activeBaselineReady.current) {
           activeBaseline.current = new Map(cards.map((card) => [card.id, card.stamps]))
+          cards.forEach((card) => syncStampBaseline(card.id, card.stamps))
           activeBaselineReady.current = true
           failureCount.current = 0
           backoffUntil.current = 0
@@ -124,6 +128,7 @@ export function useStampWatchdog() {
       if (!globalBootstrapped.current) {
         for (const card of cards) {
           stampSnapshot.current.set(card.id, card.stamps)
+          syncStampBaseline(card.id, card.stamps)
         }
         globalBootstrapped.current = true
         failureCount.current = 0

@@ -2,28 +2,40 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 
-import NfcStampSuccess from '../../src/components/customer/NfcStampSuccess'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../../src/lib/api'
-import { fetchNfcTagPreview, submitNfcStamp, type NfcStampResponse } from '../../src/lib/nfcStamp'
 import { hapticSuccess } from '../../src/lib/haptics'
+import { fetchNfcTagPreview, submitNfcStamp, type NfcStampResponse } from '../../src/lib/nfcStamp'
+import { cardRouteFromNfcStamp, nfcResponseToStampPayload } from '../../src/lib/stampLiveUpdate'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
+import { useRealtime } from '../../src/providers/RealtimeProvider'
 import { colors, space } from '../../src/theme'
 
-type ScreenState = 'loading' | 'ready' | 'stamping' | 'success' | 'error'
+type ScreenState = 'loading' | 'ready' | 'stamping' | 'error'
+
+function completeStampSuccess(
+  response: NfcStampResponse,
+  ingestStamp: (payload: ReturnType<typeof nfcResponseToStampPayload>) => void,
+  router: ReturnType<typeof useRouter>,
+) {
+  const payload = nfcResponseToStampPayload(response)
+  ingestStamp(payload)
+  void hapticSuccess()
+  router.replace(cardRouteFromNfcStamp(response))
+}
 
 export default function NfcTapScreen() {
   const router = useRouter()
   const { token } = useLocalSearchParams<{ token?: string | string[] }>()
   const { token: authToken, booting } = useAuth()
+  const { ingestStamp } = useRealtime()
   const resolvedToken = Array.isArray(token) ? token[0] : token
 
   const [screenState, setScreenState] = useState<ScreenState>('loading')
   const [venueName, setVenueName] = useState('Venue')
   const [stampToken, setStampToken] = useState<string | null>(null)
-  const [result, setResult] = useState<NfcStampResponse | null>(null)
   const [error, setError] = useState('')
   const autoStampedRef = useRef(false)
 
@@ -55,14 +67,12 @@ export default function NfcTapScreen() {
 
     try {
       const response = await submitNfcStamp(tokenForStamp, authToken)
-      setResult(response)
-      setScreenState('success')
-      void hapticSuccess()
+      completeStampSuccess(response, ingestStamp, router)
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : 'Could not add a stamp right now.')
       setScreenState('error')
     }
-  }, [authToken, resolvedToken, stampToken])
+  }, [authToken, ingestStamp, resolvedToken, router, stampToken])
 
   useEffect(() => {
     void loadPreview()
@@ -102,31 +112,13 @@ export default function NfcTapScreen() {
           </View>
         ) : null}
 
-        {screenState === 'success' && result ? (
-          <View style={{ gap: 12 }}>
-            <NfcStampSuccess subtitle={result.message} />
-            <View style={{ borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 16 }}>
-              <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.inkMuted })}>Your progress</Text>
-              <Text style={withAppFont({ marginTop: 6, fontSize: 28, fontWeight: '800', color: colors.ink })}>
-                {result.stamps} stamps
-              </Text>
-              {result.next_reward ? (
-                <Text style={withAppFont({ marginTop: 4, fontSize: 14, fontWeight: '600', color: colors.inkMuted })}>
-                  Next: {result.next_reward.title}
-                </Text>
-              ) : null}
-            </View>
-            <PrimaryButton label="Tap again for another stamp" onPress={() => void collectStamp()} />
-            <Pressable onPress={() => router.replace('/(customer)/wallet')} style={{ alignItems: 'center', paddingVertical: 8 }}>
-              <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>Open wallet</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
         {screenState === 'error' ? (
           <View style={{ gap: 12 }}>
             <Text style={withAppFont({ color: colors.danger, fontWeight: '700' })}>{error}</Text>
-            <PrimaryButton label="Try again" onPress={() => { autoStampedRef.current = false; void loadPreview().then(() => void collectStamp()) }} />
+            <PrimaryButton label="Try again" onPress={() => router.replace('/(customer)/qr')} />
+            <Pressable onPress={() => router.replace('/(customer)/wallet')} style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>Open wallet</Text>
+            </Pressable>
           </View>
         ) : null}
       </View>

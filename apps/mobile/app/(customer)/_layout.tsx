@@ -6,6 +6,7 @@ import CustomerStampOrchestrator from '../../src/components/customer/CustomerSta
 import CustomerTabBar from '../../src/components/navigation/CustomerTabBar'
 import { hapticTabChange } from '../../src/lib/haptics'
 import { useAuth } from '../../src/providers/AuthProvider'
+import { NfcStampScanProvider } from '../../src/providers/NfcStampScanProvider'
 import { colors } from '../../src/theme'
 
 export default function CustomerTabsLayout() {
@@ -19,10 +20,6 @@ export default function CustomerTabsLayout() {
     return <Redirect href="/login" />
   }
 
-  if (role === 'staff') {
-    return <Redirect href="/scanner" />
-  }
-
   if (role === 'owner') {
     return <Redirect href="/owner-dashboard" />
   }
@@ -32,6 +29,7 @@ export default function CustomerTabsLayout() {
   }
 
   return (
+    <NfcStampScanProvider>
     <View style={{ flex: 1 }}>
       <Tabs
       tabBar={(props) => <CustomerTabBar {...props} />}
@@ -69,7 +67,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="qr"
         options={{
-          title: 'My QR',
+          title: 'Stamp',
           href: role === 'customer' ? undefined : null,
           tabBarLabel: () => null,
         }}
@@ -104,5 +102,6 @@ export default function CustomerTabsLayout() {
     </Tabs>
       <CustomerStampOrchestrator />
     </View>
+    </NfcStampScanProvider>
   )
 }

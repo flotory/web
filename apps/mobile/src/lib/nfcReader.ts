@@ -1,4 +1,5 @@
-import NfcManager, { Ndef, NfcEvents, NfcTech, type NdefRecord } from 'react-native-nfc-manager'
+import { Platform } from 'react-native'
+import NfcManager, { Ndef, NfcError, NfcEvents, NfcTech, type NdefRecord, type TagEvent } from 'react-native-nfc-manager'
 
 import { extractNfcTokenFromUri, normalizeNfcToken } from './nfcToken'
 
@@ -6,6 +7,7 @@ export { extractNfcTokenFromUri, normalizeNfcToken } from './nfcToken'
 
 const NFC_LOG_PREFIX = '[Flotory NFC]'
 const NFC_SCAN_TIMEOUT_MS = 60_000
+const NFC_ANDROID_READ_RETRY_MS = 50
 
 let activeSessionId = 0
 
@@ -99,6 +101,26 @@ function describeNdefRecord(record: NdefRecord, index: number): Record<string, u
   return summary
 }
 
+function fastTokenFromNdefRecords(records: NdefRecord[]): string | null {
+  for (const record of records) {
+    if (isUriRecord(record)) {
+      const token = extractNfcTokenFromUri(decodeUriPayload(record.payload))
+      if (token) {
+        return token
+      }
+    }
+
+    if (isTextRecord(record)) {
+      const token = extractNfcTokenFromUri(decodeTextPayload(record.payload))
+      if (token) {
+        return token
+      }
+    }
+  }
+
+  return null
+}
+
 function tokenFromNdefRecords(records: NdefRecord[]): string | null {
   nfcLog('tokenFromNdefRecords: start', { recordCount: records.length })
 
@@ -127,6 +149,31 @@ function tokenFromNdefRecords(records: NdefRecord[]): string | null {
 
   nfcLog('tokenFromNdefRecords: no Flotory token found')
   return null
+}
+
+function emptyTagError(): Error {
+  return new Error(
+    'Could not read the NFC sticker. Hold the top of your iPhone on it for 2–3 seconds, then tap My QR again. If it still fails, use NFC Tools → Read to confirm the Flotory URL is on the chip.',
+  )
+}
+
+function invalidTagError(): Error {
+  return new Error('This tag is not a Flotory stamp stand. Ask staff for the correct NFC stand.')
+}
+
+function tokenFromTagEvent(tag: TagEvent | null | undefined, fast = false): string {
+  const records = tag?.ndefMessage ?? []
+  const token = fast ? fastTokenFromNdefRecords(records) : tokenFromNdefRecords(records)
+
+  if (token) {
+    return token
+  }
+
+  if (records.length === 0) {
+    throw emptyTagError()
+  }
+
+  throw invalidTagError()
 }
 
 export async function isNfcHardwareSupported(): Promise<boolean> {
@@ -192,47 +239,231 @@ function nfcTimeout<T>(promise: Promise<T>, ms: number, message: string, session
   })
 }
 
-async function requestNdefTechnology(sessionId: number): Promise<void> {
-  nfcLog('requestNdefTechnology: waiting for tag tap', {
-    sessionId,
-    hint: 'Hold the top-back of your iPhone on the NTAG sticker until the session completes.',
-  })
+/** Await native NFC teardown — must complete before navigating or animations won't show. */
+export async function forceCloseNfcSheet(): Promise<void> {
+  invalidateNfcSession()
 
-  const onSessionClosed = (event?: unknown) => {
-    nfcLog('requestNdefTechnology: SessionClosed event', { sessionId, event })
+  if (Platform.OS === 'ios') {
+    await Promise.allSettled([
+      NfcManager.unregisterTagEvent(),
+      NfcManager.invalidateSessionIOS(),
+      NfcManager.cancelTechnologyRequest(),
+    ])
+    nfcLog('forceCloseNfcSheet: ios session closed')
+    return
   }
-
-  NfcManager.setEventListener(NfcEvents.SessionClosed, onSessionClosed)
 
   try {
-    await nfcTimeout(
-      NfcManager.requestTechnology(NfcTech.Ndef, {
-        alertMessage: 'Hold your phone near the Flotory stamp stand',
-        invalidateAfterFirstRead: true,
-      }),
-      NFC_SCAN_TIMEOUT_MS,
-      'NFC timed out. Hold the top of your iPhone on the tag for 2–3 seconds, then try again.',
-      sessionId,
-    )
-  } finally {
-    NfcManager.setEventListener(NfcEvents.SessionClosed, null)
+    await NfcManager.cancelTechnologyRequest()
+    nfcLog('forceCloseNfcSheet: android session closed')
+  } catch (error) {
+    nfcLog('forceCloseNfcSheet: android close skipped', {
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
+}
+
+/** Fire-and-forget NFC sheet dismiss (prefer forceCloseNfcSheet when navigating). */
+export function dismissNfcSheetImmediately(): void {
+  void forceCloseNfcSheet()
+}
+
+/** Dismiss the native NFC sheet (async wrapper for cleanup paths). */
+export async function closeNfcSession(): Promise<void> {
+  await forceCloseNfcSheet()
 }
 
 export async function cancelNfcScan(): Promise<void> {
   nfcLog('cancelNfcScan')
   invalidateNfcSession()
+  await closeNfcSession()
+}
+
+/** Clear a stale Core NFC session before starting a new read (helps iOS retries). */
+export async function ensureNfcSessionReady(): Promise<void> {
+  await forceCloseNfcSheet()
+}
+
+/**
+ * iOS fast path: Core NFC auto-dismisses the sheet after the first NDEF read.
+ * Avoids the slower tag-session + manual invalidate flow.
+ */
+async function readFlotoryNfcTokenIOS(sessionId: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let settled = false
+    let pendingToken: string | null = null
+    let sheetClosed = false
+
+    const finish = (action: 'resolve' | 'reject', value: string | Error) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      clearTimeout(timeout)
+      NfcManager.setEventListener(NfcEvents.DiscoverTag, null)
+      NfcManager.setEventListener(NfcEvents.SessionClosed, null)
+
+      if (action === 'resolve') {
+        resolve(value as string)
+        return
+      }
+
+      reject(value)
+    }
+
+    const resolveAfterSheetClosed = () => {
+      if (!pendingToken) {
+        return
+      }
+
+      nfcLog('readFlotoryNfcTokenIOS: sheet closed, continuing', {
+        token: maskToken(pendingToken),
+      })
+      finish('resolve', pendingToken)
+    }
+
+    const timeout = setTimeout(() => {
+      finish(
+        'reject',
+        new Error('NFC timed out. Hold the top of your iPhone on the tag for 2–3 seconds, then try again.'),
+      )
+    }, NFC_SCAN_TIMEOUT_MS)
+
+    NfcManager.setEventListener(NfcEvents.DiscoverTag, (tag: TagEvent) => {
+      if (!isActiveNfcSession(sessionId)) {
+        finish('reject', new Error('NFC scan was cancelled.'))
+        return
+      }
+
+      nfcLog('readFlotoryNfcTokenIOS: tag discovered', {
+        recordCount: tag?.ndefMessage?.length ?? 0,
+      })
+
+      try {
+        pendingToken = tokenFromTagEvent(tag, true)
+        nfcLog('readFlotoryNfcTokenIOS: waiting for native sheet to close', {
+          token: maskToken(pendingToken),
+        })
+
+        if (sheetClosed) {
+          resolveAfterSheetClosed()
+        }
+      } catch (error) {
+        finish('reject', error instanceof Error ? error : new Error(String(error)))
+      }
+    })
+
+    NfcManager.setEventListener(NfcEvents.SessionClosed, (error?: Error | null) => {
+      if (settled) {
+        return
+      }
+
+      sheetClosed = true
+
+      if (pendingToken) {
+        resolveAfterSheetClosed()
+        return
+      }
+
+      if (error instanceof NfcError.SessionInvalidated) {
+        nfcLog('readFlotoryNfcTokenIOS: session invalidated before token parsed')
+        return
+      }
+
+      if (!error) {
+        finish('reject', new Error('NFC scan cancelled. Tap the center button to try again.'))
+        return
+      }
+
+      finish('reject', error)
+    })
+
+    void NfcManager.registerTagEvent({
+      alertMessage: 'Hold your phone near the NFC stand',
+      invalidateAfterFirstRead: true,
+    }).catch((error) => {
+      finish('reject', error instanceof Error ? error : new Error(String(error)))
+    })
+  })
+}
+
+async function requestNdefTechnology(sessionId: number): Promise<void> {
+  nfcLog('requestNdefTechnology: waiting for tag tap', { sessionId })
+
+  await nfcTimeout(
+    NfcManager.requestTechnology(NfcTech.Ndef, {
+      alertMessage: 'Hold your phone near the NFC stand',
+      invalidateAfterFirstRead: true,
+    }),
+    NFC_SCAN_TIMEOUT_MS,
+    'NFC timed out. Hold the top of your iPhone on the tag for 2–3 seconds, then try again.',
+    sessionId,
+  )
+}
+
+async function collectNdefRecords(): Promise<{ records: NdefRecord[]; tag: TagEvent | null }> {
+  let tag: TagEvent | null = null
+
   try {
-    await NfcManager.cancelTechnologyRequest()
-    nfcLog('cancelNfcScan: session cancelled')
+    tag = await NfcManager.getTag()
+    nfcLog('collectNdefRecords: getTag', { recordCount: tag?.ndefMessage?.length ?? 0 })
   } catch (error) {
-    nfcLog('cancelNfcScan: already closed', { error: error instanceof Error ? error.message : String(error) })
+    nfcLog('collectNdefRecords: getTag failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
+
+  let records = tag?.ndefMessage ?? []
+
+  if (records.length === 0) {
+    await new Promise((resolve) => setTimeout(resolve, NFC_ANDROID_READ_RETRY_MS))
+    try {
+      tag = await NfcManager.getTag()
+      records = tag?.ndefMessage ?? []
+      nfcLog('collectNdefRecords: retried getTag', { recordCount: records.length })
+    } catch (error) {
+      nfcLog('collectNdefRecords: retry getTag failed', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  return { records, tag }
+}
+
+async function readFlotoryNfcTokenAndroid(sessionId: number): Promise<string> {
+  await requestNdefTechnology(sessionId)
+  nfcLog('readFlotoryNfcTokenAndroid: NDEF technology acquired', { sessionId })
+
+  if (!isActiveNfcSession(sessionId)) {
+    throw new Error('NFC scan was cancelled.')
+  }
+
+  const { records, tag } = await collectNdefRecords()
+  await forceCloseNfcSheet()
+
+  nfcLog('readFlotoryNfcTokenAndroid: tag received', {
+    id: tag?.id ?? null,
+    techTypes: tag?.techTypes ?? [],
+    maxSize: tag?.maxSize ?? null,
+    recordCount: records.length,
+  })
+
+  const token = tokenFromNdefRecords(records)
+  if (!token) {
+    if (records.length === 0) {
+      throw emptyTagError()
+    }
+    throw invalidTagError()
+  }
+
+  nfcLog('readFlotoryNfcTokenAndroid: success', { token: maskToken(token) })
+  return token
 }
 
 export async function readFlotoryNfcToken(): Promise<string> {
   const sessionId = beginNfcSession()
-  nfcLog('readFlotoryNfcToken: start', { sessionId })
+  nfcLog('readFlotoryNfcToken: start', { sessionId, platform: Platform.OS })
 
   const supported = await isNfcHardwareSupported()
   if (!supported) {
@@ -254,31 +485,11 @@ export async function readFlotoryNfcToken(): Promise<string> {
       throw new Error('NFC scan was cancelled.')
     }
 
-    await requestNdefTechnology(sessionId)
-    nfcLog('readFlotoryNfcToken: NDEF technology acquired', { sessionId })
-
-    if (!isActiveNfcSession(sessionId)) {
-      throw new Error('NFC scan was cancelled.')
+    if (Platform.OS === 'ios') {
+      return await readFlotoryNfcTokenIOS(sessionId)
     }
 
-    const tag = await NfcManager.getTag()
-    nfcLog('readFlotoryNfcToken: tag received', {
-      id: tag?.id ?? null,
-      techTypes: tag?.techTypes ?? [],
-      maxSize: tag?.maxSize ?? null,
-      recordCount: tag?.ndefMessage?.length ?? 0,
-    })
-
-    const records = tag?.ndefMessage ?? []
-    const token = tokenFromNdefRecords(records)
-
-    if (!token) {
-      nfcLog('readFlotoryNfcToken: no token parsed from tag')
-      throw new Error('This tag is not a Flotory stamp stand. Ask staff for the correct NFC stand.')
-    }
-
-    nfcLog('readFlotoryNfcToken: success', { token: maskToken(token) })
-    return token
+    return await readFlotoryNfcTokenAndroid(sessionId)
   } catch (error) {
     const message = error instanceof Error ? error.message.trim() : ''
     nfcLog('readFlotoryNfcToken: failed', {
@@ -291,13 +502,14 @@ export async function readFlotoryNfcToken(): Promise<string> {
     }
     throw error
   } finally {
-    try {
-      await NfcManager.cancelTechnologyRequest()
-      nfcLog('readFlotoryNfcToken: session closed')
-    } catch (error) {
-      nfcLog('readFlotoryNfcToken: session close skipped', {
-        error: error instanceof Error ? error.message : String(error),
-      })
+    if (Platform.OS === 'ios') {
+      try {
+        await NfcManager.unregisterTagEvent()
+      } catch {
+        // Session already closed after a successful read.
+      }
+    } else {
+      await forceCloseNfcSheet()
     }
   }
 }

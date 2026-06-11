@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Campaign;
+use App\Models\NfcTag;
 use App\Models\Venue;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,5 +29,16 @@ class DatabaseSeederDemoCampaignsTest extends TestCase
             'name' => 'Demo · Quiet Day Promotion',
             'status' => Campaign::STATUS_ACTIVE,
         ]);
+
+        $this->assertDatabaseHas('nfc_tags', [
+            'venue_id' => $venue->id,
+            'label' => 'Counter stand',
+            'active' => true,
+        ]);
+
+        $this->assertSame(
+            DatabaseSeeder::DEMO_CAFE_NFC_TOKEN,
+            NfcTag::query()->where('venue_id', $venue->id)->value('token'),
+        );
     }
 }

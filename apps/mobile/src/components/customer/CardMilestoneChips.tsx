@@ -35,22 +35,22 @@ export default function CardMilestoneChips({ milestones, stamps }: CardMilestone
                 paddingVertical: 12,
                 paddingHorizontal: 12,
                 borderRadius: radius.image,
-                backgroundColor: reached ? colors.successBg : colors.surface,
+                backgroundColor: reached ? colors.accentSoft : colors.surface,
                 borderWidth: 1,
-                borderColor: reached ? colors.successBorder : colors.discoverCardBorder,
+                borderColor: reached ? colors.accentBorder : colors.discoverCardBorder,
               }}
             >
               <Ionicons
                 name={reached ? 'checkmark-circle' : 'lock-closed-outline'}
                 size={20}
-                color={reached ? colors.successText : colors.inkSoft}
+                color={reached ? colors.accentActive : colors.inkSoft}
               />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
                   style={withAppFont({
                     fontSize: 15,
                     fontWeight: '800',
-                    color: reached ? colors.successText : colors.ink,
+                    color: reached ? colors.accentActive : colors.ink,
                   })}
                 >
                   {milestone.required_stamps}
@@ -60,7 +60,7 @@ export default function CardMilestoneChips({ milestones, stamps }: CardMilestone
                     marginTop: 2,
                     fontSize: 12,
                     fontWeight: '500',
-                    color: reached ? colors.successText : colors.inkMuted,
+                    color: reached ? colors.accentActive : colors.inkMuted,
                   })}
                   numberOfLines={2}
                 >

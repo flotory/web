@@ -21,7 +21,7 @@
         "NFCReaderUsageDescription": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
       },
       "entitlements": {
-        "com.apple.developer.nfc.readersession.formats": ["NDEF"]
+        "com.apple.developer.nfc.readersession.formats": ["TAG"]
       }
     },
     "android": {
@@ -64,7 +64,8 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
+          "nfcPermission": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet.",
+          "includeNdefEntitlement": false
         }
       ],
       "./plugins/withNfc.js",

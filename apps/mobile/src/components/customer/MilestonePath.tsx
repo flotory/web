@@ -199,9 +199,9 @@ export default function MilestonePath({
     let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : colors.inkSoft
 
     if (filled) {
-      backgroundColor = colors.success
-      borderColor = colors.successBorder
-      textColor = colors.primaryText
+      backgroundColor = colors.accent
+      borderColor = colors.accentBorder
+      textColor = colors.primary
     } else if (isGift) {
       backgroundColor = colors.accentSoft
       borderColor = colors.accentBorder
@@ -268,7 +268,7 @@ export default function MilestonePath({
           key={stamp}
           style={{
             transform: [{ scale: stampPulse }],
-            shadowColor: colors.success,
+            shadowColor: colors.accent,
             shadowOpacity: 0.28,
             shadowRadius: 6,
             shadowOffset: { width: 0, height: 2 },

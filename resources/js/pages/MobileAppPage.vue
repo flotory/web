@@ -21,7 +21,7 @@ const appDeepLink = mobileAppDeepLink()
       <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
         <h1 class="text-3xl font-black tracking-tight text-ink">Use the Flotory app</h1>
         <p class="mt-3 text-sm leading-relaxed text-ink-muted">
-          Customer wallets, My QR, rewards, and the staff scanner live in the Flotory mobile app.
+          Customer wallets, NFC stamps, and slide-to-redeem rewards live in the Flotory mobile app.
           Venue owners manage loyalty from this website.
         </p>
 

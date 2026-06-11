@@ -37,7 +37,6 @@ export default function CustomerHomeScreen() {
     fade,
     refresh,
     reload,
-    silentRefreshWallet,
   } = useCustomerHome()
 
   if (role !== 'customer') {
@@ -100,7 +99,6 @@ export default function CustomerHomeScreen() {
                 venue={primaryReady!.customer.venue}
                 imageUri={rewardImageUrl(primaryReady!.reward)}
                 unlockId={primaryReady!.unlock_id}
-                onClaimUnavailable={() => void silentRefreshWallet()}
               />
             </View>
           ) : hasFeaturedNext ? (
@@ -161,9 +159,9 @@ export default function CustomerHomeScreen() {
           {hasCarousel ? (
             <View style={{ marginTop: space.sectionY }}>
               <Text style={{ ...typography.section, paddingHorizontal: space.screenX, marginBottom: 12 }}>
-                {readyItems.length > 0 ? 'More ready to claim' : 'Keep collecting'}
+                {readyItems.length > 0 ? 'More ready to redeem' : 'Keep collecting'}
               </Text>
-              <HomeRewardCarousel slides={rewardSlides} onClaimUnavailable={() => void silentRefreshWallet()} />
+              <HomeRewardCarousel slides={rewardSlides} />
             </View>
           ) : null}
 

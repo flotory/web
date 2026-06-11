@@ -15,16 +15,6 @@ class VenueCampaignControllerTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        config([
-            'loyalty.universal_qr_enabled' => true,
-            'loyalty.legacy_card_qr_enabled' => false,
-        ]);
-    }
-
     public function test_owner_can_create_and_activate_bring_back_campaign(): void
     {
         $owner = $this->createUser();
@@ -32,9 +22,7 @@ class VenueCampaignControllerTest extends TestCase
         $venue = $this->createVenue();
         $this->attachMember($venue, $owner, 'owner');
         $customer = $this->createCustomer($venue, $guest, ['stamps' => 2]);
-        $staff = $this->createUser(['email' => 'staff@example.com']);
-        $this->attachMember($venue, $staff, 'staff');
-        $this->createVisit($customer, $staff, ['created_at' => now()->subDays(45)]);
+        $this->createVisit($customer, $owner, ['created_at' => now()->subDays(45)]);
 
         Sanctum::actingAs($owner);
 
@@ -138,12 +126,11 @@ class VenueCampaignControllerTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-06-02 16:00:00'));
 
-        $owner = $this->createUser();
         $guest = $this->createUser(['email' => 'guest@example.com']);
-        $venue = $this->createVenue();
+        $owner = $this->createUser();
+        $venue = $this->createPublishedVenue();
         $this->attachMember($venue, $owner, 'owner');
-        $staff = $this->createUser(['email' => 'staff@example.com']);
-        $this->attachMember($venue, $staff, 'staff');
+        $tag = $this->createNfcTag($venue);
         $customer = $this->createCustomer($venue, $guest, ['stamps' => 1]);
         $this->createReward($venue, ['required_stamps' => 10]);
         $this->createRewardCycle($customer);
@@ -170,16 +157,12 @@ class VenueCampaignControllerTest extends TestCase
             'activate' => true,
         ])->assertCreated();
 
-        Sanctum::actingAs($staff);
+        Sanctum::actingAs($guest);
 
-        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $this->stampQrForUser($guest),
-            'stamps' => 1,
-        ])
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp")
             ->assertCreated()
             ->assertJsonPath('added_stamps', 3)
-            ->assertJsonPath('stamp_multiplier', 3)
-            ->assertJsonPath('active_campaign.headline', '3× Stamps Active');
+            ->assertJsonPath('stamp_multiplier', 3);
 
         Carbon::setTestNow();
     }
@@ -188,14 +171,13 @@ class VenueCampaignControllerTest extends TestCase
     {
         $owner = $this->createUser();
         $guest = $this->createUser(['email' => 'guest@example.com']);
-        $venue = $this->createVenue();
+        $venue = $this->createPublishedVenue();
         $this->attachMember($venue, $owner, 'owner');
-        $staff = $this->createUser(['email' => 'staff@example.com']);
-        $this->attachMember($venue, $staff, 'staff');
+        $tag = $this->createNfcTag($venue);
         $customer = $this->createCustomer($venue, $guest, ['stamps' => 1]);
         $this->createReward($venue, ['required_stamps' => 10]);
         $this->createRewardCycle($customer);
-        $this->createVisit($customer, $staff, ['created_at' => now()->subDays(40)]);
+        $this->createVisit($customer, $owner, ['created_at' => now()->subDays(40)]);
 
         Sanctum::actingAs($owner);
 
@@ -204,12 +186,9 @@ class VenueCampaignControllerTest extends TestCase
             'activate' => true,
         ])->assertCreated();
 
-        Sanctum::actingAs($staff);
+        Sanctum::actingAs($guest);
 
-        $this->postJson("/api/venues/{$venue->id}/scanner/stamps", [
-            'qr_token' => $this->stampQrForUser($guest),
-            'stamps' => 1,
-        ])
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp")
             ->assertCreated()
             ->assertJsonPath('added_stamps', 2)
             ->assertJsonPath('stamp_multiplier', 2);
@@ -225,9 +204,7 @@ class VenueCampaignControllerTest extends TestCase
         $venue = $this->createVenue();
         $this->attachMember($venue, $owner, 'owner');
         $customer = $this->createCustomer($venue, $guest);
-        $staff = $this->createUser(['email' => 'staff2@example.com']);
-        $this->attachMember($venue, $staff, 'staff');
-        $this->createVisit($customer, $staff, ['created_at' => now()->subDays(50)]);
+        $this->createVisit($customer, $owner, ['created_at' => now()->subDays(50)]);
 
         Sanctum::actingAs($owner);
 

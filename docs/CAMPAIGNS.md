@@ -59,7 +59,7 @@ Copy: *“Run multiple campaigns. Customers receive the highest eligible multipl
 
 **Dashboard** — recommendation cards (inactive guests, VIP count); no “quietest day” analytics.
 
-**Scanner** — `N× Stamps Active` + winning campaign name when eligible.
+**NFC stamp response** — `stamp_multiplier` and `active_campaign` when multiplier > 1.
 
 ---
 
@@ -80,7 +80,7 @@ Copy: *“Run multiple campaigns. Customers receive the highest eligible multipl
 
 **Dashboard:** `campaign_recommendations`, `active_campaigns` (array).
 
-**Scanner / stamp response:** `stamp_multiplier`, `active_campaign` (winning campaign context).
+**NFC / stamp response:** `stamp_multiplier`, `active_campaign` (winning campaign context when multiplier > 1).
 
 ---
 

@@ -60,34 +60,6 @@ class CampaignService
     /**
      * @return array<string, mixed>|null
      */
-    public function scannerContextFor(Customer $customer): ?array
-    {
-        $venue = $customer->venue ?? Venue::query()->find($customer->venue_id);
-        if (! $venue) {
-            return null;
-        }
-
-        $multiplier = $this->multiplierFor($customer, $venue);
-        if ($multiplier <= 1) {
-            return null;
-        }
-
-        $campaign = $this->winningCampaignFor($customer, $venue);
-        if (! $campaign) {
-            return null;
-        }
-
-        return [
-            'headline' => $multiplier.'× Stamps Active',
-            'name' => $campaign->name,
-            'template_id' => $campaign->template_id,
-            'multiplier' => $multiplier,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
     public function promotionForCustomer(Customer $customer, ?Carbon $now = null): ?array
     {
         $now ??= Carbon::now();

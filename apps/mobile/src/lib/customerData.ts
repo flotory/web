@@ -25,12 +25,6 @@ export interface CustomerCardsListResponse {
   home_campaigns?: import('../types/loyalty').HomeCampaign[]
 }
 
-export interface StampQrResponse {
-  public_token: string
-  qr_value: string
-  version: number
-}
-
 export interface DiscoverVenue {
   id: number
   name: string
@@ -112,11 +106,6 @@ export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletI
   return [...unique.values()].slice(0, 3)
 }
 
-export async function fetchStampQr(token: string, fresh = false): Promise<StampQrResponse> {
-  const key = `${cacheKey('customer', token)}:stamp-qr`
-  return fetchWithCache(key, () => apiRequest<StampQrResponse>('/customer/stamp-qr', { token }), fresh)
-}
-
 export async function fetchCustomerCardsList(token: string, fresh = false): Promise<CustomerCardsListResponse> {
   const key = `${cacheKey('customer', token)}:cards`
   return fetchWithCache(
@@ -134,11 +123,6 @@ export async function fetchCustomerCards(token: string, fresh = false): Promise<
 export async function fetchCustomerHomeCampaigns(token: string, fresh = false): Promise<import('../types/loyalty').HomeCampaign[]> {
   const response = await fetchCustomerCardsList(token, fresh)
   return response.home_campaigns ?? []
-}
-
-export async function findPendingUnlockId(token: string, unlockId: number): Promise<number | null> {
-  const wallet = await fetchRewardsWallet(token, true)
-  return wallet.items.some((item) => item.unlock_id === unlockId) ? unlockId : null
 }
 
 export async function fetchRewardsWallet(token: string, fresh = false): Promise<RewardsWalletResponse> {

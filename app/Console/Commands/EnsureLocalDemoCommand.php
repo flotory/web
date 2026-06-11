@@ -40,7 +40,7 @@ class EnsureLocalDemoCommand extends Command
             ]);
         }
 
-        $this->info('Demo logins ready: admin@flotory.com, owner@example.com, staff@example.com, customer@example.com — password: password');
+        $this->info('Demo logins ready: admin@flotory.com, owner@example.com, customer@example.com — password: password');
 
         return self::SUCCESS;
     }

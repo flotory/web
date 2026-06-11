@@ -4,7 +4,7 @@
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
-The MVP focuses on venue QR onboarding, digital stamp cards, a fast staff scanner, **NFC stamp stands** (`https://flotory.com/t/{token}`), milestone-based progression rewards, multi-venue workspaces, team memberships, Google sign-in, and retention analytics.
+The MVP focuses on venue QR onboarding, digital stamp cards, **NFC stamp stands** (`https://flotory.com/t/{token}`), customer slide-to-redeem rewards, multi-venue owner workspaces, Google sign-in, and retention analytics.
 
 ## Stack
 
@@ -136,7 +136,7 @@ If you see “Google address search is not configured”, the key is missing fro
 OAuth preserves owner signup intent:
 
 - **Owner** (`intent=owner` from homepage): continues to `/my-venues?create=1` (create first venue).
-- **Customers and staff** use the **Flotory mobile app** — web `/app` explains how to install/open it.
+- **Customers** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding flows
 
@@ -144,24 +144,18 @@ OAuth preserves owner signup intent:
 
 1. Guest scans QR → `/v/{venue-slug}` (web bridge with venue preview).
 2. Taps **Open in Flotory app** → joins in the mobile app (register or Google sign-in).
-3. Collects stamps via **My QR**; redeems from **Rewards → Claim**.
+3. Collects stamps via **NFC tap** at the counter; redeems with **slide to redeem** when a reward is ready.
 
 ### Owner (homepage — web)
 
 1. Clicks **Get started free** → `/register?intent=owner`.
 2. Creates account (email or Google).
 3. Lands on **My Venues** with the create form open — add venue name, address, and details.
-4. Opens **Dashboard** once the venue exists; configure rewards, listing, and team from the owner workspace.
+4. Opens **Dashboard** once the venue exists; configure rewards, campaigns, listing, and NFC stands from the owner workspace.
 
-New venues start as **`draft`**. Staff can use the **mobile scanner** immediately, but guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`.
+New venues start as **`draft`**. Guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`.
 
 **Listing workflow:** owners upload raw files at **My Venues → Files & docs**. Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner files, then approve.
-
-### Staff (email invitation → mobile app)
-
-1. Owner opens **Team** (web) and invites staff by email.
-2. Staff opens `/invite/{token}` on web, creates account or signs in, accepts.
-3. Staff use the **Flotory mobile app** for scanner and floor tools.
 
 Full journeys: **[docs/PRODUCT.md](docs/PRODUCT.md)** · admin approval: **[docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)**.
 
@@ -203,11 +197,12 @@ All seeded accounts use password **`password`** (re-ensured on each Docker app s
 | Account | Email | What to test |
 |--------|--------|----------------|
 | **Platform admin** | `admin@flotory.com` | Venue listings, **Manage venues**, design palette, activity log |
-| **Venue owner** | `owner@example.com` | Web: My Venues, dashboard, rewards, campaigns, team, analytics |
-| **Staff** | `staff@example.com` | Mobile app scanner at Demo Cafe (staff membership) |
-| **Customer** | `customer@example.com` | Mobile: `npm --prefix apps/mobile run start` — Home, Wallet, center My QR, Venues, Rewards |
+| **Venue owner** | `owner@example.com` | Web: My Venues, dashboard, rewards, campaigns, analytics |
+| **Customer** | `customer@example.com` | Mobile: Home, Wallet, **Stamp** (NFC), Venues — 7 stamps at Demo Cafe with a **ready reward** to slide-redeem |
 
-Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for scanner fallback search.
+Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for CRM and dashboard demos.
+
+Demo Cafe includes an NFC tag (`Counter stand`, token `democafenfcstandlocaltest00001`) and active campaigns after `db:seed`. Setup guide: [docs/NFC_VENUE_SETUP.md](docs/NFC_VENUE_SETUP.md).
 
 ### Large demo dataset (6 months of activity)
 
@@ -223,31 +218,30 @@ php artisan db:seed --class=DemoScaleSeeder
 
 Scale accounts use password **`password`** and emails like `scale-owner-{slug}@demo.flotory.test`, `scale-guest-{n}@demo.flotory.test`. Includes visits, milestone unlocks, and claimed rewards.
 
-Role-specific walkthroughs (owner web, mobile scanner, claim/redeem, team invite): **[docs/PRODUCT.md](docs/PRODUCT.md)** and **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+Walkthroughs: **[docs/PRODUCT.md](docs/PRODUCT.md)** and **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Roles
 
 ### Platform (`users.is_admin`)
 
 - **true** — platform administrator (`admin@flotory.com` seeded locally and on deploy with `SEED_DATABASE=1`). Admins review venue listings and manage platform settings — they **cannot** own venues or use owner/staff workspace tools.
-- **false** — default for all sign-ups (owners, staff, and loyalty guests)
+- **false** — default for all sign-ups (owners and loyalty guests)
 
 ### Per venue (`venue_users.role`)
 
-- **owner** — full venue control, delete venue (soft delete), manage team
-- **staff** — mobile scanner, staff redemption (web: account + invite accept only)
+- **owner** — full venue control on web (dashboard, rewards, campaigns, CRM, settings)
 
-Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be owner, staff, and customer at different venues. Scanner routes require an active `venue_users` row for the target venue.
+Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be an owner at one venue and a customer at many others.
 
 ## MVP scope
 
 Full feature list: **[docs/PRODUCT.md](docs/PRODUCT.md)**.
 
-Highlights: venue QR bridge → mobile app, owner web dashboard (venues, rewards, campaigns, CRM), listing approval workflow, mobile staff scanner + customer wallet, Reverb realtime ([apps/mobile/README.md](apps/mobile/README.md)).
+Highlights: venue QR bridge → mobile app, NFC stamp stands, owner web dashboard, slide-to-redeem wallet, listing approval workflow, Reverb realtime ([apps/mobile/README.md](apps/mobile/README.md)).
 
-## Progression and QR
+## Loyalty rules
 
-Canonical loyalty rules (stamps, milestones, claim QR, FIFO): **[docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md)**.
+Canonical rules (stamps, milestones, NFC, slide redeem): **[docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md)**.
 
 API routes, models, and flows: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 

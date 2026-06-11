@@ -44,7 +44,6 @@ class VenueController extends Controller
                     'customers',
                     'visits',
                     'rewards',
-                    'memberships as staff_count' => fn ($query) => $query->where('role', 'staff'),
                 ])
                 ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))
                 ->orderByRaw('deleted_at is not null')

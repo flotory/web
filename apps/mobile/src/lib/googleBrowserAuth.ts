@@ -3,6 +3,8 @@ import * as WebBrowser from 'expo-web-browser'
 
 import { webAppOrigin } from './config'
 
+WebBrowser.maybeCompleteAuthSession()
+
 const MOBILE_GOOGLE_RETURN_URL = 'flotory://login'
 
 export type GoogleBrowserAuthResult =

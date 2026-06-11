@@ -1,6 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { fetchCustomerCardsList } from '../lib/customerData'
+import {
+  clearStampAckState,
+  isStampSignatureAcknowledged,
+  syncStampBaseline,
+} from '../lib/stampAck'
 import { stampUpdateSignature } from '../lib/stampLiveUpdate'
 import { disconnectEcho, getEcho } from '../lib/realtime'
 import type { RewardRedeemedPayload, StampAddedPayload } from '../types/realtime'
@@ -30,11 +35,12 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const clearLatestRedeem = useCallback(() => setLatestRedeem(null), [])
   const publishStamp = useCallback((payload: StampAddedPayload) => {
     const signature = stampUpdateSignature(payload)
-    if (lastStampSignature.current === signature) {
+    if (lastStampSignature.current === signature || isStampSignatureAcknowledged(signature)) {
       return
     }
 
     lastStampSignature.current = signature
+    syncStampBaseline(payload.customer.id, payload.stamps)
     setLatestStamp(payload)
   }, [])
   const ingestStamp = publishStamp
@@ -78,11 +84,13 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       setLatestStamp(null)
       setLatestRedeem(null)
       lastStampSignature.current = ''
+      clearStampAckState()
       return
     }
 
     subscribedIds.current.clear()
     lastStampSignature.current = ''
+    clearStampAckState()
     void syncChannels()
 
     return () => {

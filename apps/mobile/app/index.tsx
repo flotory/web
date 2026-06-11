@@ -16,9 +16,6 @@ export default function IndexScreen() {
   if (role === 'owner') {
     return <Redirect href="/owner-dashboard" />
   }
-  if (role === 'staff') {
-    return <Redirect href="/scanner" />
-  }
 
   if (role === 'customer') {
     return <Redirect href="/(customer)/home" />

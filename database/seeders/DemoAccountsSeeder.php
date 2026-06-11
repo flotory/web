@@ -36,16 +36,6 @@ class DemoAccountsSeeder extends Seeder
             ],
         );
 
-        $staff = User::updateOrCreate(
-            ['email' => 'staff@example.com'],
-            [
-                'name' => 'Demo Staff',
-                'password' => 'password',
-                'is_admin' => false,
-                'active_venue_id' => $venue->id,
-            ],
-        );
-
         User::updateOrCreate(
             ['email' => 'customer@example.com'],
             [
@@ -63,16 +53,6 @@ class DemoAccountsSeeder extends Seeder
             ],
             [
                 'role' => 'owner',
-            ],
-        );
-
-        VenueUser::updateOrCreate(
-            [
-                'venue_id' => $venue->id,
-                'user_id' => $staff->id,
-            ],
-            [
-                'role' => 'staff',
             ],
         );
     }

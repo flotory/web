@@ -10,9 +10,9 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 
 | Layer | Score | What it proves |
 | ----- | ----- | ---------------- |
-| Backend API (PHPUnit) | **7.5/10** | Loyalty rules, permissions, publication, campaigns, claims |
+| Backend API (PHPUnit) | **7.5/10** | Loyalty rules, permissions, publication, campaigns, NFC stamps, self-redeem |
 | Web build + types | **7/10** | Vue/TS compiles; production bundle builds |
-| Web unit (Vitest) | **4.5/10** | Pure helpers (QR, campaigns, listing labels, mobile libs) |
+| Web unit (Vitest) | **4.5/10** | Pure helpers (campaigns, listing labels, mobile libs) |
 | Web e2e (Playwright) | **6/10** | Owner dashboard smokes + mobile app bridge pages |
 | Mobile (Expo) | **4.5/10** | Typecheck + shared unit tests; `POST /api/auth/google` covered in PHPUnit; Maestro/Google device flow manual |
 | Realtime (Reverb) | **2/10** | Server events tested; live UI animations not automated |
@@ -27,7 +27,7 @@ Runs on every push to `main` and on pull requests. Badge: [![Tests](https://gith
 
 | Job | Command (simplified) | Purpose |
 | --- | -------------------- | ------- |
-| **PHPUnit** | `php artisan test` | ~254 feature + unit tests (MySQL not required; in-memory/SQLite per test) |
+| **PHPUnit** | `php artisan test` | ~214 feature + unit tests (MySQL not required; in-memory/SQLite per test) |
 | **Frontend build** | `npm ci` → `npm run build` → `npm run test:unit` | Typecheck, Vite production build, Vitest |
 | **Playwright smoke** | Build assets → `scripts/run-e2e-smoke.sh` | Browser smokes on SQLite + demo seed (`--env=e2e`) |
 | **Mobile typecheck** | `npm ci` (apps/mobile) → typecheck + mobile Vitest via root |
@@ -100,7 +100,7 @@ Maestro smokes (simulator, manual): see [apps/mobile/README.md](../apps/mobile/R
 | `e2e/owner-signup.spec.ts` | Owner register → My Venues create form; bad venue URL guard |
 | `e2e/book-demo.spec.ts` | `/book-demo` loads Calendly iframe without signup |
 
-Customer and staff flows are tested in the mobile app (Maestro/manual) and via PHPUnit API tests — not Playwright.
+Customer flows are tested in the mobile app (Maestro/manual) and via PHPUnit API tests — not Playwright.
 
 Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` (guarded by `DatabaseSeederDemoCampaignsTest`).
 

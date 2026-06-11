@@ -36,17 +36,6 @@ class VenueAccessTest extends TestCase
         $this->attachMember($venue, $user, 'owner');
 
         $this->assertTrue(VenueAccess::canAccess($user, $venue, ['owner']));
-        $this->assertTrue(VenueAccess::canAccess($user, $venue, ['owner', 'staff']));
-    }
-
-    public function test_staff_member_cannot_access_owner_only_routes(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
-        $this->attachMember($venue, $user, 'staff');
-
-        $this->assertFalse(VenueAccess::canAccess($user, $venue, ['owner']));
-        $this->assertTrue(VenueAccess::canAccess($user, $venue, ['owner', 'staff']));
     }
 
     public function test_require_access_aborts_with_not_found_for_non_member(): void

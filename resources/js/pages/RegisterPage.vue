@@ -11,7 +11,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
-import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
+import { authFieldClass } from '@/lib/authForm'
 import { ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -28,13 +28,9 @@ const loading = ref(false)
 const error = ref('')
 
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
-const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 
 const loginLink = computed(() => {
   const query: Record<string, string> = {}
-  if (isStaffInvite.value) {
-    query.staff = '1'
-  }
   if (typeof route.query.email === 'string') {
     query.email = route.query.email
   }
@@ -77,7 +73,7 @@ async function submit() {
     )
   } catch (exception) {
     if (exception instanceof ApiError && exception.message.toLowerCase().includes('already been taken')) {
-      error.value = 'This email already has an account — usually from a staff invite. Log in instead.'
+      error.value = 'This email already has an account. Log in instead.'
     } else {
       error.value = exception instanceof ApiError ? exception.message : 'Unable to create your account.'
     }
@@ -87,11 +83,6 @@ async function submit() {
 }
 
 onMounted(() => {
-  if (isStaffInvite.value) {
-    void router.replace(loginLink.value)
-    return
-  }
-
   if (typeof route.query.email === 'string') {
     email.value = route.query.email
   }
@@ -174,23 +165,23 @@ onMounted(() => {
       <div v-if="authIntent === 'owner'" class="mt-4 overflow-hidden rounded-3xl border border-border bg-surface-muted p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-active">Launch loyalty for your venue</p>
         <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-          QR-based loyalty for cafes, bars, and restaurants. Owners run everything from this dashboard — guests and staff use the Flotory mobile app.
+          NFC stamp loyalty for cafes, bars, and restaurants. Owners run everything from this dashboard — guests collect stamps and redeem rewards in the Flotory mobile app.
         </p>
         <ol class="mt-4 grid gap-2 sm:grid-cols-3">
           <li class="rounded-2xl border border-border bg-surface p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-accent-active">1</p>
-            <p class="mt-1 text-sm font-bold text-ink">Guests scan your QR</p>
-            <p class="mt-1 text-xs text-ink-muted">They join in the Flotory app.</p>
+            <p class="mt-1 text-sm font-bold text-ink">Guests join via QR</p>
+            <p class="mt-1 text-xs text-ink-muted">They download the Flotory app.</p>
           </li>
           <li class="rounded-2xl border border-border bg-surface p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-accent-active">2</p>
-            <p class="mt-1 text-sm font-bold text-ink">Staff add stamps</p>
-            <p class="mt-1 text-xs text-ink-muted">Scanner lives in the mobile app.</p>
+            <p class="mt-1 text-sm font-bold text-ink">NFC stands add stamps</p>
+            <p class="mt-1 text-xs text-ink-muted">Customers tap their phone at the counter.</p>
           </li>
           <li class="rounded-2xl border border-border bg-surface p-3">
             <p class="text-xs font-bold uppercase tracking-wide text-accent-active">3</p>
             <p class="mt-1 text-sm font-bold text-ink">Rewards bring them back</p>
-            <p class="mt-1 text-xs text-ink-muted">Milestones unlock perks guests actually claim.</p>
+            <p class="mt-1 text-xs text-ink-muted">Guests slide to redeem when a milestone unlocks.</p>
           </li>
         </ol>
       </div>

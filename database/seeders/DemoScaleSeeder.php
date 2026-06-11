@@ -43,7 +43,7 @@ class DemoScaleSeeder extends Seeder
     private Carbon $historyEnd;
 
     /** @var array<int, int> */
-    private array $venueStaffIds = [];
+    private array $venueOwnerIds = [];
 
     /** @var array<int, list<array{id: int, required_stamps: int}>> */
     private array $venueRewards = [];
@@ -144,28 +144,7 @@ class DemoScaleSeeder extends Seeder
                 'role' => 'owner',
             ]);
 
-            $staffCount = $this->rng->numberBetween(1, 2);
-            $staffIds = [];
-
-            for ($s = 0; $s < $staffCount; $s++) {
-                $staff = User::query()->create([
-                    'name' => $this->rng->name(),
-                    'email' => "scale-staff-{$slug}-{$s}@demo.flotory.test",
-                    'password' => $this->passwordHash,
-                    'is_admin' => false,
-                    'active_venue_id' => $venue->id,
-                ]);
-
-                VenueUser::query()->create([
-                    'venue_id' => $venue->id,
-                    'user_id' => $staff->id,
-                    'role' => 'staff',
-                ]);
-
-                $staffIds[] = $staff->id;
-            }
-
-            $this->venueStaffIds[$venue->id] = $staffIds[0];
+            $this->venueOwnerIds[$venue->id] = $owner->id;
 
             $milestones = $this->milestonesForCategory($category);
             $rewardRows = [];
@@ -238,7 +217,7 @@ class DemoScaleSeeder extends Seeder
     /**
      * @param  list<int>  $venueIds
      * @param  list<int>  $guestUserIds
-     * @return list<array{customer_id: int, venue_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, staff_id: int, joined_at: Carbon}>
+     * @return list<array{customer_id: int, venue_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, owner_id: int, joined_at: Carbon}>
      */
     private function seedCustomers(array $venueIds, array $guestUserIds): array
     {
@@ -255,7 +234,6 @@ class DemoScaleSeeder extends Seeder
                 $customer = Customer::query()->create([
                     'venue_id' => $venueId,
                     'user_id' => $userId,
-                    'qr_token' => (string) Str::uuid(),
                     'stamps' => 0,
                     'created_at' => $joinedAt,
                     'updated_at' => now(),
@@ -274,7 +252,7 @@ class DemoScaleSeeder extends Seeder
                     'venue_id' => $venueId,
                     'user_id' => $userId,
                     'rewards' => $this->venueRewards[$venueId],
-                    'staff_id' => $this->venueStaffIds[$venueId],
+                    'owner_id' => $this->venueOwnerIds[$venueId],
                     'joined_at' => $joinedAt,
                 ];
             }
@@ -319,7 +297,7 @@ class DemoScaleSeeder extends Seeder
     }
 
     /**
-     * @param  array{customer_id: int, venue_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, staff_id: int, joined_at: Carbon}  $profile
+     * @param  array{customer_id: int, venue_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, owner_id: int, joined_at: Carbon}  $profile
      * @param  list<array<string, mixed>>  $visitRows
      */
     private function simulateCustomer(array $profile, int $visitTarget, array &$visitRows, int $flushSize): int
@@ -347,7 +325,7 @@ class DemoScaleSeeder extends Seeder
             $visitRows[] = [
                 'customer_id' => $profile['customer_id'],
                 'venue_id' => $profile['venue_id'],
-                'created_by' => $profile['staff_id'],
+                'created_by' => null,
                 'created_at' => $at,
             ];
             $created++;
@@ -377,7 +355,7 @@ class DemoScaleSeeder extends Seeder
                 if ($this->shouldClaimUnlock($at)) {
                     $unlock->forceFill([
                         'claimed_at' => $at->copy()->addHours($this->rng->numberBetween(2, 96)),
-                        'claimed_by' => $profile['staff_id'],
+                        'claimed_by' => $profile['user_id'],
                     ])->save();
                 }
             }

@@ -12,7 +12,7 @@ class RewardRedeemedTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
-    public function test_broadcast_payload_includes_claim_session_token(): void
+    public function test_broadcast_payload_includes_reward_and_customer(): void
     {
         $user = $this->createUser();
         $venue = $this->createVenue(['name' => 'Demo Cafe']);
@@ -22,11 +22,11 @@ class RewardRedeemedTest extends TestCase
         $unlock->load('reward');
         $customer->load('venue', 'user');
 
-        $event = new RewardRedeemed($customer, $unlock, 'test-claim-token');
+        $event = new RewardRedeemed($customer, $unlock);
         $payload = $event->broadcastWith();
 
         $this->assertSame('reward.redeemed', $event->broadcastAs());
-        $this->assertSame('test-claim-token', $payload['claim_session_token']);
+        $this->assertSame($unlock->id, $payload['unlock_id']);
         $this->assertSame('Free Coffee redeemed at Demo Cafe.', $payload['message']);
     }
 }

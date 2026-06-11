@@ -1,6 +1,6 @@
 # Architecture
 
-Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold venue team memberships (`venue_users`), loyalty cards (`customers`), or both. Business rules live in services; the SPA renders API state.
+Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold venue **owner** memberships (`venue_users`), loyalty cards (`customers`), or both. Business rules live in services; the SPA renders API state.
 
 See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISIONS.md) for locked decisions.
 
@@ -10,58 +10,50 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 |-------|------------|
 | API | Laravel 12, PHP 8.3+, MySQL |
 | Auth | Laravel Sanctum (bearer tokens) |
-| OAuth | Laravel Socialite (Google) via web routes; mobile via `POST /api/auth/google` + `id_token` verify |
+| OAuth | Laravel Socialite (Google) via web routes; mobile via web OAuth → `flotory://login?oauth_token=...` |
 | Realtime | Laravel Reverb + Echo (optional; stamp events) |
 | Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |
+| Mobile | Expo + React Native (`apps/mobile`) |
 | Uploads | Local filesystem under `public/uploads/` |
 | Deploy | Docker on VPS; Nginx → Laravel |
 
-## Repository Layout
+## Repository layout
 
 ```text
 app/
-  Events/                    StampAdded broadcast event
+  Events/                    StampAdded, RewardRedeemed
   Http/Controllers/Api/      REST API
-  Http/Controllers/Auth/       Google OAuth
-  Http/Requests/               Form validation
+  Http/Controllers/Auth/     Google OAuth
   Models/                    Eloquent domain models
-  Services/                  LoyaltyStampService, VenueBrandingService, VenueSetupFileService, VenueStaffInvitationService
-  Support/                   VenueAccess authorization
+  Services/                  LoyaltyStampService, NfcStampService, CampaignService, …
+  Support/                   VenueAccess, AuditLog
 
-resources/js/
-  components/                UI + loyalty (VenueFilter, listing, admin setup files, …)
-  composables/               useAsyncAction, useVenueTeam
-  layouts/                   AppShell (owner workspace + platform admin nav)
-  lib/                       api, onboarding, redirect, toast, realtime
-  pages/                     Route-level Vue pages
-  router/                    Guards (auth, ownerOnly, workspace)
-  stores/                    auth, workspace, realtime
+database/migrations/
+  2026_06_01_000000_create_laravel_infrastructure_tables.php
+  2026_06_01_000001_create_flotory_schema.php   # consolidated product schema
 
-routes/
-  api.php                    JSON API
-  web.php                    Google OAuth + SPA fallback
-  channels.php               Private customer broadcast channels
+resources/js/                Owner web SPA (Vue)
+apps/mobile/                 Customer iOS app (Expo)
+
+routes/api.php               JSON API
+routes/web.php               Google OAuth + SPA fallback
 ```
 
-## Backend Layers
+## Backend layers
 
 ```text
 Request → Route → Controller → (VenueAccess) → Service → Model/DB → JSON
-                      ↓
-                 FormRequest validation
 ```
-
-**Rules:**
 
 | Layer | Responsibility |
 |-------|----------------|
 | Routes | HTTP mapping, middleware (`auth:sanctum`) |
 | Controllers | Authorize, validate, delegate, respond — no loyalty math |
-| Services | Stamp awards, unlocks, claims, cycles; staff invitation lifecycle |
-| Models | Relationships, casts, accessors — no multi-step workflows |
-| Vue | Fetch, display, forms — **no business logic** |
+| Services | Stamps, unlocks, redeem, cycles, NFC, campaigns |
+| Models | Relationships, casts — no multi-step workflows |
+| Vue / mobile | Fetch, display, forms — **no business logic** |
 
-## Domain Model
+## Domain model
 
 ```text
 User ──┬──< VenueUser >── Venue ──< Reward
@@ -70,285 +62,163 @@ User ──┬──< VenueUser >── Venue ──< Reward
                 │
                 ├──< Visit
                 ├──< CustomerRewardCycle
-                └──< RewardUnlock >── Reward
+                ├──< RewardUnlock >── Reward
+                └──< StampEvent >── NfcTag
 ```
 
 | Model | Table | Purpose |
 |-------|-------|---------|
-| `User` | `users` | Login identity. `is_admin` for platform admin only. `active_venue_id` for workspace selection. Optional `google_id`, `google_avatar`. |
-| `Venue` | `venues` | Workspace. Slug, category, branding, `status` (`draft` \| `pending_review` \| `published`), soft deletes. **No** `owner_user_id`. |
-| `VenueUser` | `venue_users` | Team membership pivot: `role` = `owner` \| `staff`. |
-| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `qr_token`, `stamps`. |
-| `Reward` | `rewards` | Milestone definition: `required_stamps`, optional image, `active`, `reward_type` (= `milestone`). |
-| `Visit` | `visits` | Audit row when staff award stamps via `addStamp`. `created_by` = staff user. |
+| `User` | `users` | Login identity. `is_admin` for platform admin. `active_venue_id` for workspace selection. |
+| `Venue` | `venues` | Workspace. Slug, category, branding, geo, `status` (`draft` \| `pending_review` \| `published`), soft deletes. |
+| `VenueUser` | `venue_users` | Membership pivot: `role` = `owner` (product is owner-only; legacy `staff` rows may exist in old data). |
+| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `stamps`. |
+| `Reward` | `rewards` | Milestone: `required_stamps`, optional image, `active`. |
+| `Visit` | `visits` | Analytics row per stamp award. `created_by` is null for NFC taps. |
 | `CustomerRewardCycle` | `customer_reward_cycles` | Cycle counter; `completed_at` when top milestone reached. |
-| `RewardUnlock` | `reward_unlocks` | Unlock + claim in one row (`unlocked_at`, `claimed_at`, `claimed_by`). **No** separate redemptions table. |
-| `VenueStaffInvitation` | `venue_staff_invitations` | Pending staff invites (email, token, 7-day expiry). |
+| `RewardUnlock` | `reward_unlocks` | Unlock + redeem in one row (`unlocked_at`, `claimed_at`, `claimed_by`). |
+| `NfcTag` | `nfc_tags` | Physical stand → venue (`token`, `label`, `active`). |
+| `StampEvent` | `stamp_events` | Audit per NFC tap; powers debounce / burst limits. |
+| `Campaign` | `campaigns` | Stamp multiplier campaigns (Bring Back, Quiet Day, Happy Hour, VIP). |
 
-QR tokens and stamp balances are **per customer row**, not per user globally or per venue membership.
+**Removed tables** (no longer in schema): `redemption_requests`, `venue_staff_invitations`, `user_stamp_tokens`, `demo_leads`. **No** `customers.qr_token`.
 
-## Ownership and Authorization
+## Roles and authorization
 
-**Platform:** `users.is_admin === true` — system operator only. Platform admins **cannot** use venue owner/staff tools (`VenueAccess::assertNotPlatformAdmin`). Admin UI: `/admin/venues`, `/admin/manage-venues`, `/admin/palette`, `/admin/activity`.
+**Platform:** `users.is_admin === true` — listing review, manage venues, palette, activity. Cannot use owner workspace tools.
 
-**Venue team:** `venue_users.role`
+**Venue:** `venue_users.role === 'owner'` — web dashboard, rewards, campaigns, customers CRM, settings.
 
-| Role | Access |
-|------|--------|
-| `owner` | Web: dashboard, analytics, rewards, settings, team, my-venues, customers CRM. Mobile: scanner at counter. |
-| `staff` | Web: `/invite/{token}` accept, `/account`. Mobile: scanner, staff redemption. |
+**Customer:** `customers` row — mobile app only (stamp, wallet, slide redeem).
 
-**Loyalty:** `customers` row = participation at that venue (any signed-in user can join).
+`App\Support\VenueAccess` centralizes membership checks. Owner-only API routes use `requireAccess($user, $venue, ['owner'])`.
 
-`App\Support\VenueAccess`:
-
-- `membership($user, $venue)` → `VenueUser|null`
-- `canAccess($user, $venue, $roles = [])` → bool
-- `requireAccess($user, $venue, $roles = [])` → abort 403
-
-Example: scanner requires `['owner', 'staff']`; team management requires `['owner']`.
-
-## Loyalty Engine (`LoyaltyStampService`)
+## Loyalty engine (`LoyaltyStampService`)
 
 **`addStamp(Customer, User $actor, int $stamps, ?StampAwardContext $context)`**
 
-1. Reject duplicate scan within **2 seconds** (same customer card; `loyalty.stamp_cooldown_seconds`).
-2. Lock customer row; increment stamps (1–100). Staff scans may apply campaign multipliers; NFC taps always award exactly **1** stamp.
+1. Reject duplicate award within cooldown (`loyalty.stamp_cooldown_seconds`, default 2s) via recent `visits`.
+2. Lock customer; award stamps (NFC: always base 1 × campaign multiplier).
 3. Unlock milestones at or below current stamp count for active cycle.
-4. If stamps ≥ max active milestone threshold: complete cycle, reset stamps to 0, start next cycle.
-5. Create one `Visit` row (`created_by` = staff for scanner; `null` for NFC).
-6. Broadcast `StampAdded` on `private-customer.{customerId}`.
+4. If stamps ≥ max active milestone: complete cycle, reset stamps to 0, start next cycle.
+5. Create one `Visit` row (`created_by` null for NFC).
+6. Broadcast `StampAdded` on `private-customer.{customerId}` when Reverb is enabled.
 
-**`redeemReward(Customer, Reward, User $redeemer)`**
+**`redeemUnlock(RewardUnlock, User $customerUser)`**
 
-- Finds the **oldest unclaimed** `RewardUnlock` for that `reward_id` (FIFO by `cycle_number`), including unlocks from prior cycles.
-- Sets `claimed_at` and `claimed_by`. Does **not** reduce stamps.
-- Wallet UI lists one row per unlock (`unlock_id`), but the API redeems by `reward_id` and always claims the oldest pending unlock first.
+- Customer self-serve redeem (slide in app). Sets `claimed_at` / `claimed_by`. Does **not** reduce stamps.
 
-**Helpers:** `nextRewardFor`, `availableRewardsFor` (unique reward types with pending unlocks), `pendingUnlocksFor`, `pendingRewardCountFor`, `journeyFor`.
+**Helpers:** `nextRewardFor`, `availableRewardsFor`, `pendingUnlocksFor`, `journeyFor`, `syncEligibleUnlocks`.
 
 ## NFC stamping (`NfcStampService`)
 
-Physical stands ship with an NFC URL: `https://flotory.com/t/{token}` (deep link: `flotory://t/{token}`).
+Physical stands use URL `https://flotory.com/t/{token}` (deep link `flotory://t/{token}`).
 
-| Table | Purpose |
-|-------|---------|
-| `nfc_tags` | Admin-provisioned stand → venue mapping (`token`, `label`, `active`) |
-| `stamp_events` | Audit log for each NFC tap; powers debounce + burst limits |
+| Step | Endpoint |
+|------|----------|
+| Resolve tag | `GET /api/public/nfc/t/{token}` |
+| Award stamp | `POST /api/nfc/t/{token}/stamp` (authenticated customer) |
 
-**Flow**
+Flow: tap → auto-join venue if needed → `LoyaltyStampService::addStamp` with `StampAwardContext::nfcTap()` → `stamp_events` row.
 
-1. Customer taps NFC → web bridge or mobile app opens `/t/{token}`.
-2. `GET /api/public/nfc/t/{token}` resolves venue (published only).
-3. Authenticated customer calls `POST /api/nfc/t/{token}/stamp` → **+1 stamp** via `LoyaltyStampService` with `StampAwardContext::nfcTap()`.
-4. Mobile shows “+1 Stamp Added” success state. Staff can ask for multiple taps (e.g. 3 stamps = tap 3 times, ≥2s apart).
+Rate limits (`config/loyalty.php` → `nfc.*`): debounce per user+tag; max stamps per user+venue per window.
 
-**Rate limits** (`config/loyalty.php` → `nfc.*`): 2s debounce per user+tag; max 10 stamps per user+venue per 2 minutes.
-
-**Admin:** `/admin/manage-venues/{id}` → NFC stamp stands (create tag, copy tap URL, activate/deactivate, rotate token).
-
-**Fallback:** Staff scanner still supports bulk stamps (1–100) via customer My QR — unchanged.
+**Admin:** `/admin/manage-venues/{id}` → NFC stamp stands (create, copy tap URL, activate/deactivate, rotate token).
 
 ## Authentication
 
-### Email / password
+- Email/password: `POST /api/auth/register`, `/login`, password reset
+- Google web: `/auth/google/redirect` → callback → `oauth_token` on login page
+- Google mobile: in-app browser → same web flow → `flotory://login?oauth_token=...`
+- Sanctum bearer token for API
 
-- `POST /api/auth/register`, `POST /api/auth/login`
-- `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
-- `PUT /api/auth/password` (authenticated)
-- Sanctum bearer token returned to SPA
+## Main flows
 
-### Google OAuth
+### Guest join (QR bridge → mobile)
 
-Web routes (session-backed):
+1. `GET /v/{slug}` (web) → `GET /api/public/venues/{slug}/landing`
+2. Customer registers/logs in on mobile
+3. `POST /api/venues/{slug}/join` (venue must be `published`)
 
-- `GET /auth/google/redirect` — stores `venue_slug`, `redirect`, `intent` in session
-- `GET /auth/google/callback` — upserts user, issues token, redirects to `FRONTEND_URL/login?oauth_token=...`
-- `POST /api/auth/google` — mobile: verify Google `id_token`, upsert user, return Sanctum token
+### Stamp (NFC only)
 
-Frontend helpers in `resources/js/lib/onboarding.ts` and `redirect.ts` (internal paths only).
+1. Customer taps stand or uses in-app NFC on **Stamp** tab
+2. `POST /api/nfc/t/{token}/stamp` → +1 stamp (× campaign multiplier when eligible)
 
-## Main Flows
+### Redeem (customer self-serve)
 
-### Guest QR landing
+1. `GET /api/customer/rewards/wallet` — pending unlocks
+2. Slide to redeem → `POST /api/customer/rewards/unlocks/{unlock}/redeem`
 
-1. `GET /v/{slug}` (web bridge) → `GET /api/public/venues/{slug}/landing` → deep link `flotory://v/{slug}`
-2. Join in mobile app → register/login
-3. `POST /api/venues/{slug}/join` → mobile wallet
+### Owner workspace (web)
 
-### Owner signup
+1. Register with owner intent → `/my-venues?create=1`
+2. Listing checklist → submit → admin approve → `published`
+3. Dashboard, rewards, campaigns, customers, analytics, NFC stand setup
 
-1. Register with owner intent → `/my-venues?create=1` (create first venue: name, slug, address, contact)
-2. Venue created as `draft` → owner completes listing checklist → submit → admin approve → `published`
-3. Owner workspace: dashboard, rewards, campaigns, team
+## Frontend (web)
 
-### Staff scanner (auto-detect — mobile app)
+**`AppShell`** — owner + platform admin only.
 
-Mobile scanner screen; camera payload determines the action:
+| Route | Page |
+|-------|------|
+| `/dashboard` | KPIs, insights |
+| `/my-venues` | Venue list + create |
+| `/rewards`, `/campaigns`, `/customers`, `/analytics`, `/settings` | Owner tools |
+| `/admin/*` | Platform admin |
+| `/app` | Mobile download bridge for non-owners |
 
-| QR type | Payload | API |
-|---------|---------|-----|
-| **Stamp (My QR)** | `flotory:member:{public_token}` from `user_stamp_tokens` | `POST /api/venues/{venue}/scanner/stamps` |
-| **Reward claim** | `flotory:redeem:{token}` or `https://{app}/r/{redemption_token}` | `POST /api/venues/{venue}/scanner/redeem` |
+Customer wallet, NFC stamp, and slide redeem live in **`apps/mobile`** — see [apps/mobile/README.md](../apps/mobile/README.md).
 
-Legacy per-card `customers.qr_token` is deprecated (`LOYALTY_LEGACY_CARD_QR=false` by default).
+## API summary
 
-Parsed server-side via `App\Support\LoyaltyQr`; mobile client helpers in `apps/mobile/src/lib/`.
+**Public:** auth register/login, venue landing, NFC tag resolve, app config, demo booking.
 
-After a **stamp** scan, if the customer has unclaimed unlocks, the response includes `pending_claim_warning` (staff UI shows an info banner: ask the customer to open **Rewards → Claim**, not the stamp card).
+**Authenticated (highlights):**
 
-### Customer reward claim (QR — mobile app)
-
-1. Rewards screen → `GET /api/customer/rewards/wallet` (one row per unclaimed unlock)
-2. Tap **Claim** → `POST /api/customer/rewards/unlocks/{unlock}/claim-session` → short-lived `redemption_requests` row (10 min TTL)
-3. Screen shows claim QR (`/r/{token}`); customer polls `GET /api/customer/rewards/claim-sessions/{token}` until `status: claimed`
-4. Staff scans claim QR on the mobile scanner → redeem flow above
-
-Wallet detail QR is **stamps only**. Claim QRs (`flotory:redeem:…`) only appear on the claim screen.
-
-### Staff claim (manual fallback)
-
-`POST /api/venues/{venue}/customers/{customer}/rewards/{reward}/redeem` — still available for integrations; primary counter flow uses scanner redeem.
-
-### Customer self-redeem (legacy API)
-
-`POST /api/customers/{customer}/rewards/{reward}/redeem` remains for tests/backward compatibility; the product UI uses staff-scanned claim QRs instead of swipe-to-redeem.
-
-### Staff invitation
-
-1. Owner: `POST /api/venues/{venue}/team/invite`
-2. Email link → `/invite/{token}`
-3. New user: `POST /api/invites/{token}/register`; existing: sign in + `POST /api/invites/{token}/accept`
-
-### Realtime (optional)
-
-- Channel: `customer.{customerId}` (authorized via `customers.user_id`)
-- Event: `.stamp.added`
-- Auth: `POST /api/broadcasting/auth`
-
-## Frontend Structure
-
-### Navigation modes
-
-**Web (`AppShell`) — owners and platform admin only**
-
-| Mode | Who | Primary routes |
-|------|-----|----------------|
-| Owner workspace | `venue_users.role = owner` | Dashboard, My Venues, Customers, Rewards, Campaigns, Analytics, Team, Settings |
-| Platform admin | `users.is_admin = true` | Venue listings, Manage venues, Design palette, Activity log — no owner workspace |
-| Staff / customer (web) | No owner membership | `/app` mobile download bridge; `/invite/{token}` for staff accept; `/account` for password |
-
-**Mobile app — customers and staff**
-
-| Who | Primary screens |
-|-----|-----------------|
-| Customer | Home, Wallet, **My QR** (center), Venues, Profile; Rewards claim flow |
-| Staff / owner at counter | Scanner (venue-scoped), customer search fallback |
-
-Router guards (web): `requiresAuth`, `workspace`, `ownerOnly`, `allowWithoutMembership` (My Venues for new owners).
-
-Post-login routing (`venueRoles.ts`): owners → dashboard; staff-only and pure customers → `/app`.
-
-### Key web routes
-
-| Route | Page | Role |
-|-------|------|------|
-| `/v/:slug` | Venue app bridge (QR entry) | Guest |
-| `/app` | Mobile app download / open | Guest, staff, customer |
-| `/my-venues`, `/my-venues/:id/settings` | Venue list, create venue, settings | Owner |
-| `/dashboard` | Operational dashboard (KPIs, insights) | Owner |
-| `/rewards` | Milestone CRUD | Owner |
-| `/campaigns` | Campaign templates, activation, history | Owner |
-| `/customers` | Retention list | Owner |
-| `/customers/:customerId` | Profile: timeline, visits, rewards, notes | Owner |
-| `/analytics` | Retention stats | Owner |
-| `/team` | Invitations & members | Owner |
-| `/invite/:token` | Accept staff invite | Invitee |
-
-Customer wallet, My QR, rewards claim, and staff scanner live in the **mobile app** — see [apps/mobile/README.md](../apps/mobile/README.md).
-
-Workspace store auto-selects the first active venue when none is chosen (MVP single-venue focus).
-
-## API Route Summary
-
-**Public**
-
-- `POST /api/auth/register`, `/login`, `/forgot-password`, `/reset-password`
-- `GET /api/public/venues/{slug}/landing`
-- `GET /api/public/demo-booking` — `{ calendly_url }` for `/book-demo` (env: `FLOTORY_DEMO_CALENDLY_URL`)
-- `GET /api/invites/{token}`, `POST /api/invites/{token}/register`
-
-**Authenticated**
-
-- Auth: `/auth/me`, `/logout`, `/password`
-- `POST /api/broadcasting/auth`
-- Venues: CRUD, select, owner setup-files, join, **discover**, customers, dashboard
-- Admin: manage-venues (update, logo/cover apply from cropped setup files), listing review
+- Venues: CRUD, discover, join, customers CRM, dashboard, setup files
 - Rewards: nested CRUD + archive/reactivate/purge
-- Campaigns: templates, nested campaign CRUD, preview, activate/pause/end
-- Scanner: lookup, stamps, **redeem** (claim QR token)
-- Customer claim: `POST .../unlocks/{unlock}/claim-session`, `GET .../claim-sessions/{token}`
-- Team: list, invite, resend/cancel invitation, update/remove member
-- Customer: cards, card detail, rewards journey, **rewards wallet** (`GET /api/customer/rewards/wallet`), redeem
-- Staff redeem: venue-scoped claim endpoint
+- Campaigns: templates, CRUD, preview, activate/pause/end
+- Customer: cards, wallet, card detail, **`POST .../unlocks/{unlock}/redeem`**
+- NFC: **`POST /api/nfc/t/{token}/stamp`**
+- Admin: listing review, manage venues, NFC tags, palette, activity
 
 Full list: `routes/api.php`.
 
-## File Uploads
+## Database migrations
 
-| Asset | Path | Thumbnail |
-|-------|------|-----------|
-| Venue logo | `/uploads/venue-logos/` | `{name}-thumb.jpg` (256px max) → `logo_thumb` |
-| Venue cover | `/uploads/venue-covers/` | `{name}-thumb.jpg` (640px max) → `cover_image_thumb` |
-| Reward image | `/uploads/reward-milestones/` | `{name}-thumb.jpg` (320px max) → `image_thumb` |
+Fresh installs use **two** migrations only:
 
-Upload handlers use `ImageThumbnailService` (PHP GD) to store full-size originals plus JPEG thumbnails. Final venue logo/cover paths are applied by admins via `VenueBrandingService` (`POST /api/admin/manage-venues/{venue}/logo|cover`) after cropping owner setup files. List/card UI loads thumbs via `rewardThumbUrl`, `venueLogoThumbUrl`, and `venueCoverThumbUrl`; detail/hero views use full URLs with thumb fallback.
+1. Laravel infrastructure (sessions, cache, jobs, Sanctum tokens)
+2. `create_flotory_schema` — full product schema
 
-Backfill existing uploads: `php artisan media:generate-thumbs` (runs on deploy).
+```bash
+php artisan migrate:fresh --seed
+```
 
-Uploaded files are gitignored; directories created at deploy/boot.
+## Seeded demo data
 
-## Docker Services (local)
+| Account | Email | Role |
+|---------|-------|------|
+| Platform admin | `admin@flotory.com` | Admin UI |
+| Owner | `owner@example.com` | All four demo venues |
+| Customer | `customer@example.com` | Cards at demo venues (7 stamps at Demo Cafe) |
 
-| Service | Port | Role |
-|---------|------|------|
-| app | 8000 | Laravel HTTP |
-| vite | 5173 | Vue HMR |
-| reverb | 8080 | WebSockets |
-| mysql | internal | Database |
+Password: `password`. Demo Cafe has active campaigns and an NFC tag (`Counter stand`). See root [README.md](../README.md).
 
-## UI Patterns (frontend)
+## File uploads
 
-- **Settings / save actions:** `AsyncActionButton` — idle → `Saving…` → `Saved ✓`
-- **Validation:** inline field errors from API (`ApiError`)
-- **Destructive actions:** confirmation modal (delete venue, delete/archive reward)
-- **Cross-page feedback:** `vue-sonner` toaster wired in `App.vue` (infrastructure present; use for global success/error)
-- **Customer reward claim:** `ClaimRewardModal` — claim session QR, poll until staff scan; `RewardRedeemedCelebration` on success
+| Asset | Path |
+|-------|------|
+| Venue logo / cover | `/uploads/venue-logos/`, `/uploads/venue-covers/` |
+| Reward image | `/uploads/reward-milestones/` |
 
-## Universal My QR
+Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`.
 
-Stamp scans use one token per user (`user_stamp_tokens.public_token`), not per venue card.
+## Docker (local)
 
-| Item | Detail |
-| --- | --- |
-| Payload | `flotory:member:{public_token}` |
-| Customer UI | `/my-qr` (web), center tab (mobile) |
-| Scanner | Resolves user → card at scanner venue (auto-join) |
-| Claim QR | Unchanged: `flotory:redeem:{token}` |
-
-| Env | Default | Meaning |
-| --- | --- | --- |
-| `LOYALTY_UNIVERSAL_QR` | `true` | Use `user_stamp_tokens` for stamp scans |
-| `LOYALTY_LEGACY_CARD_QR` | `false` | Accept old per-card `customers.qr_token` |
-| `LOYALTY_LEGACY_CARD_QR_SUNSET_AT` | *(empty)* | Optional ISO datetime to force legacy off |
-
-API: `GET /api/customer/stamp-qr`, `POST /api/venues/{venue}/scanner/scan`. Backfill: `php artisan app:backfill-user-stamp-tokens`.
-
-## Seeded Demo Data
-
-- Venues: Demo Cafe (`demo-cafe`), Harbor Coffee, North Star Burgers, Olive Street Kitchen
-- `owner@example.com` — owner on all four
-- `staff@example.com` — staff at Demo Cafe only
-- `customer@example.com` — separate card per venue (e.g. 7 stamps at Demo Cafe with 5-stamp reward already claimed; 4 at Harbor Coffee); one universal My QR via `user_stamp_tokens`
-
-Demo password: `password` (local seed only).
+| Service | Port |
+|---------|------|
+| app | 8000 |
+| vite | 5173 |
+| reverb | 8080 |
+| mysql | 3306 |

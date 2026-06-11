@@ -1,94 +1,74 @@
 # Product
 
-## What Is Flotory?
+## What is Flotory?
 
-Flotory is a digital loyalty platform for independent hospitality businesses. Venues place a QR code at the counter or on tables; guests scan to join in the **Flotory mobile app**, collect stamps on a phone-based loyalty card, and unlock milestone rewards. **Owners** run everything from the **web dashboard**. **Customers and staff** use the **Expo mobile app**.
+Flotory is digital loyalty for independent cafes, bars, restaurants, and bakeries. Guests join via a venue QR bridge, collect **stamps** with **NFC stands** (or in-app NFC on iPhone), and **slide to redeem** unlocked rewards in the mobile app. **Owners** run everything from the **web dashboard**.
 
 **Tagline value:** Turn occasional customers into regulars.
 
 ## Problem
 
-Paper punch cards get lost, are easy to fraud, and give owners no insight into who comes back. Generic loyalty apps are expensive, slow to set up, and overbuilt for a single-location cafe or bar. Staff need something that works in seconds during rush hour.
+Paper punch cards get lost, are easy to fraud, and give owners no insight into who comes back. Generic loyalty apps are expensive and overbuilt for a single-location venue.
 
-## Target Customers
+## Users
 
-**Primary businesses:** Cafes, coffee shops, bakeries, restaurants, bars.
+| Role | Surface | Goal |
+|------|---------|------|
+| **Owner** | Web dashboard | Set up venue, rewards, campaigns, NFC stands; grow repeat visits |
+| **Customer** | iOS mobile app | Join venues, tap NFC for stamps, slide to redeem rewards |
+| **Platform admin** | Web `/admin` | Approve venue listings, manage platform |
 
-**Buyer:** Venue owner or manager (often also working the floor).
+Staff scanner, team invites, and claim QR were **removed** in the 2026 pivot — see [BUSINESS_RULES.md](./BUSINESS_RULES.md).
 
-**Users:**
-
-| Role | Who | Goal |
-|------|-----|------|
-| Owner | Venue operator | Set up loyalty, grow repeat visits, manage team |
-| Staff | Barista, server, host | Scan QRs, award stamps, help guests claim rewards |
-| Customer | Guest / regular | Join easily, see progress, claim earned rewards |
-
-## Value Proposition
+## Value proposition
 
 | For owners | For customers |
 |------------|---------------|
-| Live in minutes with QR onboarding | Mobile app wallet and My QR |
-| Staff scanner in the mobile app | Clear progress toward the next reward |
-| Milestone rewards that drive return visits | Claim QR scanned by staff at the counter |
-| Retention analytics (visits, claims, cycles) | Realtime stamp updates when Reverb is enabled |
+| Live in minutes with QR onboarding + NFC stands | Wallet with per-venue progress |
+| Stamp campaigns (Bring Back, Happy Hour, VIP, …) | Tap phone on counter stand — no app friction after first join |
+| Retention CRM and analytics | Slide to redeem when a reward is ready |
+| Listing approval workflow for quality control | Optional realtime stamp animations (Reverb) |
 
-## Customer Journey (mobile app)
+## Customer journey (mobile)
 
-1. **Discover** — Guest scans venue QR → web bridge at `/v/{slug}` → opens Flotory app.
-2. **Join** — Register or sign in (email or Google); auto-joins the venue.
-3. **Collect** — Staff scan the customer's **My QR** (one universal stamp code) and award stamps (typically 1 per purchase; campaigns may multiply).
-4. **Progress** — Customer sees venue cards on **Wallet**; tap a card for QR and milestone journey; pending earned rewards live on **Rewards**.
-5. **Redeem** — Customer taps **Claim**, shows the claim QR to staff; staff scan redeems it. Customer screen updates when claimed. Stamps are not deducted on redeem.
-6. **Return** — Cycle continues; when the top milestone is reached, the cycle completes and stamps reset for the next round.
+1. **Discover** — Scan venue QR → web bridge `/v/{slug}` → open Flotory app.
+2. **Join** — Register or Google sign-in; `POST /api/venues/{slug}/join` when venue is **published**.
+3. **Stamp** — Tap NFC stand at counter **or** use **Stamp** tab (in-app NFC on native iOS build). Each tap = +1 stamp (campaign multipliers apply).
+4. **Progress** — **Home** and **Wallet** show cards, journey, and ready rewards.
+5. **Redeem** — **Slide to redeem** on a ready reward (`POST /api/customer/rewards/unlocks/{unlock}/redeem`). Stamps are not deducted.
+6. **Return** — When the top milestone is reached, the cycle completes and stamps reset; unclaimed unlocks from prior cycles stay in the wallet.
 
-## Owner Journey (web)
+## Owner journey (web)
 
-1. **Sign up** — Homepage → register with `intent=owner` (or Google equivalent).
-2. **Create venue** — **My Venues** opens with the create form (`/my-venues?create=1`): name, slug, address, and contact details.
-3. **Launch** — Complete listing checklist (branding, rewards), submit for admin review, then place QR when **published**. Download QR PNG anytime; staff scanner works before public approval.
-4. **Operate** — Operational dashboard (KPIs, insights); `/rewards` for milestones; `/team` for staff.
-5. **Measure** — `/analytics` for trends and deeper KPIs; dashboard surfaces current-month KPIs and API insights.
+1. **Sign up** — Homepage → register with `intent=owner`.
+2. **Create venue** — **My Venues** (`/my-venues?create=1`): name, address, category.
+3. **Launch** — Listing checklist (setup files, rewards) → **Submit for listing** → admin approves → **published**.
+4. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics.
+5. **NFC** — Platform admin (or owner via support) provisions NFC stands; program tags with tap URL.
 
-## Staff Journey (mobile app + web invite)
-
-1. **Invite** — Owner sends email invitation from `/team` (web).
-2. **Accept** — Staff opens `/invite/{token}` on the web, creates account or signs in, joins as `staff`.
-3. **Scan** — Mobile app scanner (venue-scoped): auto-detect stamp card vs claim QR; search-by-name fallback for stamps only.
-4. **Award** — Select stamp amount (presets 1–5 or custom 1–100), confirm.
-5. **Assist** — Optionally claim a milestone on behalf of a customer via staff API when needed.
-
-## MVP Scope (Current)
-
-What ships today:
+## MVP scope (current)
 
 **Web (owners + platform admin)**
 
-- Owner dashboard, my-venues (venue setup), rewards, campaigns, analytics, team, customers CRM
-- Public venue bridge (`/v/:slug`) — QR entry points guests to the mobile app
-- Staff invitation accept flow (`/invite/{token}`)
-- Platform admin: venue listing review, design palette, activity log (`/admin/*`) — see [ADMIN_ACCESS.md](./ADMIN_ACCESS.md)
+- Dashboard, my-venues, rewards, campaigns, analytics, customers CRM, settings
+- Public venue bridge `/v/:slug`
+- Platform admin: listing review, manage venues, NFC tags, palette, activity log
 
-**Mobile app (customers + staff)**
+**Mobile (customers — iOS focus)**
 
-- Customer: Home, Wallet, My QR, Venues, Rewards claim, Profile/Settings
-- Staff scanner with QR camera + customer search fallback
-- Scanner auto-detect: stamp card vs claim QR; pending-reward warning after stamp scans
-- Optional realtime stamp updates via Reverb
+- Tabs: Home, Wallet, **Stamp** (NFC), Venues, Profile
+- Slide-to-redeem rewards
+- Google + email auth
 
-**Shared API**
+**API**
 
-- Email + Google auth; password reset
-- Venue listing workflow (`draft` → `pending_review` → `published`) with admin approval
-- Stamp campaigns (Bring Back, Quiet Day, Happy Hour, VIP)
-- Milestone rewards CRUD with images (archive / reactivate / purge)
-- Team: email invitations, resend, cancel; staff role only
-- Staff-side milestone claim API
+- NFC stamp: `POST /api/nfc/t/{token}/stamp`
+- Self-redeem: `POST /api/customer/rewards/unlocks/{unlock}/redeem`
+- Stamp campaigns (4 templates)
+- Venue listing workflow (`draft` → `pending_review` → `published`)
 
-**Venue categories in product:** cafe, bar, restaurant, bakery.
+**Venue categories:** cafe, bar, restaurant, bakery.
 
-## Future Vision (Not MVP)
+## Future (not MVP)
 
-The phased product roadmap lives in [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) — from loyalty foundation through retention, CRM, campaigns, and long-term platform vision.
-
-See [MVP_DECISIONS.md](./MVP_DECISIONS.md) for constraints that remain until explicitly revised.
+Billing, POS integrations, push delivery, Android native NFC parity, co-owner invites — see [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) and [MVP_DECISIONS.md](./MVP_DECISIONS.md).

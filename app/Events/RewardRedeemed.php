@@ -19,7 +19,6 @@ class RewardRedeemed implements ShouldBroadcastNow
     public function __construct(
         public Customer $customer,
         public RewardUnlock $unlock,
-        public ?string $claimSessionToken = null,
     ) {
         $this->customer->loadMissing('venue', 'user');
         $this->unlock->loadMissing('reward');
@@ -44,7 +43,6 @@ class RewardRedeemed implements ShouldBroadcastNow
             'venue' => $this->customer->venue,
             'unlock_id' => $this->unlock->id,
             'reward' => $reward,
-            'claim_session_token' => $this->claimSessionToken,
             'message' => "{$reward->title} redeemed at {$this->customer->venue->name}.",
             'occurred_at' => now()->toISOString(),
         ];

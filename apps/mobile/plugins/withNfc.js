@@ -12,7 +12,7 @@ function withNfc(config) {
   })
 
   config = withEntitlementsPlist(config, (mod) => {
-    mod.modResults['com.apple.developer.nfc.readersession.formats'] = ['NDEF']
+    mod.modResults['com.apple.developer.nfc.readersession.formats'] = ['TAG']
     return mod
   })
 

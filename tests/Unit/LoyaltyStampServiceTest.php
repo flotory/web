@@ -96,7 +96,7 @@ class LoyaltyStampServiceTest extends TestCase
             $service->addStamp($customer->fresh(), $staff, 1);
             $this->fail('Expected duplicate scan rejection.');
         } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('qr_token', $exception->errors());
+            $this->assertArrayHasKey('stamp', $exception->errors());
         }
 
         $this->assertSame(1, $customer->fresh()->stamps);
@@ -120,7 +120,7 @@ class LoyaltyStampServiceTest extends TestCase
             $service->addStamp($customer->fresh(), $staffTwo, 1);
             $this->fail('Expected duplicate scan rejection for overlapping scan attempt.');
         } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('qr_token', $exception->errors());
+            $this->assertArrayHasKey('stamp', $exception->errors());
         }
 
         $this->assertSame(1, $customer->fresh()->stamps);
@@ -142,7 +142,7 @@ class LoyaltyStampServiceTest extends TestCase
         $this->assertFalse($result['cycle_completed']);
     }
 
-    public function test_redeem_reward_claims_oldest_unlock_by_cycle_number(): void
+    public function test_redeem_unlock_claims_oldest_unlock_by_cycle_number(): void
     {
         $user = $this->createUser();
         $venue = $this->createVenue();
@@ -152,7 +152,7 @@ class LoyaltyStampServiceTest extends TestCase
         $older = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
         $this->createRewardUnlock($customer, $reward, ['cycle_number' => 2]);
 
-        $unlock = app(LoyaltyStampService::class)->redeemReward($customer, $reward, $user);
+        $unlock = app(LoyaltyStampService::class)->redeemUnlock($older, $user);
 
         $this->assertTrue($unlock->is($older->fresh()));
         $this->assertNotNull($unlock->claimed_at);

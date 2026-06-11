@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -9,13 +9,10 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { authFieldClass } from '@/lib/authForm'
-import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
-import { useWorkspaceStore } from '@/stores/workspace'
 
 const auth = useAuthStore()
-const workspace = useWorkspaceStore()
 const router = useRouter()
 
 const currentPassword = ref('')
@@ -23,8 +20,6 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordAction = useAsyncAction()
 const error = ref('')
-
-const isStaff = computed(() => workspace.isStaffOnlyMember)
 
 async function submit() {
   if (newPassword.value !== confirmPassword.value) {
@@ -60,11 +55,6 @@ async function submit() {
 }
 
 function goBack() {
-  if (isStaff.value) {
-    void router.push(MOBILE_APP_PATH)
-    return
-  }
-
   void router.push('/dashboard')
 }
 </script>
@@ -72,10 +62,10 @@ function goBack() {
 <template>
   <AppShell>
     <div class="mx-auto max-w-lg">
-      <AppBadge :tone="isStaff ? 'green' : 'blue'">{{ isStaff ? 'Staff account' : 'Your account' }}</AppBadge>
+      <AppBadge tone="blue">Your account</AppBadge>
       <h1 class="mt-3 text-4xl font-black tracking-tight text-ink">Change password</h1>
       <p class="mt-2 text-sm font-semibold text-ink-muted">
-        {{ isStaff ? 'Set a personal password you will remember. You must be logged in to change it.' : 'Update your login password.' }}
+        Update your login password.
       </p>
 
       <AppCard class="mt-6">
@@ -97,9 +87,6 @@ function goBack() {
               :class="authFieldClass"
               placeholder="Your password right now"
             >
-            <p v-if="isStaff" class="mt-2 text-xs font-semibold text-ink-muted">
-              Enter the password you use to sign in — the one you chose when you created your account or accepted your staff invitation.
-            </p>
           </div>
           <div>
             <label class="text-sm font-bold text-ink-muted" for="new-password">New password</label>
@@ -141,16 +128,9 @@ function goBack() {
             :error="passwordAction.error"
           />
           <AppButton class="w-full" variant="secondary" type="button" @click="goBack">
-            {{ isStaff ? 'Back to scanner' : 'Back to dashboard' }}
+            Back to dashboard
           </AppButton>
         </form>
-
-        <p v-if="isStaff" class="mt-5 rounded-2xl bg-surface-muted p-3 text-xs font-semibold leading-relaxed text-ink-muted border border-border">
-          Forgot your password?
-          <RouterLink to="/forgot-password" class="font-bold text-ink underline">
-            Request a reset link by email
-          </RouterLink>
-        </p>
       </AppCard>
     </div>
   </AppShell>

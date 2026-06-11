@@ -185,7 +185,7 @@ class NfcStampService
 
         if ($recentCount >= $maxStamps) {
             throw ValidationException::withMessages([
-                'token' => 'Too many NFC stamps in a short time. Please ask staff to scan your QR instead.',
+                'token' => 'Too many NFC stamps in a short time. Please wait a few minutes and try again.',
             ]);
         }
     }

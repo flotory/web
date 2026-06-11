@@ -12,12 +12,11 @@ export type HomeRewardSlide =
 
 interface HomeRewardCarouselProps {
   slides: HomeRewardSlide[]
-  onClaimUnavailable?: () => void
 }
 
 const transparent = { backgroundColor: 'transparent' as const }
 
-function HomeRewardCarousel({ slides, onClaimUnavailable }: HomeRewardCarouselProps) {
+function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
   const { width: screenWidth } = useWindowDimensions()
 
   const cardWidth = screenWidth - space.screenX * 2 - carousel.rewardCardPeek
@@ -62,7 +61,6 @@ function HomeRewardCarousel({ slides, onClaimUnavailable }: HomeRewardCarouselPr
               imageUri={rewardImageUrl(item.item.reward)}
               unlockId={item.item.unlock_id}
               width={cardWidth}
-              onClaimUnavailable={onClaimUnavailable}
             />
           ) : (
             <HomeRewardTicketCard

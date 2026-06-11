@@ -1,13 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Link, useRouter } from 'expo-router'
+import { Link } from 'expo-router'
 import { type ReactNode, useState } from 'react'
-import { ActivityIndicator, Image, Platform, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { Image, Platform, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import Svg, { Line } from 'react-native-svg'
 
 import { visitsToRewardCopy } from '../../lib/progressCopy'
 import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
-import { openClaimQrForUnlock } from '../../lib/openClaimQr'
-import { useAuth } from '../../providers/AuthProvider'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
@@ -34,10 +32,8 @@ export interface HomeRewardTicketCardProps {
   venueId?: number
   width?: number
   style?: StyleProp<ViewStyle>
-  /** When false, in-progress tickets are not wrapped in a navigation link */
+  /** When false, cards are not wrapped in navigation links */
   linkable?: boolean
-  /** Called when a ready reward is no longer claimable (stale list) */
-  onClaimUnavailable?: () => void
   /** In-card visit progress (cafe card page) */
   stampProgress?: { collected: number; target: number } | null
 }
@@ -195,7 +191,7 @@ function RewardIllustration({
       ) : showPhoto && logo ? (
         <Image source={{ uri: logo }} style={{ width: 88, height: 88 }} resizeMode="cover" />
       ) : (
-        <Ionicons name={variant === 'ready' ? 'qr-code-outline' : 'cafe-outline'} size={42} color={colors.accent} />
+        <Ionicons name={variant === 'ready' ? 'gift-outline' : 'cafe-outline'} size={42} color={colors.accent} />
       )}
     </View>
   )
@@ -322,19 +318,15 @@ export default function HomeRewardTicketCard({
   width,
   style,
   linkable = true,
-  onClaimUnavailable,
   stampProgress = null,
 }: HomeRewardTicketCardProps) {
-  const router = useRouter()
-  const { token } = useAuth()
-  const [openingClaim, setOpeningClaim] = useState(false)
   const isReady = variant === 'ready'
   const venueName = venue?.name ?? 'Venue'
   const resolvedImage = imageUri ?? rewardImageUrl({ title, image: null, image_thumb: null })
-  const showInlineAction = isReady || (linkable && cardId != null && venueId != null)
+  const showNextFooter = !isReady && linkable && cardId != null && venueId != null
 
   const top = (
-    <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}>
+    <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: isReady ? 20 : 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
         <View style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
           <View
@@ -350,7 +342,7 @@ export default function HomeRewardTicketCard({
             }}
           >
             <Ionicons
-              name={isReady ? 'qr-code-outline' : 'cafe-outline'}
+              name={isReady ? 'gift-outline' : 'cafe-outline'}
               size={13}
               color={isReady ? colors.accentActive : colors.inkMuted}
             />
@@ -362,7 +354,7 @@ export default function HomeRewardTicketCard({
                 color: colors.ink,
               })}
             >
-              {isReady ? 'SHOW AT COUNTER' : 'NEXT REWARD'}
+              {isReady ? 'READY TO REDEEM' : 'NEXT REWARD'}
             </Text>
           </View>
 
@@ -404,6 +396,9 @@ export default function HomeRewardTicketCard({
           {stampProgress ? (
             <TicketStampProgress collected={stampProgress.collected} target={stampProgress.target} />
           ) : null}
+          {isReady && linkable && unlockId ? (
+            <TicketCompactAction label="Redeem reward" icon="gift-outline" />
+          ) : null}
         </View>
 
         <RewardIllustration variant={variant} imageUri={resolvedImage} venue={venue} />
@@ -411,13 +406,9 @@ export default function HomeRewardTicketCard({
     </View>
   )
 
-  const footer = showInlineAction ? (
+  const footer = showNextFooter ? (
     <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 }}>
-      <TicketCompactAction
-        label={isReady ? 'Open claim QR' : 'View card'}
-        icon={isReady ? 'qr-code-outline' : 'card-outline'}
-        style={{ marginTop: 0 }}
-      />
+      <TicketCompactAction label="View card" icon="card-outline" style={{ marginTop: 0 }} />
     </View>
   ) : null
 
@@ -428,7 +419,7 @@ export default function HomeRewardTicketCard({
       isReady={isReady}
       top={top}
       footer={footer}
-      showPerforation={showInlineAction}
+      showPerforation={showNextFooter}
     />
   )
 
@@ -436,39 +427,17 @@ export default function HomeRewardTicketCard({
 
   if (linkable && isReady && unlockId) {
     return (
-      <Pressable
-        style={pressedStyle}
-        disabled={openingClaim}
-        onPress={() => {
-          if (!token || openingClaim) return
-          setOpeningClaim(true)
-          void openClaimQrForUnlock(router, token, unlockId, { onStale: onClaimUnavailable }).finally(() => {
-            setOpeningClaim(false)
-          })
+      <Link
+        href={{
+          pathname: '/redeem/[unlockId]',
+          params: { unlockId: String(unlockId) },
         }}
+        asChild
       >
-        <View>
+        <Pressable testID="reward-redeem-link" style={pressedStyle}>
           {body}
-          {openingClaim ? (
-            <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.72)',
-                borderRadius: TICKET_RADIUS,
-              }}
-            >
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : null}
-        </View>
-      </Pressable>
+        </Pressable>
+      </Link>
     )
   }
 

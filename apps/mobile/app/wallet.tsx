@@ -11,7 +11,7 @@ import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { withAppFont } from '../src/lib/typography'
-import { colors, radius, space } from '../src/theme'
+import { colors, radius, space, tabBar } from '../src/theme'
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets()
@@ -123,7 +123,7 @@ export default function WalletScreen() {
             cards={filtered}
             refreshing={refreshing}
             onRefresh={refresh}
-            bottomInset={insets.bottom}
+            bottomInset={insets.bottom + tabBar.height + tabBar.scrollBottomPad}
             emptySearch={filtered.length === 0 && cardList.length > 0}
             onClearSearch={() => setSearch('')}
           />

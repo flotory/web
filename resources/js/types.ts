@@ -7,7 +7,7 @@ export interface Venue {
   name: string
   slug: string
   category?: VenueCategory | null
-  membership_role?: 'owner' | 'staff' | null
+  membership_role?: 'owner' | null
   logo?: string | null
   logo_thumb?: string | null
   cover_image?: string | null
@@ -32,7 +32,6 @@ export interface Venue {
   customers_count?: number
   visits_count?: number
   rewards_count?: number
-  staff_count?: number
   joined_count?: number
 }
 

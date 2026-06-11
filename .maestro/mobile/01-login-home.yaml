@@ -15,7 +15,7 @@ appId: "${APP_ID}"
 - tapOn:
     id: "login-submit-button"
 - extendedWaitUntil:
-    visible: "Scan QR"
+    visible: "Collect a stamp"
     timeout: 30000
 - assertVisible: "Open wallet"
 - assertVisible: "Find a venue"

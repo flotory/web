@@ -14,13 +14,11 @@ import RegisterPage from '@/pages/RegisterPage.vue'
 import RewardsPage from '@/pages/RewardsPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
-import StaffInvitePage from '@/pages/StaffInvitePage.vue'
 import AdminActivityPage from '@/pages/AdminActivityPage.vue'
 import AdminPalettePage from '@/pages/AdminPalettePage.vue'
 import AdminManageVenuesPage from '@/pages/AdminManageVenuesPage.vue'
 import AdminVenueEditPage from '@/pages/AdminVenueEditPage.vue'
 import AdminVenuesPage from '@/pages/AdminVenuesPage.vue'
-import TeamPage from '@/pages/TeamPage.vue'
 import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
 import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
@@ -33,9 +31,7 @@ import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import {
   ADMIN_HOME_PATH,
   hasOwnerMembership,
-  hasTeamMembership,
   isPlatformAdmin,
-  isStaffOnlyMember,
   ownerBootstrapPath,
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
@@ -63,7 +59,6 @@ const router = createRouter({
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { guest: true } },
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { guest: true } },
-    { path: '/invite/:token', name: 'staff-invite', component: StaffInvitePage },
     { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
     { path: '/t/:token', name: 'nfc-tap', component: () => import('@/pages/NfcTapBridgePage.vue'), meta: { guest: true } },
     { path: '/onboarding', redirect: { path: '/my-venues', query: { create: '1' } } },
@@ -79,7 +74,6 @@ const router = createRouter({
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/campaigns', name: 'campaigns', component: CampaignsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/team', name: 'team', component: TeamPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
@@ -149,25 +143,19 @@ router.beforeEach(async (to) => {
       await workspace.bootstrap()
     }
 
-    const teamMember = hasTeamMembership(workspace.activeVenues)
     const ownerMember = hasOwnerMembership(workspace.activeVenues)
-    const staffOnly = isStaffOnlyMember(workspace.activeVenues)
     const home = needsWorkspaceContext
       ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
       : await workspaceHomePath()
 
     const allowWithoutMembership = to.meta.allowWithoutMembership === true
 
-    if (staffOnly && to.meta.ownerOnly) {
-      return { path: MOBILE_APP_PATH }
-    }
-
     const platformAdminRedirect = redirectPlatformAdminFromOwnerRoute()
     if (platformAdminRedirect && needsWorkspaceContext && !to.meta.adminOnly && !allowWithoutMembership) {
       return { path: platformAdminRedirect }
     }
 
-    if (needsWorkspaceContext && !teamMember && !allowWithoutMembership && !to.meta.adminOnly) {
+    if (needsWorkspaceContext && !ownerMember && !allowWithoutMembership && !to.meta.adminOnly) {
       if (auth.isAdmin) {
         return { path: ADMIN_HOME_PATH }
       }
@@ -216,7 +204,7 @@ router.beforeEach(async (to) => {
 
     if (auth.user?.is_admin) {
       destination = ADMIN_HOME_PATH
-    } else if (hasOwnerMembership(workspace.activeVenues) || hasTeamMembership(workspace.activeVenues)) {
+    } else if (hasOwnerMembership(workspace.activeVenues)) {
       destination = ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId)
     }
 

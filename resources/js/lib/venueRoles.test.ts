@@ -6,38 +6,30 @@ import type { Venue } from '@/types'
 import {
   ADMIN_HOME_PATH,
   hasOwnerMembership,
-  hasTeamMembership,
-  isStaffOnlyMember,
   ownerVenueSetupLocation,
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
 } from './venueRoles'
 
-function venue(id: number, role: 'owner' | 'staff', archived = false): Venue {
+function venue(id: number, archived = false): Venue {
   return {
     id,
     name: `Venue ${id}`,
     slug: `venue-${id}`,
-    membership_role: role,
+    membership_role: 'owner',
     archived,
   }
 }
 
 describe('membership helpers', () => {
-  it('detects owner, staff, and staff-only workspaces', () => {
-    const ownerVenues = [venue(1, 'owner')]
-    const staffVenues = [venue(1, 'staff')]
-    const mixedVenues = [venue(1, 'owner'), venue(2, 'staff')]
+  it('detects owner workspaces', () => {
+    const ownerVenues = [venue(1)]
 
     expect(hasOwnerMembership(ownerVenues)).toBe(true)
-    expect(hasTeamMembership(ownerVenues)).toBe(true)
-    expect(isStaffOnlyMember(staffVenues)).toBe(true)
-    expect(isStaffOnlyMember(mixedVenues)).toBe(false)
   })
 
   it('ignores archived venues', () => {
-    expect(hasOwnerMembership([venue(1, 'owner', true)])).toBe(false)
-    expect(hasTeamMembership([venue(1, 'staff', true)])).toBe(false)
+    expect(hasOwnerMembership([venue(1, true)])).toBe(false)
   })
 })
 
@@ -47,8 +39,7 @@ describe('resolveAuthenticatedHomePath', () => {
   })
 
   it('routes venue owners to the dashboard and everyone else to the mobile app page', () => {
-    expect(resolveAuthenticatedHomePath(false, [venue(1, 'owner')], 1)).toBe('/dashboard')
-    expect(resolveAuthenticatedHomePath(false, [venue(1, 'staff')], 1)).toBe(MOBILE_APP_PATH)
+    expect(resolveAuthenticatedHomePath(false, [venue(1)], 1)).toBe('/dashboard')
     expect(resolveAuthenticatedHomePath(false, [], null)).toBe(MOBILE_APP_PATH)
   })
 })
@@ -64,7 +55,7 @@ describe('ownerVenueSetupLocation', () => {
 
 describe('resolvePostLoginDestination', () => {
   it('uses home when there is no redirect and the user already has a team', () => {
-    expect(resolvePostLoginDestination(null, false, [venue(1, 'owner')], 1)).toBe('/dashboard')
+    expect(resolvePostLoginDestination(null, false, [venue(1)], 1)).toBe('/dashboard')
   })
 
   it('falls back to the mobile app page for users without a team', () => {
@@ -79,8 +70,8 @@ describe('resolvePostLoginDestination', () => {
   })
 
   it('sends owners away from customer-only redirects', () => {
-    expect(resolvePostLoginDestination('/app', false, [venue(1, 'owner')], 1)).toBe('/dashboard')
-    expect(resolvePostLoginDestination('/wallet', false, [venue(1, 'owner')], 1)).toBe('/dashboard')
+    expect(resolvePostLoginDestination('/app', false, [venue(1)], 1)).toBe('/dashboard')
+    expect(resolvePostLoginDestination('/wallet', false, [venue(1)], 1)).toBe('/dashboard')
   })
 
   it('sends new owners to My Venues when targeting owner workspace routes', () => {
@@ -94,7 +85,7 @@ describe('resolvePostLoginDestination', () => {
   })
 
   it('rejects unsafe external redirects', () => {
-    expect(resolvePostLoginDestination('https://evil.test', false, [venue(1, 'owner')], 1))
+    expect(resolvePostLoginDestination('https://evil.test', false, [venue(1)], 1))
       .toBe('/dashboard')
   })
 })

@@ -8,7 +8,8 @@ High-level phases. Detailed rules live in [BUSINESS_RULES.md](./BUSINESS_RULES.m
 
 | Phase | What |
 | --- | --- |
-| **1 — Loyalty foundation** | QR join, wallet, milestones, claim QR, staff scanner, team invites, multi-venue workspace, owner dashboard, venue listing approval, universal My QR |
+| **1 — Loyalty foundation** | QR join, wallet, milestones, multi-venue workspace, owner dashboard, venue listing approval |
+| **1b — NFC + self-redeem (2026 pivot)** | NFC stamp stands, slide-to-redeem; removed staff scanner, claim QR, team invites, stamp QR |
 | **1.5 — Retention basics** | Last visit, visit count, rewards claimed, joined date on customer list |
 | **2 — Profiles** | Customer profile, visit/reward history, notes, birthday |
 | **3 — Timeline** | Unified activity timeline on profile |
@@ -19,7 +20,7 @@ High-level phases. Detailed rules live in [BUSINESS_RULES.md](./BUSINESS_RULES.m
 | Phase | What |
 | --- | --- |
 | **Pilot validation** | One real venue live for 2+ weeks; measure repeat visits and redemptions |
-| **1 polish** | Email deliverability, scanner edge cases, onboarding copy |
+| **1 polish** | Email deliverability, NFC edge cases, onboarding copy |
 
 ## Planned (next)
 

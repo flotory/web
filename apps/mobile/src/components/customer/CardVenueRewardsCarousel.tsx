@@ -102,7 +102,7 @@ export default function CardVenueRewardsCarousel({
             marginTop: -4,
           })}
         >
-          {readyCount === 1 ? '1 reward — show QR at counter' : `${readyCount} rewards — show QR at counter`}
+          {readyCount === 1 ? '1 reward ready — tap to redeem' : `${readyCount} rewards ready — tap to redeem`}
         </Text>
       ) : (
         <Text

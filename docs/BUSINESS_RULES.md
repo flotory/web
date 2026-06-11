@@ -1,6 +1,8 @@
 # Business Rules
 
-**Canonical product contract for Flotory.** These rules describe what the system must guarantee for owners, staff, and customers. Implementation lives in Laravel services and API tests; this document does not prescribe code structure.
+**Canonical product contract for Flotory.** These rules describe what the system must guarantee for owners and customers. Implementation lives in Laravel services and API tests; this document does not prescribe code structure.
+
+**2026 pivot:** Staff scanner, claim QR, team invites, and staff role are **removed**. Stamps are **NFC-only**; rewards redeem via **slide-to-redeem** in the customer app.
 
 
 | Document                               | Role                                                                      |
@@ -23,9 +25,8 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 | L1–L9  | Loyalty & cycles           | [Loyalty](#loyalty-rules)                |
 | S1–S8  | Stamps & visits            | [Stamps](#stamp-rules)                   |
 | R1–R9  | Rewards & milestones       | [Rewards](#reward-rules)                 |
-| X1–X8  | Redemption & claim QR      | [Redemption](#redemption-rules)          |
+| X1–X6  | Redemption (self-serve)    | [Redemption](#redemption-rules)          |
 | C1–C12 | Stamp campaigns            | [Campaigns](#campaign-rules)             |
-| I1–I9  | Staff invitations          | [Invitations](#invitation-rules)         |
 | U1–U7  | Customers                  | [Customers](#customer-rules)             |
 | O1–O8  | Ownership & roles          | [Ownership](#ownership-rules)            |
 | Z1–Z8  | Security & authorization   | [Security](#security-rules)              |
@@ -60,21 +61,19 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 ## Stamp rules
 
-**S1.** **Stamps** are customer-facing (card, journey, “next reward”). **Visits** are owner-facing analytics (one visit row per staff stamp action).
+**S1.** **Stamps** are customer-facing (card, journey, “next reward”). **Visits** are owner-facing analytics (one visit row per stamp award).
 
 **S2.** Customer UI must say **stamps**, never **visits**.
 
 **S3.** Owner analytics may say **visits**, **customers**, and **loyalty activity** — not “stamps” as the primary counter metric.
 
-**S4.** Staff may award **1–100 stamps** in a single action (presets or custom). The customer receives `base_stamps × campaign_multiplier` (see [Campaigns](#campaign-rules)).
+**S4.** Stamps are awarded **only via NFC** (`POST /api/nfc/t/{token}/stamp` or in-app NFC read on the Stamp tab). Each successful tap awards **1 stamp** (campaign multipliers may apply — see [Campaigns](#campaign-rules)).
 
-**S5.** Each staff stamp action creates **exactly one** visit record, regardless of how many stamps were awarded.
+**S5.** Each stamp award creates **exactly one** visit record.
 
-**S6.** The same customer must not receive duplicate stamp awards from accidental double-scanning within **5 seconds** (same venue, same customer).
+**S6.** The same customer must not receive duplicate stamp awards from accidental double-tap within **5 seconds** (same venue, same customer).
 
-**S7.** Stamp awards must be rejected if the customer’s loyalty card belongs to a **different venue** than the scanner’s active venue.
-
-**S8.** If the customer has **unclaimed unlocks** and staff scan the **stamp card** QR (not the claim QR), the API must return a **pending claim warning** so staff can ask for the claim QR instead.
+**S7.** NFC stamp stands are venue-scoped; a tap must only award at the stand’s venue.
 
 ---
 
@@ -102,21 +101,15 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 ## Redemption rules
 
-**X1.** Customers redeem **at the venue** only: **Rewards → Claim** → show **claim QR** → staff scan on the **same scanner** used for stamps.
+**X1.** Customers redeem **in the app** by sliding **Slide to redeem** on a ready reward (`POST /api/customer/rewards/unlocks/{unlock}/redeem`). No staff scan or claim QR.
 
-**X2.** The **stamp QR** (`flotory:member:{token}` from `user_stamp_tokens`) must **only** add stamps. It must **never** redeem a reward. Per-card `customers.qr_token` is **deprecated** (not shown in apps; scanner rejects unless `LOYALTY_LEGACY_CARD_QR=true`).
+**X2.** Redeeming consumes the **specific unlock** the customer slid on (not FIFO across wallet rows).
 
-**X3.** The **claim QR** encodes a **single-use redemption session** (not the stamp card UUID). Format: `flotory:redeem:{token}` or `/r/{token}`.
+**X3.** After a successful redeem, the UI must show clear **success** and refresh wallet/card state.
 
-**X4.** A claim session expires after **10 minutes** if not scanned. The customer may request a new session.
+**X4.** Stamps, cycle number, and other unlocks are unchanged by redeem except the consumed unlock row (`claimed_at`, `claimed_by`).
 
-**X5.** Redeeming always consumes the **oldest unclaimed unlock** for that **reward** (FIFO across cycles), even if the customer tapped a different wallet row ([E3](#e3-fifo-vs-wallet-row)).
-
-**X6.** Staff redeem via scanner auto-detection of QR type, or dedicated redeem API with the session token.
-
-**X7.** After a successful redeem, the customer claim screen must show clear **success** before returning to the wallet.
-
-**X8.** Stamps, cycle number, and other unlocks are unchanged by redeem except the consumed unlock row (`claimed_at`, `claimed_by`).
+**X5.** Claim QR, redemption sessions, staff scanner, and universal stamp QR flows are **removed**.
 
 ---
 
@@ -132,7 +125,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **C4.** Example: VIP 2× and Happy Hour 2× and Bring Back 3× all match → customer gets **3×** stamps for that scan (not 12×).
 
-**C5.** `added_stamps = base_stamps × multiplier` where `base_stamps` is what staff selected (1–100) and `multiplier` is from [C3].
+**C5.** `added_stamps = base_stamps × multiplier` where `base_stamps` is **1** per NFC tap and `multiplier` is from [C3].
 
 **C6.** Matching rules by template:
 
@@ -149,37 +142,15 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **C10.** Owners configure campaigns via template wizard: **Configure → Review → Activate**.
 
-**C11.** Scanner and customer card surfaces may show the **winning** campaign (highest multiplier) when multiplier > 1.
+**C11.** Customer card surfaces may show the **winning** campaign (highest multiplier) when multiplier > 1.
 
 **C12.** Template catalog is fixed: Bring Back, Quiet Day, Happy Hour, VIP (legacy IDs migrated — see [CAMPAIGNS.md](./CAMPAIGNS.md)).
 
 ---
 
-## Invitation rules
-
-**I1.** Staff join via **email invitation links**, not shared passwords or owner-created credentials.
-
-**I2.** Each invitation is scoped to one **venue** and one **email**.
-
-**I3.** Invitations **expire** after **7 days**. Expired invites may be resent (new token).
-
-**I4.** **Accepted** invitations cannot be reused.
-
-**I5.** **Cancelled** invitations cannot be accepted; send a new invitation instead.
-
-**I6.** Only the invited email may accept (signed-in user email must match).
-
-**I7.** **Deleted or soft-deleted venues** cannot accept new invitations.
-
-**I8.** Owners cannot be invited as staff to a venue they already own.
-
-**I9.** Active staff cannot receive a duplicate pending invitation for the same venue.
-
----
-
 ## Customer rules
 
-**U1.** Customers enroll by scanning venue QR or joining via `/v/{slug}` landing. **Public join requires the venue to be `published`.** Scanner auto-join at the counter may enroll guests before publication (staff context only).
+**U1.** Customers enroll by joining via `/v/{slug}` landing or their first NFC stamp at a venue. **Public join requires the venue to be `published`.**
 
 **U2.** **One loyalty card per (user, venue)**. Re-join returns the existing card.
 
@@ -189,9 +160,9 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **U5.** Customers interact only with venues where they are enrolled.
 
-**U6.** Primary surfaces (**mobile app**): **My QR** (universal stamp QR), **Wallet** (progress per venue), **Rewards** (claim QR only), **Venues** (find/join published venues), **Profile/Settings**. Web `/wallet`, `/scanner`, etc. redirect to `/app`.
+**U6.** Primary surfaces (**mobile app**): **Stamp** tab (NFC), **Wallet** (progress + slide redeem), **Home**, **Venues** (find/join published venues), **Profile/Settings**. Web `/wallet`, `/my-qr`, etc. redirect to `/app`.
 
-**U7.** Unclaimed rewards stay visible in **Rewards** until staff scans the claim QR.
+**U7.** Unclaimed rewards stay visible in **Wallet** and on cafe cards until the customer slides to redeem.
 
 ---
 
@@ -201,17 +172,17 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **O2.** `users` has no global owner/staff/customer role column — only `is_admin` for platform operators.
 
-**O3.** One user may be owner at venue A, staff at B, customer at many.
+**O3.** One user may be **owner** at venue A and **customer** at many venues.
 
 **O4.** Each venue has one or more **owners** via membership.
 
-**O5.** **Staff** may scan and view customer lists; not owner configuration (rewards, team, settings, campaigns).
+**O5.** **Staff role, team invites, and staff scanner are removed** (2026 pivot). Only `owner` is a supported venue team role.
 
-**O6.** An owner **cannot remove themselves** or demote themselves to staff.
+**O6.** An owner **cannot remove themselves** as the sole owner without transferring ownership (future) or deleting the venue.
 
-**O7.** **Platform admin** (`is_admin`) bypasses venue membership for support — minimize admin accounts ([E11](#e11-platform-admin-bypass)).
+**O7.** **Platform admin** (`is_admin`) bypasses venue membership for admin routes — minimize admin accounts ([E11](#e11-platform-admin-bypass)).
 
-**O8.** Owner-only routes (dashboard config, campaigns, analytics config, team) must be denied to staff at the API layer.
+**O8.** Owner-only routes (dashboard, campaigns, analytics, rewards CRUD, settings) must return **403** for users without `owner` membership at that venue.
 
 ---
 
@@ -223,13 +194,11 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **Z3.** **Cross-venue access is denied** unless the user legitimately belongs to both contexts.
 
-**Z4.** Customers cannot access scanner, reward management, team, or venue settings APIs.
-
-**Z5.** Staff cannot perform owner-only actions via direct API calls.
+**Z4.** Customers cannot access reward management or venue settings APIs.
 
 **Z6.** Owners cannot access venues they do not belong to.
 
-**Z7.** QR tokens and API IDs must not allow cross-user data access.
+**Z7.** API IDs and NFC tag tokens must not allow cross-user data access.
 
 **Z8.** Dangerous operations (delete venue, purge reward, remove member) require explicit UI confirmation.
 
@@ -251,11 +220,9 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **Y7.** Customer copy: **stamps**, **rewards**, **progress**. Owner analytics: **visits**, **customers**, **loyalty activity**.
 
-**Y8.** After redeem, customer sees **success** on the claim screen.
+**Y8.** After redeem, customer sees **success** inline on the reward card.
 
-**Y9.** When staff scan a stamp card but claim QR was needed, show **pending claim warning** ([S8](#s8-stamp-scan-warning-when-unclaimed-rewards)).
-
-**Y10.** Owner dashboard focuses on **operations** (KPIs, insights, QR download, mobile-app CTA) — not a post-launch setup tutorial. Counter scanning is in the **mobile app**.
+**Y9.** Owner dashboard focuses on **operations** (KPIs, insights, NFC stand setup, mobile-app CTA) — not a post-launch setup tutorial.
 
 ---
 
@@ -268,13 +235,13 @@ These are **known behaviors**, not bugs, until a rule change is approved and shi
 | ------- | ------------ | -------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | **E1**  | L8 / S4      | Accepted | Stamp overflow lost on cycle reset if scan pushes balance past max milestone in one action | Carry overflow, cap UI, or staff warning                            |
 | **E2**  | R9           | Accepted | New lower milestone does not retro-unlock for existing stamp totals                        | Backfill on create or owner communication                           |
-| **E3**  | X5           | Accepted | Wallet row tapped may not be the unlock consumed (FIFO)                                    | UI explain FIFO, collapse rows, or bind redeem to `unlock_id` in UI |
+| **E3**  | X2           | Resolved | Redeem binds to specific `unlock_id` via slide-to-redeem                                   | —                                                                   |
 | **E4**  | U7 / journey | Accepted | Card journey shows current cycle; older-cycle unlocks mainly in Rewards                    | Cross-cycle indicators on card                                      |
-| **E5**  | R3 / U7      | Resolved | Earned unlocks remain redeemable after owner archives the milestone                        | Wallet may show “retired” copy; claim QR and staff redeem work      |
+| **E5**  | R3 / U7      | Resolved | Earned unlocks remain redeemable after owner archives the milestone                        | Wallet may show “retired” copy; slide redeem still works            |
 | **E6**  | L8           | Accepted | All milestones archived → stamps accumulate, no cycle completion                           | Owner warning; optional freeze                                      |
 | **E7**  | R2           | Accepted | Archived threshold still blocks reusing same stamp count until purge                       | Uniqueness on active only or clearer purge UX                       |
 | **E8**  | U1           | Accepted | Soft-deleted venue: no new stamps; redeem may still work                                   | Read-only card, messaging on landing                                |
-| **E9**  | O5           | Accepted | Removed staff keep session until logout; API returns 403                                   | Revoke token on removal                                             |
+| **E9**  | O5           | N/A      | Staff role removed from product                                                            | —                                                                   |
 | **E10** | Analytics    | Accepted | Multi-venue owner may see empty customers without venue filter                             | Default workspace venue                                             |
 | **E11** | O7           | Accepted | `is_admin` broad access by design                                                          | Audit, few accounts                                                 |
 | **E12** | U6           | Accepted | Background card refresh may fail silently                                                  | Reconnect / retry indicator                                         |
@@ -297,8 +264,9 @@ Business capabilities **not** offered in MVP unless this section is updated:
 | **N4** | Campaign **push** delivery (toggle may exist; delivery is not guaranteed) |
 | **N5** | Email/SMS **marketing** campaigns (stamp multipliers only)                |
 | **N6** | Coupons, discount engines, A/B tests                                      |
-| **N7** | Co-owner invitations (staff only)                                         |
+| **N7** | Co-owner invitations                                                      |
 | **N8** | Global `owner` / `staff` role on user accounts                            |
+| **N9** | Staff scanner, claim QR, team invites, stamp QR                             |
 
 
 Engineering-only exclusions: [MVP_DECISIONS.md](./MVP_DECISIONS.md).
@@ -312,9 +280,9 @@ Rules are enforced by:
 
 | Layer                                | Responsibility                                          |
 | ------------------------------------ | ------------------------------------------------------- |
-| `LoyaltyStampService`                | L1–L9, S4–S8, R1–R2 unlocks, X5–X8 redeem path          |
+| `LoyaltyStampService`                | L1–L9, S4–S7, R unlocks, X1–X4 redeem path              |
+| `NfcStampService`                    | S4, S6–S7, NFC rate limits                              |
 | `CampaignEngine` / `CampaignService` | C1–C7, C11                                              |
-| `VenueStaffInvitationService`        | I1–I9                                                   |
 | `VenueAccess` + policies             | O1–O8, Z1–Z6                                            |
 | Feature tests                        | `tests/Feature/`*, `tests/Unit/CampaignServiceTest.php` — see [TESTING.md](./TESTING.md) |
 
@@ -329,5 +297,6 @@ When adding a feature, add or update a rule here **before** merge, then add a te
 | Date       | Change                                                                            |
 | ---------- | --------------------------------------------------------------------------------- |
 | 2026-06-03 | Full rewrite: campaigns, redemption, exceptions table, rule IDs, canonical status |
+| 2026-06-08 | Pivot: NFC-only stamps, slide-to-redeem, staff/scanner/claim QR removed; consolidated schema |
 
 

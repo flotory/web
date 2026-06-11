@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\VenueStaffInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -80,25 +79,6 @@ class AuthControllerTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_web_login_rejects_staff_only_accounts(): void
-    {
-        $staff = $this->createUser(['email' => 'staff@example.com']);
-        $owner = $this->createUser(['email' => 'owner@example.com']);
-        $venue = $this->createVenue();
-        $this->attachMember($venue, $owner, 'owner');
-        $this->attachMember($venue, $staff, 'staff');
-
-        $this->postJson('/api/auth/login', [
-            'email' => 'staff@example.com',
-            'password' => 'password',
-            'device_name' => 'browser',
-        ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('email');
-
-        $this->assertDatabaseCount('personal_access_tokens', 0);
-    }
-
     public function test_mobile_login_allows_customer_accounts(): void
     {
         $customer = $this->createUser(['email' => 'customer@example.com']);
@@ -114,32 +94,6 @@ class AuthControllerTest extends TestCase
             ->assertJsonPath('user.email', 'customer@example.com');
 
         $this->assertDatabaseCount('personal_access_tokens', 1);
-    }
-
-    public function test_web_login_rejects_pending_staff_invitee(): void
-    {
-        $invitee = $this->createUser(['email' => 'pending-staff@example.com']);
-        $owner = $this->createUser(['email' => 'invite-owner@example.com']);
-        $venue = $this->createVenue();
-        $this->attachMember($venue, $owner, 'owner');
-
-        VenueStaffInvitation::query()->create([
-            'venue_id' => $venue->id,
-            'email' => 'pending-staff@example.com',
-            'role' => 'staff',
-            'token' => 'invite-token-123',
-            'invited_by' => $owner->id,
-            'status' => \App\Enums\VenueStaffInvitationStatus::Pending,
-            'expires_at' => now()->addDays(7),
-        ]);
-
-        $this->postJson('/api/auth/login', [
-            'email' => 'pending-staff@example.com',
-            'password' => 'password',
-            'device_name' => 'browser',
-        ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('email');
     }
 
     public function test_web_login_allows_platform_admin(): void

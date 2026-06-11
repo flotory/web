@@ -38,23 +38,4 @@ class PlatformAdminIsolationTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_admin_cannot_be_invited_to_venue_team(): void
-    {
-        $owner = $this->createUser();
-        $admin = $this->createUser([
-            'email' => 'ops@flotory.com',
-            'is_admin' => true,
-        ]);
-        $venue = $this->createVenue();
-        $this->attachMember($venue, $owner, 'owner');
-
-        Sanctum::actingAs($owner);
-
-        $this->postJson("/api/venues/{$venue->id}/team/invite", [
-            'email' => $admin->email,
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email']);
-    }
-
 }

@@ -19,11 +19,7 @@ use App\Http\Controllers\Api\VenueCampaignController;
 use App\Http\Controllers\Api\VenueController;
 use App\Http\Controllers\Api\VenueCustomerController;
 use App\Http\Controllers\Api\VenueDashboardController;
-use App\Http\Controllers\Api\VenueStaffRedemptionController;
-use App\Http\Controllers\Api\VenueTeamController;
 use App\Http\Controllers\Api\RewardController;
-use App\Http\Controllers\Api\StaffInvitationController;
-use App\Http\Controllers\Api\StaffScanController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -37,10 +33,6 @@ Route::get('/public/nfc/t/{token}', [NfcStampController::class, 'show']);
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
 Route::get('/public/app-config', [PublicAppConfigController::class, 'show']);
 Route::get('/public/demo-booking', [PublicDemoBookingController::class, 'show']);
-
-Route::get('/invites/{token}', [StaffInvitationController::class, 'show']);
-Route::post('/invites/{token}/register', [StaffInvitationController::class, 'register']);
-Route::post('/invites/{token}/accept', [StaffInvitationController::class, 'accept'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -66,17 +58,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/venues/{venue}/customers/{customer}/notes', [VenueCustomerController::class, 'storeNote']);
     Route::post('/venues/{venue:slug}/join', [CustomerLoyaltyController::class, 'join']);
 
-    Route::get('/customer/stamp-qr', [CustomerLoyaltyController::class, 'stampQr']);
     Route::post('/nfc/t/{token}/stamp', [NfcStampController::class, 'stamp']);
     Route::get('/customer/cards', [CustomerLoyaltyController::class, 'mine']);
     Route::get('/customer/rewards/wallet', [CustomerLoyaltyController::class, 'wallet']);
-    Route::post('/customer/rewards/unlocks/{unlock}/claim-session', [CustomerLoyaltyController::class, 'createClaimSession']);
-    Route::get('/customer/rewards/claim-sessions/{token}', [CustomerLoyaltyController::class, 'claimSessionStatus']);
+    Route::post('/customer/rewards/unlocks/{unlock}/redeem', [CustomerLoyaltyController::class, 'redeemUnlock']);
     Route::get('/customers/{customer}/card', [CustomerLoyaltyController::class, 'card']);
     Route::get('/customers/{customer}/rewards', [CustomerLoyaltyController::class, 'rewards']);
-    Route::post('/customers/{customer}/rewards/{reward}/redeem', [CustomerLoyaltyController::class, 'redeem']);
-    Route::post('/venues/{venue}/customers/{customer}/rewards/{reward}/redeem', [VenueStaffRedemptionController::class, 'redeem']);
-
     Route::get('/dashboard', [VenueDashboardController::class, 'index']);
     Route::get('/venues/{venue}/dashboard', [VenueDashboardController::class, 'show']);
     Route::apiResource('/venues/{venue}/rewards', RewardController::class)->except(['show']);
@@ -89,18 +76,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::patch('/venues/{venue}/rewards/{reward}/archive', [RewardController::class, 'archive']);
     Route::patch('/venues/{venue}/rewards/{reward}/reactivate', [RewardController::class, 'reactivate']);
     Route::delete('/venues/{venue}/rewards/{reward}/purge', [RewardController::class, 'purge']);
-
-    Route::post('/venues/{venue}/scanner/lookup', [StaffScanController::class, 'lookup']);
-    Route::post('/venues/{venue}/scanner/scan', [StaffScanController::class, 'scan']);
-    Route::post('/venues/{venue}/scanner/stamps', [StaffScanController::class, 'addStamp']);
-    Route::post('/venues/{venue}/scanner/redeem', [StaffScanController::class, 'redeem']);
-
-    Route::get('/venues/{venue}/team', [VenueTeamController::class, 'index']);
-    Route::post('/venues/{venue}/team/invite', [VenueTeamController::class, 'invite']);
-    Route::post('/venues/{venue}/team/invitations/{invitation}/resend', [VenueTeamController::class, 'resendInvitation']);
-    Route::delete('/venues/{venue}/team/invitations/{invitation}', [VenueTeamController::class, 'cancelInvitation']);
-    Route::patch('/venues/{venue}/team/{user}', [VenueTeamController::class, 'update']);
-    Route::delete('/venues/{venue}/team/{user}', [VenueTeamController::class, 'destroy']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/activity', [AdminActivityController::class, 'index']);

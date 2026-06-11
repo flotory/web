@@ -1,0 +1,26 @@
+appId: "${APP_ID}"
+---
+# Full customer loop: login → NFC tap URL (same API as physical tag) → slide redeem.
+# Requires: migrate:fresh --seed (Demo Cafe NFC token + customer@ with pending unlock).
+- runFlow: 01-login-home.yaml
+- openLink: "flotory://t/${NFC_TAP_TOKEN}"
+- extendedWaitUntil:
+    visible: "${TEST_VENUE_NAME}"
+    timeout: 45000
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible: "READY TO REDEEM"
+    timeout: 25000
+- tapOn:
+    id: "reward-redeem-link"
+- extendedWaitUntil:
+    visible: "Show at the counter"
+    timeout: 15000
+- swipe:
+    from:
+      id: "slide-to-redeem-track"
+    direction: RIGHT
+- extendedWaitUntil:
+    visible: "REDEEMED"
+    timeout: 20000

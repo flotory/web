@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg'
 import TabBarQrButton from './TabBarQrButton'
 import { buildTabBarSurfacePath } from './tabBarShape'
 import { fonts } from '../../lib/typography'
+import { useNfcStampScanAction } from '../../providers/NfcStampScanProvider'
 import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../theme'
 
 const HIDDEN_TABS = new Set(['notifications'])
@@ -34,6 +35,7 @@ function tabIcon(name: string, focused: boolean, color: string, size: number) {
 export default function CustomerTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
+  const { startScan, scanning: nfcScanning } = useNfcStampScanAction()
   const barHeight = tabBarMetrics.height + insets.bottom
   const surfacePath = buildTabBarSurfacePath(width, barHeight, {
     cornerRadius: 18,
@@ -93,6 +95,11 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
             const tint = focused ? colors.ink : colors.inkSoft
 
             const onPress = () => {
+              if (isQr) {
+                void startScan()
+                return
+              }
+
               const event = navigation.emit({
                 type: 'tabPress',
                 target: route.key,
@@ -125,7 +132,7 @@ export default function CustomerTabBar({ state, descriptors, navigation }: Botto
                 }}
               >
                 {isQr ? (
-                  <TabBarQrButton focused={focused} />
+                  <TabBarQrButton focused={nfcScanning || focused} />
                 ) : (
                   <>
                     {options.tabBarIcon?.({

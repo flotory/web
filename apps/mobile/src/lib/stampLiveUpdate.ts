@@ -1,5 +1,43 @@
 import type { RewardRef } from '../types/loyalty'
 import type { StampAddedPayload } from '../types/realtime'
+import type { NfcStampResponse } from './nfcStamp'
+
+export function nfcResponseToStampPayload(response: NfcStampResponse): StampAddedPayload {
+  const venue = response.venue ?? response.customer.venue
+  if (!venue) {
+    throw new Error('Venue missing from stamp response.')
+  }
+
+  return {
+    customer: response.customer,
+    venue,
+    previous_stamps: response.previous_stamps,
+    added_stamps: response.added_stamps,
+    stamps: response.stamps,
+    next_reward: response.next_reward,
+    available_rewards: response.available_rewards,
+    milestones: response.milestones,
+    current_cycle: response.current_cycle,
+    cycle_completed: response.cycle_completed,
+    message: response.message,
+    occurred_at: response.occurred_at,
+  }
+}
+
+export function cardRouteFromNfcStamp(response: NfcStampResponse) {
+  const venue = response.venue ?? response.customer.venue
+  if (!venue) {
+    throw new Error('Venue missing from stamp response.')
+  }
+
+  return {
+    pathname: '/card/[cardId]' as const,
+    params: {
+      cardId: String(response.customer.id),
+      venueId: String(venue.id),
+    },
+  }
+}
 
 export function stampUpdateSignature(payload: StampAddedPayload): string {
   return [

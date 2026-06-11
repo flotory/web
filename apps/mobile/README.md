@@ -11,12 +11,12 @@ Mobile app lives in `apps/mobile` and uses the Laravel API as source of truth.
 
 ## NFC stamp stands (native iOS — Xcode)
 
-Flotory supports **two** ways to collect a stamp from a physical NFC stand:
+Stamps are **NFC-only**. Customers collect them from the center **Stamp** tab or by tapping a physical stand.
 
 | Method | How it works | Works in Expo Go? |
 |--------|----------------|-------------------|
-| **Tag URL (default)** | Tag is programmed with `https://flotory.com/t/{token}`; iOS opens the app or web bridge | Yes (via system tap) |
-| **In-app NFC scan** | Customer opens **My QR** tab → QR is always visible; Core NFC starts in the background | **No** — needs Xcode build |
+| **Tag URL** | Tag programmed with `https://flotory.com/t/{token}`; iOS opens the app or web bridge | Yes (via system tap) |
+| **In-app NFC scan** | Customer opens **Stamp** tab; Core NFC starts automatically | **No** — needs Xcode build |
 
 Expo Go cannot load `react-native-nfc-manager` (Core NFC). Use a **development build** on a **physical iPhone** (NFC does not work in the Simulator).
 
@@ -56,11 +56,15 @@ Or press **Run** in Xcode with your phone selected.
 ### Test flow
 
 1. Admin creates a tag in **Manage venues → NFC stamp stands** and copies the tap URL.
-2. Program a blank NFC tag (NDEF URI) with that URL, or use the in-app scanner on a pre-programmed stand.
-3. In the app: open the **My QR** tab (center button) — your QR is always shown; hold the phone on the stand when the NFC prompt appears, or let staff scan the QR.
-4. App reads the URI, opens `/t/{token}`, and awards **+1 stamp** via the API.
+2. Program a blank NFC tag (NDEF URI) with that URL.
+3. In the app: open the **Stamp** tab (center button) and hold the phone on the stand when the NFC prompt appears.
+4. App reads the URI, awards **+1 stamp** via the API, and navigates to your cafe card with animation.
 
 Tags must contain a Flotory tap URL (`https://flotory.com/t/...` or `flotory://t/...`).
+
+### Rewards
+
+Ready rewards use **Slide to redeem** on Home, Wallet, and cafe cards (`POST /api/customer/rewards/unlocks/{unlock}/redeem`). There is no claim QR or staff scanner.
 
 ## Run
 
@@ -82,7 +86,7 @@ For local backend:
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile run start
 ```
 
-For production realtime (stamp animations after staff scan), set Reverb env to match the server (see `deploy/env.production.example`):
+For production realtime (stamp animations after NFC stamp), set Reverb env to match the server (see `deploy/env.production.example`):
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=https://flotory.com/api \
@@ -93,7 +97,7 @@ EXPO_PUBLIC_REVERB_SCHEME=https \
 npm --prefix apps/mobile run start
 ```
 
-Without matching keys, the app still detects new stamps via polling (fast on Home/My QR/card, slower elsewhere) and opens your venue card with animation.
+Without matching keys, the app still detects new stamps via polling (fast on Home/Stamp/card, slower elsewhere) and opens your venue card with animation.
 
 ## Google sign-in
 
@@ -129,37 +133,35 @@ Install Maestro once:
 curl -Ls "https://get.maestro.mobile.dev" | bash
 ```
 
-Run the app in a simulator, then run:
+Run on a **simulator or device** with a **development build** (`com.flotory.mobile`), then:
 
 ```bash
-# Dev build app id
+# After: docker compose exec app php artisan migrate:fresh --seed
 APP_ID=com.flotory.mobile \
 CUSTOMER_EMAIL=customer@example.com \
 CUSTOMER_PASSWORD=password \
 TEST_VENUE_NAME="Demo Cafe" \
-npm run test:mobile:e2e
-
-# Expo Go app id, if testing through Expo Go
-APP_ID=host.exp.Exponent \
-CUSTOMER_EMAIL=customer@example.com \
-CUSTOMER_PASSWORD=password \
-TEST_VENUE_NAME="Demo Cafe" \
+NFC_TAP_TOKEN=democafenfcstandlocaltest00001 \
 npm run test:mobile:e2e
 ```
 
-The flows live in `.maestro/mobile` and cover:
+Flows in `.maestro/mobile`:
 
-- login -> Home
-- Wallet -> cafe card
-- ready reward -> claim QR
+| File | What it tests |
+|------|----------------|
+| `01-login-home.yaml` | Login → Home |
+| `02-wallet-card.yaml` | Wallet → venue card |
+| `03-stamp-redeem.yaml` | NFC tap deep link → Home → slide redeem |
 
-The claim QR smoke expects seeded demo data with a ready reward. Re-run local seed if it fails because demo rewards were already claimed.
+`03-stamp-redeem` uses `flotory://t/{token}` — same backend path as a physical NFC tag, without radio hardware. Token is seeded on Demo Cafe (`DatabaseSeeder::DEMO_CAFE_NFC_TOKEN`).
+
+Venue NFC setup guide for pilots: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE_SETUP.md).
 
 ## Architecture (customer app)
 
-- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center My QR (`TabBarQrButton`), Venues, Profile; Notifications is a hidden stack route
+- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center Stamp (`TabBarQrButton`), Venues, Profile; Notifications is a hidden stack route
 - **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
-- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useDiscoverVenues`, `useCardDetail`, `useStampQr`, `useScreenResource`
+- **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useDiscoverVenues`, `useCardDetail`, `useNfcStampScan`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
 - **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`, `HomeRewardTicketCard`, `HomeScreenHeader` (bell → notifications; unread dot when `unreadCount > 0`)
 
@@ -207,7 +209,7 @@ When adding new screens or redesigning existing ones, prefer these primitives be
 ## Copy + Feedback Helpers
 
 - `src/lib/progressCopy.ts`: human progress lines (e.g. `2 visits to free coffee`)
-- `src/lib/haptics.ts`: `hapticTabChange`, `hapticLightTap`, `hapticSuccess` (tabs, CTAs, join/unlock/claim)
+- `src/lib/haptics.ts`: `hapticTabChange`, `hapticLightTap`, `hapticSuccess` (tabs, CTAs, join/redeem)
 
 ## Media + Performance
 

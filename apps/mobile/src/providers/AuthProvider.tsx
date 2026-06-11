@@ -11,6 +11,7 @@ interface AuthContextValue {
   role: UserRole | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
+  signInWithToken: (sessionToken: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -19,8 +20,6 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 function deriveRole(venues: VenueMembership[]): UserRole {
   const hasOwner = venues.some((venue) => venue.membership_role === 'owner')
   if (hasOwner) return 'owner'
-  const hasStaff = venues.some((venue) => venue.membership_role === 'staff')
-  if (hasStaff) return 'staff'
   return 'customer'
 }
 
@@ -78,6 +77,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function signInWithToken(sessionToken: string) {
+    try {
+      await saveToken(sessionToken)
+      await hydrateSession(sessionToken)
+      setToken(sessionToken)
+    } catch (exception) {
+      await clearToken()
+      setToken(null)
+      setUser(null)
+      setRole(null)
+      throw exception
+    }
+  }
+
   async function signUp(name: string, email: string, password: string) {
     const payload = await apiRequest<AuthResponse>('/auth/register', {
       method: 'POST',
@@ -114,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, signIn, signUp, signOut }),
+    () => ({ booting, token, user, role, signIn, signUp, signInWithToken, signOut }),
     [booting, token, user, role],
   )
 

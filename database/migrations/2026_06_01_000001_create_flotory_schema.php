@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('google_id')->nullable()->unique();
             $table->text('google_avatar')->nullable();
+            $table->date('birthday')->nullable();
             $table->boolean('is_admin')->default(false)->index();
             $table->rememberToken();
             $table->timestamps();
@@ -31,10 +32,19 @@ return new class extends Migration
             $table->string('cover_image')->nullable();
             $table->string('cover_image_thumb')->nullable();
             $table->string('address')->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->string('google_place_id')->nullable();
             $table->string('phone', 40)->nullable();
             $table->string('website')->nullable();
+            $table->string('status', 20)->default('draft')->index();
+            $table->text('review_note')->nullable();
+            $table->timestamp('submitted_at')->nullable();
+            $table->timestamp('published_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index(['latitude', 'longitude']);
         });
 
         Schema::table('users', function (Blueprint $table): void {
@@ -56,7 +66,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->uuid('qr_token')->unique();
             $table->unsignedInteger('stamps')->default(0);
             $table->timestamps();
 
@@ -115,10 +124,111 @@ return new class extends Migration
             $table->unique(['customer_id', 'reward_id', 'cycle_number']);
             $table->index(['customer_id', 'cycle_number', 'claimed_at']);
         });
+
+        Schema::create('activity_log', function (Blueprint $table): void {
+            $table->id();
+            $table->string('log_name')->nullable()->index();
+            $table->text('description');
+            $table->nullableMorphs('subject', 'subject');
+            $table->string('event')->nullable();
+            $table->nullableMorphs('causer', 'causer');
+            $table->json('attribute_changes')->nullable();
+            $table->json('properties')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('customer_notes', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
+            $table->foreignId('author_id')->constrained('users')->cascadeOnDelete();
+            $table->text('body');
+            $table->timestamps();
+
+            $table->index(['customer_id', 'created_at']);
+        });
+
+        Schema::create('campaigns', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->string('template_id', 40);
+            $table->string('name');
+            $table->string('status', 20)->default('draft');
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
+            $table->json('config');
+            $table->boolean('push_enabled')->default(true);
+            $table->timestamp('activated_at')->nullable();
+            $table->unsignedInteger('audience_count')->default(0);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+
+            $table->index(['venue_id', 'status']);
+        });
+
+        Schema::create('platform_settings', function (Blueprint $table): void {
+            $table->id();
+            $table->string('key')->unique();
+            $table->json('value');
+            $table->timestamps();
+        });
+
+        Schema::create('venue_address_changes', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(['venue_id', 'created_at']);
+        });
+
+        Schema::create('venue_setup_files', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('uploaded_by_user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('kind', 32);
+            $table->string('original_name');
+            $table->string('path');
+            $table->string('mime_type', 120);
+            $table->unsignedBigInteger('byte_size');
+            $table->timestamps();
+
+            $table->index(['venue_id', 'kind']);
+        });
+
+        Schema::create('nfc_tags', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->string('token', 64)->unique();
+            $table->string('label')->nullable();
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+
+            $table->index(['venue_id', 'active']);
+        });
+
+        Schema::create('stamp_events', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
+            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('nfc_tag_id')->constrained('nfc_tags')->cascadeOnDelete();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(['user_id', 'venue_id', 'created_at']);
+            $table->index(['nfc_tag_id', 'user_id', 'created_at']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('stamp_events');
+        Schema::dropIfExists('nfc_tags');
+        Schema::dropIfExists('venue_setup_files');
+        Schema::dropIfExists('venue_address_changes');
+        Schema::dropIfExists('platform_settings');
+        Schema::dropIfExists('campaigns');
+        Schema::dropIfExists('customer_notes');
+        Schema::dropIfExists('activity_log');
         Schema::dropIfExists('reward_unlocks');
         Schema::dropIfExists('customer_reward_cycles');
         Schema::dropIfExists('visits');

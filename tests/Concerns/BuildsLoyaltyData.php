@@ -8,12 +8,10 @@ use App\Models\NfcTag;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
-use App\Models\UserStampToken;
 use App\Models\Venue;
 use App\Models\VenueSetupFile;
 use App\Models\VenueUser;
 use App\Models\Visit;
-use App\Support\LoyaltyQr;
 use Illuminate\Support\Str;
 
 trait BuildsLoyaltyData
@@ -62,27 +60,8 @@ trait BuildsLoyaltyData
         return Customer::query()->create(array_merge([
             'venue_id' => $venue->id,
             'user_id' => $user->id,
-            'qr_token' => null,
             'stamps' => 0,
         ], $attributes));
-    }
-
-    protected function ensureUserStampToken(User $user, ?string $publicToken = null): UserStampToken
-    {
-        return UserStampToken::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'public_token' => $publicToken ?? (string) Str::uuid(),
-                'version' => 1,
-            ],
-        );
-    }
-
-    protected function stampQrForUser(User $user, ?string $publicToken = null): string
-    {
-        $token = $this->ensureUserStampToken($user, $publicToken);
-
-        return LoyaltyQr::memberQrPayload($token->public_token);
     }
 
     protected function createReward(Venue $venue, array $attributes = []): Reward

@@ -14,17 +14,7 @@ class Customer extends Model
     protected $fillable = [
         'venue_id',
         'user_id',
-        'qr_token',
         'stamps',
-    ];
-
-    /**
-     * Per-card qr_token is deprecated (v2 My QR). Kept in DB for migration/audit only.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'qr_token',
     ];
 
     protected function casts(): array

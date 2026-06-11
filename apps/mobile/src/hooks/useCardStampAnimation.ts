@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { CardDetailPayload } from '../lib/customerData'
 import { hapticLightTap, hapticSuccess } from '../lib/haptics'
+import { acknowledgeStampSignature } from '../lib/stampAck'
 import {
   rewardEarnedThisScan,
   slotsForStampIncrease,
@@ -49,6 +50,7 @@ export function useCardStampAnimation({
       return
     }
     lastAnimatedStampSignature.current = signature
+    acknowledgeStampSignature(signature)
 
     if (stampFeedbackTimer.current) {
       clearTimeout(stampFeedbackTimer.current)

@@ -20,7 +20,6 @@ export interface RewardRedeemedPayload {
   venue: VenueRef
   unlock_id: number
   reward: RewardRef
-  claim_session_token: string | null
   message: string
   occurred_at: string
 }

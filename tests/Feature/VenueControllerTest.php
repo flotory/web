@@ -104,22 +104,23 @@ class VenueControllerTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'venues')
             ->assertJsonPath('venues.0.membership_role', 'owner')
-            ->assertJsonStructure(['venues' => [['staff_count', 'customers_count', 'rewards_count']]]);
+            ->assertJsonStructure(['venues' => [['customers_count', 'visits_count', 'rewards_count']]]);
     }
 
-    public function test_venue_list_includes_staff_count(): void
+    public function test_venue_list_includes_visit_count(): void
     {
         $owner = $this->createUser();
-        $staff = $this->createUser(['email' => 'staff@example.com']);
+        $guest = $this->createUser(['email' => 'guest@example.com']);
         $venue = $this->createVenue();
         $this->attachMember($venue, $owner, 'owner');
-        $this->attachMember($venue, $staff, 'staff');
+        $customer = $this->createCustomer($venue, $guest);
+        $this->createVisit($customer, $owner);
 
         Sanctum::actingAs($owner);
 
         $this->getJson('/api/venues')
             ->assertOk()
-            ->assertJsonPath('venues.0.staff_count', 1);
+            ->assertJsonPath('venues.0.visits_count', 1);
     }
 
     public function test_admin_venue_index_returns_empty_list(): void

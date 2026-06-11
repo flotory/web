@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
+use App\Models\NfcTag;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
@@ -12,11 +13,12 @@ use App\Models\VenueUser;
 use App\Models\Visit;
 use App\Services\LoyaltyStampService;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+    /** Stable token for Demo Cafe NFC stand (Maestro + local tap URL tests). */
+    public const DEMO_CAFE_NFC_TOKEN = 'democafenfcstandlocaltest00001';
+
     public function run(): void
     {
         $this->call(AdminUserSeeder::class);
@@ -82,26 +84,6 @@ class DatabaseSeeder extends Seeder
         $venue = $venues->first();
 
         $owner->forceFill(['active_venue_id' => $venue->id])->save();
-
-        $staff = User::updateOrCreate(
-            ['email' => 'staff@example.com'],
-            [
-                'name' => 'Demo Staff',
-                'password' => 'password',
-                'is_admin' => false,
-                'active_venue_id' => $venue->id,
-            ],
-        );
-
-        VenueUser::updateOrCreate(
-            [
-                'venue_id' => $venue->id,
-                'user_id' => $staff->id,
-            ],
-            [
-                'role' => 'staff',
-            ],
-        );
 
         $venues->each(function (Venue $venue) use ($owner): void {
             VenueUser::updateOrCreate([
@@ -197,10 +179,6 @@ class DatabaseSeeder extends Seeder
                         'user_id' => $user->id,
                     ],
                     [
-                        'qr_token' => Customer::query()
-                            ->where('venue_id', $venue->id)
-                            ->where('user_id', $user->id)
-                            ->value('qr_token') ?? (string) Str::uuid(),
                         'stamps' => $stamps,
                     ],
                 );
@@ -242,23 +220,19 @@ class DatabaseSeeder extends Seeder
 
                 $loyalty->syncEligibleUnlocks($customer);
 
-                if ($venue->slug === 'demo-cafe' && $user->email === 'customer@example.com') {
-                    RewardUnlock::query()
-                        ->where('customer_id', $customer->id)
-                        ->where('cycle_number', 1)
-                        ->whereNull('claimed_at')
-                        ->whereHas('reward', fn ($query) => $query
-                            ->where('venue_id', $venue->id)
-                            ->where('required_stamps', '<=', 5))
-                        ->update([
-                            'claimed_at' => now()->subDays(2),
-                            'claimed_by' => $owner->id,
-                        ]);
-                }
             });
         });
 
-        Artisan::call('app:backfill-user-stamp-tokens');
+        NfcTag::updateOrCreate(
+            [
+                'venue_id' => $venue->id,
+                'label' => 'Counter stand',
+            ],
+            [
+                'token' => self::DEMO_CAFE_NFC_TOKEN,
+                'active' => true,
+            ],
+        );
 
         $this->call(DemoCampaignsSeeder::class);
 

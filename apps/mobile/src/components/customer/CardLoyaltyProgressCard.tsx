@@ -73,12 +73,12 @@ export default function CardLoyaltyProgressCard({
             paddingHorizontal: 12,
             paddingVertical: 7,
             borderRadius: 999,
-            backgroundColor: colors.successBg,
+            backgroundColor: colors.accentSoft,
             borderWidth: 1,
-            borderColor: colors.successBorder,
+            borderColor: colors.accentBorder,
           }}
         >
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: colors.successText })}>
+          <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: colors.accentActive })}>
             {collected} of {progressTarget}
           </Text>
         </View>

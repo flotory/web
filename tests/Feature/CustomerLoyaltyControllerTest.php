@@ -70,10 +70,10 @@ class CustomerLoyaltyControllerTest extends TestCase
 
         $unlockId = $this->getJson("/api/customers/{$customer->id}/card")->json('pending_unlocks.0.unlock_id');
 
-        $this->postJson("/api/customer/rewards/unlocks/{$unlockId}/claim-session")
+        $this->postJson("/api/customer/rewards/unlocks/{$unlockId}/redeem")
             ->assertCreated()
-            ->assertJsonPath('reward.id', $reward->id)
-            ->assertJsonPath('status', 'pending');
+            ->assertJsonPath('unlock.reward_id', $reward->id)
+            ->assertJsonPath('unlock.claimed_by', $user->id);
     }
 
     public function test_customer_cannot_view_another_users_card(): void
@@ -87,54 +87,6 @@ class CustomerLoyaltyControllerTest extends TestCase
 
         $this->getJson("/api/customers/{$customer->id}/card")
             ->assertForbidden();
-    }
-
-    public function test_customer_can_redeem_an_unlocked_reward(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
-        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
-        $reward = $this->createReward($venue, [
-            'title' => 'Free Cappuccino',
-            'required_stamps' => 5,
-        ]);
-
-        $this->createRewardCycle($customer);
-        $this->createRewardUnlock($customer, $reward);
-
-        Sanctum::actingAs($user);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertCreated()
-            ->assertJsonPath('unlock.reward_id', $reward->id)
-            ->assertJsonPath('unlock.claimed_by', $user->id)
-            ->assertJsonPath('available_rewards', []);
-
-        $this->assertDatabaseHas('reward_unlocks', [
-            'customer_id' => $customer->id,
-            'reward_id' => $reward->id,
-            'claimed_by' => $user->id,
-        ]);
-    }
-
-    public function test_customer_cannot_redeem_the_same_reward_twice_in_a_cycle(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
-        $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
-        $reward = $this->createReward($venue, ['required_stamps' => 5]);
-
-        $this->createRewardCycle($customer);
-        $this->createRewardUnlock($customer, $reward, [
-            'claimed_at' => now()->subMinute(),
-            'claimed_by' => $user->id,
-        ]);
-
-        Sanctum::actingAs($user);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('reward');
     }
 
     public function test_customer_can_list_all_cards_and_filter_by_venue(): void
@@ -249,63 +201,4 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_customer_can_redeem_two_pending_unlocks_for_same_reward_in_sequence(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
-        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
-        $reward = $this->createReward($venue, [
-            'title' => 'Free Latte',
-            'required_stamps' => 5,
-        ]);
-        $this->createRewardCycle($customer, ['cycle_number' => 3, 'completed_at' => now()]);
-        $firstUnlock = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 1]);
-        $secondUnlock = $this->createRewardUnlock($customer, $reward, ['cycle_number' => 2]);
-
-        Sanctum::actingAs($user);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertCreated()
-            ->assertJsonPath('unlock.id', $firstUnlock->id);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertCreated()
-            ->assertJsonPath('unlock.id', $secondUnlock->id);
-
-        $this->getJson('/api/customer/rewards/wallet')
-            ->assertOk()
-            ->assertJsonPath('pending_count', 0)
-            ->assertJsonCount(0, 'items');
-    }
-
-    public function test_customer_cannot_redeem_unavailable_reward(): void
-    {
-        $user = $this->createUser();
-        $otherVenue = $this->createVenue(['name' => 'Other']);
-        $venue = $this->createVenue();
-        $customer = $this->createCustomer($venue, $user);
-        $foreignReward = $this->createReward($otherVenue, ['required_stamps' => 5]);
-        $this->createRewardCycle($customer);
-
-        Sanctum::actingAs($user);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$foreignReward->id}/redeem")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('reward');
-    }
-
-    public function test_customer_cannot_redeem_locked_reward(): void
-    {
-        $user = $this->createUser();
-        $venue = $this->createVenue();
-        $customer = $this->createCustomer($venue, $user, ['stamps' => 1]);
-        $reward = $this->createReward($venue, ['required_stamps' => 5]);
-        $this->createRewardCycle($customer);
-
-        Sanctum::actingAs($user);
-
-        $this->postJson("/api/customers/{$customer->id}/rewards/{$reward->id}/redeem")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('reward');
-    }
 }

@@ -11,7 +11,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
-import { authFieldClass, isStaffInviteRoute } from '@/lib/authForm'
+import { authFieldClass } from '@/lib/authForm'
 import { hasOwnerMembership, ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -28,7 +28,6 @@ const oauthLoading = ref(false)
 const error = ref('')
 
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
-const isStaffInvite = computed(() => isStaffInviteRoute(route.query))
 const postAuthPath = computed(() => {
   if (authIntent.value === 'owner') {
     return '/my-venues?create=1'
@@ -127,17 +126,10 @@ onMounted(() => {
       </RouterLink>
 
       <AppCard :wrapper-class="marketingCardClass">
-      <div v-if="isStaffInvite" class="mb-4 rounded-2xl border border-accent-border bg-accent-soft p-4 text-sm text-accent-active">
-        <p class="font-black text-ink">Staff invitation</p>
-        <p class="mt-1 font-semibold">
-          Sign in with the email that received the invite. You will return to accept and join the team.
-        </p>
-      </div>
-
-      <AppBadge :tone="authIntent === 'owner' ? 'amber' : 'blue'">{{ isStaffInvite ? 'Staff invitation' : authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ isStaffInvite ? 'Sign in to join the team' : authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <AppBadge :tone="authIntent === 'owner' ? 'amber' : 'blue'">{{ authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        {{ isStaffInvite ? 'After login you can accept the invitation and open the Flotory mobile app.' : authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Venue owners and platform admins only. Customers and staff use the Flotory mobile app.' }}
+        {{ authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Venue owners and platform admins only. Customers use the Flotory mobile app.' }}
       </p>
 
       <AppButton
@@ -186,7 +178,7 @@ onMounted(() => {
         </AppButton>
       </form>
 
-      <p v-if="!isStaffInvite" class="mt-5 text-center text-sm text-ink-muted">
+      <p class="mt-5 text-center text-sm text-ink-muted">
         New here?
         <RouterLink
           :to="authIntent === 'owner' ? '/register?intent=owner' : '/register'"
@@ -194,9 +186,6 @@ onMounted(() => {
         >
           Create an account
         </RouterLink>
-      </p>
-      <p v-else class="mt-5 text-center text-xs font-semibold leading-relaxed text-ink-muted">
-        No account yet? Your manager can resend the invitation from the Team page.
       </p>
 
       <p class="mt-4 text-center text-sm text-ink-muted">

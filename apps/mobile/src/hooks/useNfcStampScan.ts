@@ -1,157 +1,88 @@
-import { useIsFocused, useNavigation } from '@react-navigation/native'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'expo-router'
+import { useCallback, useRef, useState } from 'react'
+import { Alert } from 'react-native'
 
-import { cancelNfcScan, isNfcHardwareSupported, nfcLog, readFlotoryNfcToken } from '../lib/nfcReader'
+import { ApiError } from '../lib/api'
+import { hapticSuccess } from '../lib/haptics'
+import {
+  ensureNfcSessionReady,
+  isNfcHardwareSupported,
+  nfcLog,
+  readFlotoryNfcToken,
+} from '../lib/nfcReader'
+import { submitNfcStamp } from '../lib/nfcStamp'
+import { cardRouteFromNfcStamp, nfcResponseToStampPayload } from '../lib/stampLiveUpdate'
+import { useAuth } from '../providers/AuthProvider'
+import { useRealtime } from '../providers/RealtimeProvider'
 
-function nfcScanErrorMessage(exception: unknown): string {
-  if (exception instanceof Error && exception.message.trim()) {
-    return exception.message
-  }
-
-  return 'NFC scan cancelled. Tap the center button to try again.'
+function isUserCancelled(message: string): boolean {
+  const lower = message.toLowerCase()
+  return lower.includes('cancel') || lower.includes('invalidated')
 }
 
-export type NfcStampScanPhase = 'idle' | 'checking' | 'scanning' | 'error' | 'unsupported'
-
-function isNfcScannerInactive(phase: NfcStampScanPhase): boolean {
-  return phase === 'idle' || phase === 'error'
-}
-
-interface UseNfcStampScanOptions {
-  enabled: boolean
-}
-
-export function useNfcStampScan({ enabled }: UseNfcStampScanOptions) {
+export function useNfcStampScan() {
   const router = useRouter()
-  const navigation = useNavigation()
-  const isFocused = useIsFocused()
-  const [phase, setPhase] = useState<NfcStampScanPhase>('idle')
-  const [error, setError] = useState('')
+  const { token: authToken } = useAuth()
+  const { ingestStamp } = useRealtime()
+  const [scanning, setScanning] = useState(false)
   const scanningRef = useRef(false)
-  const pausedRef = useRef(false)
-  const phaseRef = useRef(phase)
-  phaseRef.current = phase
 
-  const runScan = useCallback(async () => {
-    if (!enabled || scanningRef.current || pausedRef.current) {
-      nfcLog('useNfcStampScan.runScan: skipped', {
-        enabled,
-        scanning: scanningRef.current,
-        paused: pausedRef.current,
-      })
+  const startScan = useCallback(async () => {
+    if (scanningRef.current) {
+      nfcLog('useNfcStampScan.startScan: skipped — already scanning')
       return
     }
 
-    nfcLog('useNfcStampScan.runScan: start')
     scanningRef.current = true
-    setError('')
-    setPhase('checking')
+    setScanning(true)
+    nfcLog('useNfcStampScan.startScan: start')
 
     try {
       const supported = await isNfcHardwareSupported()
       if (!supported) {
-        nfcLog('useNfcStampScan.runScan: unsupported device')
-        setPhase('unsupported')
+        Alert.alert(
+          'NFC unavailable',
+          'In-app NFC needs a native iOS build from Xcode. You can still tap the physical stand to open Flotory.',
+        )
         return
       }
 
-      setPhase('scanning')
+      if (!authToken) {
+        Alert.alert('Sign in required', 'Log in to collect stamps with NFC.')
+        return
+      }
+
+      await ensureNfcSessionReady()
       const nfcToken = await readFlotoryNfcToken()
-      nfcLog('useNfcStampScan.runScan: navigating to stamp screen', {
+      nfcLog('useNfcStampScan.startScan: token ready', {
         token: `${nfcToken.slice(0, 4)}…${nfcToken.slice(-4)}`,
       })
-      router.push(`/t/${encodeURIComponent(nfcToken)}`)
+
+      const response = await submitNfcStamp(nfcToken, authToken)
+      ingestStamp(nfcResponseToStampPayload(response))
+      void hapticSuccess()
+      router.navigate(cardRouteFromNfcStamp(response))
     } catch (exception) {
-      const message = nfcScanErrorMessage(exception)
-      nfcLog('useNfcStampScan.runScan: error', {
+      const message =
+        exception instanceof ApiError
+          ? exception.message
+          : exception instanceof Error && exception.message.trim()
+            ? exception.message
+            : 'Could not collect a stamp. Try again.'
+
+      nfcLog('useNfcStampScan.startScan: error', {
         message,
         raw: exception instanceof Error ? { name: exception.name, message: exception.message } : exception,
       })
-      setError(message)
-      setPhase('error')
-      pausedRef.current = true
+
+      if (!isUserCancelled(message)) {
+        Alert.alert('Could not collect stamp', message)
+      }
     } finally {
       scanningRef.current = false
+      setScanning(false)
     }
-  }, [enabled, router])
+  }, [authToken, ingestStamp, router])
 
-  const pauseScan = useCallback(async () => {
-    nfcLog('useNfcStampScan.pauseScan')
-    await cancelNfcScan()
-    scanningRef.current = false
-    pausedRef.current = true
-    setPhase('idle')
-    setError('')
-  }, [])
-
-  const startScanIfInactive = useCallback(() => {
-    if (!isNfcScannerInactive(phaseRef.current)) {
-      return
-    }
-
-    pausedRef.current = false
-    setError('')
-    void runScan()
-  }, [runScan])
-
-  const retryScan = useCallback(() => {
-    startScanIfInactive()
-  }, [startScanIfInactive])
-
-  useFocusEffect(
-    useCallback(() => {
-      nfcLog('useNfcStampScan: screen focused')
-      pausedRef.current = false
-      setPhase('idle')
-      setError('')
-
-      const focusTimer = setTimeout(() => {
-        nfcLog('useNfcStampScan: starting scan after focus delay')
-        void runScan()
-      }, 400)
-
-      return () => {
-        clearTimeout(focusTimer)
-        nfcLog('useNfcStampScan: screen blurred', {
-          phase: phaseRef.current,
-          scanning: scanningRef.current,
-        })
-        // iOS NFC sheet can blur this screen — never cancel an in-flight read here.
-        if (!scanningRef.current) {
-          void cancelNfcScan()
-        }
-      }
-    }, [runScan]),
-  )
-
-  useEffect(() => {
-    if (!enabled) {
-      return
-    }
-
-    // tabPress is emitted by the bottom tab navigator, not the root navigation event map.
-    // @ts-expect-error Bottom tab event — see react-navigation bottom-tabs TabPressEvent
-    const unsubscribe = navigation.addListener('tabPress', () => {
-      nfcLog('useNfcStampScan: tabPress', {
-        isFocused,
-        phase: phaseRef.current,
-      })
-      if (!isFocused || !isNfcScannerInactive(phaseRef.current)) {
-        return
-      }
-
-      startScanIfInactive()
-    })
-
-    return unsubscribe
-  }, [enabled, isFocused, navigation, startScanIfInactive])
-
-  return {
-    phase,
-    error,
-    pauseScan,
-    retryScan,
-    runScan,
-  }
+  return { startScan, scanning }
 }
