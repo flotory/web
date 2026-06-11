@@ -4,7 +4,7 @@ import type { Venue } from '@/types'
 
 import { isOwnerVenueInWorkspace } from './venueWorkspace'
 
-function venue(id: number, role: 'owner' | 'staff', archived = false): Venue {
+function venue(id: number, role: Venue['membership_role'] = 'owner', archived = false): Venue {
   return {
     id,
     name: `Venue ${id}`,
@@ -19,8 +19,8 @@ describe('isOwnerVenueInWorkspace', () => {
     expect(isOwnerVenueInWorkspace(12, [venue(12, 'owner')])).toBe(true)
   })
 
-  it('returns false for staff membership or archived owner venues', () => {
-    expect(isOwnerVenueInWorkspace(12, [venue(12, 'staff')])).toBe(false)
+  it('returns false for non-owner membership or archived owner venues', () => {
+    expect(isOwnerVenueInWorkspace(12, [venue(12, null)])).toBe(false)
     expect(isOwnerVenueInWorkspace(12, [venue(12, 'owner', true)])).toBe(false)
   })
 
