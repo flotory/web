@@ -4,21 +4,26 @@ export type CardVenueRewardSlide =
   | { id: string; kind: 'ready'; milestone: MilestoneProgress; unlockId: number }
   | { id: string; kind: 'next'; milestone: MilestoneProgress; stampsToGo: number }
 
+function sortMilestones(milestones: MilestoneProgress[]): MilestoneProgress[] {
+  return [...milestones]
+    .filter((milestone) => !milestone.claimed)
+    .sort((a, b) => a.required_stamps - b.required_stamps)
+}
+
 export function buildCardVenueRewardSlides(
   milestones: MilestoneProgress[],
   stamps: number,
   pendingUnlocks: { unlock_id: number; reward: RewardRef }[] = [],
 ): CardVenueRewardSlide[] {
   const unlockByRewardId = new Map(pendingUnlocks.map((item) => [item.reward.id, item.unlock_id]))
-  const slides: CardVenueRewardSlide[] = []
+  const readySlides: CardVenueRewardSlide[] = []
+  const nextSlides: CardVenueRewardSlide[] = []
 
-  for (const milestone of [...milestones]
-    .filter((milestone) => !milestone.claimed)
-    .sort((a, b) => a.required_stamps - b.required_stamps)) {
+  for (const milestone of sortMilestones(milestones)) {
     const unlockId = unlockByRewardId.get(milestone.id)
 
     if (unlockId != null) {
-      slides.push({
+      readySlides.push({
         id: `reward-${milestone.id}`,
         kind: 'ready',
         milestone,
@@ -27,7 +32,7 @@ export function buildCardVenueRewardSlides(
       continue
     }
 
-    slides.push({
+    nextSlides.push({
       id: `reward-${milestone.id}`,
       kind: 'next',
       milestone,
@@ -35,13 +40,13 @@ export function buildCardVenueRewardSlides(
     })
   }
 
+  const slides = [...readySlides, ...nextSlides]
+
   if (slides.length > 0) {
     return slides
   }
 
-  const fallback = [...milestones]
-    .filter((milestone) => !milestone.claimed)
-    .sort((a, b) => a.required_stamps - b.required_stamps)[0]
+  const fallback = sortMilestones(milestones)[0]
 
   if (!fallback) {
     return []

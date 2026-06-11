@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { apiRequest } from '../lib/api'
 import { clearToken, getToken, saveToken } from '../lib/session'
@@ -12,6 +12,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
   signInWithToken: (sessionToken: string) => Promise<void>
+  refreshUser: () => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -116,6 +117,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const refreshUser = useCallback(async () => {
+    if (!token) {
+      return
+    }
+
+    await hydrateSession(token)
+  }, [token])
+
   async function signOut() {
     if (token) {
       await apiRequest<void>('/auth/logout', { method: 'POST', token }).catch(() => undefined)
@@ -127,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, signIn, signUp, signInWithToken, signOut }),
+    () => ({ booting, token, user, role, signIn, signUp, signInWithToken, refreshUser, signOut }),
     [booting, token, user, role],
   )
 

@@ -4,8 +4,6 @@ import { Animated, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
-import CardLoyaltyProgressCard from '../../src/components/customer/CardLoyaltyProgressCard'
-import CardPromotionBanner from '../../src/components/customer/CardPromotionBanner'
 import CardVenueRewardsCarousel from '../../src/components/customer/CardVenueRewardsCarousel'
 import StampScannedBanner from '../../src/components/customer/StampScannedBanner'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
@@ -143,11 +141,9 @@ export default function CardDetailScreen() {
       ) : null}
 
       <Animated.View style={{ opacity: fade }}>
-        <CardDetailHeader venue={card.venue} />
-
-        {promotion ? <CardPromotionBanner promotion={promotion} /> : null}
-
-        <CardLoyaltyProgressCard
+        <CardDetailHeader
+          venue={card.venue}
+          promotion={promotion}
           stamps={stamps}
           progressTarget={progressTarget}
           nextReward={progressNextReward}

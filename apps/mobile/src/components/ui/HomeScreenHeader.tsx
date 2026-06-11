@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
 
-import { fonts, withAppFont } from '../../lib/typography'
+import { withAppFont } from '../../lib/typography'
 import { colors, screenWallpaperBaseColor, type as typography } from '../../theme'
+
 interface HomeScreenHeaderProps {
-  pretitle: string
+  greeting: string
+  name: string
   title?: string
   subtitle?: string
   onNotificationsPress?: () => void
@@ -13,7 +15,8 @@ interface HomeScreenHeaderProps {
 }
 
 export default function HomeScreenHeader({
-  pretitle,
+  greeting,
+  name,
   title,
   subtitle,
   onNotificationsPress,
@@ -23,20 +26,23 @@ export default function HomeScreenHeader({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text
-          style={withAppFont({
-            fontFamily: fonts.bold,
-            fontSize: 22,
-            fontWeight: '700',
-            color: colors.ink,
-            letterSpacing: -0.2,
-            lineHeight: 28,
-          })}
-        >
-          {pretitle}
-        </Text>
-        {title ? <Text style={{ ...typography.hero, marginTop: 8 }}>{title}</Text> : null}
-        {subtitle ? <Text style={{ ...typography.body, marginTop: 6 }}>{subtitle}</Text> : null}
+        <Text style={typography.label}>{greeting}</Text>
+        <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>{name}</Text>
+        {title ? (
+          <Text
+            style={withAppFont({
+              marginTop: 10,
+              fontSize: 18,
+              fontWeight: '700',
+              color: colors.ink,
+              letterSpacing: -0.2,
+              lineHeight: 24,
+            })}
+          >
+            {title}
+          </Text>
+        ) : null}
+        {subtitle ? <Text style={{ ...typography.body, marginTop: 6, fontSize: 15 }}>{subtitle}</Text> : null}
       </View>
       <Pressable
         onPress={onNotificationsPress}

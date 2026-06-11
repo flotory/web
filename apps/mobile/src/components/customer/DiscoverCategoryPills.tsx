@@ -35,11 +35,11 @@ export default function DiscoverCategoryPills({ value, onChange }: DiscoverCateg
             accessibilityState={{ selected: active }}
             style={({ pressed }) => ({
               paddingHorizontal: 16,
-              paddingVertical: 9,
+              paddingVertical: 10,
               borderRadius: 999,
-              backgroundColor: active ? colors.ink : colors.discoverPillInactive,
-              borderWidth: active ? 0 : 1,
-              borderColor: colors.discoverPillBorder,
+              backgroundColor: active ? colors.primary : colors.surface,
+              borderWidth: 1,
+              borderColor: active ? colors.primary : colors.border,
               opacity: pressed ? 0.92 : 1,
             })}
           >

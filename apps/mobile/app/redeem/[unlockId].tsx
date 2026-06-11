@@ -2,11 +2,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { Image, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import RedeemPassCard from '../../src/components/customer/RedeemPassCard'
+import RedeemStepsGuide from '../../src/components/customer/RedeemStepsGuide'
+import RedeemVenueInfo from '../../src/components/customer/RedeemVenueInfo'
 import SlideToRedeem from '../../src/components/customer/SlideToRedeem'
 import { CustomerScreenLoading } from '../../src/components/ui/CustomerScreen'
+import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
@@ -17,23 +21,9 @@ import { rewardImageUrl, venueLogoUrl } from '../../src/lib/media'
 import { redeemUnlock } from '../../src/lib/redeemUnlock'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors, radius, shadows, space } from '../../src/theme'
+import { colors, radius, shadows, space, type as typography } from '../../src/theme'
 
-const MEDIA_SIZE = 84
-const MEDIA_RADIUS = 18
-const VENUE_LOGO_SIZE = 22
-
-function RedeemPassCard({
-  title,
-  venueName,
-  imageUri,
-  logoUri,
-}: {
-  title: string
-  venueName: string
-  imageUri: string | null
-  logoUri: string | null
-}) {
+function RedeemSuccessHero({ title, venueName }: { title: string; venueName: string }) {
   return (
     <LinearGradient
       colors={['#071225', colors.primary, '#0c1a30']}
@@ -41,163 +31,53 @@ function RedeemPassCard({
       end={{ x: 1, y: 1 }}
       style={{
         borderRadius: radius.card,
-        padding: 16,
-        overflow: 'hidden',
+        padding: 24,
+        alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(215, 163, 93, 0.22)',
+        borderColor: 'rgba(215, 163, 93, 0.28)',
         ...shadows.md,
       }}
     >
       <View
-        pointerEvents="none"
         style={{
-          position: 'absolute',
-          top: -24,
-          right: 48,
-          width: 100,
-          height: 100,
-          borderRadius: 20,
-          backgroundColor: 'rgba(215, 163, 93, 0.1)',
-          transform: [{ rotate: '12deg' }],
-        }}
-      />
-
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-        <View style={{ flex: 1, minWidth: 0, gap: 10 }}>
-          <View
-            style={{
-              alignSelf: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 8,
-              backgroundColor: 'rgba(215, 163, 93, 0.14)',
-            }}
-          >
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent }} />
-            <Text style={withAppFont({ fontSize: 10, fontWeight: '800', letterSpacing: 0.9, color: colors.accent })}>
-              READY
-            </Text>
-          </View>
-
-          <Text
-            style={withAppFont({
-              fontSize: 26,
-              fontWeight: '800',
-              color: colors.primaryText,
-              letterSpacing: -0.5,
-              lineHeight: 30,
-            })}
-            numberOfLines={3}
-          >
-            {title}
-          </Text>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              alignSelf: 'flex-start',
-              gap: 7,
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderRadius: 10,
-              backgroundColor: 'rgba(255, 255, 255, 0.07)',
-            }}
-          >
-            {logoUri ? (
-              <Image
-                source={{ uri: logoUri }}
-                style={{
-                  width: VENUE_LOGO_SIZE,
-                  height: VENUE_LOGO_SIZE,
-                  borderRadius: 7,
-                  backgroundColor: colors.surface,
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: VENUE_LOGO_SIZE,
-                  height: VENUE_LOGO_SIZE,
-                  borderRadius: 7,
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="storefront-outline" size={13} color="rgba(255,255,255,0.75)" />
-              </View>
-            )}
-            <Text
-              style={withAppFont({ fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.88)' })}
-              numberOfLines={1}
-            >
-              {venueName}
-            </Text>
-          </View>
-        </View>
-
-        <View
-          style={{
-            width: MEDIA_SIZE,
-            height: MEDIA_SIZE,
-            borderRadius: MEDIA_RADIUS,
-            backgroundColor: colors.surface,
-            overflow: 'hidden',
-            borderWidth: 1,
-            borderColor: 'rgba(215, 163, 93, 0.45)',
-            ...shadows.sm,
-          }}
-        >
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={{ width: MEDIA_SIZE, height: MEDIA_SIZE }} resizeMode="cover" />
-          ) : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentSoft }}>
-              <Ionicons name="gift-outline" size={34} color={colors.accentActive} />
-            </View>
-          )}
-        </View>
-      </View>
-    </LinearGradient>
-  )
-}
-
-function RedeemSuccessCard() {
-  return (
-    <View
-      style={{
-        marginTop: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: radius.card,
-        backgroundColor: colors.accentSoft,
-        borderWidth: 1,
-        borderColor: colors.accentBorder,
-      }}
-    >
-      <View
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 12,
-          backgroundColor: colors.surface,
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: colors.accent,
           alignItems: 'center',
           justifyContent: 'center',
+          marginBottom: 16,
         }}
       >
-        <Ionicons name="checkmark" size={26} color={colors.accentActive} />
+        <Ionicons name="checkmark" size={40} color={colors.primary} />
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={withAppFont({ fontSize: 17, fontWeight: '800', color: colors.ink })}>Redeemed</Text>
-        <Text style={withAppFont({ fontSize: 14, fontWeight: '500', color: colors.inkMuted })}>Enjoy your reward!</Text>
-      </View>
-    </View>
+      <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: colors.accent })}>
+        REDEEMED
+      </Text>
+      <Text
+        style={withAppFont({
+          marginTop: 8,
+          fontSize: 26,
+          fontWeight: '800',
+          color: colors.primaryText,
+          textAlign: 'center',
+          letterSpacing: -0.4,
+        })}
+      >
+        Enjoy your reward!
+      </Text>
+      <Text
+        style={withAppFont({
+          marginTop: 10,
+          fontSize: 15,
+          lineHeight: 22,
+          color: 'rgba(255,255,255,0.78)',
+          textAlign: 'center',
+        })}
+      >
+        {title} at {venueName} is marked as used. Thanks for visiting.
+      </Text>
+    </LinearGradient>
   )
 }
 
@@ -265,69 +145,112 @@ export default function RedeemRewardScreen() {
     return null
   }
 
-  const venueName = item.customer.venue?.name ?? 'Venue'
+  const venue = item.customer.venue
+  const venueName = venue?.name ?? 'Venue'
   const stickyBack = <StickyBackHeader onPress={handleBack} topInset={insets.top} />
 
   return (
-    <ScreenGradientLayout scrollable={false} flexContent tabBarInset={false} fixedHeader={stickyBack} paddingTop={0}>
-      <View
-        style={{
-          flex: 1,
-          paddingHorizontal: space.screenX,
-          paddingTop: insets.top + 44,
-          justifyContent: 'flex-start',
-        }}
-      >
-        <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted, marginBottom: 10 })}>
-          Show at the counter
-        </Text>
-
-        <RedeemPassCard
-          title={item.reward.title}
-          venueName={venueName}
-          imageUri={rewardImageUrl(item.reward)}
-          logoUri={venueLogoUrl(item.customer.venue ?? undefined)}
-        />
-
-        {redeemed ? <RedeemSuccessCard /> : null}
-      </View>
-
-      {!redeemed ? (
-        <View
-          style={{
+    <ScreenGradientLayout
+      scrollable={false}
+      flexContent
+      tabBarInset={false}
+      fixedHeader={stickyBack}
+      paddingTop={0}
+    >
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
             paddingHorizontal: space.screenX,
-            paddingTop: 12,
-            paddingBottom: Math.max(insets.bottom, 12) + 8,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            backgroundColor: colors.surface,
-            gap: 8,
+            paddingTop: 0,
+            paddingBottom: space.sectionY,
+            gap: space.sectionGap,
           }}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkMuted, textAlign: 'center' })}>
-            Slide to confirm redemption
-          </Text>
-          {redeemError ? (
-            <Text style={withAppFont({ color: colors.danger, fontWeight: '600', textAlign: 'center', fontSize: 13 })}>
-              {redeemError}
+          <View>
+            <Text style={typography.label}>Redeem</Text>
+            <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>
+              {redeemed ? 'All set' : 'Your reward'}
             </Text>
-          ) : null}
-          <SlideToRedeem
-            disabled={!token}
-            onRedeem={async () => {
-              if (!token) {
-                throw new Error('Sign in required')
-              }
+            <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
+              {redeemed
+                ? 'This reward has been confirmed. Hope you enjoy it!'
+                : 'Show this pass at the counter, then slide below when staff are ready.'}
+            </Text>
+          </View>
 
-              setRedeemError('')
-              await redeemUnlock(item.unlock_id, token)
-              invalidateCustomerRewardCaches(token)
-              setRedeemed(true)
-              void hapticSuccess()
+          {redeemed ? (
+            <>
+              <RedeemSuccessHero title={item.reward.title} venueName={venueName} />
+              <PrimaryButton label="Back to home" onPress={() => router.replace('/(customer)/home')} icon="home-outline" />
+            </>
+          ) : (
+            <>
+              <RedeemPassCard
+                title={item.reward.title}
+                venueName={venueName}
+                imageUri={rewardImageUrl(item.reward)}
+                logoUri={venueLogoUrl(venue ?? undefined)}
+                requiredStamps={item.reward.required_stamps}
+                description={item.reward.description}
+              />
+
+              <RedeemStepsGuide />
+
+              <RedeemVenueInfo
+                venueName={venueName}
+                address={venue?.address}
+                mapTarget={{
+                  latitude: venue?.latitude,
+                  longitude: venue?.longitude,
+                  address: venue?.address,
+                  label: venueName,
+                }}
+              />
+            </>
+          )}
+        </ScrollView>
+
+        {!redeemed ? (
+          <View
+            style={{
+              paddingHorizontal: space.screenX,
+              paddingTop: 14,
+              paddingBottom: Math.max(insets.bottom, 12) + 8,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              backgroundColor: colors.surface,
+              gap: 10,
+              ...shadows.md,
+              shadowOffset: { width: 0, height: -4 },
             }}
-          />
-        </View>
-      ) : null}
+          >
+            <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted, textAlign: 'center' })}>
+              Show at the counter · slide when ready
+            </Text>
+            {redeemError ? (
+              <Text style={withAppFont({ color: colors.danger, fontWeight: '600', textAlign: 'center', fontSize: 13 })}>
+                {redeemError}
+              </Text>
+            ) : null}
+            <SlideToRedeem
+              disabled={!token}
+              onRedeem={async () => {
+                if (!token) {
+                  throw new Error('Sign in required')
+                }
+
+                setRedeemError('')
+                await redeemUnlock(item.unlock_id, token)
+                invalidateCustomerRewardCaches(token)
+                setRedeemed(true)
+                void hapticSuccess()
+              }}
+            />
+          </View>
+        ) : null}
+      </View>
     </ScreenGradientLayout>
   )
 }

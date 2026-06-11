@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, Easing, Text, View } from 'react-native'
 
-export type NfcStampScanPhase = 'idle' | 'checking' | 'scanning' | 'stamping' | 'error' | 'unsupported'
+import { usePulseRing } from '../../hooks/usePulseRing'
 import { withAppFont } from '../../lib/typography'
 import { colors, motion, shadows } from '../../theme'
+
+export type NfcStampScanPhase = 'idle' | 'checking' | 'scanning' | 'stamping' | 'error' | 'unsupported'
 
 function phaseHint(phase: NfcStampScanPhase): string {
   switch (phase) {
@@ -26,48 +28,6 @@ const HERO_ICON_SIZE = 64
 const HERO_SIZE = 272
 const CORE_SIZE = 136
 const RING_SIZE = 156
-
-function usePulseRing(active: boolean, delayMs: number) {
-  const scale = useRef(new Animated.Value(1)).current
-  const opacity = useRef(new Animated.Value(0.38)).current
-
-  useEffect(() => {
-    if (!active) {
-      scale.setValue(1)
-      opacity.setValue(0.14)
-      return
-    }
-
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delayMs),
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 1.62,
-            duration: 2400,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 2400,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0.38, duration: 0, useNativeDriver: true }),
-        ]),
-      ]),
-    )
-
-    loop.start()
-    return () => loop.stop()
-  }, [active, delayMs, opacity, scale])
-
-  return { scale, opacity }
-}
 
 interface NfcStampPulseHeroProps {
   phase: NfcStampScanPhase

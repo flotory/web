@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useMemo, useState } from 'react'
-import { Animated, Pressable, Text, TextInput, View } from 'react-native'
+import { useCallback, useMemo, useState } from 'react'
+import { Animated, Text, View } from 'react-native'
 
 import DiscoverCategoryPills, { type DiscoverCategoryFilter } from '../src/components/customer/DiscoverCategoryPills'
+import DiscoverLocationBanner from '../src/components/customer/DiscoverLocationBanner'
+import DiscoverSearchBar from '../src/components/customer/DiscoverSearchBar'
 import DiscoverVenueCard from '../src/components/customer/DiscoverVenueCard'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
-import ScreenHeader from '../src/components/ui/ScreenHeader'
+import HomeSectionHeader from '../src/components/ui/HomeSectionHeader'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerLocation } from '../src/hooks/useCustomerLocation'
@@ -15,8 +16,7 @@ import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
 import { hasVenueCoordinates, sortVenuesByDistance } from '../src/lib/distance'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors, radius, space, type as typography } from '../src/theme'
-import { withAppFont } from '../src/lib/typography'
+import { space, type as typography } from '../src/theme'
 
 const KNOWN_CATEGORIES = new Set(['cafe', 'restaurant', 'bar', 'bakery'])
 
@@ -38,6 +38,16 @@ function matchesCategoryFilter(venue: DiscoverVenue, filter: DiscoverCategoryFil
   }
 }
 
+function resultsLabel(count: number, hasFilters: boolean): string {
+  if (count === 0) {
+    return hasFilters ? 'No matches' : 'No venues yet'
+  }
+  if (count === 1) {
+    return '1 venue'
+  }
+  return `${count} venues`
+}
+
 export default function VenuesScreen() {
   const router = useRouter()
   const { role } = useAuth()
@@ -57,6 +67,13 @@ export default function VenuesScreen() {
   const venues = data?.venues ?? []
   const cardsByVenue = data?.cardsByVenue ?? {}
   const locatedVenueCount = venues.filter(hasVenueCoordinates).length
+  const hasActiveFilters = search.trim().length > 0 || categoryFilter !== 'all'
+  const sortedByDistance = hasLocation && locatedVenueCount > 0
+
+  const handleRefresh = useCallback(() => {
+    refresh()
+    void refreshLocation()
+  }, [refresh, refreshLocation])
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -87,245 +104,17 @@ export default function VenuesScreen() {
   }
 
   if (role !== 'customer') {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', padding: space.screenX, backgroundColor: colors.bg }}>
-        <Text style={typography.section}>Customer venues only</Text>
-      </View>
-    )
+    return null
   }
 
-  const locationBanner = (() => {
-    if (locationStatus === 'loading') {
-      return (
-        <View
-          style={{
-            marginTop: 14,
-            borderRadius: radius.image,
-            backgroundColor: colors.surfaceMuted,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <Ionicons name="locate-outline" size={18} color={colors.inkMuted} />
-          <Text style={withAppFont({ flex: 1, fontSize: 13, color: colors.inkMuted })}>
-            Finding venues near you…
-          </Text>
-        </View>
-      )
-    }
-
-    if (hasLocation) {
-      return (
-        <View style={{ marginTop: 14, gap: 10 }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Refresh nearby venues"
-            onPress={() => void refreshLocation()}
-            style={({ pressed }) => ({
-              borderRadius: radius.image,
-              backgroundColor: colors.lavender,
-              borderWidth: 1,
-              borderColor: colors.lavenderBorder,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              opacity: pressed ? 0.92 : 1,
-            })}
-          >
-            <Ionicons name="navigate-outline" size={18} color={colors.primarySoft} />
-            <Text style={withAppFont({ flex: 1, fontSize: 13, fontWeight: '600', color: colors.primarySoft })}>
-              Sorted by distance from you
-            </Text>
-            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>Refresh</Text>
-          </Pressable>
-          {locatedVenueCount === 0 ? (
-            <View
-              style={{
-                borderRadius: radius.image,
-                backgroundColor: colors.surfaceMuted,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
-                No venues have a map location yet. Owners can add a Google address in venue settings on the web.
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      )
-    }
-
-    if (locationStatus === 'denied') {
-      return (
-        <View
-          style={{
-            marginTop: 14,
-            borderRadius: radius.image,
-            backgroundColor: colors.surfaceMuted,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            gap: 10,
-          }}
-        >
-          <View style={{ gap: 4 }}>
-            <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>
-              Location is off
-            </Text>
-            <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
-              Allow location access to sort venues by distance and show how far away they are.
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open location settings"
-            onPress={() => void openLocationSettings()}
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.discoverPillBorder,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>
-              Open settings
-            </Text>
-          </Pressable>
-        </View>
-      )
-    }
-
-    if (locationStatus === 'unavailable') {
-      return (
-        <View
-          style={{
-            marginTop: 14,
-            borderRadius: radius.image,
-            backgroundColor: colors.surfaceMuted,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            gap: 10,
-          }}
-        >
-          <Text style={withAppFont({ fontSize: 12, color: colors.inkMuted, lineHeight: 18 })}>
-            Could not read your location. Try again or check that location services are enabled on your phone.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Try location again"
-            onPress={() => void requestLocation()}
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.discoverPillBorder,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.primarySoft })}>
-              Try again
-            </Text>
-          </Pressable>
-        </View>
-      )
-    }
-
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Use location to show nearby venues"
-        onPress={() => void requestLocation()}
-        style={({ pressed }) => ({
-          marginTop: 14,
-          borderRadius: radius.image,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.discoverPillBorder,
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          opacity: pressed ? 0.92 : 1,
-        })}
-      >
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: colors.discoverCategoryFill,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Ionicons name="location-outline" size={18} color={colors.discoverCategoryIcon} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>
-            Allow location to see distance
-          </Text>
-          <Text style={withAppFont({ marginTop: 2, fontSize: 12, color: colors.inkMuted, lineHeight: 17 })}>
-            We will ask once, then sort venues nearest-first.
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
-      </Pressable>
-    )
-  })()
-
   const header = (
-    <View style={{ paddingHorizontal: space.screenX }}>
-      <ScreenHeader
-        title="Discover venues"
-        subtitle="Find places, earn rewards, enjoy more."
-      />
-      {locationBanner}
-      <View style={{ marginTop: space.sectionGap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.discoverSearchFill,
-            borderRadius: radius.image,
-            borderWidth: 1,
-            borderColor: colors.discoverPillBorder,
-            paddingHorizontal: 12,
-            gap: 8,
-          }}
-        >
-          <Ionicons name="search" size={19} color={colors.inkMuted} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search venues or cuisines"
-            placeholderTextColor={colors.inkSoft}
-            style={withAppFont({
-              flex: 1,
-              paddingVertical: 12,
-              fontSize: 15,
-              color: colors.ink,
-            })}
-          />
-        </View>
-      </View>
-      <View style={{ marginTop: 14 }}>
-        <DiscoverCategoryPills value={categoryFilter} onChange={setCategoryFilter} />
-      </View>
-    </View>
+    <Animated.View style={{ opacity: fade, paddingHorizontal: space.screenX }}>
+      <Text style={typography.label}>Explore</Text>
+      <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>Venues</Text>
+      <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
+        Find places nearby, join their loyalty cards, and collect visits with NFC.
+      </Text>
+    </Animated.View>
   )
 
   return (
@@ -335,7 +124,7 @@ export default function VenuesScreen() {
       scrollable
       tabBarInset
       refreshing={refreshing}
-      onRefresh={refresh}
+      onRefresh={handleRefresh}
       header={header}
       skeleton={<ScreenSkeleton topInset={0} withSearch cardCount={4} listCard />}
       errorState={
@@ -352,14 +141,30 @@ export default function VenuesScreen() {
       }
     >
       {!error ? (
-        <Animated.View
-          style={{
-            opacity: fade,
-            marginTop: space.headerBottom,
-            paddingHorizontal: space.screenX,
-          }}
-        >
-          <View style={{ gap: space.listGap }}>
+        <Animated.View style={{ opacity: fade, marginTop: space.sectionGap, gap: space.sectionGap }}>
+          <View style={{ paddingHorizontal: space.screenX, gap: 14 }}>
+            <DiscoverSearchBar value={search} onChange={setSearch} />
+            <DiscoverCategoryPills value={categoryFilter} onChange={setCategoryFilter} />
+            <DiscoverLocationBanner
+              status={locationStatus}
+              hasLocation={hasLocation}
+              locatedVenueCount={locatedVenueCount}
+              onRequestLocation={() => void requestLocation()}
+              onOpenSettings={() => void openLocationSettings()}
+            />
+          </View>
+
+          <View style={{ paddingHorizontal: space.screenX }}>
+            <HomeSectionHeader
+              title={resultsLabel(filtered.length, hasActiveFilters)}
+              label="Nearby"
+              trailing={
+                hasActiveFilters ? 'Filtered' : sortedByDistance ? 'Nearest first' : undefined
+              }
+            />
+          </View>
+
+          <View style={{ paddingHorizontal: space.screenX, gap: space.listGap }}>
             {filtered.map((item) => (
               <DiscoverVenueCard
                 key={item.id}
@@ -372,15 +177,23 @@ export default function VenuesScreen() {
           </View>
 
           {!filtered.length ? (
-            <View style={{ marginTop: space.sectionY }}>
+            <View style={{ paddingHorizontal: space.screenX, marginTop: space.sectionY }}>
               <StateCard
                 emoji="🔍"
                 title="No venues found"
                 message="Try another search or category, or browse all venues."
-                primaryAction={{ label: 'Clear filters', onPress: () => { setSearch(''); setCategoryFilter('all') } }}
+                primaryAction={{
+                  label: 'Clear filters',
+                  onPress: () => {
+                    setSearch('')
+                    setCategoryFilter('all')
+                  },
+                }}
               />
             </View>
           ) : null}
+
+          <View style={{ height: space.sectionY }} />
         </Animated.View>
       ) : null}
     </CustomerScreen>

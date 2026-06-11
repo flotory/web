@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { ScrollView, Text, View } from 'react-native'
 
 import { withAppFont } from '../../lib/typography'
+import HomeSectionHeader from '../ui/HomeSectionHeader'
 import { colors, radius } from '../../theme'
 import type { MilestoneProgress } from '../../types/loyalty'
 
@@ -14,12 +15,13 @@ export default function CardMilestoneChips({ milestones, stamps }: CardMilestone
   if (!milestones.length) return null
 
   return (
-    <View style={{ marginTop: 20 }}>
-      <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>Reward milestones</Text>
+    <View style={{ marginTop: 22 }}>
+      <HomeSectionHeader title="All milestones" label="Reward path" />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingTop: 10, paddingRight: 4 }}
+        nestedScrollEnabled
+        contentContainerStyle={{ gap: 10, paddingTop: 14, paddingRight: 4 }}
       >
         {milestones.map((milestone) => {
           const reached = stamps >= milestone.required_stamps

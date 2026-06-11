@@ -90,6 +90,18 @@ describe('buildCardVenueRewardSlides', () => {
       },
     ])
   })
+
+  it('lists ready rewards before upcoming rewards regardless of stamp threshold', () => {
+    const slides = buildCardVenueRewardSlides(
+      [milestone(1, 5), milestone(2, 10)],
+      4,
+      [{ unlock_id: 42, reward: reward(2, 10) }],
+    )
+
+    expect(slides.map((slide) => slide.kind)).toEqual(['ready', 'next'])
+    expect(slides[0]).toMatchObject({ kind: 'ready', unlockId: 42, milestone: milestone(2, 10) })
+    expect(slides[1]).toMatchObject({ kind: 'next', stampsToGo: 1, milestone: milestone(1, 5) })
+  })
 })
 
 describe('buildStampPayloadFromCardDetail', () => {

@@ -1,10 +1,10 @@
-import { ScrollView, Text, useWindowDimensions, View } from 'react-native'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
 
 import { buildCardVenueRewardSlides, type CardVenueRewardSlide } from '../../lib/cardVenueRewardSlides'
 import { rewardImageUrl } from '../../lib/media'
-import { withAppFont } from '../../lib/typography'
 import type { MilestoneProgress, RewardRef, VenueRef } from '../../types/loyalty'
-import { carousel, colors, space } from '../../theme'
+import HomeSectionHeader from '../ui/HomeSectionHeader'
+import { carousel, space } from '../../theme'
 import HomeRewardTicketCard from './HomeRewardTicketCard'
 
 interface CardVenueRewardsCarouselProps {
@@ -77,47 +77,22 @@ export default function CardVenueRewardsCarousel({
   const readyCount = slides.filter((slide) => slide.kind === 'ready').length
   const useCarousel = slides.length > 1
 
+  const sectionLabel =
+    readyCount > 0
+      ? readyCount === 1
+        ? '1 ready to redeem'
+        : `${readyCount} ready to redeem`
+      : 'Coming up'
+
   return (
-    <View style={{ marginTop: space.sectionGap }}>
-      <Text
-        style={withAppFont({
-          fontSize: 18,
-          fontWeight: '800',
-          color: colors.ink,
-          letterSpacing: -0.3,
-          paddingHorizontal: space.screenX,
-          marginBottom: 12,
-        })}
-      >
-        {venue?.name ? `Rewards at ${venue.name}` : 'Venue rewards'}
-      </Text>
-      {readyCount > 0 ? (
-        <Text
-          style={withAppFont({
-            fontSize: 13,
-            fontWeight: '600',
-            color: colors.inkMuted,
-            paddingHorizontal: space.screenX,
-            marginBottom: 12,
-            marginTop: -4,
-          })}
-        >
-          {readyCount === 1 ? '1 reward ready — tap to redeem' : `${readyCount} rewards ready — tap to redeem`}
-        </Text>
-      ) : (
-        <Text
-          style={withAppFont({
-            fontSize: 13,
-            fontWeight: '600',
-            color: colors.inkMuted,
-            paddingHorizontal: space.screenX,
-            marginBottom: 12,
-            marginTop: -4,
-          })}
-        >
-          Your next treat at this cafe
-        </Text>
-      )}
+    <View style={{ marginTop: space.sectionY }}>
+      <View style={{ paddingHorizontal: space.screenX, marginBottom: 14 }}>
+        <HomeSectionHeader
+          title={venue?.name ? `Rewards at ${venue.name}` : 'Venue rewards'}
+          label={sectionLabel}
+          trailing={useCarousel ? 'Swipe' : undefined}
+        />
+      </View>
 
       {useCarousel ? (
         <ScrollView
@@ -128,9 +103,8 @@ export default function CardVenueRewardsCarousel({
           snapToAlignment="start"
           disableIntervalMomentum
           nestedScrollEnabled
-          directionalLockEnabled
           scrollEventThrottle={16}
-          style={{ backgroundColor: 'transparent' }}
+          style={{ backgroundColor: 'transparent', flexGrow: 0 }}
           contentContainerStyle={{
             paddingLeft: space.screenX,
             paddingRight: space.screenX,

@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
 
 import HomeCampaignCard from './HomeCampaignCard'
-import { withAppFont } from '../../lib/typography'
-import { carousel, colors, space, type as typography } from '../../theme'
+import HomeSectionHeader from '../ui/HomeSectionHeader'
+import { carousel, space } from '../../theme'
 import type { HomeCampaign, VenueRef } from '../../types/loyalty'
 
 interface HomeCampaignCarouselProps {
@@ -39,20 +39,15 @@ export default function HomeCampaignCarousel({ campaigns, venueById }: HomeCampa
 
   if (!campaigns.length) return null
 
+  const featuredHeight = 212
+
   return (
-    <View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: space.screenX,
-        }}
-      >
-        <Text style={typography.section}>Active campaigns</Text>
-        {campaigns.length > 1 ? (
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '600', color: colors.inkSoft })}>Swipe</Text>
-        ) : null}
+    <View style={{ minHeight: featuredHeight }}>
+      <View style={{ paddingHorizontal: space.screenX }}>
+        <HomeSectionHeader
+          title="Active campaigns"
+          trailing={campaigns.length > 1 ? 'Swipe' : undefined}
+        />
       </View>
       <ScrollView
         horizontal
@@ -62,13 +57,13 @@ export default function HomeCampaignCarousel({ campaigns, venueById }: HomeCampa
         snapToAlignment="start"
         disableIntervalMomentum
         nestedScrollEnabled
-        directionalLockEnabled
         scrollEventThrottle={16}
-        style={[transparent, { marginTop: 14 }]}
+        style={[transparent, { marginTop: 14, flexGrow: 0 }]}
         contentContainerStyle={{
           paddingLeft: space.screenX,
           paddingRight: space.screenX + 8,
           paddingVertical: 4,
+          alignItems: 'stretch',
         }}
       >
         {campaigns.map((campaign, index) => {
