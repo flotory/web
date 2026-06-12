@@ -47,6 +47,27 @@ Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, 
 
 Defaults (examples): Bring Back — 30 days inactive, 14-day run, 2×; Quiet Day — Mon–Wed, 30-day run, 2×; Happy Hour — Mon–Fri 15:00–18:00, 2× (overnight windows such as 22:00–02:00 supported); VIP — 5+ lifetime stamps or 1+ reward claimed, 2×. Schedule templates use the **venue timezone** (from Google address coordinates when available).
 
+### Venue timezone (Google Time Zone API)
+
+Happy Hour and Quiet Day windows are evaluated in `venues.timezone`. Laravel resolves it from lat/long when an owner or admin saves a venue address (`VenueTimezoneService`).
+
+| Env var | Purpose |
+| ------- | ------- |
+| `VITE_GOOGLE_MAPS_API_KEY` | Browser — Places autocomplete in Vue |
+| `GOOGLE_MAPS_SERVER_API_KEY` | Server — Time Zone API from Laravel |
+
+Enable **Time Zone API** in Google Cloud. Use a **server** API key (IP-restricted on production). A browser-referrer key will not work from Laravel.
+
+Backfill existing venues after deploy:
+
+```bash
+php artisan venues:sync-timezones
+php artisan venues:sync-timezones --force   # re-fetch all
+php artisan venues:sync-timezones --dry-run # preview only
+```
+
+If lookup fails, campaigns fall back to `UTC` (`config/app.php`).
+
 ---
 
 ## Owner UI (`/campaigns`)

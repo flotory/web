@@ -114,4 +114,70 @@ class CustomerRedeemUnlockTest extends TestCase
         $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/redeem")
             ->assertStatus(422);
     }
+
+    public function test_redeem_response_includes_journey_and_remaining_unlocks(): void
+    {
+        $customerUser = $this->createUser(['email' => 'redeem-payload@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 2]);
+        $smallReward = $this->createReward($venue, [
+            'title' => 'Free Cookie',
+            'required_stamps' => 3,
+            'sort_order' => 3,
+        ]);
+        $largeReward = $this->createReward($venue, [
+            'title' => 'Free Meal',
+            'required_stamps' => 10,
+            'sort_order' => 10,
+        ]);
+        $this->createRewardCycle($customer);
+        $unlock = $this->createRewardUnlock($customer, $smallReward);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/redeem")
+            ->assertCreated()
+            ->assertJsonPath('unlock.id', $unlock->id)
+            ->assertJsonPath('customer.id', $customer->id)
+            ->assertJsonPath('next_reward.id', $smallReward->id)
+            ->assertJsonPath('journey.current_stamps', 2)
+            ->assertJsonStructure([
+                'unlock',
+                'customer',
+                'next_reward',
+                'available_rewards',
+                'journey' => ['current_cycle', 'current_stamps', 'milestones'],
+                'recent_visits',
+            ]);
+    }
+
+    public function test_redeem_requires_authentication(): void
+    {
+        $customerUser = $this->createUser(['email' => 'auth-guest@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 5]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $unlock = $this->createRewardUnlock($customer, $reward);
+
+        $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/redeem")
+            ->assertUnauthorized();
+    }
+
+    public function test_redeem_allows_archived_reward_when_unlock_is_pending(): void
+    {
+        $customerUser = $this->createUser(['email' => 'archived-redeem@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 5]);
+        $reward = $this->createReward($venue, ['required_stamps' => 5, 'active' => false]);
+        $unlock = $this->createRewardUnlock($customer, $reward);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/customer/rewards/unlocks/{$unlock->id}/redeem")
+            ->assertCreated()
+            ->assertJsonPath('unlock.id', $unlock->id);
+
+        $this->assertNotNull($unlock->fresh()->claimed_at);
+    }
+
 }

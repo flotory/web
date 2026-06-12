@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
-# Run the same Playwright smoke suite as GitHub Actions (requires php + node locally).
+# Run the same Playwright smoke suite as GitHub Actions (PHP 8.4+ locally or via Docker).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "${ROOT}"
-
-if ! command -v php >/dev/null 2>&1; then
-  echo "ERROR: php 8.4 is required. Use Docker or install PHP locally."
-  exit 1
-fi
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "ERROR: npm is required."

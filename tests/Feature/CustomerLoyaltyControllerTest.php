@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Venue;
+use App\Support\CampaignTemplates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
@@ -201,6 +203,71 @@ class CustomerLoyaltyControllerTest extends TestCase
 
         $this->getJson("/api/customers/{$customer->id}/rewards")
             ->assertForbidden();
+    }
+
+    public function test_customer_cannot_join_unpublished_venue(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue(['status' => Venue::STATUS_DRAFT]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/venues/{$venue->slug}/join")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('venue');
+    }
+
+    public function test_cards_list_includes_claimed_history(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createVenue(['name' => 'History Cafe']);
+        $customer = $this->createCustomer($venue, $user, ['stamps' => 0]);
+        $reward = $this->createReward($venue, ['title' => 'Free Latte', 'required_stamps' => 5]);
+        $this->createRewardUnlock($customer, $reward, [
+            'claimed_at' => now()->subDay(),
+            'claimed_by' => $user->id,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonCount(1, 'claimed_history')
+            ->assertJsonPath('claimed_history.0.title', 'Free Latte')
+            ->assertJsonPath('claimed_history.0.card_id', $customer->id);
+    }
+
+    public function test_cards_list_includes_promotion_and_home_campaigns(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-06-02 12:00:00'));
+
+        try {
+            $owner = $this->createUser();
+            $user = $this->createUser(['email' => 'cards-promo@example.com']);
+            $venue = $this->createPublishedVenue(['name' => 'Promo Cafe']);
+            $this->attachMember($venue, $owner, 'owner');
+            $customer = $this->createCustomer($venue, $user, ['stamps' => 2]);
+            $this->createReward($venue, ['required_stamps' => 5]);
+            $this->createRewardCycle($customer);
+
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::QUIET_DAY, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [2],
+            ]);
+
+            Sanctum::actingAs($user);
+
+            $this->getJson('/api/customer/cards')
+                ->assertOk()
+                ->assertJsonPath('cards.0.promotion.multiplier', 2)
+                ->assertJsonPath('cards.0.promotion.applies_now', true)
+                ->assertJsonPath('promotion.multiplier', 2)
+                ->assertJsonCount(1, 'home_campaigns')
+                ->assertJsonPath('home_campaigns.0.venue_name', 'Promo Cafe')
+                ->assertJsonPath('home_campaigns.0.applies_now', true);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
 }

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   campaignMetaLine,
+  campaignMetaParts,
+  campaignTimelineLabel,
   filterCampaigns,
   sortCampaigns,
 } from '@/lib/campaignHistory'
@@ -74,5 +76,50 @@ describe('campaignMetaLine', () => {
     expect(line).toContain('3× stamps')
     expect(line).toContain('42 customers')
     expect(line).toContain('Mon')
+  })
+
+  it('formats every-day and weekday schedules with optional time chips', () => {
+    expect(
+      campaignMetaParts(
+        campaign({
+          schedule_chips: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', '9 AM – 5 PM'],
+        }),
+      )[0],
+    ).toBe('Every day, 9 AM – 5 PM')
+
+    expect(
+      campaignMetaParts(
+        campaign({
+          schedule_chips: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        }),
+      )[0],
+    ).toBe('Mon – Fri')
+  })
+
+  it('falls back to schedule_summary when chips are empty', () => {
+    expect(
+      campaignMetaParts(
+        campaign({
+          schedule_chips: [],
+          schedule_summary: 'Weekends only',
+        }),
+      )[0],
+    ).toBe('Weekends only')
+  })
+})
+
+describe('campaignTimelineLabel', () => {
+  it('labels active, paused, and ended campaigns from the right timestamp', () => {
+    expect(campaignTimelineLabel(campaign({ status: 'active', activated_at: '2026-06-01T10:00:00Z' }))).toMatch(
+      /^Started /,
+    )
+    expect(campaignTimelineLabel(campaign({ status: 'paused', updated_at: '2026-06-02T10:00:00Z' }))).toMatch(
+      /^Paused /,
+    )
+    expect(
+      campaignTimelineLabel(
+        campaign({ status: 'ended', ends_at: '2026-06-03T10:00:00Z', updated_at: '2026-06-04T10:00:00Z' }),
+      ),
+    ).toMatch(/^Ended /)
   })
 })

@@ -8,10 +8,19 @@ MAX_ATTEMPTS="${E2E_WAIT_ATTEMPTS:-60}"
 for ((i = 1; i <= MAX_ATTEMPTS; i++)); do
   if curl -fsS "${BASE_URL}/login" 2>/dev/null | grep -q 'id="app"'; then
     if curl -fsS "${BASE_URL}/build/manifest.json" >/dev/null 2>&1; then
-      APP_ASSET="$(php -r '
-        $manifest = json_decode(file_get_contents("public/build/manifest.json"), true);
-        echo $manifest["resources/js/app.ts"]["file"] ?? "";
-      ' 2>/dev/null || true)"
+      if command -v node >/dev/null 2>&1; then
+        APP_ASSET="$(node -e "
+          const manifest = require('./public/build/manifest.json');
+          process.stdout.write(manifest['resources/js/app.ts']?.file ?? '');
+        " 2>/dev/null || true)"
+      elif command -v php >/dev/null 2>&1; then
+        APP_ASSET="$(php -r '
+          $manifest = json_decode(file_get_contents("public/build/manifest.json"), true);
+          echo $manifest["resources/js/app.ts"]["file"] ?? "";
+        ' 2>/dev/null || true)"
+      else
+        APP_ASSET=""
+      fi
 
       if [[ -n "${APP_ASSET}" ]] && curl -fsS "${BASE_URL}/build/${APP_ASSET}" >/dev/null 2>&1; then
         echo "==> App ready (${BASE_URL}, asset: ${APP_ASSET})"

@@ -14,12 +14,3 @@ export interface StampAddedPayload {
   message: string
   occurred_at: string
 }
-
-export interface RewardRedeemedPayload {
-  customer: WalletCard
-  venue: VenueRef
-  unlock_id: number
-  reward: RewardRef
-  message: string
-  occurred_at: string
-}

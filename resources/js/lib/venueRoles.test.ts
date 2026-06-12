@@ -6,6 +6,9 @@ import type { Venue } from '@/types'
 import {
   ADMIN_HOME_PATH,
   hasOwnerMembership,
+  isPlatformAdmin,
+  isVenueOwner,
+  ownerBootstrapPath,
   ownerVenueSetupLocation,
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
@@ -30,6 +33,19 @@ describe('membership helpers', () => {
 
   it('ignores archived venues', () => {
     expect(hasOwnerMembership([venue(1, true)])).toBe(false)
+  })
+
+  it('checks owner role and platform admin flag', () => {
+    expect(isVenueOwner(venue(1))).toBe(true)
+    expect(isVenueOwner(null)).toBe(false)
+    expect(isVenueOwner({} as Pick<Venue, 'membership_role'>)).toBe(false)
+    expect(isPlatformAdmin(true)).toBe(true)
+    expect(isPlatformAdmin(false)).toBe(false)
+  })
+
+  it('delegates owner bootstrap to authenticated home', () => {
+    expect(ownerBootstrapPath(false, [venue(1)], 1)).toBe('/dashboard')
+    expect(ownerBootstrapPath(false, [], null)).toBe(MOBILE_APP_PATH)
   })
 })
 

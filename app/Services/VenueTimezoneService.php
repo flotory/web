@@ -14,7 +14,7 @@ class VenueTimezoneService
             return null;
         }
 
-        $key = config('services.google.maps_key');
+        $key = config('services.google.maps_server_key');
 
         if (! filled($key)) {
             return null;
@@ -34,9 +34,18 @@ class VenueTimezoneService
                     return $timezoneId;
                 }
             }
+
+            Log::warning('Venue timezone lookup returned non-OK status.', [
+                'status' => $response->json('status'),
+                'error_message' => $response->json('errorMessage'),
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
         } catch (\Throwable $exception) {
             Log::warning('Venue timezone lookup failed.', [
                 'exception' => $exception->getMessage(),
+                'latitude' => $latitude,
+                'longitude' => $longitude,
             ]);
         }
 

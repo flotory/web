@@ -19,10 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withBroadcasting(
-        channels: __DIR__.'/../routes/channels.php',
-        attributes: ['middleware' => ['auth:sanctum']],
-    )
     ->withMiddleware(function (Middleware $middleware): void {
         // API uses Bearer tokens (see resources/js/lib/api.ts), not cookie SPA auth.
         // statefulApi() would require CSRF on /api/* from the production host.

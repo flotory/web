@@ -8,7 +8,7 @@ The MVP focuses on venue QR onboarding, digital stamp cards, **NFC stamp stands*
 
 ## Stack
 
-- Laravel 12, PHP 8.3+, MySQL, Sanctum, REST APIs, Reverb, Laravel Socialite (Google)
+- Laravel 12, PHP 8.3+, MySQL, Sanctum, REST APIs, Laravel Socialite (Google)
 - Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
 - Monolith architecture for VPS deployment
 
@@ -33,7 +33,7 @@ Portable defaults use **`localhost` only** — same on every Mac/PC. Do not put 
 
 ```bash
 git clone git@github.com:flotory/web.git && cd web
-cp .env.secrets.example .env.secrets   # GOOGLE_CLIENT_SECRET + GOOGLE_MAPS_API_KEY
+cp .env.secrets.example .env.secrets   # GOOGLE_CLIENT_SECRET + Maps API keys
 ./scripts/setup-local.sh
 ./scripts/docker-up.sh --build
 ```
@@ -43,7 +43,7 @@ Open **http://localhost:8000** (not the Vite port for login or OAuth). Vite HMR:
 | File | Committed? | Purpose |
 |------|------------|---------|
 | `.env.example` | Yes | Shared template (`localhost`, same on all machines) |
-| `.env.secrets` | No | `GOOGLE_CLIENT_SECRET`, `GOOGLE_MAPS_API_KEY` — copy manually to each computer |
+| `.env.secrets` | No | `GOOGLE_CLIENT_SECRET`, `VITE_GOOGLE_MAPS_API_KEY` (browser), `GOOGLE_MAPS_SERVER_API_KEY` (Time Zone API) |
 | `.env` | No | Generated locally by `setup-local.sh` |
 
 **Never commit:** `.env`, `.env.secrets`. Each machine has its own `APP_KEY` and database.
@@ -83,7 +83,6 @@ php artisan migrate --seed
 npm install
 npm run dev
 php artisan serve
-php artisan reverb:start --host=0.0.0.0 --port=8080
 ```
 
 ## Google Sign-In
@@ -177,7 +176,7 @@ Build assets first, then open the Laravel app from your phone using your Mac's l
 
 ```bash
 npm run build
-docker compose up --build app mysql reverb
+docker compose up --build app mysql
 ```
 
 Find your Mac IP:
@@ -237,7 +236,7 @@ Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user c
 
 Full feature list: **[docs/PRODUCT.md](docs/PRODUCT.md)**.
 
-Highlights: venue QR bridge → mobile app, NFC stamp stands, owner web dashboard, slide-to-redeem wallet, listing approval workflow, Reverb realtime ([apps/mobile/README.md](apps/mobile/README.md)).
+Highlights: venue QR bridge → mobile app, NFC stamp stands, owner web dashboard, slide-to-redeem wallet, listing approval workflow ([apps/mobile/README.md](apps/mobile/README.md)).
 
 ## Loyalty rules
 

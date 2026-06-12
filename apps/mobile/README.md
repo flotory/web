@@ -86,18 +86,7 @@ For local backend:
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/api npm --prefix apps/mobile run start
 ```
 
-For production realtime (stamp animations after NFC stamp), set Reverb env to match the server (see `deploy/env.production.example`):
-
-```bash
-EXPO_PUBLIC_API_BASE_URL=https://flotory.com/api \
-EXPO_PUBLIC_REVERB_APP_KEY=your-prod-reverb-key \
-EXPO_PUBLIC_REVERB_HOST=flotory.com \
-EXPO_PUBLIC_REVERB_PORT=443 \
-EXPO_PUBLIC_REVERB_SCHEME=https \
-npm --prefix apps/mobile run start
-```
-
-Without matching keys, the app still detects new stamps via polling (fast on Home/Stamp/card, slower elsewhere) and opens your venue card with animation.
+Stamp and redeem updates use **API polling** (fast on Home/Stamp/card screens, slower elsewhere). NFC taps still navigate to your venue card immediately from the HTTP response.
 
 ## Google sign-in
 
@@ -133,16 +122,23 @@ Install Maestro once:
 curl -Ls "https://get.maestro.mobile.dev" | bash
 ```
 
-Run on a **simulator or device** with a **development build** (`com.flotory.mobile`), then:
+Run on a **simulator or device** with a **development build** (`com.flotory.mobile`), then from repo root:
 
 ```bash
-# After: docker compose exec app php artisan migrate:fresh --seed
+chmod +x scripts/run-mobile-e2e.sh
+# Seeds demo data (Docker or local PHP) and runs all Maestro flows
+./scripts/run-mobile-e2e.sh
+```
+
+Or flows only when the DB is already seeded:
+
+```bash
 APP_ID=com.flotory.mobile \
 CUSTOMER_EMAIL=customer@example.com \
 CUSTOMER_PASSWORD=password \
 TEST_VENUE_NAME="Demo Cafe" \
 NFC_TAP_TOKEN=democafenfcstandlocaltest00001 \
-npm run test:mobile:e2e
+npm run test:mobile:e2e:flows
 ```
 
 Flows in `.maestro/mobile`:
@@ -150,8 +146,9 @@ Flows in `.maestro/mobile`:
 | File | What it tests |
 |------|----------------|
 | `01-login-home.yaml` | Login → Home |
-| `02-wallet-card.yaml` | Wallet → venue card |
+| `02-wallet-card.yaml` | Login → Wallet → venue card |
 | `03-stamp-redeem.yaml` | NFC tap deep link → Home → slide redeem |
+| `04-customer-tabs.yaml` | Login → Wallet / Venues / Profile / Home tabs |
 
 `03-stamp-redeem` uses `flotory://t/{token}` — same backend path as a physical NFC tag, without radio hardware. Token is seeded on Demo Cafe (`DatabaseSeeder::DEMO_CAFE_NFC_TOKEN`).
 

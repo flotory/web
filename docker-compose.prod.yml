@@ -33,26 +33,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  reverb:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-    ports:
-      - "127.0.0.1:8080:8080"
-    env_file:
-      - .env
-    depends_on:
-      - app
-    restart: unless-stopped
-    command: >
-      sh -c "
-        composer install --no-dev --optimize-autoloader --no-interaction;
-        php artisan reverb:start --host=0.0.0.0 --port=8080
-      "
-
   queue:
     build:
       context: .

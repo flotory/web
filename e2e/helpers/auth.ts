@@ -1,7 +1,29 @@
 import { expect, type Page } from '@playwright/test'
 
-export async function loginAs(page: Page, email: string, password = 'password'): Promise<void> {
+import { DEMO_PASSWORD } from './demo'
+
+/** Clear auth token on the app origin (must run after navigation, not on about:blank). */
+async function clearAuthToken(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    localStorage.removeItem('auth_token')
+  })
+}
+
+export async function logoutFromApp(page: Page): Promise<void> {
   await page.goto('/login')
+  await clearAuthToken(page)
+  await page.goto('/login')
+  await expect(page.locator('#email')).toBeVisible({ timeout: 15_000 })
+}
+
+export async function loginAs(page: Page, email: string, password = DEMO_PASSWORD): Promise<void> {
+  await page.goto('/login')
+
+  if (!page.url().includes('/login')) {
+    await clearAuthToken(page)
+    await page.goto('/login')
+  }
+
   await expect(page.locator('#email')).toBeVisible({ timeout: 30_000 })
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
@@ -13,7 +35,7 @@ export async function registerOwnerAs(
   page: Page,
   options: { name: string; email: string; password?: string },
 ): Promise<void> {
-  const password = options.password ?? 'password'
+  const password = options.password ?? DEMO_PASSWORD
 
   await page.goto('/register?intent=owner')
   await expect(page.getByRole('heading', { name: 'Launch loyalty in minutes' })).toBeVisible({ timeout: 30_000 })
@@ -25,7 +47,7 @@ export async function registerOwnerAs(
 }
 
 export async function selectVenueIfPresent(page: Page, venueName: string): Promise<void> {
-  const select = page.locator('select').first()
+  const select = page.locator('aside select').first()
   const count = await select.count()
 
   if (count === 0) {
@@ -34,13 +56,17 @@ export async function selectVenueIfPresent(page: Page, venueName: string): Promi
 
   await expect(select).toBeVisible({ timeout: 10_000 })
 
-  const campaignsRequest = page.waitForResponse(
-    (response) => response.url().includes('/campaigns') && response.request().method() === 'GET',
-    { timeout: 15_000 },
-  ).catch(() => null)
+  const selectedValue = await select.inputValue()
+  const selectedLabel = await select.locator(`option[value="${selectedValue}"]`).textContent()
+  if (selectedLabel?.trim() === venueName) {
+    return
+  }
 
   await select.selectOption({ label: venueName })
-  await campaignsRequest
+  await page.waitForResponse(
+    (response) => response.url().includes('/api/venues') && response.request().method() === 'GET',
+    { timeout: 15_000 },
+  ).catch(() => null)
 }
 
 export async function demoCafeVenueId(page: Page): Promise<number> {

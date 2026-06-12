@@ -16,7 +16,6 @@ export default defineConfig({
     // Visiting :5173 directly still needs Laravel for /api/* (login, venues, etc.).
     proxy: {
       '/api': { target: apiProxyTarget, changeOrigin: true },
-      '/broadcasting': { target: apiProxyTarget, changeOrigin: true },
       '/auth/google': { target: apiProxyTarget, changeOrigin: true },
     },
   },

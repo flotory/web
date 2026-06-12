@@ -11,7 +11,6 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 | API | Laravel 12, PHP 8.3+, MySQL |
 | Auth | Laravel Sanctum (bearer tokens) |
 | OAuth | Laravel Socialite (Google) via web routes; mobile via web OAuth → `flotory://login?oauth_token=...` |
-| Realtime | Laravel Reverb + Echo (optional; stamp events) |
 | Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |
 | Mobile | Expo + React Native (`apps/mobile`) |
 | Uploads | Local filesystem under `public/uploads/` |
@@ -21,7 +20,6 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 
 ```text
 app/
-  Events/                    StampAdded, RewardRedeemed
   Http/Controllers/Api/      REST API
   Http/Controllers/Auth/     Google OAuth
   Models/                    Eloquent domain models
@@ -101,7 +99,6 @@ User ──┬──< VenueUser >── Venue ──< Reward
 3. Unlock milestones at or below current stamp count for active cycle.
 4. If stamps ≥ max active milestone: complete cycle, reset stamps to 0, start next cycle.
 5. Create one `Visit` row (`created_by` null for NFC).
-6. Broadcast `StampAdded` on `private-customer.{customerId}` when Reverb is enabled.
 
 **`redeemUnlock(RewardUnlock, User $customerUser)`**
 
@@ -220,5 +217,4 @@ Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan me
 |---------|------|
 | app | 8000 |
 | vite | 5173 |
-| reverb | 8080 |
 | mysql | 3306 |

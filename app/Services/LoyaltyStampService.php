@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\RewardRedeemed;
-use App\Events\StampAdded;
 use App\Models\CustomerRewardCycle;
 use App\Models\Customer;
 use App\Models\Reward;
@@ -110,24 +108,6 @@ class LoyaltyStampService
             ];
         });
 
-        try {
-            StampAdded::dispatch(
-                $result['customer'],
-                $result['previous_stamps'],
-                $result['added_stamps'],
-                $result['next_reward'],
-                $result['available_rewards'],
-                $result['milestones'],
-                $result['current_cycle'],
-                $result['cycle_completed'],
-            );
-        } catch (Throwable $exception) {
-            Log::warning('Stamp added but realtime broadcast failed.', [
-                'customer_id' => $result['customer']->id,
-                'exception' => $exception->getMessage(),
-            ]);
-        }
-
         AuditLog::loyalty(
             'stamp.added',
             $result['customer'],
@@ -196,19 +176,6 @@ class LoyaltyStampService
 
             return $locked;
         });
-
-        try {
-            RewardRedeemed::dispatch(
-                $customer->fresh()->load('venue', 'user'),
-                $unlock,
-            );
-        } catch (Throwable $exception) {
-            Log::warning('Reward redeemed but realtime broadcast failed.', [
-                'customer_id' => $customer->id,
-                'unlock_id' => $unlock->id,
-                'exception' => $exception->getMessage(),
-            ]);
-        }
 
         return $unlock;
     }

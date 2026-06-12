@@ -2,10 +2,12 @@
 
 namespace Tests\Concerns;
 
+use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
 use App\Models\NfcTag;
 use App\Models\Reward;
+use App\Support\CampaignTemplates;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
@@ -162,5 +164,31 @@ trait BuildsLoyaltyData
             'label' => 'Counter stand',
             'active' => true,
         ], $attributes));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function seedActiveCampaign(
+        Venue $venue,
+        User $owner,
+        string $templateId,
+        array $config,
+        ?string $name = null,
+    ): Campaign {
+        $defaults = CampaignTemplates::defaults($templateId);
+        $merged = array_merge($defaults['config'], $config);
+
+        return Campaign::query()->create([
+            'venue_id' => $venue->id,
+            'template_id' => $templateId,
+            'name' => $name ?? $defaults['name'],
+            'status' => Campaign::STATUS_ACTIVE,
+            'config' => $merged,
+            'push_enabled' => true,
+            'activated_at' => now(),
+            'created_by' => $owner->id,
+            'audience_count' => 0,
+        ]);
     }
 }

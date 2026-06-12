@@ -21,7 +21,7 @@ function isOnCardScreen(segments: string[], pathname: string, cardId: number): b
   return match !== null && Number(match[1]) === cardId
 }
 
-/** Keeps customer stamp updates flowing: fallback polling plus one-time card navigation. */
+/** Keeps customer stamp updates flowing via polling plus one-time card navigation. */
 export function useCustomerStampSync() {
   const watchdog = useStampWatchdog()
   const router = useRouter()

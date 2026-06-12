@@ -1,115 +1,52 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import { fetchCustomerCardsList } from '../lib/customerData'
-import {
-  clearStampAckState,
-  isStampSignatureAcknowledged,
-  syncStampBaseline,
-} from '../lib/stampAck'
-import { stampUpdateSignature } from '../lib/stampLiveUpdate'
-import { disconnectEcho, getEcho } from '../lib/realtime'
-import type { RewardRedeemedPayload, StampAddedPayload } from '../types/realtime'
-import type { WalletCard } from '../types/loyalty'
+import { clearStampAckState, syncStampBaseline } from '../lib/stampAck'
+import { decideStampPublish } from '../lib/stampRealtime'
+import type { StampAddedPayload } from '../types/realtime'
 import { useAuth } from './AuthProvider'
 
 interface RealtimeContextValue {
   latestStamp: StampAddedPayload | null
-  latestRedeem: RewardRedeemedPayload | null
   clearLatestStamp: () => void
-  clearLatestRedeem: () => void
   ingestStamp: (payload: StampAddedPayload) => void
-  syncChannels: (cards?: WalletCard[]) => Promise<void>
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefined)
 
+/** In-memory stamp sync bus — fed by NFC responses and polling, not WebSockets. */
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const { token, role } = useAuth()
   const [latestStamp, setLatestStamp] = useState<StampAddedPayload | null>(null)
-  const [latestRedeem, setLatestRedeem] = useState<RewardRedeemedPayload | null>(null)
-  const subscribedIds = useRef<Set<number>>(new Set())
-  const echoRef = useRef<ReturnType<typeof getEcho> | null>(null)
   const lastStampSignature = useRef('')
 
   const clearLatestStamp = useCallback(() => setLatestStamp(null), [])
-  const clearLatestRedeem = useCallback(() => setLatestRedeem(null), [])
-  const publishStamp = useCallback((payload: StampAddedPayload) => {
-    const signature = stampUpdateSignature(payload)
-    if (lastStampSignature.current === signature || isStampSignatureAcknowledged(signature)) {
+
+  const ingestStamp = useCallback((payload: StampAddedPayload) => {
+    const decision = decideStampPublish(payload, lastStampSignature.current)
+    if (!decision.publish) {
       return
     }
 
-    lastStampSignature.current = signature
+    lastStampSignature.current = decision.signature
     syncStampBaseline(payload.customer.id, payload.stamps)
     setLatestStamp(payload)
   }, [])
-  const ingestStamp = publishStamp
-
-  const bindChannel = useCallback((cardId: number) => {
-    if (!token || subscribedIds.current.has(cardId) || !echoRef.current) {
-      return
-    }
-
-    subscribedIds.current.add(cardId)
-    echoRef.current
-      .private(`customer.${cardId}`)
-      .listen('.stamp.added', (payload: StampAddedPayload) => {
-        publishStamp(payload)
-      })
-      .listen('.reward.redeemed', (payload: RewardRedeemedPayload) => {
-        setLatestRedeem(payload)
-      })
-  }, [token, publishStamp])
-
-  const syncChannels = useCallback(async (knownCards?: WalletCard[]) => {
-    if (!token || role !== 'customer') {
-      return
-    }
-
-    try {
-      const echo = getEcho(token)
-      echoRef.current = echo
-      const cards = knownCards ?? (await fetchCustomerCardsList(token, true)).cards
-      cards.forEach((card) => bindChannel(card.id))
-    } catch {
-      // Realtime is optional — polling still updates the UI.
-    }
-  }, [token, role, bindChannel])
 
   useEffect(() => {
     if (!token || role !== 'customer') {
-      subscribedIds.current.clear()
-      echoRef.current = null
-      disconnectEcho()
       setLatestStamp(null)
-      setLatestRedeem(null)
       lastStampSignature.current = ''
       clearStampAckState()
-      return
     }
-
-    subscribedIds.current.clear()
-    lastStampSignature.current = ''
-    clearStampAckState()
-    void syncChannels()
-
-    return () => {
-      subscribedIds.current.clear()
-      echoRef.current = null
-      disconnectEcho()
-    }
-  }, [token, role, syncChannels])
+  }, [token, role])
 
   const value = useMemo(
     () => ({
       latestStamp,
-      latestRedeem,
       clearLatestStamp,
-      clearLatestRedeem,
       ingestStamp,
-      syncChannels,
     }),
-    [latestStamp, latestRedeem, clearLatestStamp, clearLatestRedeem, ingestStamp, syncChannels],
+    [latestStamp, clearLatestStamp, ingestStamp],
   )
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>

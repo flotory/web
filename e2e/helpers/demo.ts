@@ -1,0 +1,6 @@
+export const DEMO_OWNER_EMAIL = 'owner@example.com'
+export const DEMO_ADMIN_EMAIL = 'admin@flotory.com'
+export const DEMO_CUSTOMER_EMAIL = 'customer@example.com'
+export const DEMO_PASSWORD = 'password'
+export const DEMO_CAFE_SLUG = 'demo-cafe'
+export const DEMO_CAFE_NFC_TOKEN = 'democafenfcstandlocaltest00001'

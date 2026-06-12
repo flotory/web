@@ -62,4 +62,29 @@ describe('useWorkspaceStore', () => {
     expect(workspace.filterVenueId).toBe(2)
     expect(workspace.effectiveVenueId).toBe(2)
   })
+
+  it('exposes filtered and effective venues while ignoring archived rows', () => {
+    const workspace = useWorkspaceStore()
+    const active = venue(1, 'Demo Cafe')
+    const archived = { ...venue(2, 'Old Spot'), archived: true } as Venue
+
+    workspace.venues = [active, archived]
+    workspace.setFilter(1)
+
+    expect(workspace.activeVenues).toEqual([active])
+    expect(workspace.filteredVenue).toEqual(active)
+    expect(workspace.effectiveVenue).toEqual(active)
+    expect(workspace.isOwnerAtEffectiveVenue).toBe(true)
+  })
+
+  it('clears the stored filter when setFilter receives null', () => {
+    const workspace = useWorkspaceStore()
+    workspace.venues = [venue(1, 'Demo Cafe')]
+    workspace.setFilter(1)
+
+    workspace.setFilter(null)
+
+    expect(workspace.filterVenueId).toBe(1)
+    expect(sessionStorage.getItem('loyalty_venue_filter')).toBe('1')
+  })
 })

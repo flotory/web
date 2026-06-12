@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
@@ -320,6 +321,64 @@ class VenueControllerTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'customers')
             ->assertJsonPath('customers.0.stamps', 4);
+    }
+
+    public function test_venue_create_persists_timezone_from_google_api(): void
+    {
+        config(['services.google.maps_server_key' => 'test-server-key']);
+        Http::fake([
+            'maps.googleapis.com/maps/api/timezone/json*' => Http::response([
+                'status' => 'OK',
+                'timeZoneId' => 'Europe/Warsaw',
+            ]),
+        ]);
+
+        $user = $this->createUser();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/venues', [
+            'name' => 'Timezone Cafe',
+            'category' => 'cafe',
+            'address' => '12 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+        ])->assertCreated();
+
+        $this->assertSame('Europe/Warsaw', $response->json('venue.timezone'));
+        $this->assertDatabaseHas('venues', [
+            'id' => $response->json('venue.id'),
+            'timezone' => 'Europe/Warsaw',
+        ]);
+    }
+
+    public function test_venue_update_refreshes_timezone_when_coordinates_change(): void
+    {
+        config(['services.google.maps_server_key' => 'test-server-key']);
+        Http::fake([
+            'maps.googleapis.com/maps/api/timezone/json*' => Http::response([
+                'status' => 'OK',
+                'timeZoneId' => 'America/New_York',
+            ]),
+        ]);
+
+        $owner = $this->createUser();
+        $venue = $this->createVenue([
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'timezone' => 'Europe/Warsaw',
+        ]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/venues/{$venue->id}", [
+            'name' => $venue->name,
+            'address' => '350 5th Ave, New York',
+            'latitude' => 40.7484,
+            'longitude' => -73.9857,
+        ])
+            ->assertOk()
+            ->assertJsonPath('venue.timezone', 'America/New_York');
     }
 
     public function test_owner_logo_and_cover_routes_are_not_available(): void

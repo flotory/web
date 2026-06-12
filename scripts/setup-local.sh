@@ -24,11 +24,17 @@ env_merge_from_secrets .env.secrets .env
 env_merge_save_docker_backup .env
 echo "Saved .env.docker.backup (auto-restored on Docker start if .env is corrupted — see scripts/restore-docker-env.sh)."
 
-if ! grep -q '^GOOGLE_MAPS_API_KEY=.\+' .env 2>/dev/null; then
+if ! grep -q '^VITE_GOOGLE_MAPS_API_KEY=.\+' .env 2>/dev/null; then
   echo ""
-  echo "WARNING: GOOGLE_MAPS_API_KEY is empty — venue address autocomplete will not work."
+  echo "WARNING: VITE_GOOGLE_MAPS_API_KEY is empty — venue address autocomplete will not work."
   echo "  Add your browser Maps key to .env.secrets, then re-run: ./scripts/setup-local.sh"
   echo "  Enable: Maps JavaScript API + Places API. Referrer: http://localhost:8000/*"
+fi
+
+if ! grep -qE '^GOOGLE_MAPS_SERVER_API_KEY=.+|^GOOGLE_MAPS_API_KEY=.+' .env 2>/dev/null; then
+  echo ""
+  echo "WARNING: GOOGLE_MAPS_SERVER_API_KEY is empty — campaign happy-hour timezone lookup will fall back to UTC."
+  echo "  Add a server Maps key with Time Zone API enabled to .env.secrets."
 fi
 
 echo ""

@@ -145,21 +145,17 @@ class CampaignServiceTest extends TestCase
         $this->assertSame(2, $this->campaigns->multiplierFor($customer, $venue));
     }
 
-    public function test_vip_matches_loyal_customer_by_visits(): void
+    public function test_vip_matches_loyal_customer_by_lifetime_stamps(): void
     {
         $venue = $this->createVenue();
         $guest = $this->createUser(['email' => 'guest6@example.com']);
-        $customer = $this->createCustomer($venue, $guest);
+        $customer = $this->createCustomer($venue, $guest, ['lifetime_stamps' => 5]);
         $owner = $this->createUser(['email' => 'owner6@example.com']);
         $this->attachMember($venue, $owner, 'owner');
 
-        foreach (range(1, 5) as $index) {
-            $this->createVisit($customer, $owner, ['created_at' => now()->subDays($index)]);
-        }
-
         $this->seedActiveCampaign($venue, $owner, CampaignTemplates::VIP, [
             'stamp_multiplier' => 2,
-            'min_visits' => 5,
+            'min_lifetime_stamps' => 5,
             'min_rewards_claimed' => 99,
         ]);
 
@@ -258,6 +254,52 @@ class CampaignServiceTest extends TestCase
         }
     }
 
+    public function test_promotion_for_customer_returns_null_when_no_campaign_applies(): void
+    {
+        $venue = $this->createVenue();
+        $guest = $this->createUser(['email' => 'no-promo@example.com']);
+        $customer = $this->createCustomer($venue, $guest);
+        $owner = $this->createUser(['email' => 'no-promo-owner@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Carbon::setTestNow(Carbon::parse('2026-06-01 12:00:00'));
+
+        $this->seedActiveCampaign($venue, $owner, CampaignTemplates::QUIET_DAY, [
+            'stamp_multiplier' => 2,
+            'days_of_week' => [2],
+        ]);
+
+        $this->assertNull($this->campaigns->promotionForCustomer($customer));
+    }
+
+    public function test_home_campaigns_for_cards_lists_visible_campaigns_per_venue(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-06-02 12:00:00'));
+
+        try {
+            $owner = $this->createUser();
+            $guest = $this->createUser(['email' => 'home-campaigns@example.com']);
+            $venue = $this->createPublishedVenue(['name' => 'Home Cafe']);
+            $this->attachMember($venue, $owner, 'owner');
+            $customer = $this->createCustomer($venue, $guest);
+            $customer->setRelation('venue', $venue);
+
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::QUIET_DAY, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [2],
+            ]);
+
+            $items = $this->campaigns->homeCampaignsForCards(collect([$customer]));
+
+            $this->assertCount(1, $items);
+            $this->assertSame('Home Cafe', $items[0]['venue_name']);
+            $this->assertTrue($items[0]['applies_now']);
+            $this->assertSame(2, $items[0]['multiplier']);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_happy_hour_uses_venue_timezone(): void
     {
         $venue = $this->createVenue(['timezone' => 'America/Los_Angeles']);
@@ -282,29 +324,4 @@ class CampaignServiceTest extends TestCase
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $config
-     */
-    private function seedActiveCampaign(
-        \App\Models\Venue $venue,
-        \App\Models\User $owner,
-        string $templateId,
-        array $config,
-        ?string $name = null,
-    ): Campaign {
-        $defaults = CampaignTemplates::defaults($templateId);
-        $merged = array_merge($defaults['config'], $config);
-
-        return Campaign::query()->create([
-            'venue_id' => $venue->id,
-            'template_id' => $templateId,
-            'name' => $name ?? $defaults['name'],
-            'status' => Campaign::STATUS_ACTIVE,
-            'config' => $merged,
-            'push_enabled' => true,
-            'activated_at' => now(),
-            'created_by' => $owner->id,
-            'audience_count' => 0,
-        ]);
-    }
 }

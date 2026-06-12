@@ -1,0 +1,25 @@
+appId: "${APP_ID}"
+---
+# Smoke all primary customer tabs after login.
+- runFlow: 01-login-home.yaml
+- tapOn:
+    id: "tab-wallet"
+- extendedWaitUntil:
+    visible: "Wallet"
+    timeout: 20000
+- assertVisible: "${TEST_VENUE_NAME}"
+- tapOn:
+    id: "tab-venues"
+- extendedWaitUntil:
+    visible: "Venues"
+    timeout: 20000
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Profile"
+    timeout: 20000
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible: "Collect a stamp"
+    timeout: 20000

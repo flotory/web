@@ -14,7 +14,6 @@ import { useCardDetail } from '../../src/hooks/useCardDetail'
 import { useCardRewards } from '../../src/hooks/useCardRewards'
 import { useCardStampAnimation } from '../../src/hooks/useCardStampAnimation'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
-import { useRedeemRefresh } from '../../src/hooks/useRedeemRefresh'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { stampBannerCopy } from '../../src/lib/stampLiveUpdate'
 import { colors, space } from '../../src/theme'
@@ -30,7 +29,6 @@ export default function CardDetailScreen() {
   const refreshAfterRedeem = useCallback(() => {
     void silentRefresh()
   }, [silentRefresh])
-  useRedeemRefresh(refreshAfterRedeem, { customerId: payload?.active_card?.id ?? null })
 
   function handleBack() {
     if (router.canGoBack()) {

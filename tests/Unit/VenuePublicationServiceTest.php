@@ -83,4 +83,52 @@ class VenuePublicationServiceTest extends TestCase
         $this->assertSame('Please add a clearer storefront photo.', $rejected->review_note);
         $this->assertFalse($this->service->isPublic($rejected));
     }
+
+    public function test_assert_public_rejects_draft_venue(): void
+    {
+        $venue = $this->createVenue(['status' => Venue::STATUS_DRAFT]);
+
+        $this->expectException(ValidationException::class);
+
+        try {
+            $this->service->assertPublic($venue);
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('venue', $exception->errors());
+            throw $exception;
+        }
+    }
+
+    public function test_soft_deleted_venue_is_not_public(): void
+    {
+        $venue = $this->createPublishedVenue();
+        $venue->delete();
+
+        $this->assertFalse($this->service->isPublic($venue->fresh()));
+    }
+
+    public function test_assert_slug_can_change_blocks_published_slug_edit(): void
+    {
+        $venue = $this->createPublishedVenue(['slug' => 'live-venue']);
+
+        $this->expectException(ValidationException::class);
+
+        try {
+            $this->service->assertSlugCanChange($venue, 'new-slug');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('slug', $exception->errors());
+            throw $exception;
+        }
+    }
+
+    public function test_admin_unpublish_returns_venue_to_draft(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createPublishedVenue();
+
+        $draft = $this->service->unpublish($venue, $admin, 'Seasonal closure.');
+
+        $this->assertSame(Venue::STATUS_DRAFT, $draft->status);
+        $this->assertNull($draft->published_at);
+        $this->assertFalse($this->service->isPublic($draft));
+    }
 }

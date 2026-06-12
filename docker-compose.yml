@@ -23,51 +23,15 @@ services:
       DB_DATABASE: flotory_app
       DB_USERNAME: flotory
       DB_PASSWORD: secret
-      BROADCAST_CONNECTION: reverb
+      BROADCAST_CONNECTION: null
       SESSION_DRIVER: database
       CACHE_STORE: database
       QUEUE_CONNECTION: database
-      REVERB_APP_ID: flotory-local-app
-      REVERB_APP_KEY: flotory-local-key
-      REVERB_APP_SECRET: flotory-local-secret
-      # Docker DNS can be unreliable on some setups; route via host port mapping.
-      REVERB_HOST: host.docker.internal
-      REVERB_BROADCAST_HOST: host.docker.internal
-      REVERB_PORT: 8080
-      REVERB_SCHEME: http
-      REVERB_SERVER_HOST: 0.0.0.0
-      REVERB_SERVER_PORT: 8080
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
     depends_on:
       mysql:
         condition: service_healthy
     command: ["sh", "/var/www/html/docker/entrypoint-app.sh"]
-
-  reverb:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    working_dir: /var/www/html
-    restart: unless-stopped
-    volumes:
-      - .:/var/www/html
-    ports:
-      - "8080:8080"
-    environment:
-      APP_URL: ${APP_URL:-http://localhost:8000}
-      BROADCAST_CONNECTION: reverb
-      REVERB_APP_ID: flotory-local-app
-      REVERB_APP_KEY: flotory-local-key
-      REVERB_APP_SECRET: flotory-local-secret
-      REVERB_HOST: reverb
-      REVERB_PORT: 8080
-      REVERB_SCHEME: http
-      REVERB_SERVER_HOST: 0.0.0.0
-      REVERB_SERVER_PORT: 8080
-    depends_on:
-      mysql:
-        condition: service_healthy
-    command: ["sh", "/var/www/html/docker/entrypoint-reverb.sh"]
 
   vite:
     image: node:24-alpine

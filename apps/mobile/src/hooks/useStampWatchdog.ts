@@ -12,7 +12,6 @@ import type { WalletCard } from '../types/loyalty'
 
 const POLL_MS = 2000
 const POLL_MS_ACTIVE = 900
-const CHANNEL_SYNC_MS = 30000
 const FAILURE_BACKOFF_MS = [0, 3000, 8000, 15000, 30000] as const
 
 export type StampWatchdogStatus = 'ok' | 'offline' | 'delayed'
@@ -69,13 +68,12 @@ async function detectStampChanges(
 export function useStampWatchdog() {
   const pathname = usePathname()
   const { token, role } = useAuth()
-  const { ingestStamp, syncChannels } = useRealtime()
+  const { ingestStamp } = useRealtime()
   const [status, setStatus] = useState<StampWatchdogStatus>('ok')
   const stampSnapshot = useRef<Map<number, number>>(new Map())
   const activeBaseline = useRef<Map<number, number>>(new Map())
   const activeBaselineReady = useRef(false)
   const globalBootstrapped = useRef(false)
-  const lastChannelSyncAt = useRef(0)
   const failureCount = useRef(0)
   const backoffUntil = useRef(0)
   const fastPoll = usesFastStampPoll(pathname)
@@ -97,11 +95,6 @@ export function useStampWatchdog() {
       }
 
       const { cards } = await fetchCustomerCardsList(token, true)
-      const now = Date.now()
-      if (now - lastChannelSyncAt.current > CHANNEL_SYNC_MS) {
-        lastChannelSyncAt.current = now
-        await syncChannels(cards)
-      }
 
       if (fastPoll) {
         if (!activeBaselineReady.current) {
@@ -150,9 +143,8 @@ export function useStampWatchdog() {
       if (failureCount.current >= 2) {
         setStatus('delayed')
       }
-      // Polling is a fallback when WebSockets are unavailable.
     }
-  }, [token, role, ingestStamp, syncChannels, fastPoll])
+  }, [token, role, ingestStamp, fastPoll])
 
   useEffect(() => {
     if (!token || role !== 'customer') {
@@ -160,7 +152,6 @@ export function useStampWatchdog() {
       activeBaseline.current.clear()
       globalBootstrapped.current = false
       activeBaselineReady.current = false
-      lastChannelSyncAt.current = 0
       failureCount.current = 0
       backoffUntil.current = 0
       setStatus('ok')

@@ -104,6 +104,12 @@ Open the **latest** run on `main`, not an old failed one:
 
 If migrations were added locally, they run automatically via `deploy.sh` on the server.
 
+After enabling **Time Zone API** and setting `GOOGLE_MAPS_SERVER_API_KEY` on the server:
+
+```bash
+ssh root@64.226.84.118 'cd /var/www/web && docker compose -f docker-compose.prod.yml exec -T app php artisan venues:sync-timezones'
+```
+
 ## Files
 
 | Script | Where | Purpose |

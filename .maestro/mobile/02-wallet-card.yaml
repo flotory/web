@@ -1,6 +1,6 @@
 appId: "${APP_ID}"
 ---
-- launchApp
+- runFlow: 01-login-home.yaml
 - tapOn:
     id: "tab-wallet"
 - extendedWaitUntil:

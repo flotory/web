@@ -199,8 +199,9 @@ export function campaignCriteriaChips(campaign: Campaign): string[] {
 
   if (campaign.template_id === 'vip_rewards') {
     const chips: string[] = []
-    if (config.min_visits) {
-      chips.push(`${config.min_visits}+ visits`)
+    const minLifetime = config.min_lifetime_stamps ?? config.min_visits
+    if (minLifetime) {
+      chips.push(`${minLifetime}+ lifetime stamps`)
     }
     if (config.min_rewards_claimed) {
       chips.push(`${config.min_rewards_claimed}+ reward claimed`)

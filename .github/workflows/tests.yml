@@ -72,11 +72,14 @@ jobs:
       - name: Install mobile dependencies
         run: npm ci --prefix apps/mobile
 
-      - name: Typecheck and build
-        run: npm run build
+      - name: Typecheck
+        run: npm run typecheck
 
-      - name: Unit tests
-        run: npm run test:unit
+      - name: Production build
+        run: vite build
+
+      - name: Web unit tests
+        run: npm run test:unit:web
 
   e2e:
     name: Playwright smoke

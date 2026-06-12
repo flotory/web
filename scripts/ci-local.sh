@@ -82,23 +82,12 @@ npm run typecheck --prefix apps/mobile
 echo "==> Local CI: mobile unit tests (shared vitest)"
 npm run test:unit -- apps/mobile/src
 
-if php_is_usable_for_tests; then
+if php_is_usable_for_tests || command -v docker >/dev/null 2>&1; then
   echo "==> Local CI: Playwright smoke"
-  chmod +x scripts/run-e2e-smoke.sh
+  chmod +x scripts/run-e2e-smoke.sh scripts/run-e2e-docker.sh
   ./scripts/run-e2e-smoke.sh --install-browser
-elif command -v docker >/dev/null 2>&1; then
-  echo "==> Local CI: Playwright smoke (via Docker PHP)"
-  chmod +x scripts/run-e2e-smoke.sh scripts/e2e-prepare.sh
-  docker compose exec -T app ./scripts/e2e-prepare.sh
-  docker compose run --rm -d -p 8765:8765 --no-deps app php artisan serve --env=e2e --host=0.0.0.0 --port=8765 >/dev/null
-  sleep 3
-  PLAYWRIGHT_BASE_URL=http://127.0.0.1:8765 npm run test:e2e
-  e2e_container="$(docker ps -q --filter publish=8765 | head -n 1)"
-  if [[ -n "${e2e_container}" ]]; then
-    docker stop "${e2e_container}" >/dev/null 2>&1 || true
-  fi
 else
-  echo "    (skipping Playwright — install PHP 8.4+ locally or run: ./scripts/e2e-local.sh)"
+  echo "    (skipping Playwright — install PHP 8.4+ locally or Docker, then run: ./scripts/e2e-local.sh)"
 fi
 
 echo "==> Local CI passed (backend + frontend + mobile + e2e when php available)."
