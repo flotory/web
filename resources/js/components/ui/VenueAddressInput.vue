@@ -23,6 +23,8 @@ const latitude = defineModel<number | null>('latitude', { default: null })
 const longitude = defineModel<number | null>('longitude', { default: null })
 const googlePlaceId = defineModel<string | null>('googlePlaceId', { default: null })
 
+const isLocalDev = import.meta.env.DEV
+
 const inputRef = ref<HTMLInputElement | null>(null)
 const mapsConfigured = ref(false)
 const autocompleteReady = ref(false)
@@ -241,10 +243,15 @@ watch(address, (value) => {
       {{ quotaHint }}
     </p>
     <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-amber-800">
-      Google address search is not configured. Add <code class="rounded bg-amber-100 px-1">GOOGLE_MAPS_API_KEY</code> to
-      <code class="rounded bg-amber-100 px-1">.env.secrets</code>, run
-      <code class="rounded bg-amber-100 px-1">./scripts/setup-local.sh</code>, then restart Docker
-      (<code class="rounded bg-amber-100 px-1">docker compose up --build</code>).
+      <template v-if="isLocalDev">
+        Google address search is not configured. Add <code class="rounded bg-amber-100 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
+        <code class="rounded bg-amber-100 px-1">.env.secrets</code>, run
+        <code class="rounded bg-amber-100 px-1">./scripts/setup-local.sh</code>, then restart Docker
+        (<code class="rounded bg-amber-100 px-1">docker compose up --build</code>).
+      </template>
+      <template v-else>
+        Google address search is not available right now. You can still save the venue and add the address later.
+      </template>
     </p>
     <p v-else-if="loadError" class="mt-2 text-xs font-semibold text-danger">
       {{ loadError }}

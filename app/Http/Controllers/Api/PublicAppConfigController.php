@@ -9,7 +9,7 @@ class PublicAppConfigController extends Controller
 {
     public function show(): JsonResponse
     {
-        $mapsKey = config('services.google.maps_key');
+        $mapsKey = config('services.google.maps_browser_key');
         $normalizedKey = is_string($mapsKey) ? trim($mapsKey) : '';
 
         $clientId = config('services.google.client_id');

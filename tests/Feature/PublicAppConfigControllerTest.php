@@ -11,7 +11,7 @@ class PublicAppConfigControllerTest extends TestCase
 
     public function test_returns_google_maps_key_when_configured(): void
     {
-        config(['services.google.maps_key' => 'test-maps-key']);
+        config(['services.google.maps_browser_key' => 'test-maps-key']);
 
         $this->getJson('/api/public/app-config')
             ->assertOk()
@@ -20,7 +20,7 @@ class PublicAppConfigControllerTest extends TestCase
 
     public function test_returns_null_google_maps_key_when_missing(): void
     {
-        config(['services.google.maps_key' => '']);
+        config(['services.google.maps_browser_key' => '']);
 
         $this->getJson('/api/public/app-config')
             ->assertOk()
