@@ -76,7 +76,7 @@ jobs:
         run: npm run typecheck
 
       - name: Production build
-        run: vite build
+        run: npx vite build
 
       - name: Web unit tests
         run: npm run test:unit:web
