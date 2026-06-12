@@ -1,13 +1,13 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native'
 
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../../src/lib/api'
 import { hapticSuccess } from '../../src/lib/haptics'
-import { fetchNfcTagPreview, submitNfcStamp, type NfcStampResponse } from '../../src/lib/nfcStamp'
-import { cardRouteFromNfcStamp, nfcResponseToStampPayload } from '../../src/lib/stampLiveUpdate'
+import { completeNfcStampSuccess } from '../../src/lib/completeNfcStampSuccess'
+import { fetchNfcTagPreview, submitNfcStamp } from '../../src/lib/nfcStamp'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
@@ -15,15 +15,18 @@ import { colors, space } from '../../src/theme'
 
 type ScreenState = 'loading' | 'ready' | 'stamping' | 'error'
 
-function completeStampSuccess(
-  response: NfcStampResponse,
-  ingestStamp: (payload: ReturnType<typeof nfcResponseToStampPayload>) => void,
+async function completeStampSuccess(
+  response: Parameters<typeof completeNfcStampSuccess>[0],
+  authToken: string,
+  ingestStamp: Parameters<typeof completeNfcStampSuccess>[2],
   router: ReturnType<typeof useRouter>,
 ) {
-  const payload = nfcResponseToStampPayload(response)
-  ingestStamp(payload)
+  await completeNfcStampSuccess(response, authToken, ingestStamp, router, 'replace')
   void hapticSuccess()
-  router.replace(cardRouteFromNfcStamp(response))
+
+  if (response.campaign_warning) {
+    Alert.alert('Stamp added', response.campaign_warning)
+  }
 }
 
 export default function NfcTapScreen() {
@@ -67,7 +70,7 @@ export default function NfcTapScreen() {
 
     try {
       const response = await submitNfcStamp(tokenForStamp, authToken)
-      completeStampSuccess(response, ingestStamp, router)
+      await completeStampSuccess(response, authToken, ingestStamp, router)
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : 'Could not add a stamp right now.')
       setScreenState('error')

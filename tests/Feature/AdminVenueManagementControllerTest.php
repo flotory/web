@@ -70,6 +70,35 @@ class AdminVenueManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_change_slug_on_published_venue(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'published-owner@example.com']);
+        $venue = $this->createPublishedVenue([
+            'name' => 'Published Harbor',
+            'slug' => 'published-harbor',
+        ]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($admin);
+
+        $this->putJson("/api/admin/manage-venues/{$venue->id}", [
+            'name' => 'Published Harbor',
+            'slug' => 'renamed-harbor',
+            'category' => 'cafe',
+            'address' => $venue->address,
+            'latitude' => $venue->latitude,
+            'longitude' => $venue->longitude,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('slug');
+
+        $this->assertDatabaseHas('venues', [
+            'id' => $venue->id,
+            'slug' => 'published-harbor',
+        ]);
+    }
+
     public function test_non_admin_cannot_access_manage_venues_api(): void
     {
         $owner = $this->createUser();

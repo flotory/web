@@ -50,6 +50,13 @@ function resetForm() {
   if (props.editing) {
     name.value = props.editing.name
     config.value = { ...props.editing.config }
+    if (
+      props.templateId === 'vip_rewards'
+      && config.value.min_lifetime_stamps === undefined
+      && config.value.min_visits !== undefined
+    ) {
+      config.value.min_lifetime_stamps = config.value.min_visits
+    }
     pushEnabled.value = props.editing.push_enabled
   } else {
     name.value = defaultNameFor(props.templateId, props.templates)
@@ -274,9 +281,9 @@ function setMultiplier(value: number) {
 
             <div v-if="templateId === 'vip_rewards'" class="space-y-4">
               <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum visits</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum lifetime stamps</span>
                 <input
-                  v-model.number="config.min_visits"
+                  v-model.number="config.min_lifetime_stamps"
                   type="number"
                   min="1"
                   class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"

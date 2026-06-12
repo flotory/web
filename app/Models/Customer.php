@@ -15,12 +15,14 @@ class Customer extends Model
         'venue_id',
         'user_id',
         'stamps',
+        'lifetime_stamps',
     ];
 
     protected function casts(): array
     {
         return [
             'stamps' => 'integer',
+            'lifetime_stamps' => 'integer',
         ];
     }
 

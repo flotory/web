@@ -22,6 +22,7 @@ export interface NfcStampResponse {
   current_cycle: number
   cycle_completed: boolean
   joined_on_scan?: boolean
+  campaign_warning?: string | null
   message: string
   occurred_at: string
 }

@@ -56,6 +56,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
 | Owner signup | Register with owner intent → **My Venues** create form. |
 | Venue listing status | `draft` → `pending_review` → `published`. Customers join only when **published**. |
+| Venue slug after publish | **Locked** once `published` — owner and admin APIs reject slug changes; QR links stay valid. |
 | Post-login routing (web) | Owners → dashboard; non-owners → `/app` (mobile download). |
 | Customer primary surface | **Mobile app only**: Stamp (NFC), Wallet, slide redeem. |
 | Owner campaigns | `/campaigns` workspace; dashboard links for recommendations. |

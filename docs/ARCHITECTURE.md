@@ -96,7 +96,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 
 **`addStamp(Customer, User $actor, int $stamps, ?StampAwardContext $context)`**
 
-1. Reject duplicate award within cooldown (`loyalty.stamp_cooldown_seconds`, default 2s) via recent `visits`.
+1. Reject duplicate award within cooldown (`loyalty.stamp_cooldown_seconds`, default 3s) via recent `visits`.
 2. Lock customer; award stamps (NFC: always base 1 × campaign multiplier).
 3. Unlock milestones at or below current stamp count for active cycle.
 4. If stamps ≥ max active milestone: complete cycle, reset stamps to 0, start next cycle.

@@ -9,6 +9,7 @@ use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\VenueAddressUpdateService;
 use App\Services\VenuePublicationService;
+use App\Services\VenueTimezoneService;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class VenueController extends Controller
     public function __construct(
         private VenueAddressUpdateService $venueAddresses,
         private VenuePublicationService $publication,
+        private VenueTimezoneService $timezones,
     ) {}
     public function index(Request $request): JsonResponse
     {
@@ -182,12 +184,14 @@ class VenueController extends Controller
             'role' => 'owner',
         ]);
 
+        $this->timezones->applyToVenue($venue, $location['latitude'], $location['longitude']);
+
         $user->forceFill([
             'active_venue_id' => $venue->id,
         ])->save();
 
         return response()->json([
-            'venue' => $this->presentVenue($venue),
+            'venue' => $this->presentVenue($venue->fresh()),
         ], 201);
     }
 
@@ -205,11 +209,15 @@ class VenueController extends Controller
         $this->venueAddresses->assertCanApply($venue, $location, enforceDailyLimit: true);
         $this->venueAddresses->recordChangeIfNeeded($venue, $request->user(), $location);
 
+        $requestedSlug = $request->filled('slug')
+            ? $request->string('slug')->toString()
+            : $venue->slug;
+
+        $this->publication->assertSlugCanChange($venue, $requestedSlug);
+
         $venue->update([
             'name' => $request->string('name')->toString(),
-            'slug' => $request->filled('slug')
-                ? $request->string('slug')->toString()
-                : $venue->slug,
+            'slug' => $requestedSlug,
             'category' => $request->filled('category')
                 ? $request->string('category')->toString()
                 : $venue->category,
@@ -220,6 +228,9 @@ class VenueController extends Controller
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
         ]);
+
+        $venue = $venue->fresh();
+        $this->timezones->applyToVenue($venue, $location['latitude'], $location['longitude']);
 
         return response()->json([
             'venue' => $this->presentVenue($venue->fresh()->loadCount(['customers', 'visits', 'rewards'])),

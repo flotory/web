@@ -11,6 +11,7 @@ import { useRealtime } from '../providers/RealtimeProvider'
 import { colors } from '../theme'
 import type { RewardWalletItem, VenueRef } from '../types/loyalty'
 import { useFadeOnReady } from './useFadeOnReady'
+import { useCustomerSurfaceRefresh } from './useCustomerSurfaceRefresh'
 import { useRedeemRefresh } from './useRedeemRefresh'
 import { useRewardsWallet } from './useRewardsWallet'
 import { useScreenResource } from './useScreenResource'
@@ -74,6 +75,7 @@ export function useCustomerHome() {
     void silentRefreshWallet()
   }, [silentRefreshCards, silentRefreshWallet])
   useRedeemRefresh(refreshAfterRedeem)
+  useCustomerSurfaceRefresh(refresh)
 
   const reload = useCallback(() => {
     cardsQuery.reload()

@@ -87,6 +87,20 @@ class NfcStampControllerTest extends TestCase
         $this->assertSame(1, StampEvent::query()->where('user_id', $customerUser->id)->count());
     }
 
+    public function test_nfc_stamp_rejects_stamp_at_soft_deleted_venue(): void
+    {
+        $customerUser = $this->createUser(['email' => 'nfc-deleted@example.com']);
+        $venue = $this->createPublishedVenue();
+        $tag = $this->createNfcTag($venue);
+        $venue->delete();
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('venue');
+    }
+
     public function test_nfc_stamp_allows_second_tap_after_cooldown(): void
     {
         Carbon::setTestNow('2026-06-11 12:00:00');
@@ -103,7 +117,7 @@ class NfcStampControllerTest extends TestCase
 
             $this->postJson("/api/nfc/t/{$tag->token}/stamp")->assertCreated();
 
-            Carbon::setTestNow('2026-06-11 12:00:03');
+            Carbon::setTestNow('2026-06-11 12:00:04');
 
             $this->postJson("/api/nfc/t/{$tag->token}/stamp")
                 ->assertCreated()

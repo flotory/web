@@ -14,21 +14,26 @@ use Illuminate\Support\Collection;
  */
 class CampaignEngine
 {
-    public function multiplierFor(Customer $customer, Venue $venue, ?Carbon $now = null): int
-    {
-        $now ??= Carbon::now();
-        $multipliers = $this->matchingCampaignsFor($customer, $venue, $now)
+    public function multiplierFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): int {
+        $multipliers = $this->matchingCampaignsFor($customer, $venue, $now, $pendingLifetimeStamps)
             ->map(fn (Campaign $campaign): int => $this->multiplierValue($campaign))
             ->all();
 
         return $multipliers === [] ? 1 : max($multipliers);
     }
 
-    public function winningCampaignFor(Customer $customer, Venue $venue, ?Carbon $now = null): ?Campaign
-    {
-        $now ??= Carbon::now();
-
-        return $this->matchingCampaignsFor($customer, $venue, $now)
+    public function winningCampaignFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): ?Campaign {
+        return $this->matchingCampaignsFor($customer, $venue, $now, $pendingLifetimeStamps)
             ->sortByDesc(fn (Campaign $campaign): int => $this->multiplierValue($campaign))
             ->first();
     }
@@ -36,15 +41,25 @@ class CampaignEngine
     /**
      * @return Collection<int, Campaign>
      */
-    public function matchingCampaignsFor(Customer $customer, Venue $venue, ?Carbon $now = null): Collection
-    {
-        $now ??= Carbon::now();
+    public function matchingCampaignsFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): Collection {
+        $now = $this->venueNow($venue, $now);
 
         return Campaign::query()
             ->where('venue_id', $venue->id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->get()
-            ->filter(fn (Campaign $campaign): bool => $this->customerMatches($customer, $campaign, $now))
+            ->filter(fn (Campaign $campaign): bool => $this->customerMatches(
+                $customer,
+                $campaign,
+                $venue,
+                $now,
+                $pendingLifetimeStamps,
+            ))
             ->values();
     }
 
@@ -53,9 +68,14 @@ class CampaignEngine
         return max(1, (int) ($campaign->config['stamp_multiplier'] ?? 2));
     }
 
-    private function customerMatches(Customer $customer, Campaign $campaign, Carbon $now): bool
-    {
-        if (! $this->isScheduleOpen($campaign, $now)) {
+    private function customerMatches(
+        Customer $customer,
+        Campaign $campaign,
+        Venue $venue,
+        Carbon $now,
+        int $pendingLifetimeStamps,
+    ): bool {
+        if (! $this->isScheduleOpen($campaign, $venue, $now)) {
             return false;
         }
 
@@ -67,18 +87,19 @@ class CampaignEngine
             CampaignTemplates::QUIET_DAY => $this->matchesDayOfWeek($campaign, $now),
             CampaignTemplates::HAPPY_HOUR => $this->matchesDayOfWeek($campaign, $now)
                 && $this->matchesTimeWindow($campaign, $now),
-            CampaignTemplates::VIP => $this->isLoyalCustomer(
+            CampaignTemplates::VIP => $this->isVipCustomer(
                 $customer,
-                (int) ($campaign->config['min_visits'] ?? 5),
+                $this->minLifetimeStampsFor($campaign),
                 (int) ($campaign->config['min_rewards_claimed'] ?? 1),
+                $pendingLifetimeStamps,
             ),
             default => false,
         };
     }
 
-    public function isScheduleOpen(Campaign $campaign, ?Carbon $now = null): bool
+    public function isScheduleOpen(Campaign $campaign, Venue $venue, ?Carbon $now = null): bool
     {
-        $now ??= Carbon::now();
+        $now = $this->venueNow($venue, $now);
 
         if ($campaign->starts_at && $now->lt($campaign->starts_at)) {
             return false;
@@ -99,6 +120,17 @@ class CampaignEngine
         }
 
         return true;
+    }
+
+    private function venueNow(Venue $venue, ?Carbon $now = null): Carbon
+    {
+        $timezone = $venue->campaignTimezone();
+
+        if ($now !== null) {
+            return $now->copy()->timezone($timezone);
+        }
+
+        return Carbon::now($timezone);
     }
 
     private function matchesDayOfWeek(Campaign $campaign, Carbon $now): bool
@@ -123,7 +155,11 @@ class CampaignEngine
 
         $current = $now->format('H:i');
 
-        return $current >= $start && $current <= $end;
+        if ($start <= $end) {
+            return $current >= $start && $current <= $end;
+        }
+
+        return $current >= $start || $current <= $end;
     }
 
     private function isInactiveCustomer(Customer $customer, int $inactiveDays): bool
@@ -137,11 +173,22 @@ class CampaignEngine
         return Carbon::parse($lastVisit)->lessThan(now()->subDays($inactiveDays));
     }
 
-    private function isLoyalCustomer(Customer $customer, int $minVisits, int $minRewardsClaimed): bool
-    {
-        $visits = $customer->visits()->count();
+    private function isVipCustomer(
+        Customer $customer,
+        int $minLifetimeStamps,
+        int $minRewardsClaimed,
+        int $pendingLifetimeStamps,
+    ): bool {
+        $lifetimeStamps = (int) $customer->lifetime_stamps + $pendingLifetimeStamps;
         $claimed = $customer->rewardUnlocks()->whereNotNull('claimed_at')->count();
 
-        return $visits >= $minVisits || $claimed >= $minRewardsClaimed;
+        return $lifetimeStamps >= $minLifetimeStamps || $claimed >= $minRewardsClaimed;
+    }
+
+    private function minLifetimeStampsFor(Campaign $campaign): int
+    {
+        $config = $campaign->config ?? [];
+
+        return (int) ($config['min_lifetime_stamps'] ?? $config['min_visits'] ?? 5);
     }
 }

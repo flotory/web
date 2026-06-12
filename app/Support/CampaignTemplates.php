@@ -103,7 +103,7 @@ class CampaignTemplates
                 'push_message' => 'Thanks for being a regular.',
                 'config' => [
                     'stamp_multiplier' => 2,
-                    'min_visits' => 5,
+                    'min_lifetime_stamps' => 5,
                     'min_rewards_claimed' => 1,
                 ],
                 'starts_at' => null,

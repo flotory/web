@@ -8,6 +8,7 @@ use App\Models\Venue;
 use App\Services\VenueAddressUpdateService;
 use App\Services\VenueBrandingService;
 use App\Services\VenuePublicationService;
+use App\Services\VenueTimezoneService;
 use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class AdminVenueManagementController extends Controller
         private VenueBrandingService $branding,
         private VenueAddressUpdateService $venueAddresses,
         private VenuePublicationService $publication,
+        private VenueTimezoneService $timezones,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -94,11 +96,15 @@ class AdminVenueManagementController extends Controller
         $this->venueAddresses->assertCanApply($venue, $location, enforceDailyLimit: false);
         $this->venueAddresses->recordChangeIfNeeded($venue, $request->user(), $location);
 
+        $requestedSlug = $request->filled('slug')
+            ? $request->string('slug')->toString()
+            : $venue->slug;
+
+        $this->publication->assertSlugCanChange($venue, $requestedSlug);
+
         $venue->update([
             'name' => $request->string('name')->toString(),
-            'slug' => $request->filled('slug')
-                ? $request->string('slug')->toString()
-                : $venue->slug,
+            'slug' => $requestedSlug,
             'category' => $request->filled('category')
                 ? $request->string('category')->toString()
                 : $venue->category,
@@ -109,6 +115,9 @@ class AdminVenueManagementController extends Controller
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
         ]);
+
+        $venue = $venue->fresh();
+        $this->timezones->applyToVenue($venue, $location['latitude'], $location['longitude']);
 
         AuditLog::record(
             description: 'venue.admin_updated',

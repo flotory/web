@@ -202,6 +202,21 @@ class VenuePublicationService
         ]);
     }
 
+    public function assertSlugCanChange(Venue $venue, string $requestedSlug): void
+    {
+        if (($venue->status ?? Venue::STATUS_DRAFT) !== Venue::STATUS_PUBLISHED) {
+            return;
+        }
+
+        if ($requestedSlug === $venue->slug) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'slug' => 'The venue URL cannot be changed after the listing is published. Printed QR codes and customer links rely on this address.',
+        ]);
+    }
+
     private function hasMappedAddress(Venue $venue): bool
     {
         return filled($venue->address)

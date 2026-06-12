@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\NfcTag;
 use App\Models\StampEvent;
 use App\Models\User;
+use App\Models\Venue;
 use App\Support\AuditLog;
 use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,7 @@ class NfcStampService
                 'next_milestone' => $payload['next_reward'],
             ],
             'joined_on_scan' => (bool) ($payload['joined_on_scan'] ?? false),
+            'campaign_warning' => $payload['campaign_warning'] ?? null,
             'stamp_event_id' => $payload['stamp_event_id'] ?? null,
             'nfc_tag' => $payload['nfc_tag'] ?? null,
             'message' => $payload['cycle_completed'] ?? false
@@ -108,8 +110,7 @@ class NfcStampService
      */
     public function awardStampFromTap(User $user, NfcTag $tag): array
     {
-        $tag->loadMissing('venue');
-        $venue = $tag->venue;
+        $venue = Venue::withTrashed()->find($tag->venue_id);
 
         if ($venue === null) {
             throw ValidationException::withMessages([
@@ -161,7 +162,7 @@ class NfcStampService
 
     private function guardNfcRateLimits(User $user, NfcTag $tag): void
     {
-        $debounceSeconds = max((int) config('loyalty.nfc.debounce_seconds', 2), 1);
+        $debounceSeconds = max((int) config('loyalty.nfc.debounce_seconds', 3), 1);
         $windowSeconds = max((int) config('loyalty.nfc.window_seconds', 120), 1);
         $maxStamps = max((int) config('loyalty.nfc.max_stamps_per_window', 10), 1);
 

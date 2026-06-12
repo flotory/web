@@ -10,8 +10,8 @@ import {
   nfcLog,
   readFlotoryNfcToken,
 } from '../lib/nfcReader'
+import { completeNfcStampSuccess } from '../lib/completeNfcStampSuccess'
 import { submitNfcStamp } from '../lib/nfcStamp'
-import { cardRouteFromNfcStamp, nfcResponseToStampPayload } from '../lib/stampLiveUpdate'
 import { useAuth } from '../providers/AuthProvider'
 import { useRealtime } from '../providers/RealtimeProvider'
 
@@ -59,9 +59,12 @@ export function useNfcStampScan() {
       })
 
       const response = await submitNfcStamp(nfcToken, authToken)
-      ingestStamp(nfcResponseToStampPayload(response))
+      await completeNfcStampSuccess(response, authToken, ingestStamp, router)
       void hapticSuccess()
-      router.navigate(cardRouteFromNfcStamp(response))
+
+      if (response.campaign_warning) {
+        Alert.alert('Stamp added', response.campaign_warning)
+      }
     } catch (exception) {
       const message =
         exception instanceof ApiError

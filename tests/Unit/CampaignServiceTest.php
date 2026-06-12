@@ -71,11 +71,11 @@ class CampaignServiceTest extends TestCase
 
         $this->seedActiveCampaign($venue, $owner, CampaignTemplates::VIP, [
             'stamp_multiplier' => 2,
-            'min_visits' => 1,
+            'min_lifetime_stamps' => 1,
             'min_rewards_claimed' => 0,
         ]);
 
-        $this->createVisit($customer, $owner);
+        $customer->forceFill(['lifetime_stamps' => 1])->save();
 
         $this->assertSame(2, $this->campaigns->multiplierFor($customer, $venue));
     }
@@ -215,6 +215,71 @@ class CampaignServiceTest extends TestCase
         $this->assertNotNull($winner);
         $this->assertSame($high->id, $winner->id);
         $this->assertSame('Happy 3x', $winner->name);
+    }
+
+    public function test_vip_matches_when_current_stamp_reaches_lifetime_threshold(): void
+    {
+        $venue = $this->createVenue();
+        $guest = $this->createUser(['email' => 'vip-threshold@example.com']);
+        $customer = $this->createCustomer($venue, $guest, ['lifetime_stamps' => 4]);
+        $owner = $this->createUser(['email' => 'vip-owner@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $this->seedActiveCampaign($venue, $owner, CampaignTemplates::VIP, [
+            'stamp_multiplier' => 2,
+            'min_lifetime_stamps' => 5,
+            'min_rewards_claimed' => 99,
+        ]);
+
+        $this->assertSame(2, $this->campaigns->multiplierFor($customer, $venue, null, 1));
+    }
+
+    public function test_happy_hour_supports_overnight_time_window(): void
+    {
+        $venue = $this->createVenue();
+        $guest = $this->createUser(['email' => 'overnight@example.com']);
+        $customer = $this->createCustomer($venue, $guest);
+        $owner = $this->createUser(['email' => 'overnight-owner@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Carbon::setTestNow(Carbon::parse('2026-06-02 23:30:00'));
+
+        try {
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::HAPPY_HOUR, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [2],
+                'start_time' => '22:00',
+                'end_time' => '02:00',
+            ]);
+
+            $this->assertSame(2, $this->campaigns->multiplierFor($customer, $venue));
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_happy_hour_uses_venue_timezone(): void
+    {
+        $venue = $this->createVenue(['timezone' => 'America/Los_Angeles']);
+        $guest = $this->createUser(['email' => 'tz-guest@example.com']);
+        $customer = $this->createCustomer($venue, $guest);
+        $owner = $this->createUser(['email' => 'tz-owner@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Carbon::setTestNow(Carbon::parse('2026-06-02 22:30:00', 'UTC'));
+
+        try {
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::HAPPY_HOUR, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [2],
+                'start_time' => '15:00',
+                'end_time' => '18:00',
+            ]);
+
+            $this->assertSame(2, $this->campaigns->multiplierFor($customer, $venue));
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     /**

@@ -30,35 +30,56 @@ class LoyaltyStampService
         $context ??= StampAwardContext::nfcTap();
         $customer->loadMissing('venue');
         $requestedStamps = max($stamps, 1);
-        $multiplier = $context->appliesCampaignMultiplier()
-            ? $this->campaigns->multiplierFor($customer, $customer->venue)
-            : 1;
+        $campaignWarning = null;
+        $multiplier = 1;
+
+        if ($context->appliesCampaignMultiplier()) {
+            try {
+                $multiplier = $this->campaigns->multiplierFor($customer, $customer->venue, null, $requestedStamps);
+            } catch (Throwable $exception) {
+                Log::warning('Campaign multiplier failed during stamp; awarding base stamp.', [
+                    'customer_id' => $customer->id,
+                    'venue_id' => $customer->venue_id,
+                    'exception' => $exception->getMessage(),
+                ]);
+                $campaignWarning = 'Your stamp was added. Bonus stamps from the promotion could not be applied right now — any extra stamps will be added once we finish calculating the promotion.';
+                $multiplier = 1;
+            }
+        }
+
         $stampsToAward = $requestedStamps * $multiplier;
 
-        $result = DB::transaction(function () use ($customer, $actor, $stampsToAward, $requestedStamps, $multiplier, $context): array {
+        $result = DB::transaction(function () use ($customer, $actor, $stampsToAward, $requestedStamps, $multiplier, $context, $campaignWarning): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $customer->load('user', 'venue');
             $this->guardAgainstDuplicateScan($customer);
             $rewards = $this->milestonesForVenue($customer);
             $cycle = $this->activeCycle($customer);
             $previousStamps = $customer->stamps;
-            $newStamps = $customer->stamps + $stampsToAward;
-
+            $balance = $customer->stamps + $stampsToAward;
             $maxMilestone = (int) ($rewards->max('required_stamps') ?? 0);
             $completedCycle = false;
 
-            if ($maxMilestone > 0 && $newStamps >= $maxMilestone) {
-                $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $maxMilestone);
-                $cycle->forceFill([
-                    'completed_at' => now(),
-                ])->save();
+            if ($maxMilestone > 0) {
+                while ($balance >= $maxMilestone) {
+                    $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $maxMilestone);
+                    $cycle->forceFill([
+                        'completed_at' => now(),
+                    ])->save();
 
-                $customer->forceFill(['stamps' => 0])->save();
-                $cycle = $this->startNextCycle($customer, $cycle->cycle_number + 1);
-                $completedCycle = true;
-            } else {
-                $customer->forceFill(['stamps' => $newStamps])->save();
-                $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $newStamps);
+                    $balance -= $maxMilestone;
+                    $cycle = $this->startNextCycle($customer, $cycle->cycle_number + 1);
+                    $completedCycle = true;
+                }
+            }
+
+            $customer->forceFill([
+                'stamps' => $balance,
+                'lifetime_stamps' => (int) $customer->lifetime_stamps + $stampsToAward,
+            ])->save();
+
+            if ($balance > 0) {
+                $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $balance);
             }
 
             $customer->refresh()->load('user', 'venue');
@@ -77,7 +98,8 @@ class LoyaltyStampService
                 'added_stamps' => $stampsToAward,
                 'requested_stamps' => $requestedStamps,
                 'stamp_multiplier' => $multiplier,
-                'active_campaign' => $this->campaigns->promotionForCustomer($customer),
+                'active_campaign' => $this->resolveActiveCampaignForStamp($customer, $multiplier, $campaignWarning),
+                'campaign_warning' => $campaignWarning,
                 'next_reward' => $this->nextRewardFor($customer),
                 'available_rewards' => $this->availableRewardsFor($customer),
                 'milestones' => $journey['milestones'],
@@ -287,7 +309,7 @@ class LoyaltyStampService
             ->get();
     }
 
-    /** Ensures RewardUnlock rows exist for every milestone the customer has already earned. */
+    /** Manual repair helper — not called from customer API reads. Use only for data fixes. */
     public function syncEligibleUnlocks(Customer $customer): void
     {
         $customer = $customer->fresh() ?? $customer;
@@ -400,9 +422,28 @@ class LoyaltyStampService
         }
     }
 
+    private function resolveActiveCampaignForStamp(Customer $customer, int $multiplier, ?string $campaignWarning): ?array
+    {
+        if ($campaignWarning !== null || $multiplier <= 1) {
+            return null;
+        }
+
+        try {
+            return $this->campaigns->promotionForCustomer($customer);
+        } catch (Throwable $exception) {
+            Log::warning('Campaign promotion payload failed after stamp.', [
+                'customer_id' => $customer->id,
+                'venue_id' => $customer->venue_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     private function guardAgainstDuplicateScan(Customer $customer): void
     {
-        $cooldownSeconds = max((int) config('loyalty.stamp_cooldown_seconds', 2), 1);
+        $cooldownSeconds = max((int) config('loyalty.stamp_cooldown_seconds', 3), 1);
 
         $recentVisitExists = $customer->visits()
             ->where('created_at', '>=', now()->sub(CarbonInterval::seconds($cooldownSeconds)))

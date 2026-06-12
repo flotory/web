@@ -9,6 +9,7 @@ import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/Cust
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
+import { useCustomerSurfaceRefresh } from '../src/hooks/useCustomerSurfaceRefresh'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { withAppFont } from '../src/lib/typography'
 import { colors, radius, space, tabBar } from '../src/theme'
@@ -17,7 +18,10 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const { data: cards, loading, refreshing, error, refresh, reload } = useCustomerCards()
+  const { data: cards, loading, refreshing, error, refresh, reload, silentRefresh } = useCustomerCards()
+  useCustomerSurfaceRefresh(() => {
+    void silentRefresh()
+  })
   const fade = useFadeOnReady(!loading)
 
   const cardList = cards ?? []

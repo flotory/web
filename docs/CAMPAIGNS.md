@@ -42,10 +42,10 @@ Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, 
 | **Bring Back**  | `inactive_days`, `duration_days`, `stamp_multiplier` (2 or 3), `push_enabled`        |
 | **Quiet Day**   | `days_of_week` (1–7 ISO), `duration_days`, `stamp_multiplier`, `push_enabled`        |
 | **Happy Hour**  | `days_of_week`, `start_time`, `end_time` (`H:i`), `stamp_multiplier`, `push_enabled` |
-| **VIP Rewards** | `min_visits`, `min_rewards_claimed`, `stamp_multiplier`, `push_enabled`              |
+| **VIP Rewards** | `min_lifetime_stamps`, `min_rewards_claimed`, `stamp_multiplier`, `push_enabled`    |
 
 
-Defaults (examples): Bring Back — 30 days inactive, 14-day run, 2×; Quiet Day — Mon–Wed, 30-day run, 2×; Happy Hour — Mon–Fri 15:00–18:00, 2×; VIP — 5+ visits or 1+ reward claimed, 2×.
+Defaults (examples): Bring Back — 30 days inactive, 14-day run, 2×; Quiet Day — Mon–Wed, 30-day run, 2×; Happy Hour — Mon–Fri 15:00–18:00, 2× (overnight windows such as 22:00–02:00 supported); VIP — 5+ lifetime stamps or 1+ reward claimed, 2×. Schedule templates use the **venue timezone** (from Google address coordinates when available).
 
 ---
 

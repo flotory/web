@@ -251,6 +251,28 @@ class VenueControllerTest extends TestCase
         $this->assertSame($venueB->id, $owner->fresh()->active_venue_id);
     }
 
+    public function test_published_venue_cannot_change_slug(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createPublishedVenue(['slug' => 'live-cafe']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/venues/{$venue->id}", [
+            'name' => 'Live Cafe',
+            'slug' => 'new-live-cafe',
+            'category' => 'cafe',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('slug');
+
+        $this->assertDatabaseHas('venues', [
+            'id' => $venue->id,
+            'slug' => 'live-cafe',
+        ]);
+    }
+
     public function test_update_keeps_existing_slug_and_category_when_omitted(): void
     {
         $owner = $this->createUser();

@@ -94,7 +94,8 @@ class CampaignOwnerPresenter
         }
 
         if ($campaign->template_id === CampaignTemplates::VIP) {
-            $chips[] = (int) ($campaign->config['min_visits'] ?? 5).'+ visits';
+            $minLifetimeStamps = (int) ($campaign->config['min_lifetime_stamps'] ?? $campaign->config['min_visits'] ?? 5);
+            $chips[] = $minLifetimeStamps.'+ lifetime stamps';
             $chips[] = (int) ($campaign->config['min_rewards_claimed'] ?? 1).'+ rewards claimed';
         }
 

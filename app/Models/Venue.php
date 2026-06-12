@@ -32,6 +32,7 @@ class Venue extends Model
         'address',
         'latitude',
         'longitude',
+        'timezone',
         'google_place_id',
         'phone',
         'website',
@@ -58,6 +59,17 @@ class Venue extends Model
     public function scopePublished($query)
     {
         return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function campaignTimezone(): string
+    {
+        $timezone = $this->timezone;
+
+        if (is_string($timezone) && $timezone !== '' && in_array($timezone, timezone_identifiers_list(), true)) {
+            return $timezone;
+        }
+
+        return (string) config('app.timezone', 'UTC');
     }
 
     public function getArchivedAttribute(): bool

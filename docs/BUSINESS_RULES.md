@@ -11,6 +11,7 @@
 | [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked engineering choices (must not contradict this file)                |
 | [CAMPAIGNS.md](./CAMPAIGNS.md)         | Campaign UI, API paths, and test references                               |
 | [PRODUCT.md](./PRODUCT.md)             | Journeys and positioning                                                  |
+| [PROJECT_BUSINESS_REFERENCE.md](./PROJECT_BUSINESS_REFERENCE.md) | One-page overview, flows, edge-case audit checklist |
 
 
 When code, UI, or support docs disagree with this file, **fix the product or update this file explicitly** — do not let drift accumulate silently.
@@ -53,7 +54,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **L7.** **Stamps are not deducted** when a reward is claimed. Claiming only marks the unlock as used.
 
-**L8.** When the customer reaches the **highest active milestone** threshold in the current cycle, the cycle **completes**: stamp balance resets to **0**, a new cycle begins, and new unlocks use the new cycle number. **Unclaimed unlocks from prior cycles remain redeemable.**
+**L8.** When the customer reaches the **highest active milestone** threshold in the current cycle, the cycle **completes**: stamp balance resets to **0**, or **carries overflow** into the next cycle when a single award exceeded the milestone (e.g. 9 + 3 at max 10 → cycle completes, next cycle starts at **2**). Multiple completions in one award are allowed when the award spans more than one full cycle. **Unclaimed unlocks from prior cycles remain redeemable.**
 
 **L9.** Cycle completion uses the **maximum** `required_stamps` among **active** milestones at the venue. Archiving the top milestone changes which threshold completes a cycle.
 
@@ -71,7 +72,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **S5.** Each stamp award creates **exactly one** visit record.
 
-**S6.** The same customer must not receive duplicate stamp awards from accidental double-tap within **5 seconds** (same venue, same customer).
+**S6.** The same customer must not receive duplicate stamp awards from accidental double-tap within **3 seconds** (same venue, same customer). NFC stands also enforce a **3-second** per-tag debounce.
 
 **S7.** NFC stamp stands are venue-scoped; a tap must only award at the stand’s venue.
 
@@ -132,7 +133,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 - **Bring Back:** customer inactive for at least `inactive_days` since last visit (or since join if no visits).
 - **Quiet Day:** current weekday (ISO 1–7) in `days_of_week`, and campaign within `starts_at` / `ends_at` when set.
 - **Happy Hour:** weekday in `days_of_week`, local time within `start_time`–`end_time`, and within campaign dates when set.
-- **VIP:** visit count ≥ `min_visits` **or** claimed reward count ≥ `min_rewards_claimed`.
+- **VIP:** lifetime stamps earned at the venue ≥ `min_lifetime_stamps` **or** claimed reward count ≥ `min_rewards_claimed`. The current tap counts toward lifetime stamps when eligibility is evaluated.
 
 **C7.** Bring Back and Quiet Day campaigns, when activated, get a bounded run (`duration_days` → `starts_at` / `ends_at`). Happy Hour and VIP may run without an end date until the owner ends them.
 
@@ -233,8 +234,8 @@ These are **known behaviors**, not bugs, until a rule change is approved and shi
 
 | ID      | Rule area    | Status   | Behavior                                                                                   | Target fix                                                          |
 | ------- | ------------ | -------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| **E1**  | L8 / S4      | Accepted | Stamp overflow lost on cycle reset if scan pushes balance past max milestone in one action | Carry overflow, cap UI, or staff warning                            |
-| **E2**  | R9           | Accepted | New lower milestone does not retro-unlock for existing stamp totals                        | Backfill on create or owner communication                           |
+| **E1**  | L8 / S4      | Resolved | Overflow stamps carry into the next cycle (and multiple cycles complete in one award when needed) | —                                                                   |
+| **E2**  | R9           | Resolved | New milestone unlocks on the customer’s **next stamp event** only — not on card/wallet/home API load | —                                                                   |
 | **E3**  | X2           | Resolved | Redeem binds to specific `unlock_id` via slide-to-redeem                                   | —                                                                   |
 | **E4**  | U7 / journey | Accepted | Card journey shows current cycle; older-cycle unlocks mainly in Rewards                    | Cross-cycle indicators on card                                      |
 | **E5**  | R3 / U7      | Resolved | Earned unlocks remain redeemable after owner archives the milestone                        | Wallet may show “retired” copy; slide redeem still works            |
@@ -298,5 +299,6 @@ When adding a feature, add or update a rule here **before** merge, then add a te
 | ---------- | --------------------------------------------------------------------------------- |
 | 2026-06-03 | Full rewrite: campaigns, redemption, exceptions table, rule IDs, canonical status |
 | 2026-06-08 | Pivot: NFC-only stamps, slide-to-redeem, staff/scanner/claim QR removed; consolidated schema |
+| 2026-06-08 | L8 overflow carry; E1/E2 resolved; unlocks on stamp only (no API read sync) |
 
 

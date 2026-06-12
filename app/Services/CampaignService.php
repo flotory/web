@@ -17,22 +17,34 @@ class CampaignService
         private CampaignOwnerPresenter $presenter,
     ) {}
 
-    public function multiplierFor(Customer $customer, Venue $venue, ?Carbon $now = null): int
-    {
-        return $this->engine->multiplierFor($customer, $venue, $now);
+    public function multiplierFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): int {
+        return $this->engine->multiplierFor($customer, $venue, $now, $pendingLifetimeStamps);
     }
 
-    public function winningCampaignFor(Customer $customer, Venue $venue, ?Carbon $now = null): ?Campaign
-    {
-        return $this->engine->winningCampaignFor($customer, $venue, $now);
+    public function winningCampaignFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): ?Campaign {
+        return $this->engine->winningCampaignFor($customer, $venue, $now, $pendingLifetimeStamps);
     }
 
     /**
      * @return Collection<int, Campaign>
      */
-    public function matchingCampaignsFor(Customer $customer, Venue $venue, ?Carbon $now = null): Collection
-    {
-        return $this->engine->matchingCampaignsFor($customer, $venue, $now);
+    public function matchingCampaignsFor(
+        Customer $customer,
+        Venue $venue,
+        ?Carbon $now = null,
+        int $pendingLifetimeStamps = 0,
+    ): Collection {
+        return $this->engine->matchingCampaignsFor($customer, $venue, $now, $pendingLifetimeStamps);
     }
 
     /**
@@ -211,7 +223,7 @@ class CampaignService
             ),
             CampaignTemplates::VIP => $this->loyalCustomerCount(
                 $venue,
-                (int) ($config['min_visits'] ?? 5),
+                (int) ($config['min_lifetime_stamps'] ?? $config['min_visits'] ?? 5),
                 (int) ($config['min_rewards_claimed'] ?? 1),
             ),
             default => $venue->customers()->count(),
@@ -403,13 +415,13 @@ class CampaignService
             ->count();
     }
 
-    private function loyalCustomerCount(Venue $venue, int $minVisits, int $minRewardsClaimed): int
+    private function loyalCustomerCount(Venue $venue, int $minLifetimeStamps, int $minRewardsClaimed): int
     {
         return Customer::query()
             ->where('venue_id', $venue->id)
-            ->where(function (Builder $query) use ($minVisits, $minRewardsClaimed): void {
+            ->where(function (Builder $query) use ($minLifetimeStamps, $minRewardsClaimed): void {
                 $query
-                    ->has('visits', '>=', $minVisits)
+                    ->where('lifetime_stamps', '>=', $minLifetimeStamps)
                     ->orWhereHas(
                         'rewardUnlocks',
                         fn (Builder $unlock) => $unlock->whereNotNull('claimed_at'),

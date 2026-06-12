@@ -4,7 +4,10 @@ namespace Tests\Unit;
 
 use App\Models\CustomerRewardCycle;
 use App\Models\RewardUnlock;
+use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
+use Mockery;
+use RuntimeException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\BuildsLoyaltyData;
@@ -139,6 +142,7 @@ class LoyaltyStampServiceTest extends TestCase
         $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 0);
 
         $this->assertSame(1, $result['customer']->stamps);
+        $this->assertSame(1, $result['customer']->lifetime_stamps);
         $this->assertFalse($result['cycle_completed']);
     }
 
@@ -250,6 +254,71 @@ class LoyaltyStampServiceTest extends TestCase
 
         $this->assertSame(0, $loyalty->pendingRewardCountFor($customer));
         $this->assertTrue($loyalty->journeyFor($customer)['milestones'][0]['claimed']);
+    }
+
+    public function test_add_stamp_carries_overflow_into_next_cycle(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'overflow@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 9]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 3);
+
+        $this->assertSame(2, $result['customer']->stamps);
+        $this->assertTrue($result['cycle_completed']);
+        $this->assertDatabaseHas('reward_unlocks', [
+            'customer_id' => $customer->id,
+            'cycle_number' => 1,
+            'claimed_at' => null,
+        ]);
+        $this->assertDatabaseHas('customer_reward_cycles', [
+            'customer_id' => $customer->id,
+            'cycle_number' => 2,
+            'completed_at' => null,
+        ]);
+    }
+
+    public function test_add_stamp_can_complete_multiple_cycles_in_one_award(): void
+    {
+        $staff = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'multi-cycle@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 8]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $staff, 20);
+
+        $this->assertSame(8, $result['customer']->stamps);
+        $this->assertTrue($result['cycle_completed']);
+        $this->assertSame(2, CustomerRewardCycle::query()->where('customer_id', $customer->id)->whereNotNull('completed_at')->count());
+    }
+
+    public function test_add_stamp_awards_base_stamp_when_campaign_multiplier_fails(): void
+    {
+        $customerUser = $this->createUser(['email' => 'campaign-fail@example.com']);
+        $venue = $this->createVenue();
+        $customer = $this->createCustomer($venue, $customerUser, ['stamps' => 0]);
+        $this->createReward($venue, ['required_stamps' => 10]);
+        $this->createRewardCycle($customer);
+
+        $campaigns = Mockery::mock(CampaignService::class);
+        $campaigns->shouldReceive('multiplierFor')
+            ->once()
+            ->andThrow(new RuntimeException('campaign unavailable'));
+
+        $this->app->instance(CampaignService::class, $campaigns);
+
+        $result = app(LoyaltyStampService::class)->addStamp($customer, $customerUser, 1);
+
+        $this->assertSame(1, $result['customer']->stamps);
+        $this->assertSame(1, $result['added_stamps']);
+        $this->assertSame(1, $result['stamp_multiplier']);
+        $this->assertNotNull($result['campaign_warning']);
+        $this->assertNull($result['active_campaign']);
     }
 
     public function test_add_stamp_starts_next_cycle_after_completion(): void

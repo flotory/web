@@ -172,6 +172,7 @@ class VenueCampaignController extends Controller
             'config.days_of_week.*' => ['integer', 'min:1', 'max:7'],
             'config.start_time' => ['sometimes', 'date_format:H:i'],
             'config.end_time' => ['sometimes', 'date_format:H:i'],
+            'config.min_lifetime_stamps' => ['sometimes', 'integer', 'min:1', 'max:500'],
             'config.min_visits' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'config.min_rewards_claimed' => ['sometimes', 'integer', 'min:0', 'max:50'],
         ]);

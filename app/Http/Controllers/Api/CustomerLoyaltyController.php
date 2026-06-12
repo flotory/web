@@ -30,10 +30,6 @@ class CustomerLoyaltyController extends Controller
             ? $cards->firstWhere('venue_id', $request->integer('venue_id'))
             : $cards->first();
 
-        if ($activeCard) {
-            $loyalty->syncEligibleUnlocks($activeCard);
-        }
-
         $isList = ! $request->integer('venue_id');
 
         $claimedHistory = $isList
@@ -101,10 +97,6 @@ class CustomerLoyaltyController extends Controller
             ->orderBy('venue_id')
             ->get();
 
-        foreach ($cards as $card) {
-            $loyalty->syncEligibleUnlocks($card);
-        }
-
         $items = $cards->flatMap(function (Customer $card) use ($loyalty): array {
             return $loyalty->pendingUnlocksFor($card)
                 ->map(fn ($unlock): array => [
@@ -153,7 +145,6 @@ class CustomerLoyaltyController extends Controller
         CustomerAccess::requireCustomer($request->user(), $customer);
 
         $customer->load('venue');
-        $loyalty->syncEligibleUnlocks($customer);
 
         return response()->json([
             'active_card' => $customer,
@@ -189,7 +180,6 @@ class CustomerLoyaltyController extends Controller
         $unlock->load('customer', 'reward');
 
         CustomerAccess::requireUnlock($request->user(), $unlock);
-        $loyalty->syncEligibleUnlocks($unlock->customer);
 
         $claimed = $loyalty->redeemUnlock($unlock, $request->user());
 

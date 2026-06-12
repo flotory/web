@@ -55,6 +55,7 @@ const selectChevronStyle = {
 }
 
 const venueId = computed(() => Number(route.params.id))
+const slugLocked = computed(() => venue.value?.status === 'published')
 const linkCopied = ref(false)
 const publicSlug = computed(() => slug.value.trim() || venue.value?.slug || '')
 const landingUrl = computed(() => (publicSlug.value ? buildVenueLandingUrl(publicSlug.value) : ''))
@@ -270,7 +271,16 @@ onMounted(loadPage)
               </div>
               <div>
                 <label class="text-sm font-bold text-ink-muted" for="admin-edit-venue-slug">Slug</label>
-                <input id="admin-edit-venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface">
+                <input
+                  id="admin-edit-venue-slug"
+                  v-model="slug"
+                  :disabled="slugLocked"
+                  :readonly="slugLocked"
+                  class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                <p v-if="slugLocked" class="mt-2 text-xs font-medium text-ink-muted">
+                  Locked after publish so printed QR codes keep working.
+                </p>
               </div>
               <div>
                 <label class="text-sm font-bold text-ink-muted" for="admin-edit-venue-category">Category</label>

@@ -53,26 +53,28 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('journey.current_stamps', 3);
     }
 
-    public function test_card_syncs_pending_unlocks_when_stamps_qualify_but_unlock_row_missing(): void
+    public function test_card_does_not_unlock_until_next_stamp_when_unlock_row_missing(): void
     {
         $user = $this->createUser();
         $venue = $this->createVenue();
         $customer = $this->createCustomer($venue, $user, ['stamps' => 5]);
-        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->createReward($venue, ['required_stamps' => 5]);
         $this->createRewardCycle($customer);
 
         Sanctum::actingAs($user);
 
         $this->getJson("/api/customers/{$customer->id}/card")
             ->assertOk()
-            ->assertJsonCount(1, 'pending_unlocks')
-            ->assertJsonPath('pending_unlocks.0.reward.id', $reward->id);
+            ->assertJsonCount(0, 'pending_unlocks');
 
-        $unlockId = $this->getJson("/api/customers/{$customer->id}/card")->json('pending_unlocks.0.unlock_id');
+        app(\App\Services\LoyaltyStampService::class)->addStamp($customer->fresh(), $user, 1);
+
+        $unlockId = $this->getJson("/api/customers/{$customer->id}/card")
+            ->assertJsonCount(1, 'pending_unlocks')
+            ->json('pending_unlocks.0.unlock_id');
 
         $this->postJson("/api/customer/rewards/unlocks/{$unlockId}/redeem")
             ->assertCreated()
-            ->assertJsonPath('unlock.reward_id', $reward->id)
             ->assertJsonPath('unlock.claimed_by', $user->id);
     }
 

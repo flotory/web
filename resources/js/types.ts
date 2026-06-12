@@ -27,6 +27,7 @@ export interface Venue {
   review_note?: string | null
   submitted_at?: string | null
   published_at?: string | null
+  timezone?: string | null
   archived?: boolean
   deleted_at?: string | null
   customers_count?: number

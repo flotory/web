@@ -173,3 +173,19 @@ export async function joinVenueBySlug(token: string, slug: string): Promise<void
   await apiRequest(`/venues/${slug}/join`, { method: 'POST', token })
   invalidateCustomerCaches(token)
 }
+
+/** Fresh home, wallet, and card caches after a successful stamp — call before navigating away. */
+export async function refreshCustomerSurfacesAfterStamp(token: string, venueId?: number): Promise<void> {
+  invalidateCustomerCaches(token)
+
+  const tasks: Promise<unknown>[] = [
+    fetchCustomerCardsList(token, true),
+    fetchRewardsWallet(token, true),
+  ]
+
+  if (venueId != null) {
+    tasks.push(fetchCardDetail(token, String(venueId), true))
+  }
+
+  await Promise.all(tasks)
+}

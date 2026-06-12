@@ -18,6 +18,8 @@ export interface CampaignConfig {
   days_of_week?: number[]
   start_time?: string
   end_time?: string
+  min_lifetime_stamps?: number
+  /** @deprecated Use min_lifetime_stamps */
   min_visits?: number
   min_rewards_claimed?: number
 }
@@ -124,7 +126,7 @@ export function defaultConfigFor(templateId: CampaignTemplateId): CampaignConfig
         end_time: '18:00',
       }
     case 'vip_rewards':
-      return { stamp_multiplier: 2, min_visits: 5, min_rewards_claimed: 1 }
+      return { stamp_multiplier: 2, min_lifetime_stamps: 5, min_rewards_claimed: 1 }
   }
 }
 

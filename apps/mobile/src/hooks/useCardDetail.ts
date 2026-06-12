@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 
 import { fetchCardDetail, readCachedCardDetail } from '../lib/customerData'
 import { useAuth } from '../providers/AuthProvider'
+import { useCustomerSurfaceRefresh } from './useCustomerSurfaceRefresh'
 import { useScreenResource } from './useScreenResource'
 
 export function useCardDetail(venueId?: string) {
@@ -20,11 +21,17 @@ export function useCardDetail(venueId?: string) {
     return readCachedCardDetail(token, venueId)
   }, [token, venueId])
 
-  return useScreenResource({
+  const resource = useScreenResource({
     enabled: Boolean(token && venueId),
     refetchOnFocus: true,
     hydrate,
     errorMessage: 'Could not load this loyalty card.',
     load,
   })
+
+  useCustomerSurfaceRefresh(() => {
+    void resource.silentRefresh()
+  }, Boolean(token && venueId))
+
+  return resource
 }
