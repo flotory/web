@@ -171,7 +171,7 @@ These are **accepted** until explicitly changed in [BUSINESS_RULES.md](./BUSINES
 | **E8** | Soft-deleted venue | No new stamps; redeem **may** still work | Confusing card state |
 | **E10** | Multi-venue owner | Empty customers list without venue filter | Owner UX gap |
 | **E11** | Platform admin | `is_admin` broad bypass by design | Security / audit |
-| **E12** | Mobile refresh | After NFC stamp, home/wallet/card prefetch before navigate; mounted tabs listen for refresh | Realtime-only updates may still lag |
+| **E12** | Mobile refresh | After NFC stamp, home/wallet/card prefetch before navigate; mounted tabs listen for refresh | Polling-only updates may still lag |
 
 **Resolved:** E1 (overflow carry), E2 (stamp-only unlock), E3 (specific unlock redeem), E5 partial (archived still redeemable by design), E9 (staff removed).
 
@@ -356,7 +356,7 @@ Copy this into QA tickets or pre-release review.
 
 ### Mobile / sync
 - [ ] Background refresh failure (E12) — stale ready reward state
-- [ ] Reverb offline — polling fallback still updates after stamp
+- [ ] Polling refresh updates home/wallet/card after stamp and redeem
 
 ---
 

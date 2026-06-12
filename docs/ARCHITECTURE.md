@@ -8,7 +8,7 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 
 | Layer | Technology |
 |-------|------------|
-| API | Laravel 12, PHP 8.3+, MySQL |
+| API | Laravel 12, PHP 8.4, MySQL |
 | Auth | Laravel Sanctum (bearer tokens) |
 | OAuth | Laravel Socialite (Google) via web routes; mobile via web OAuth → `flotory://login?oauth_token=...` |
 | Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |

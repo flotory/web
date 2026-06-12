@@ -8,7 +8,7 @@ The MVP focuses on venue QR onboarding, digital stamp cards, **NFC stamp stands*
 
 ## Stack
 
-- Laravel 12, PHP 8.3+, MySQL, Sanctum, REST APIs, Laravel Socialite (Google)
+- Laravel 12, PHP 8.4, MySQL, Sanctum, REST APIs, Laravel Socialite (Google)
 - Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
 - Monolith architecture for VPS deployment
 
@@ -73,7 +73,7 @@ E2E tests use isolated `.env.e2e` and do not modify your Docker `.env`.
 
 ### Native
 
-If you are not using Docker, install PHP 8.3+ and Composer first.
+If you are not using Docker, install PHP 8.4+ and Composer first.
 
 ```bash
 cp .env.example .env

@@ -73,8 +73,8 @@ npm ci --prefix apps/mobile
 echo "==> Local CI: frontend typecheck + build"
 npm run build
 
-echo "==> Local CI: frontend unit tests"
-npm run test:unit
+echo "==> Local CI: web unit tests"
+npm run test:unit:web
 
 echo "==> Local CI: mobile typecheck"
 npm run typecheck --prefix apps/mobile

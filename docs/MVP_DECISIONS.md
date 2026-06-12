@@ -69,7 +69,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Soft delete venues | `venues.deleted_at`. |
 | Local file uploads | Logos, covers, reward images under `public/uploads/`. |
 | Monolith | Single repo, Laravel + Vue + Expo mobile. |
-| Reverb optional | Realtime enhances UX; polling fallback on mobile. |
+| Polling refresh | Mobile refreshes loyalty surfaces after stamp/redeem without websocket infrastructure. |
 | Visit timestamps | `visits` has `created_at` only. |
 
 ## Authorization

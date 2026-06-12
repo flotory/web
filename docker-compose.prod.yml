@@ -22,14 +22,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     command: >
-      sh -c "
-        composer install --no-dev --optimize-autoloader --no-interaction;
-        php artisan config:cache;
-        php artisan route:cache;
-        php artisan view:cache;
-        php artisan migrate --force;
-        php artisan serve --host=0.0.0.0 --port=8000
-      "
+      php artisan serve --host=0.0.0.0 --port=8000
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -49,10 +42,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     command: >
-      sh -c "
-        composer install --no-dev --optimize-autoloader --no-interaction;
-        php artisan queue:work --sleep=3 --tries=3 --max-time=3600
-      "
+      php artisan queue:work --sleep=3 --tries=3 --max-time=3600
 
   mysql:
     image: mysql:8.4

@@ -28,7 +28,7 @@ Runs on every push to `main` and on pull requests. Badge: [![Tests](https://gith
 | Job | Command (simplified) | Purpose |
 | --- | -------------------- | ------- |
 | **PHPUnit** | `php artisan test` | 282 feature + unit tests (MySQL not required; in-memory/SQLite per test) |
-| **Frontend build** | `npm ci` → `npm run build` → `npm run test:unit` | Typecheck, Vite production build, Vitest |
+| **Frontend build** | `npm ci` → `npm run build` → `npm run test:unit:web` | Typecheck, Vite production build, web Vitest |
 | **Playwright smoke** | Build assets → `scripts/run-e2e-smoke.sh` | Browser smokes on SQLite + demo seed (`--env=e2e`) |
 | **Mobile typecheck** | `npm ci` (apps/mobile) → typecheck + mobile Vitest via root |
 
@@ -44,7 +44,7 @@ Deploy from Mac (`./deploy/push-prod.sh`) waits for this workflow to pass on the
 ./scripts/ci-local.sh
 ```
 
-Runs: PHPUnit (Docker if PHP not installed locally) → frontend install/build → Vitest → mobile typecheck → mobile unit tests → **Playwright** when PHP is available locally.
+Runs: PHPUnit (Docker if PHP is not installed locally) → frontend install/build → web Vitest → mobile typecheck → mobile unit tests → **Playwright** when PHP 8.4+ or Docker is available.
 
 Requires **Docker Desktop** for PHPUnit when PHP is not on your PATH.
 
@@ -107,7 +107,7 @@ See [apps/mobile/README.md](../apps/mobile/README.md) for Maestro install and `E
 | Check | Command | CI job |
 | ----- | ------- | ------ |
 | Typecheck | `npm run typecheck` | Frontend build → Typecheck |
-| Bundle | `vite build` | Frontend build → Production build |
+| Bundle | `npm run build` | Frontend build → Production build |
 | Web unit | `npm run test:unit:web` | Frontend build → Web unit tests |
 | All web gates | `npm run check:web` | Local mirror of the three steps above |
 
@@ -133,7 +133,7 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |
 
-**10/10 means:** every critical API contract and business invariant is regression-tested. It does **not** replace manual checks for Google OAuth on device, live Reverb animations, or pilot onboarding UX (see table below).
+**10/10 means:** every critical API contract and business invariant is regression-tested. It does **not** replace manual checks for Google OAuth on device, polling-based refresh behavior, or pilot onboarding UX (see table below).
 
 ---
 

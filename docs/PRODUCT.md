@@ -27,7 +27,7 @@ Staff scanner, team invites, and claim QR were **removed** in the 2026 pivot —
 | Live in minutes with QR onboarding + NFC stands | Wallet with per-venue progress |
 | Stamp campaigns (Bring Back, Happy Hour, VIP, …) | Tap phone on counter stand — no app friction after first join |
 | Retention CRM and analytics | Slide to redeem when a reward is ready |
-| Listing approval workflow for quality control | Optional realtime stamp animations (Reverb) |
+| Listing approval workflow for quality control | Polling refresh after stamps and redeems |
 
 ## Customer journey (mobile)
 

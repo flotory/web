@@ -9,14 +9,21 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+echo "==> Upload directories..."
+mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones
+chmod -R 775 public/uploads 2>/dev/null || true
+
+echo "==> Building PHP containers..."
+docker compose -f docker-compose.prod.yml build app queue
+
+echo "==> Installing PHP dependencies..."
+docker compose -f docker-compose.prod.yml run --rm --no-deps app \
+  composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
 if ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
   echo "==> Generating APP_KEY..."
   docker compose -f docker-compose.prod.yml run --rm --no-deps app php artisan key:generate --force
 fi
-
-echo "==> Upload directories..."
-mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones
-chmod -R 775 public/uploads 2>/dev/null || true
 
 echo "==> Building frontend assets..."
 rm -f public/hot
@@ -28,7 +35,7 @@ docker run --rm \
 rm -f public/hot
 
 echo "==> Starting production containers..."
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --no-build --remove-orphans
 
 echo "==> Generating missing media thumbnails..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate-thumbs || true
@@ -44,6 +51,7 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --clas
 
 echo "==> Refreshing Laravel caches..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear
+docker compose -f docker-compose.prod.yml exec -T app php artisan config:cache
 docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
 docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
 

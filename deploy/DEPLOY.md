@@ -80,7 +80,7 @@ Run the same checks without deploying:
 ./scripts/ci-local.sh
 ```
 
-This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **npm run test:unit**, **mobile typecheck**, **mobile unit tests**, and **Playwright** (when PHP is available). See [docs/TESTING.md](../docs/TESTING.md).
+This mirrors the GitHub **Tests** workflow: **PHPUnit**, **npm run build**, **web Vitest**, **mobile typecheck**, **mobile Vitest**, and **Playwright** (when PHP or Docker is available). See [docs/TESTING.md](../docs/TESTING.md).
 
 ### CI status (read this if Actions looks “broken”)
 
