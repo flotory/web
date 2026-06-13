@@ -1,14 +1,16 @@
 import { Link } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Image, Text, View } from 'react-native'
 
 import WalletMilestoneSlots from './WalletMilestoneSlots'
 import PressableCard from '../ui/PressableCard'
-import { formatVenueCategoryLabel } from '../../lib/format'
 import { venueCoverUrl } from '../../lib/media'
 import { walletMilestoneProgress } from '../../lib/walletMilestoneProgress'
 import { withAppFont } from '../../lib/typography'
 import { colors, walletCard } from '../../theme'
 import type { WalletCard } from '../../types/loyalty'
+
+const walletProgressScrimHeight = 96
 
 interface WalletHeroCardProps {
   item: WalletCard
@@ -17,7 +19,6 @@ interface WalletHeroCardProps {
 export default function WalletHeroCard({ item }: WalletHeroCardProps) {
   const progress = walletMilestoneProgress(item.summary, item.stamps)
   const cover = venueCoverUrl(item.venue ?? undefined)
-  const categoryLabel = formatVenueCategoryLabel(item.venue?.category)
 
   return (
     <Link
@@ -43,52 +44,32 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
               resizeMode="cover"
             />
           ) : null}
-          <View
+
+          <LinearGradient
+            colors={['transparent', 'rgba(5, 13, 30, 0.82)']}
+            pointerEvents="none"
             style={{
               position: 'absolute',
               left: 0,
               right: 0,
-              top: 0,
               bottom: 0,
-              backgroundColor: 'rgba(5, 13, 30, 0.72)',
+              height: walletProgressScrimHeight,
             }}
           />
 
-          <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
-            <View>
-              <Text
-                style={withAppFont({
-                  fontSize: 22,
-                  fontWeight: '800',
-                  color: colors.primaryText,
-                  letterSpacing: -0.5,
-                })}
-                numberOfLines={1}
-              >
-                {item.venue?.name ?? 'Venue'}
-              </Text>
-              <Text
-                style={withAppFont({
-                  marginTop: 2,
-                  fontSize: 13,
-                  fontWeight: '600',
-                  color: 'rgba(255,255,255,0.82)',
-                })}
-              >
-                {categoryLabel}
-              </Text>
-            </View>
-
+          <View style={{ flex: 1, padding: 14, justifyContent: 'flex-end' }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, paddingRight: 10 }}>
                 <Text
                   style={withAppFont({
                     fontSize: 14,
                     fontWeight: '700',
-                    color: 'rgba(255,255,255,0.9)',
+                    color: 'rgba(255,255,255,0.95)',
                   })}
                 >
-                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.accent }}>{progress.current}</Text>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.accent }}>
+                    {progress.current}
+                  </Text>
                   {` / ${progress.target} stamps`}
                 </Text>
                 <WalletMilestoneSlots filled={progress.current} milestoneStamp={progress.milestoneStamp} />
@@ -108,7 +89,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                   style={withAppFont({
                     fontSize: 12,
                     fontWeight: '600',
-                    color: 'rgba(255,255,255,0.75)',
+                    color: 'rgba(255,255,255,0.9)',
                     textAlign: 'right',
                   })}
                 >
