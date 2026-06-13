@@ -19,12 +19,16 @@ export interface ScanLandingQuickFact {
   text: string
 }
 
-export function exampleFilledStamps(requiredStamps: number): number {
-  if (requiredStamps <= 1) {
-    return 0
+export function formatUnlockRequirement(requiredStamps: number): string {
+  if (requiredStamps <= 0) {
+    return 'Join to start collecting stamps'
   }
 
-  return Math.min(Math.max(1, Math.floor(requiredStamps / 2)), requiredStamps - 1)
+  if (requiredStamps === 1) {
+    return 'Unlocks after 1 stamp'
+  }
+
+  return `Unlocks after ${requiredStamps} stamps`
 }
 
 export function formatHeroRewardLine(hero: VenueHeroReward | null | undefined, venueName: string): string {
@@ -51,10 +55,9 @@ export function buildScanLandingQuickFacts(options: {
   const facts: ScanLandingQuickFact[] = []
 
   if (firstRewardStamps && firstRewardStamps > 0) {
-    const stampWord = firstRewardStamps === 1 ? 'stamp' : 'stamps'
     facts.push({
       icon: 'stamps',
-      text: `${firstRewardStamps} ${stampWord} to unlock your first reward`,
+      text: formatUnlockRequirement(firstRewardStamps).replace(/^Unlocks/, 'First reward unlocks'),
     })
   }
 

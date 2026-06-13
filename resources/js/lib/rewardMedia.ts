@@ -34,6 +34,14 @@ export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | n
   return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
 }
 
+export function rewardUploadedImageUrl(reward: RewardMediaFields | null | undefined): string | null {
+  if (!reward) {
+    return null
+  }
+
+  return pickMediaPath(reward.image, reward.image_thumb)
+}
+
 export function rewardHasCustomImage(reward: RewardMediaFields | null | undefined): boolean {
-  return Boolean(pickMediaPath(reward?.image, reward?.image_thumb))
+  return Boolean(rewardUploadedImageUrl(reward))
 }

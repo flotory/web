@@ -4,9 +4,9 @@ import { Image, Text, View } from 'react-native'
 
 import { rewardImageUrl } from '../../lib/media'
 import {
-  exampleFilledStamps,
   formatHeroRewardLine,
   formatHeroSubtitle,
+  formatUnlockRequirement,
   type VenueHeroReward,
 } from '../../lib/venueScanLanding'
 import { withAppFont } from '../../lib/typography'
@@ -32,9 +32,7 @@ interface VenueScanRewardHeroCardProps {
 export default function VenueScanRewardHeroCard({ venueName, category, hero }: VenueScanRewardHeroCardProps) {
   const heroImageUri =
     hero && (hero.image_thumb || hero.image) ? rewardImageUrl(hero) ?? undefined : undefined
-  const filled = hero ? exampleFilledStamps(hero.required_stamps) : 0
   const slots = hero ? Math.min(Math.max(hero.required_stamps, 1), 10) : 0
-  const stampsToGo = hero ? Math.max(hero.required_stamps - filled, 0) : 0
 
   return (
     <View
@@ -86,13 +84,16 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero }: V
                       flex: 1,
                       height: 6,
                       borderRadius: 4,
-                      backgroundColor: index < filled ? colors.progressFilled : colors.progressTrack,
+                      backgroundColor: colors.progressTrack,
                     }}
                   />
                 ))}
               </View>
               <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.ink })}>
-                {stampsToGo === 1 ? '1 stamp to unlock' : `${stampsToGo} stamps to unlock`}
+                {formatUnlockRequirement(hero.required_stamps)}
+              </Text>
+              <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
+                Join to start at 0 stamps
               </Text>
             </View>
           ) : null}

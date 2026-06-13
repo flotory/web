@@ -15,7 +15,7 @@ import {
   MOBILE_PREVIEW_FRAMES,
   WEB_PREVIEW_FRAMES,
 } from '@/lib/designPreviewSpec'
-import { rewardImageUrl } from '@/lib/rewardMedia'
+import { rewardHasCustomImage, rewardUploadedImageUrl } from '@/lib/rewardMedia'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
 import type { Reward, Venue } from '@/types'
 
@@ -37,18 +37,62 @@ const settingsPath = computed(() => (
 
 const coverSrc = computed(() => venueCoverUrl(venue.value))
 const logoSrc = computed(() => venueLogoUrl(venue.value))
-const rewardSrc = computed(() => {
-  const first = milestones.value.find((item) => item.active !== false) ?? milestones.value[0]
-  return rewardImageUrl(first)
-})
+const rewardPreviewMilestones = computed(() =>
+  milestones.value
+    .filter((item) => item.active !== false)
+    .sort((left, right) => left.required_stamps - right.required_stamps),
+)
 
-const mobileCoverFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id !== 'logo-ticket-fallback' && frame.id !== 'reward-ticket'))
-const mobileLogoFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'logo-ticket-fallback'))
+const milestonesWithUploadedImages = computed(() =>
+  rewardPreviewMilestones.value.filter((item) => rewardHasCustomImage(item)),
+)
+
+const mobileCoverFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => (
+  frame.id !== 'logo-ticket-fallback'
+  && frame.id !== 'reward-ticket'
+  && frame.id !== 'join-logo'
+)))
+const mobileLogoFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => (
+  frame.id === 'logo-ticket-fallback' || frame.id === 'join-logo'
+)))
 const mobileRewardFrames = computed(() => MOBILE_PREVIEW_FRAMES.filter((frame) => frame.id === 'reward-ticket'))
 
 const webCoverFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id === 'web-wallet-strip' || frame.id === 'web-landing-cover'))
 const webLogoFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('logo')))
 const webRewardFrames = computed(() => WEB_PREVIEW_FRAMES.filter((frame) => frame.id.includes('reward')))
+
+async function loadMilestones(venueData: Venue): Promise<Reward[]> {
+  try {
+    const response = await api<{ rewards: Reward[] }>(`/venues/${venueId.value}/rewards`)
+    return response.rewards
+  } catch (exception) {
+    if (!venueData.slug) {
+      throw exception
+    }
+
+    const landing = await api<{
+      milestones: Array<{
+        id: number
+        title: string
+        description?: string | null
+        image?: string | null
+        image_thumb?: string | null
+        required_stamps: number
+      }>
+    }>(`/public/venues/${encodeURIComponent(venueData.slug)}/landing`, { includeAuth: false })
+
+    return landing.milestones.map((milestone) => ({
+      id: milestone.id,
+      venue_id: venueData.id,
+      title: milestone.title,
+      description: milestone.description ?? null,
+      image: milestone.image ?? null,
+      image_thumb: milestone.image_thumb ?? null,
+      required_stamps: milestone.required_stamps,
+      active: true,
+    }))
+  }
+}
 
 async function loadPage() {
   loading.value = true
@@ -59,13 +103,9 @@ async function loadPage() {
     : `/venues/${venueId.value}`
 
   try {
-    const [venueResponse, rewardsResponse] = await Promise.all([
-      api<{ venue: Venue }>(venuePath),
-      api<{ rewards: Reward[] }>(`/venues/${venueId.value}/rewards`).catch(() => ({ rewards: [] as Reward[] })),
-    ])
-
+    const venueResponse = await api<{ venue: Venue }>(venuePath)
     venue.value = venueResponse.venue
-    milestones.value = [...rewardsResponse.rewards].sort(
+    milestones.value = [...(await loadMilestones(venueResponse.venue))].sort(
       (left, right) => left.required_stamps - right.required_stamps,
     )
   } catch (exception) {
@@ -134,7 +174,7 @@ onMounted(loadPage)
 
       <AppCard>
         <h2 class="text-xl font-black text-ink">Venue cover</h2>
-        <p class="mt-1 text-sm font-medium text-ink-muted">Used on wallet cards, discover, join screen, and landing page.</p>
+        <p class="mt-1 text-sm font-medium text-ink-muted">Used on wallet cards, discover, card detail, and landing page.</p>
 
         <div class="mt-5">
           <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>
@@ -177,7 +217,7 @@ onMounted(loadPage)
 
       <AppCard>
         <h2 class="text-xl font-black text-ink">Venue logo</h2>
-        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown on web discover, landing, and as a fallback on reward tickets.</p>
+        <p class="mt-1 text-sm font-medium text-ink-muted">Square 512×512 upload. Shown on join screen, web discover, landing, and as a fallback on reward tickets.</p>
 
         <div class="mt-5">
           <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>
@@ -220,44 +260,65 @@ onMounted(loadPage)
       <AppCard>
         <h2 class="text-xl font-black text-ink">Reward image</h2>
         <p class="mt-1 text-sm font-medium text-ink-muted">
-          Preview uses your first milestone{{ milestones[0] ? `: ${milestones[0].title}` : '' }}.
-          Upload images on the rewards page.
+          <template v-if="!rewardPreviewMilestones.length">
+            Create a milestone on the rewards page to preview reward images.
+          </template>
+          <template v-else-if="!milestonesWithUploadedImages.length">
+            None of your milestones have a custom image yet. Upload a 512×512 image on the rewards page — customers see a category placeholder until then.
+          </template>
+          <template v-else>
+            Showing uploaded images only. Each milestone below uses the photo you saved on the rewards page.
+          </template>
         </p>
 
-        <div class="mt-5">
-          <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>
-          <div class="flex flex-wrap gap-6">
-            <DesignPreviewFrame
-              v-for="frame in mobileRewardFrames"
-              :key="frame.id"
-              :label="frame.label"
-              :platform="frame.platform"
-              :width="frame.width"
-              :height="frame.height"
-              :border-radius="frame.borderRadius"
-              :circular="frame.circular"
-              :mirrors="frame.mirrors"
-              :image-src="rewardSrc"
-              :max-display-width="frame.width"
-            />
+        <div
+          v-for="(milestone, index) in rewardPreviewMilestones"
+          :key="milestone.id"
+          :class="index > 0 ? 'mt-8 border-t border-border pt-6' : 'mt-5'"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-sm font-black text-ink">{{ milestone.title }}</h3>
+            <span class="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+              {{ milestone.required_stamps }} stamps
+            </span>
+            <AppBadge v-if="!rewardHasCustomImage(milestone)" tone="slate">No image yet</AppBadge>
           </div>
-        </div>
 
-        <div class="mt-8 border-t border-border pt-6">
-          <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Web</p>
-          <div class="flex flex-wrap gap-6">
-            <DesignPreviewFrame
-              v-for="frame in webRewardFrames"
-              :key="frame.id"
-              :label="frame.label"
-              :platform="frame.platform"
-              :width="frame.width"
-              :height="frame.height"
-              :border-radius="frame.borderRadius"
-              :mirrors="frame.mirrors"
-              :image-src="rewardSrc"
-              :max-display-width="frame.width"
-            />
+          <div class="mt-4">
+            <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Mobile</p>
+            <div class="flex flex-wrap gap-6">
+              <DesignPreviewFrame
+                v-for="frame in mobileRewardFrames"
+                :key="`${milestone.id}-${frame.id}`"
+                :label="frame.label"
+                :platform="frame.platform"
+                :width="frame.width"
+                :height="frame.height"
+                :border-radius="frame.borderRadius"
+                :circular="frame.circular"
+                :mirrors="frame.mirrors"
+                :image-src="rewardUploadedImageUrl(milestone)"
+                :max-display-width="frame.width"
+              />
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <p class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-soft">Web</p>
+            <div class="flex flex-wrap gap-6">
+              <DesignPreviewFrame
+                v-for="frame in webRewardFrames"
+                :key="`${milestone.id}-${frame.id}`"
+                :label="frame.label"
+                :platform="frame.platform"
+                :width="frame.width"
+                :height="frame.height"
+                :border-radius="frame.borderRadius"
+                :mirrors="frame.mirrors"
+                :image-src="rewardUploadedImageUrl(milestone)"
+                :max-display-width="frame.width"
+              />
+            </div>
           </div>
         </div>
 

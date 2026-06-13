@@ -11,7 +11,7 @@ const props = withDefaults(
     height: number
     borderRadius?: number
     circular?: boolean
-    imageSrc: string
+    imageSrc?: string | null
     objectFit?: 'cover' | 'contain'
     overlay?: 'wallet' | null
     mirrors?: string
@@ -22,6 +22,7 @@ const props = withDefaults(
     circular: false,
     objectFit: 'cover',
     overlay: null,
+    imageSrc: null,
     mirrors: '',
     maxDisplayWidth: 200,
   },
@@ -62,11 +63,19 @@ const frameStyle = computed(() => ({
       :style="frameStyle"
     >
       <img
+        v-if="imageSrc"
         :src="imageSrc"
         :alt="label"
         class="size-full"
         :class="objectFit === 'contain' ? 'object-contain' : 'object-cover'"
       >
+
+      <div
+        v-else
+        class="flex size-full items-center justify-center p-2 text-center text-[10px] font-semibold leading-snug text-ink-soft"
+      >
+        No image uploaded
+      </div>
 
       <div
         v-if="overlay === 'wallet'"

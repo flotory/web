@@ -50,15 +50,6 @@ export const MOBILE_PREVIEW_FRAMES: DesignPreviewFrameSpec[] = [
     mirrors: 'CardDetailHeader',
   },
   {
-    id: 'join-cover',
-    label: 'Join venue',
-    platform: 'mobile',
-    width: 358,
-    height: 168,
-    borderRadius: 22,
-    mirrors: 'VenueJoinScreen',
-  },
-  {
     id: 'campaign-chip',
     label: 'Home campaign',
     platform: 'mobile',
@@ -86,6 +77,15 @@ export const MOBILE_PREVIEW_FRAMES: DesignPreviewFrameSpec[] = [
     borderRadius: 44,
     circular: true,
     mirrors: 'HomeRewardTicketCard',
+  },
+  {
+    id: 'join-logo',
+    label: 'Join venue',
+    platform: 'mobile',
+    width: 80,
+    height: 80,
+    borderRadius: 22,
+    mirrors: 'VenueJoinScreen',
   },
 ]
 
