@@ -18,6 +18,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
+        "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances.",
         "NFCReaderUsageDescription": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
       },

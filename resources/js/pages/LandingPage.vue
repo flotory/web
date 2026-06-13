@@ -164,12 +164,12 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section class="reveal relative border-y border-border/70 bg-surface/80">
-      <div class="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 py-6 sm:grid-cols-4">
+    <section class="reveal relative">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-8 sm:gap-4">
         <div
           v-for="item in trustPoints"
           :key="item"
-          class="rounded-2xl border border-border bg-surface px-3 py-3 text-center text-sm font-semibold text-ink-muted"
+          class="trust-pill"
         >
           {{ item }}
         </div>
@@ -352,6 +352,25 @@ onBeforeUnmount(() => {
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+.trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--flotory-ink-muted);
+}
+
+.trust-pill::before {
+  content: '';
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 9999px;
+  background: var(--flotory-accent);
+  flex-shrink: 0;
 }
 
 .hero-heading {
