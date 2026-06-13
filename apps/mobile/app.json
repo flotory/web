@@ -3,18 +3,18 @@
     "name": "Flotory",
     "slug": "flotory-mobile",
     "newArchEnabled": false,
-    "version": "1.0.11",
+    "version": "1.0.12",
     "orientation": "portrait",
     "icon": "./assets/flotory-app-icon-padded.png",
     "splash": {
-      "image": "./assets/flotory-boot-splash.png",
+      "image": "./assets/android-icon-foreground.png",
       "resizeMode": "contain",
-      "backgroundColor": "#050D1E"
+      "backgroundColor": "#FCFAF6"
     },
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "buildNumber": "12",
+      "buildNumber": "13",
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
@@ -48,10 +48,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/flotory-boot-splash.png",
-          "imageWidth": 400,
+          "image": "./assets/android-icon-foreground.png",
+          "imageWidth": 154,
           "resizeMode": "contain",
-          "backgroundColor": "#050D1E"
+          "backgroundColor": "#FCFAF6"
         }
       ],
       "expo-font",

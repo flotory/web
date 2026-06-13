@@ -25,6 +25,15 @@ export interface CustomerCardsListResponse {
   home_campaigns?: import('../types/loyalty').HomeCampaign[]
 }
 
+export interface DiscoverVenueBranch {
+  id: number
+  name: string
+  slug: string
+  address?: string | null
+  latitude?: number | null
+  longitude?: number | null
+}
+
 export interface DiscoverVenue {
   id: number
   name: string
@@ -38,6 +47,7 @@ export interface DiscoverVenue {
   joined_count?: number
   rewards_count?: number
   branches_count?: number
+  branches?: DiscoverVenueBranch[]
 }
 
 export interface DiscoverVenuesData {

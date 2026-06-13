@@ -14,7 +14,7 @@ import { useCustomerLocation } from '../src/hooks/useCustomerLocation'
 import { useDiscoverVenues } from '../src/hooks/useDiscoverVenues'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
-import { hasVenueCoordinates, sortVenuesByDistance } from '../src/lib/distance'
+import { collectDiscoverVenueLocations, sortDiscoverVenuesByNearestLocation } from '../src/lib/distance'
 import { useAuth } from '../src/providers/AuthProvider'
 import { space, type as typography } from '../src/theme'
 
@@ -66,7 +66,7 @@ export default function VenuesScreen() {
 
   const venues = data?.venues ?? []
   const cardsByVenue = data?.cardsByVenue ?? {}
-  const locatedVenueCount = venues.filter(hasVenueCoordinates).length
+  const locatedVenueCount = venues.filter((venue) => collectDiscoverVenueLocations(venue).length > 0).length
   const hasActiveFilters = search.trim().length > 0 || categoryFilter !== 'all'
   const sortedByDistance = hasLocation && locatedVenueCount > 0
 
@@ -87,7 +87,7 @@ export default function VenuesScreen() {
       return haystack.includes(query)
     })
 
-    return sortVenuesByDistance(matches, coords)
+    return sortDiscoverVenuesByNearestLocation(matches, coords)
   }, [categoryFilter, coords, search, venues])
 
   function openVenue(venue: DiscoverVenue) {
@@ -168,7 +168,13 @@ export default function VenuesScreen() {
             {filtered.map((item) => (
               <DiscoverVenueCard
                 key={item.id}
-                venue={item}
+                venue={{
+                  ...item,
+                  address: item.nearestAddress ?? item.address,
+                  latitude: item.nearestLatitude ?? item.latitude,
+                  longitude: item.nearestLongitude ?? item.longitude,
+                }}
+                nearestLocationName={item.nearestLocationName}
                 card={cardsByVenue[item.id] ?? null}
                 distanceLabel={item.distanceLabel}
                 onPress={() => openVenue(item)}

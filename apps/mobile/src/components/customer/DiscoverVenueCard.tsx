@@ -26,6 +26,7 @@ function categoryIcon(category: string | null | undefined): IoniconName {
 
 interface DiscoverVenueCardProps {
   venue: DiscoverVenue
+  nearestLocationName?: string | null
   card?: WalletCard | null
   distanceLabel?: string | null
   onPress: () => void
@@ -52,13 +53,24 @@ const PILL_STYLES = {
   },
 }
 
-export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress }: DiscoverVenueCardProps) {
+export default function DiscoverVenueCard({
+  venue,
+  nearestLocationName,
+  card,
+  distanceLabel,
+  onPress,
+}: DiscoverVenueCardProps) {
   const cover = venueCoverUrl(venue)
   const categoryLabel = formatVenueCategoryLabel(venue.category)
-  const locationLabel =
-    (venue.branches_count ?? 0) > 1
-      ? `${venue.branches_count} locations`
-      : categoryLabel
+  const hasMultipleLocations = (venue.branches_count ?? 0) > 1
+  const nearestBranchLabel =
+    hasMultipleLocations
+    && nearestLocationName
+    && nearestLocationName !== venue.name
+      ? nearestLocationName
+      : null
+  const locationLabel = nearestBranchLabel
+    ?? (hasMultipleLocations ? `${venue.branches_count} locations` : categoryLabel)
   const joined = (venue.joined_count ?? 0) > 0
   const status = discoverVenuePill(joined, venue.rewards_count, card)
   const pillStyle = PILL_STYLES[status.tone]
