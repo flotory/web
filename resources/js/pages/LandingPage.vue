@@ -4,10 +4,16 @@ import { Gift, Nfc, QrCode, Smartphone, Store } from '@lucide/vue'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import LandingHeroVisual from '@/components/marketing/LandingHeroVisual.vue'
-import LandingScreenshotPlaceholder from '@/components/marketing/LandingScreenshotPlaceholder.vue'
+import LandingProductShowcase from '@/components/marketing/LandingProductShowcase.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import productOverviewSrc from '../../images/marketing/product-overview.jpg'
+
+const trustPoints = [
+  'NFC stamps at the counter',
+  'No POS required',
+  'Multi-location ready',
+  'Setup in minutes',
+]
 
 const features = [
   {
@@ -57,7 +63,10 @@ const flowSteps = [
 
     <section class="relative mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-14 lg:pb-24 lg:pt-20">
       <div class="space-y-6 text-center lg:text-left">
-        <p class="mx-auto inline-flex rounded-full border border-accent-border/35 bg-accent-soft/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-active lg:mx-0">
+        <p
+          class="mx-auto inline-flex rounded-full border border-accent-border/35 bg-accent-soft/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-active lg:mx-0"
+          data-testid="landing-hero-tagline"
+        >
           Built for the counter, not the queue
         </p>
 
@@ -89,6 +98,20 @@ const flowSteps = [
       <LandingHeroVisual class="mx-auto w-full max-w-md lg:max-w-none lg:mx-0" />
     </section>
 
+    <section
+      class="relative mx-auto max-w-6xl px-5 pb-8 sm:px-6 sm:pb-10"
+      data-testid="landing-trust-strip"
+    >
+      <ul class="trust-strip">
+        <li v-for="point in trustPoints" :key="point" class="trust-point">
+          {{ point }}
+        </li>
+      </ul>
+      <p class="trust-footnote">
+        Built for independent cafes, wine bars, and bakeries.
+      </p>
+    </section>
+
     <section class="relative mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24">
       <div class="feature-grid">
         <article
@@ -114,16 +137,15 @@ const flowSteps = [
           </h2>
         </div>
         <div class="mt-8 lg:mt-10">
-          <LandingScreenshotPlaceholder
-            :src="productOverviewSrc"
-            alt="Flotory guest app, NFC stand, and owner dashboard"
-            label="Product overview screenshot"
-          />
+          <LandingProductShowcase />
         </div>
       </AppCard>
     </section>
 
-    <section class="relative mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24">
+    <section
+      class="relative mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24"
+      data-testid="landing-how-it-works"
+    >
       <AppCard wrapper-class="border-border/70 bg-surface/95 p-8 sm:p-10 lg:p-12">
         <p class="text-center text-xs font-semibold uppercase tracking-[0.14em] text-accent-active sm:text-sm">How it works</p>
         <div class="mt-8 grid gap-5 sm:grid-cols-3 sm:gap-6 lg:mt-10 lg:gap-8">
@@ -179,6 +201,42 @@ const flowSteps = [
   text-wrap: balance;
   line-height: 1.06;
   letter-spacing: -0.04em;
+}
+
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem 0.75rem;
+}
+
+.trust-point {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--flotory-accent-border) 35%, var(--flotory-border));
+  background: color-mix(in srgb, var(--flotory-surface) 92%, transparent);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--flotory-ink-muted);
+}
+
+.trust-point::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.45rem;
+  border-radius: 9999px;
+  background: var(--flotory-accent);
+}
+
+.trust-footnote {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--flotory-ink-soft);
 }
 
 .feature-grid {

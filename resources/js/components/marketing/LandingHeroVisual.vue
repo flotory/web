@@ -9,7 +9,7 @@ const TAP_CYCLE_S = 3.4
 </script>
 
 <template>
-  <div class="hero-visual" aria-hidden="true">
+  <div class="hero-visual" aria-hidden="true" data-testid="landing-hero-visual">
     <div class="hero-visual-frame">
       <div
         class="hero-stage"

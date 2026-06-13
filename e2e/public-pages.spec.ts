@@ -3,13 +3,36 @@ import { expect, test } from '@playwright/test'
 import { DEMO_CAFE_NFC_TOKEN, DEMO_CAFE_SLUG } from './helpers/demo'
 
 test.describe('Public marketing and bridge pages', () => {
-  test('landing page renders the marketing hero', async ({ page }) => {
+  test('landing page renders the full marketing surface', async ({ page }) => {
     await page.goto('/')
+
+    await expect(page.getByTestId('landing-hero-tagline')).toHaveText('Built for the counter, not the queue')
     await expect(page.getByRole('heading', { name: 'Turn first-time visitors into regulars.' })).toBeVisible({
       timeout: 15_000,
     })
+    await expect(page.getByText('No POS. No staff scanner.')).toBeVisible()
+    await expect(page.getByTestId('landing-hero-visual')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Start free' }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Book a demo' }).first()).toBeVisible()
     await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible()
+
+    await expect(page.getByTestId('landing-trust-strip')).toBeVisible()
+    await expect(page.getByText('NFC stamps at the counter')).toBeVisible()
+    await expect(page.getByText('Built for independent cafes, wine bars, and bakeries.')).toBeVisible()
+
+    await expect(page.getByRole('heading', { name: 'Guest app, NFC stand, and owner dashboard — in one loop.' })).toBeVisible()
+    await expect(page.getByTestId('landing-product-showcase')).toBeVisible()
+    await expect(page.getByTestId('landing-product-panel-guest')).toBeVisible()
+    await expect(page.getByTestId('landing-product-panel-nfc')).toBeVisible()
+    await expect(page.getByTestId('landing-product-panel-owner')).toBeVisible()
+
+    const howItWorks = page.getByTestId('landing-how-it-works')
+    await expect(howItWorks).toBeVisible()
+    await expect(howItWorks.getByText('Guest joins')).toBeVisible()
+    await expect(howItWorks.getByText('Tap for stamp')).toBeVisible()
+    await expect(howItWorks.getByText('Unlock reward')).toBeVisible()
+
+    await expect(page.getByRole('heading', { name: 'Ready to launch at your venue?' })).toBeVisible()
   })
 
   test('legacy customer paths redirect to the mobile app page', async ({ page }) => {
