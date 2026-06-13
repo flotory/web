@@ -17,6 +17,7 @@ class AdminVenueReviewController extends Controller
         $status = $request->string('status')->toString();
 
         $query = Venue::query()
+            ->whereNull('parent_venue_id')
             ->when($request->boolean('include_archived'), fn ($builder) => $builder->withTrashed())
             ->withCount([
                 'rewards as active_rewards_count' => fn ($builder) => $builder->where('active', true),

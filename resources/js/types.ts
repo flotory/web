@@ -34,6 +34,18 @@ export interface Venue {
   visits_count?: number
   rewards_count?: number
   joined_count?: number
+  branches_count?: number
+}
+
+export interface VenueBranch {
+  id: number
+  parent_venue_id?: number | null
+  name: string
+  slug: string
+  address?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  google_place_id?: string | null
 }
 
 export interface User {

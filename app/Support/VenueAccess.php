@@ -17,7 +17,7 @@ class VenueAccess
     public static function membership(User $user, Venue $venue): ?VenueUser
     {
         return VenueUser::query()
-            ->where('venue_id', $venue->id)
+            ->where('venue_id', $venue->loyaltyVenue()->id)
             ->where('user_id', $user->id)
             ->first();
     }

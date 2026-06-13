@@ -55,6 +55,10 @@ const PILL_STYLES = {
 export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress }: DiscoverVenueCardProps) {
   const cover = venueCoverUrl(venue)
   const categoryLabel = formatVenueCategoryLabel(venue.category)
+  const locationLabel =
+    (venue.branches_count ?? 0) > 1
+      ? `${venue.branches_count} locations`
+      : categoryLabel
   const joined = (venue.joined_count ?? 0) > 0
   const status = discoverVenuePill(joined, venue.rewards_count, card)
   const pillStyle = PILL_STYLES[status.tone]
@@ -136,7 +140,7 @@ export default function DiscoverVenueCard({ venue, card, distanceLabel, onPress 
               {venue.name}
             </Text>
             <Text style={withAppFont({ marginTop: 2, fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' })} numberOfLines={1}>
-              {categoryLabel}
+              {locationLabel}
             </Text>
           </View>
           {distanceLabel ? (

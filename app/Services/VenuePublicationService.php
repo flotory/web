@@ -9,7 +9,10 @@ use Illuminate\Validation\ValidationException;
 
 class VenuePublicationService
 {
-    public function __construct(private VenueSetupFileService $setupFiles) {}
+    public function __construct(
+        private VenueSetupFileService $setupFiles,
+        private VenueBranchService $branches,
+    ) {}
 
     /**
      * @return list<array{key: string, label: string, complete: bool, hint: string}>
@@ -137,6 +140,8 @@ class VenuePublicationService
             'status' => Venue::STATUS_PUBLISHED,
         ]);
 
+        $this->branches->syncStatusFromBrand($venue);
+
         return $venue->fresh();
     }
 
@@ -182,13 +187,28 @@ class VenuePublicationService
             'status' => Venue::STATUS_DRAFT,
         ]);
 
+        $this->branches->syncStatusFromBrand($venue);
+
         return $venue->fresh();
     }
 
     public function isPublic(Venue $venue): bool
     {
-        return ($venue->status ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED
-            && $venue->deleted_at === null;
+        if ($venue->deleted_at !== null) {
+            return false;
+        }
+
+        if ($venue->isBranch()) {
+            $parent = $venue->parentVenue;
+
+            if ($parent === null || ! $this->isBrandPublished($parent)) {
+                return false;
+            }
+
+            return $this->hasMappedAddress($venue);
+        }
+
+        return $this->isBrandPublished($venue);
     }
 
     public function assertPublic(Venue $venue): void
@@ -222,6 +242,11 @@ class VenuePublicationService
         return filled($venue->address)
             && $venue->latitude !== null
             && $venue->longitude !== null;
+    }
+
+    private function isBrandPublished(Venue $venue): bool
+    {
+        return ($venue->status ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED;
     }
 
     private function normalizeReviewNote(?string $note): ?string

@@ -31,7 +31,7 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('customer.user_id', $user->id);
 
         $secondResponse
-            ->assertCreated()
+            ->assertOk()
             ->assertJsonPath('customer.id', $firstResponse->json('customer.id'));
 
         $this->assertDatabaseCount('customers', 1);

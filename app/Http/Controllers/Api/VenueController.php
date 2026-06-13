@@ -48,6 +48,7 @@ class VenueController extends Controller
                     'rewards',
                 ])
                 ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))
+                ->whereNull('parent_venue_id')
                 ->orderByRaw('deleted_at is not null')
                 ->latest()
                 ->get(),
@@ -61,21 +62,66 @@ class VenueController extends Controller
         return response()->json([
             'venues' => Venue::query()
                 ->published()
+                ->whereNull('parent_venue_id')
                 ->whereNull('deleted_at')
+                ->with(['branches' => fn ($query) => $query
+                    ->whereNull('deleted_at')
+                    ->orderBy('name')
+                    ->select(['id', 'parent_venue_id', 'name', 'slug', 'address', 'latitude', 'longitude']),
+                ])
                 ->withCount([
                     'customers',
                     'visits',
                     'rewards',
+                    'branches',
                     'customers as joined_count' => fn ($query) => $query->where('user_id', $user->id),
                 ])
                 ->orderBy('name')
-                ->get(),
+                ->get()
+                ->map(fn (Venue $venue): array => $this->presentDiscoverVenue($venue))
+                ->values(),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function presentDiscoverVenue(Venue $venue): array
+    {
+        $primaryBranch = $venue->branches->first();
+
+        return [
+            'id' => $venue->id,
+            'name' => $venue->name,
+            'slug' => $venue->slug,
+            'category' => $venue->category,
+            'logo' => $venue->logo,
+            'logo_thumb' => $venue->logo_thumb,
+            'cover_image' => $venue->cover_image,
+            'cover_image_thumb' => $venue->cover_image_thumb,
+            'address' => $venue->address ?? $primaryBranch?->address,
+            'latitude' => $venue->latitude ?? $primaryBranch?->latitude,
+            'longitude' => $venue->longitude ?? $primaryBranch?->longitude,
+            'customers_count' => $venue->customers_count,
+            'visits_count' => $venue->visits_count,
+            'rewards_count' => $venue->rewards_count,
+            'joined_count' => $venue->joined_count,
+            'branches_count' => $venue->branches_count,
+            'branches' => $venue->branches->map(fn (Venue $branch): array => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'slug' => $branch->slug,
+                'address' => $branch->address,
+                'latitude' => $branch->latitude,
+                'longitude' => $branch->longitude,
+            ])->values()->all(),
+        ];
     }
 
     public function publicLanding(string $slug): JsonResponse
     {
         $venue = Venue::query()
+            ->with('parentVenue')
             ->where('slug', $slug)
             ->whereNull('deleted_at')
             ->first();
@@ -84,7 +130,9 @@ class VenueController extends Controller
             abort(404, 'Venue not found');
         }
 
-        $milestones = $venue->rewards()
+        $loyaltyVenue = $venue->loyaltyVenue();
+
+        $milestones = $loyaltyVenue->rewards()
             ->where('active', true)
             ->where('reward_type', 'milestone')
             ->orderBy('required_stamps')
@@ -94,25 +142,28 @@ class VenueController extends Controller
 
         $heroReward = $milestones->first();
 
-        $membersCount = $venue->customers()->count();
+        $membersCount = $loyaltyVenue->customers()->count();
         $rewardsClaimedCount = RewardUnlock::query()
             ->whereNotNull('claimed_at')
-            ->whereHas('customer', static fn ($query) => $query->where('venue_id', $venue->id))
+            ->whereHas('customer', static fn ($query) => $query->where('venue_id', $loyaltyVenue->id))
             ->count();
 
         return response()->json([
             'venue' => [
                 'id' => $venue->id,
+                'loyalty_venue_id' => $loyaltyVenue->id,
                 'name' => $venue->name,
                 'slug' => $venue->slug,
-                'category' => $venue->category,
-                'logo' => $venue->logo,
-                'logo_thumb' => $venue->logo_thumb,
-                'cover_image' => $venue->cover_image,
-                'cover_image_thumb' => $venue->cover_image_thumb,
+                'category' => $loyaltyVenue->category,
+                'logo' => $loyaltyVenue->logo,
+                'logo_thumb' => $loyaltyVenue->logo_thumb,
+                'cover_image' => $loyaltyVenue->cover_image,
+                'cover_image_thumb' => $loyaltyVenue->cover_image_thumb,
                 'address' => $venue->address,
                 'latitude' => $venue->latitude,
                 'longitude' => $venue->longitude,
+                'is_branch' => $venue->isBranch(),
+                'brand_name' => $loyaltyVenue->name,
             ],
             'milestones' => $milestones,
             'hero_reward' => $heroReward ? [
@@ -142,7 +193,7 @@ class VenueController extends Controller
         VenueAccess::requireAccess($request->user(), $venue, ['owner', 'staff']);
 
         return response()->json([
-            'venue' => $this->presentVenue($venue->loadCount(['customers', 'visits', 'rewards'])),
+            'venue' => $this->presentVenue($venue->loadCount(['customers', 'visits', 'rewards', 'branches'])),
         ]);
     }
 
@@ -262,12 +313,14 @@ class VenueController extends Controller
     {
         VenueAccess::requireAccess($request->user(), $venue);
 
+        $brand = $venue->loyaltyVenue();
+
         $request->user()->forceFill([
-            'active_venue_id' => $venue->id,
+            'active_venue_id' => $brand->id,
         ])->save();
 
         return response()->json([
-            'venue' => $venue->loadCount(['customers', 'visits', 'rewards']),
+            'venue' => $brand->loadCount(['customers', 'visits', 'rewards', 'branches']),
         ]);
     }
 

@@ -37,6 +37,7 @@ export interface DiscoverVenue {
   longitude?: number | null
   joined_count?: number
   rewards_count?: number
+  branches_count?: number
 }
 
 export interface DiscoverVenuesData {

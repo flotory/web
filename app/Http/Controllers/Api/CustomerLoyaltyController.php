@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
+use App\Services\CustomerEnrollmentService;
 use App\Services\CampaignService;
 use App\Services\LoyaltyStampService;
 use App\Services\VenuePublicationService;
-use App\Support\AuditLog;
 use App\Support\CustomerAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -115,29 +115,15 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function join(Request $request, Venue $venue, VenuePublicationService $publication): JsonResponse
+    public function join(Request $request, Venue $venue, VenuePublicationService $publication, CustomerEnrollmentService $enrollment): JsonResponse
     {
         $publication->assertPublic($venue);
 
-        $customer = Customer::firstOrCreate(
-            [
-                'venue_id' => $venue->id,
-                'user_id' => $request->user()->id,
-            ],
-            [
-                'stamps' => 0,
-            ],
-        );
-
-        if ($customer->wasRecentlyCreated) {
-            AuditLog::loyalty('customer.joined', $customer, $request->user(), 'success', [
-                'status' => 'success',
-            ]);
-        }
+        $customer = $enrollment->findOrJoin($request->user(), $venue, $request->user(), 'manual_join');
 
         return response()->json([
             'customer' => $customer->load('venue'),
-        ], 201);
+        ], $customer->wasRecentlyCreated ? 201 : 200);
     }
 
     public function card(Request $request, Customer $customer, LoyaltyStampService $loyalty): JsonResponse

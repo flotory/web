@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,6 +23,7 @@ class Venue extends Model
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
+        'parent_venue_id',
         'name',
         'slug',
         'category',
@@ -75,6 +77,42 @@ class Venue extends Model
     public function getArchivedAttribute(): bool
     {
         return $this->trashed();
+    }
+
+    public function parentVenue(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_venue_id');
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_venue_id');
+    }
+
+    public function isBranch(): bool
+    {
+        return $this->parent_venue_id !== null;
+    }
+
+    public function isBrand(): bool
+    {
+        return $this->parent_venue_id === null;
+    }
+
+    /**
+     * Brand that owns loyalty (rewards, NFC, wallet). Branches resolve to parent.
+     */
+    public function loyaltyVenue(): self
+    {
+        if ($this->relationLoaded('parentVenue') && $this->parentVenue !== null) {
+            return $this->parentVenue;
+        }
+
+        if ($this->parent_venue_id !== null) {
+            return self::query()->find($this->parent_venue_id) ?? $this;
+        }
+
+        return $this;
     }
 
     public function memberships(): HasMany

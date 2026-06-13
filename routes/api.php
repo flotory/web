@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
 use App\Http\Controllers\Api\NfcStampController;
 use App\Http\Controllers\Api\VenueCampaignController;
+use App\Http\Controllers\Api\VenueBranchController;
 use App\Http\Controllers\Api\VenueController;
 use App\Http\Controllers\Api\VenueCustomerController;
 use App\Http\Controllers\Api\VenueDashboardController;
@@ -44,6 +45,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/venues/current', [VenueController::class, 'current']);
     Route::get('/venues/{venue}', [VenueController::class, 'show']);
     Route::post('/venues/{venue}/select', [VenueController::class, 'select']);
+    Route::get('/venues/{venue}/branches', [VenueBranchController::class, 'index']);
+    Route::post('/venues/{venue}/branches', [VenueBranchController::class, 'store']);
+    Route::patch('/venues/{venue}/branches/{branch}', [VenueBranchController::class, 'update']);
+    Route::delete('/venues/{venue}/branches/{branch}', [VenueBranchController::class, 'destroy']);
     Route::get('/venues/{venue}/listing', [VenueListingController::class, 'show']);
     Route::post('/venues/{venue}/listing/submit', [VenueListingController::class, 'submit']);
     Route::get('/venues/{venue}/setup-files', [VenueSetupFileController::class, 'index']);

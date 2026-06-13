@@ -17,7 +17,7 @@ import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { normalizeVenueCategory } from '@/lib/defaultImages'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
-import type { Venue, VenueCategory } from '@/types'
+import type { Venue, VenueBranch, VenueCategory } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,6 +37,18 @@ const addressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
 const phone = ref('')
 const website = ref('')
 const category = ref<VenueCategory>('cafe')
+
+const branches = ref<VenueBranch[]>([])
+const branchesLoading = ref(false)
+const branchError = ref('')
+const branchName = ref('')
+const branchAddress = ref('')
+const branchLatitude = ref<number | null>(null)
+const branchLongitude = ref<number | null>(null)
+const branchGooglePlaceId = ref<string | null>(null)
+const branchAddressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
+const addBranchAction = useAsyncAction()
+const deletingBranchId = ref<number | null>(null)
 
 const categoryOptions: Array<{ id: VenueCategory; label: string }> = [
   { id: 'cafe', label: 'Cafe' },
@@ -72,6 +84,78 @@ function hydrateForm(item: Venue) {
   category.value = normalizeVenueCategory(item.category)
 }
 
+async function loadBranches() {
+  if (!venue.value) return
+
+  branchesLoading.value = true
+  branchError.value = ''
+
+  try {
+    const response = await api<{ branches: VenueBranch[] }>(`/venues/${venue.value.id}/branches`)
+    branches.value = response.branches
+  } catch (exception) {
+    branchError.value = exception instanceof ApiError ? exception.message : 'Could not load branches.'
+  } finally {
+    branchesLoading.value = false
+  }
+}
+
+async function addBranch() {
+  if (!venue.value) return
+
+  if (!branchAddressInput.value?.validateSelection()) {
+    branchError.value = 'Select a branch address from the Google suggestions list.'
+    return
+  }
+
+  try {
+    await addBranchAction.run(async () => {
+      branchError.value = ''
+
+      try {
+        const response = await api<{ branch: VenueBranch }>(`/venues/${venue.value!.id}/branches`, {
+          method: 'POST',
+          body: {
+            name: branchName.value,
+            address: branchAddress.value,
+            latitude: branchLatitude.value ?? undefined,
+            longitude: branchLongitude.value ?? undefined,
+            google_place_id: branchGooglePlaceId.value ?? undefined,
+          },
+        })
+
+        branches.value = [...branches.value, response.branch].sort((a, b) => a.name.localeCompare(b.name))
+        branchName.value = ''
+        branchAddress.value = ''
+        branchLatitude.value = null
+        branchLongitude.value = null
+        branchGooglePlaceId.value = null
+      } catch (exception) {
+        branchError.value = exception instanceof ApiError ? exception.message : 'Could not add branch.'
+        throw exception
+      }
+    })
+  } catch {
+    // Button shows Failed; field error stays inline.
+  }
+}
+
+async function removeBranch(branch: VenueBranch) {
+  if (!venue.value) return
+
+  deletingBranchId.value = branch.id
+  branchError.value = ''
+
+  try {
+    await api(`/venues/${venue.value.id}/branches/${branch.id}`, { method: 'DELETE' })
+    branches.value = branches.value.filter((item) => item.id !== branch.id)
+  } catch (exception) {
+    branchError.value = exception instanceof ApiError ? exception.message : 'Could not remove branch.'
+  } finally {
+    deletingBranchId.value = null
+  }
+}
+
 async function loadVenue() {
   loading.value = true
   error.value = ''
@@ -79,6 +163,7 @@ async function loadVenue() {
   try {
     const response = await api<{ venue: Venue }>(`/venues/${venueId.value}`)
     hydrateForm(response.venue)
+    await loadBranches()
   } catch (exception) {
     error.value = exception instanceof ApiError ? exception.message : 'Could not load venue.'
     if (isVenueAccessDenied(exception)) {
@@ -316,6 +401,68 @@ onMounted(loadVenue)
           </form>
         </AppCard>
       </div>
+
+      <AppCard>
+        <h2 class="text-xl font-black text-ink">Locations</h2>
+        <p class="mt-2 text-sm font-semibold text-ink-muted">
+          Add extra branches that share the same rewards, NFC tags, and wallet card. Each location gets its own name and address.
+        </p>
+
+        <div v-if="branchesLoading" class="mt-5 text-sm font-bold text-ink-muted">Loading branches…</div>
+
+        <ul v-else-if="branches.length" class="mt-5 divide-y divide-border rounded-2xl border border-border">
+          <li v-for="branch in branches" :key="branch.id" class="flex items-start justify-between gap-4 px-4 py-3">
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-ink">{{ branch.name }}</p>
+              <p v-if="branch.address" class="mt-1 text-xs font-medium text-ink-muted">{{ branch.address }}</p>
+            </div>
+            <AppButton
+              variant="secondary"
+              size="sm"
+              :disabled="deletingBranchId === branch.id"
+              @click="removeBranch(branch)"
+            >
+              {{ deletingBranchId === branch.id ? 'Removing…' : 'Remove' }}
+            </AppButton>
+          </li>
+        </ul>
+
+        <p v-else class="mt-5 text-sm font-semibold text-ink-muted">No extra branches yet. Your main venue address above is the first location.</p>
+
+        <form class="mt-6 grid gap-4 border-t border-border pt-6" @submit.prevent="addBranch">
+          <div>
+            <label class="text-sm font-bold text-ink-muted" for="branch-name">Branch name</label>
+            <input
+              id="branch-name"
+              v-model="branchName"
+              required
+              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+              placeholder="Mio Gelato · Vake"
+            >
+          </div>
+          <VenueAddressInput
+            id="branch-address"
+            ref="branchAddressInput"
+            v-model:address="branchAddress"
+            v-model:latitude="branchLatitude"
+            v-model:longitude="branchLongitude"
+            v-model:google-place-id="branchGooglePlaceId"
+            label="Branch address"
+            hint="Customers can join from any branch link. Rewards stay shared across all locations."
+          />
+          <p v-if="branchError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ branchError }}</p>
+          <AsyncActionButton
+            type="submit"
+            idle-label="Add branch"
+            loading-label="Adding…"
+            success-label="Added ✓"
+            :loading="addBranchAction.loading"
+            :success="addBranchAction.success"
+            :error="addBranchAction.error"
+            :disabled="!branchName.trim()"
+          />
+        </form>
+      </AppCard>
     </div>
   </AppShell>
 </template>

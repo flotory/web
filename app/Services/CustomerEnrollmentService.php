@@ -11,8 +11,10 @@ class CustomerEnrollmentService
 {
     public function findAtVenue(User $user, Venue $venue): ?Customer
     {
+        $loyaltyVenue = $venue->loyaltyVenue();
+
         return Customer::query()
-            ->where('venue_id', $venue->id)
+            ->where('venue_id', $loyaltyVenue->id)
             ->where('user_id', $user->id)
             ->first();
     }
@@ -22,9 +24,11 @@ class CustomerEnrollmentService
      */
     public function findOrJoin(User $user, Venue $venue, ?User $joinedVia = null, string $source = 'nfc_auto_join'): Customer
     {
+        $loyaltyVenue = $venue->loyaltyVenue();
+
         $customer = Customer::query()->firstOrCreate(
             [
-                'venue_id' => $venue->id,
+                'venue_id' => $loyaltyVenue->id,
                 'user_id' => $user->id,
             ],
             [
@@ -36,6 +40,7 @@ class CustomerEnrollmentService
             AuditLog::loyalty('customer.joined', $customer, $joinedVia ?? $user, 'success', [
                 'status' => 'success',
                 'source' => $source,
+                'scan_venue_id' => $venue->id !== $loyaltyVenue->id ? $venue->id : null,
             ]);
         }
 
