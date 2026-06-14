@@ -13,6 +13,8 @@ import { StyleSheet, View } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import BootSplashScreen, { BOOT_SPLASH_BACKGROUND } from '../src/components/ui/BootSplashScreen'
+import ForceUpdateScreen from '../src/components/ui/ForceUpdateScreen'
+import { useAppUpdateGate } from '../src/hooks/useAppUpdateGate'
 import { AuthProvider, useAuth } from '../src/providers/AuthProvider'
 import { RealtimeProvider } from '../src/providers/RealtimeProvider'
 import { ThemeProvider } from '../src/providers/ThemeProvider'
@@ -23,6 +25,7 @@ applyDefaultAppTypography()
 
 function RootNavigator() {
   const { booting } = useAuth()
+  const updateGate = useAppUpdateGate()
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -32,13 +35,23 @@ function RootNavigator() {
   })
 
   useEffect(() => {
-    if (!booting && fontsLoaded) {
+    if (!booting && fontsLoaded && updateGate.ready) {
       void SplashScreen.hideAsync()
     }
-  }, [booting, fontsLoaded])
+  }, [booting, fontsLoaded, updateGate.ready])
 
-  if (booting || !fontsLoaded) {
+  if (booting || !fontsLoaded || !updateGate.ready) {
     return <BootSplashScreen fontsReady={fontsLoaded} />
+  }
+
+  if (updateGate.blocked) {
+    return (
+      <ForceUpdateScreen
+        currentVersion={updateGate.currentVersion}
+        requiredVersion={updateGate.requiredVersion}
+        updateUrl={updateGate.updateUrl}
+      />
+    )
   }
 
   return <Stack screenOptions={{ headerShown: false }} />
