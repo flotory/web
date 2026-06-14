@@ -6,7 +6,9 @@ import { rewardImageUrl } from '../../lib/media'
 import {
   formatHeroRewardLine,
   formatHeroSubtitle,
+  formatMemberStampCaption,
   formatUnlockRequirement,
+  type ScanLandingMembership,
   type VenueHeroReward,
 } from '../../lib/venueScanLanding'
 import { withAppFont } from '../../lib/typography'
@@ -27,12 +29,14 @@ interface VenueScanRewardHeroCardProps {
   venueName: string
   category?: string | null
   hero?: VenueHeroReward | null
+  membership?: ScanLandingMembership | null
 }
 
-export default function VenueScanRewardHeroCard({ venueName, category, hero }: VenueScanRewardHeroCardProps) {
+export default function VenueScanRewardHeroCard({ venueName, category, hero, membership }: VenueScanRewardHeroCardProps) {
   const heroImageUri =
     hero && (hero.image_thumb || hero.image) ? rewardImageUrl(hero) ?? undefined : undefined
-  const slots = hero ? Math.min(Math.max(hero.required_stamps, 1), 10) : 0
+  const slots = membership?.target ?? (hero ? Math.min(Math.max(hero.required_stamps, 1), 10) : 0)
+  const filledSlots = membership?.stamps ?? 0
 
   return (
     <View
@@ -74,7 +78,7 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero }: V
             {formatHeroSubtitle(venueName)}
           </Text>
 
-          {hero ? (
+          {hero || membership ? (
             <View style={{ marginTop: 14 }}>
               <View style={{ flexDirection: 'row', gap: 4 }}>
                 {Array.from({ length: slots }).map((_, index) => (
@@ -84,17 +88,30 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero }: V
                       flex: 1,
                       height: 6,
                       borderRadius: 4,
-                      backgroundColor: colors.progressTrack,
+                      backgroundColor: index < filledSlots ? colors.accent : colors.progressTrack,
                     }}
                   />
                 ))}
               </View>
-              <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.ink })}>
-                {formatUnlockRequirement(hero.required_stamps)}
-              </Text>
-              <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
-                Join to start at 0 stamps
-              </Text>
+              {membership ? (
+                <>
+                  <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.ink })}>
+                    {membership.stamps} / {membership.target} stamps
+                  </Text>
+                  <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
+                    {formatMemberStampCaption(membership)}
+                  </Text>
+                </>
+              ) : hero ? (
+                <>
+                  <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.ink })}>
+                    {formatUnlockRequirement(hero.required_stamps)}
+                  </Text>
+                  <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
+                    Join to start at 0 stamps
+                  </Text>
+                </>
+              ) : null}
             </View>
           ) : null}
         </View>

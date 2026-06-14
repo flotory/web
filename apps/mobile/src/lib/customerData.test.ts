@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildHomeActivity } from './customerData'
+import { buildHomeActivity, findWalletCardForLoyaltyVenue } from './customerData'
 import type { RewardWalletItem, WalletCard } from '../types/loyalty'
 
 const venue = { id: 10, name: 'Demo Cafe', slug: 'demo-cafe' }
@@ -49,5 +49,14 @@ describe('buildHomeActivity', () => {
     const rows = buildHomeActivity([single, { ...single }], [])
 
     expect(rows.filter((row) => row.id === 'join-1')).toHaveLength(1)
+  })
+})
+
+describe('findWalletCardForLoyaltyVenue', () => {
+  it('matches cards by loyalty venue id', () => {
+    const cards = [card(1, 4), { ...card(2, 2), venue_id: 99 }]
+    expect(findWalletCardForLoyaltyVenue(cards, 10)?.id).toBe(1)
+    expect(findWalletCardForLoyaltyVenue(cards, 99)?.id).toBe(2)
+    expect(findWalletCardForLoyaltyVenue(cards, 404)).toBeUndefined()
   })
 })

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { ComponentProps } from 'react'
 import { Text, View } from 'react-native'
 
-import { buildScanLandingQuickFacts, type ScanLandingQuickFactIcon } from '../../lib/venueScanLanding'
+import { buildScanLandingQuickFacts, type ScanLandingMembership, type ScanLandingQuickFactIcon } from '../../lib/venueScanLanding'
 import { withAppFont } from '../../lib/typography'
 import { colors } from '../../theme'
 
@@ -12,15 +12,17 @@ const iconMap: Record<ScanLandingQuickFactIcon, IoniconName> = {
   stamps: 'star-outline',
   rewards: 'gift-outline',
   join: 'phone-portrait-outline',
+  nfc: 'scan-outline',
 }
 
 interface VenueScanQuickFactsProps {
   firstRewardStamps?: number | null
   milestoneCount: number
+  membership?: ScanLandingMembership | null
 }
 
-export default function VenueScanQuickFacts({ firstRewardStamps, milestoneCount }: VenueScanQuickFactsProps) {
-  const facts = buildScanLandingQuickFacts({ firstRewardStamps, milestoneCount })
+export default function VenueScanQuickFacts({ firstRewardStamps, milestoneCount, membership }: VenueScanQuickFactsProps) {
+  const facts = buildScanLandingQuickFacts({ firstRewardStamps, milestoneCount, membership })
 
   return (
     <View style={{ gap: 12 }}>

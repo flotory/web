@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Image, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -11,16 +11,19 @@ import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/component
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
+import { fetchCustomerCards, findWalletCardForLoyaltyVenue } from '../../src/lib/customerData'
 import { webAppOrigin } from '../../src/lib/config'
 import { venueLogoUrl } from '../../src/lib/media'
-import type { VenueHeroReward, VenueSocialProof } from '../../src/lib/venueScanLanding'
+import { membershipFromWalletCard, type VenueHeroReward, type VenueSocialProof } from '../../src/lib/venueScanLanding'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, space } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
+import type { WalletCard } from '../../src/types/loyalty'
 
 interface LandingPayload {
   venue: {
     id: number
+    loyalty_venue_id?: number
     name: string
     slug: string
     category?: string | null
@@ -45,23 +48,41 @@ export default function VenueJoinScreen() {
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
   const [landing, setLanding] = useState<LandingPayload | null>(null)
+  const [existingCard, setExistingCard] = useState<WalletCard | null>(null)
 
   useEffect(() => {
     async function load() {
       if (!slug) return
       setLoading(true)
       setError('')
+      setExistingCard(null)
+
       try {
-        const response = await apiRequest<LandingPayload>(`/public/venues/${encodeURIComponent(slug)}/landing`)
-        setLanding(response)
+        const landingResponse = await apiRequest<LandingPayload>(`/public/venues/${encodeURIComponent(slug)}/landing`)
+        setLanding(landingResponse)
+
+        if (token && role === 'customer') {
+          const cards = await fetchCustomerCards(token, true)
+          const loyaltyVenueId = landingResponse.venue.loyalty_venue_id ?? landingResponse.venue.id
+          setExistingCard(findWalletCardForLoyaltyVenue(cards, loyaltyVenueId) ?? null)
+        }
       } catch {
         setError('Venue link unavailable.')
+        setLanding(null)
       } finally {
         setLoading(false)
       }
     }
+
     void load()
-  }, [slug])
+  }, [slug, token, role])
+
+  const membership = useMemo(
+    () => (existingCard ? membershipFromWalletCard(existingCard) : null),
+    [existingCard],
+  )
+
+  const isMember = membership != null
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -71,8 +92,25 @@ export default function VenueJoinScreen() {
     router.replace('/(customer)/venues')
   }
 
+  function openExistingCard() {
+    if (!existingCard) {
+      router.replace('/(customer)/wallet')
+      return
+    }
+
+    router.replace({
+      pathname: '/card/[cardId]',
+      params: { cardId: String(existingCard.id), venueId: String(existingCard.venue_id) },
+    })
+  }
+
   async function handlePrimary() {
     if (!slug) return
+
+    if (isMember) {
+      openExistingCard()
+      return
+    }
 
     if (!token) {
       await Linking.openURL(`${webAppOrigin()}/v/${encodeURIComponent(slug)}`)
@@ -127,6 +165,7 @@ export default function VenueJoinScreen() {
 
   const venue = landing?.venue
   const logo = venue ? venueLogoUrl(venue) : null
+  const primaryLabel = isMember ? 'Open your card' : joining ? 'Joining…' : 'Start collecting rewards'
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -166,16 +205,27 @@ export default function VenueJoinScreen() {
             <Text style={withAppFont({ marginTop: 14, fontSize: 24, fontWeight: '800', color: colors.ink, textAlign: 'center' })}>
               {venue?.name ?? 'Venue'}
             </Text>
+            {isMember ? (
+              <Text style={withAppFont({ marginTop: 8, fontSize: 14, fontWeight: '700', color: colors.accent, textAlign: 'center' })}>
+                You are already a member
+              </Text>
+            ) : null}
           </View>
 
           <View style={{ marginTop: space.sectionGap }}>
-            <VenueScanRewardHeroCard venueName={venue?.name ?? 'Venue'} category={venue?.category} hero={landing?.hero_reward} />
+            <VenueScanRewardHeroCard
+              venueName={venue?.name ?? 'Venue'}
+              category={venue?.category}
+              hero={landing?.hero_reward}
+              membership={membership}
+            />
           </View>
 
           <View style={{ marginTop: space.sectionGap }}>
             <VenueScanQuickFacts
               firstRewardStamps={landing?.hero_reward?.required_stamps}
               milestoneCount={landing?.milestones.length ?? 0}
+              membership={membership}
             />
           </View>
 
@@ -196,10 +246,15 @@ export default function VenueJoinScreen() {
         }}
       >
         <PrimaryButton
-          label={joining ? 'Joining…' : 'Start collecting rewards'}
+          label={primaryLabel}
           onPress={() => void handlePrimary()}
           disabled={joining}
         />
+        {isMember ? (
+          <Text style={withAppFont({ marginTop: 10, fontSize: 12, lineHeight: 18, color: colors.inkMuted, textAlign: 'center' })}>
+            No need to scan the join QR again — tap the NFC stand when you visit.
+          </Text>
+        ) : null}
       </View>
     </View>
   )

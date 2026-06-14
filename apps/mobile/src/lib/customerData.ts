@@ -131,6 +131,10 @@ export async function fetchCustomerCards(token: string, fresh = false): Promise<
   return response.cards
 }
 
+export function findWalletCardForLoyaltyVenue(cards: WalletCard[], loyaltyVenueId: number): WalletCard | undefined {
+  return cards.find((card) => card.venue_id === loyaltyVenueId)
+}
+
 export async function fetchCustomerHomeCampaigns(token: string, fresh = false): Promise<import('../types/loyalty').HomeCampaign[]> {
   const response = await fetchCustomerCardsList(token, fresh)
   return response.home_campaigns ?? []

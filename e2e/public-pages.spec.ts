@@ -64,6 +64,10 @@ test.describe('Public marketing and bridge pages', () => {
   test('venue slug bridge matches the seeded public page', async ({ page }) => {
     await page.goto(`/v/${DEMO_CAFE_SLUG}`)
     await expect(page.getByRole('heading', { name: 'Demo Cafe' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Join and collect rewards in the Flotory app.')).toBeVisible()
+    await expect(page.getByTestId('venue-join-bridge')).toBeVisible()
+    await expect(page.getByText('Your digital stamp card')).toBeVisible()
+    await expect(page.getByTestId('venue-join-cta')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Get my stamp card' })).toBeVisible()
+    await expect(page.getByText('Already a member? Tap the NFC stand at the counter')).toBeVisible()
   })
 })

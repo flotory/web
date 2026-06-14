@@ -12,7 +12,14 @@ export interface VenueSocialProof {
   rewards_claimed_count: number
 }
 
-export type ScanLandingQuickFactIcon = 'stamps' | 'rewards' | 'join'
+export type ScanLandingQuickFactIcon = 'stamps' | 'rewards' | 'join' | 'nfc'
+
+export interface ScanLandingMembership {
+  stamps: number
+  target: number
+  stampsToNext: number
+  pendingRewardsCount: number
+}
 
 export interface ScanLandingQuickFact {
   icon: ScanLandingQuickFactIcon
@@ -47,11 +54,62 @@ export function formatHeroSubtitle(venueName: string): string {
   return `Collect stamps every visit and unlock rewards from ${venueName}.`
 }
 
+export function formatMemberStampCaption(membership: ScanLandingMembership): string {
+  if (membership.pendingRewardsCount > 0) {
+    return membership.pendingRewardsCount === 1
+      ? 'You have a reward ready in Wallet'
+      : `${membership.pendingRewardsCount} rewards ready in Wallet`
+  }
+
+  if (membership.stampsToNext <= 0) {
+    return 'You are on your loyalty card'
+  }
+
+  if (membership.stampsToNext === 1) {
+    return '1 stamp to your next reward'
+  }
+
+  return `${membership.stampsToNext} stamps to your next reward`
+}
+
 export function buildScanLandingQuickFacts(options: {
   firstRewardStamps?: number | null
   milestoneCount: number
+  membership?: ScanLandingMembership | null
 }): ScanLandingQuickFact[] {
-  const { firstRewardStamps, milestoneCount } = options
+  const { firstRewardStamps, milestoneCount, membership } = options
+
+  if (membership) {
+    const facts: ScanLandingQuickFact[] = [
+      {
+        icon: 'stamps',
+        text: `${membership.stamps} / ${membership.target} stamps on your card`,
+      },
+    ]
+
+    if (membership.pendingRewardsCount > 0) {
+      facts.push({
+        icon: 'rewards',
+        text:
+          membership.pendingRewardsCount === 1
+            ? 'Reward ready — open your card to redeem'
+            : `${membership.pendingRewardsCount} rewards ready — open your card`,
+      })
+    } else if (membership.stampsToNext > 0) {
+      facts.push({
+        icon: 'stamps',
+        text: membership.stampsToNext === 1 ? '1 stamp to next reward' : `${membership.stampsToNext} stamps to next reward`,
+      })
+    }
+
+    facts.push({
+      icon: 'nfc',
+      text: 'Tap the NFC stand at the counter for each visit',
+    })
+
+    return facts
+  }
+
   const facts: ScanLandingQuickFact[] = []
 
   if (firstRewardStamps && firstRewardStamps > 0) {
@@ -74,6 +132,24 @@ export function buildScanLandingQuickFacts(options: {
   })
 
   return facts
+}
+
+export function membershipFromWalletCard(
+  card: { stamps: number; summary?: { stamps?: number; next_reward_stamps?: number | null; max_stamps?: number; stamps_to_next?: number | null; pending_rewards_count?: number } | null },
+): ScanLandingMembership {
+  const stamps = card.summary?.stamps ?? card.stamps
+  const target = Math.max(card.summary?.next_reward_stamps ?? card.summary?.max_stamps ?? 10, 1)
+  const stampsToNext =
+    card.summary?.stamps_to_next != null
+      ? Math.max(card.summary.stamps_to_next, 0)
+      : Math.max(target - stamps, 0)
+
+  return {
+    stamps: Math.min(Math.max(stamps, 0), target),
+    target,
+    stampsToNext,
+    pendingRewardsCount: Math.max(card.summary?.pending_rewards_count ?? 0, 0),
+  }
 }
 
 export function progressDotSymbols(requiredStamps: number, filledStamps: number): string {
