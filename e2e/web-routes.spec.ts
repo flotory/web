@@ -25,6 +25,7 @@ test.describe('Web route smoke', () => {
   test('venue bridge page loads', async ({ page }) => {
     await page.goto('/v/demo-cafe')
     await expect(page.getByRole('heading', { name: 'Demo Cafe' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Join and collect rewards in the Flotory app.')).toBeVisible()
+    await expect(page.getByText('Your digital stamp card')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Get my stamp card' })).toBeVisible()
   })
 })
