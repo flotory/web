@@ -81,6 +81,17 @@ describe('completeNfcStampSuccess', () => {
     expect(router.navigate).not.toHaveBeenCalled()
   })
 
+  it('passes nfc education when the guest joined on first tap', async () => {
+    const router = { navigate: vi.fn(), replace: vi.fn() }
+
+    await completeNfcStampSuccess(nfcResponse({ joined_on_scan: true }), 'auth-token', vi.fn(), router)
+
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/card/[cardId]',
+      params: { cardId: '42', venueId: '10', nfcEducation: '1' },
+    })
+  })
+
   it('still ingests and navigates when prefetch fails', async () => {
     vi.mocked(refreshCustomerSurfacesAfterStamp).mockRejectedValue(new Error('offline'))
     const ingestStamp = vi.fn()

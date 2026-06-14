@@ -24,7 +24,7 @@ export function nfcResponseToStampPayload(response: NfcStampResponse): StampAdde
   }
 }
 
-export function cardRouteFromNfcStamp(response: NfcStampResponse) {
+export function cardRouteFromNfcStamp(response: NfcStampResponse, options?: { showNfcEducation?: boolean }) {
   const venue = response.venue ?? response.customer.venue
   if (!venue) {
     throw new Error('Venue missing from stamp response.')
@@ -35,6 +35,7 @@ export function cardRouteFromNfcStamp(response: NfcStampResponse) {
     params: {
       cardId: String(response.customer.id),
       venueId: String(venue.id),
+      ...(options?.showNfcEducation ? { nfcEducation: '1' } : {}),
     },
   }
 }

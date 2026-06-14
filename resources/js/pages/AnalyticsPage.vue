@@ -220,7 +220,7 @@ onMounted(load)
           bare
           :icon="BarChart3"
           title="No loyalty activity yet"
-          description="When guests scan your QR and collect stamps, you'll see engagement here."
+          description="When guests join via your QR and tap your NFC stand, you'll see engagement here."
         />
         <ol class="mx-auto mt-8 max-w-md space-y-4 text-sm text-ink-muted">
           <li class="flex gap-3">
@@ -229,11 +229,11 @@ onMounted(load)
           </li>
           <li class="flex gap-3">
             <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">2</span>
-            <span><strong class="text-ink">Scan visits</strong> — staff award stamps from the mobile app scanner.</span>
+            <span><strong class="text-ink">Stamp return visits</strong> — guests tap your NFC stand with the Flotory app.</span>
           </li>
           <li class="flex gap-3">
             <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">3</span>
-            <span><strong class="text-ink">Unlock rewards</strong> — guests claim milestones when they earn them.</span>
+            <span><strong class="text-ink">Redeem rewards</strong> — guests slide to redeem in the app when a milestone unlocks.</span>
           </li>
         </ol>
         <div class="mt-8 flex flex-wrap justify-center gap-3">

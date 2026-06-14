@@ -24,7 +24,9 @@ export async function completeNfcStampSuccess(
   ingestStamp(nfcResponseToStampPayload(response))
   notifyCustomerSurfaceRefresh()
 
-  const route = cardRouteFromNfcStamp(response)
+  const route = cardRouteFromNfcStamp(response, {
+    showNfcEducation: Boolean(response.joined_on_scan),
+  })
   if (navigation === 'replace') {
     router.replace(route)
   } else {

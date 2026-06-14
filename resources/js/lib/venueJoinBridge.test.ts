@@ -4,6 +4,8 @@ import {
   formatJoinSocialProof,
   formatVenueJoinRewardHeadline,
   formatVisitsToUnlock,
+  NFC_RETURN_VISIT_HEADLINE,
+  VENUE_JOIN_NFC_EDUCATION,
 } from './venueJoinBridge'
 
 describe('venueJoinBridge', () => {
@@ -24,5 +26,10 @@ describe('venueJoinBridge', () => {
     expect(formatJoinSocialProof({ members_count: 20, rewards_claimed_count: 3 })).toBe(
       '20 people already collect stamps here',
     )
+  })
+
+  it('exposes NFC return-visit education copy for the join bridge', () => {
+    expect(VENUE_JOIN_NFC_EDUCATION.headline).toBe(NFC_RETURN_VISIT_HEADLINE)
+    expect(VENUE_JOIN_NFC_EDUCATION.detail).toContain('return visits')
   })
 })

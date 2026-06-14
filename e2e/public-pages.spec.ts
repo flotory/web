@@ -67,6 +67,8 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByTestId('venue-join-bridge')).toBeVisible()
     await expect(page.getByText('Your digital stamp card')).toBeVisible()
     await expect(page.getByTestId('venue-join-cta')).toBeVisible()
+    await expect(page.getByTestId('venue-join-nfc-education')).toBeVisible()
+    await expect(page.getByText('Next visit, tap the NFC stand')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Get my stamp card' })).toBeVisible()
     await expect(page.getByText('Already a member? Tap the NFC stand at the counter')).toBeVisible()
   })

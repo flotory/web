@@ -406,7 +406,7 @@ onMounted(loadDashboard)
         </div>
         <div v-else class="mt-4 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
           <p class="text-sm font-semibold text-ink-muted">No activity yet.</p>
-          <p class="mt-1 text-xs text-ink-muted">Staff scan guests from the Flotory mobile app.</p>
+          <p class="mt-1 text-xs text-ink-muted">Guests join via your venue QR, then tap the NFC stand on return visits.</p>
         </div>
 
         <div class="mt-5 border-t border-border pt-4">

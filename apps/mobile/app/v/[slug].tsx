@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import VenueScanRewardHeroCard from '../../src/components/customer/VenueScanRewardHeroCard'
 import VenueScanQuickFacts from '../../src/components/customer/VenueScanQuickFacts'
+import FirstJoinNfcEducation from '../../src/components/customer/FirstJoinNfcEducation'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout, { ScreenGradientLoading } from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
@@ -47,6 +48,7 @@ export default function VenueJoinScreen() {
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
+  const [joinedCustomerId, setJoinedCustomerId] = useState<number | null>(null)
   const [landing, setLanding] = useState<LandingPayload | null>(null)
   const [existingCard, setExistingCard] = useState<WalletCard | null>(null)
 
@@ -104,6 +106,19 @@ export default function VenueJoinScreen() {
     })
   }
 
+  function openJoinedCard(customerId: number) {
+    const loyaltyVenueId = landing?.venue.loyalty_venue_id ?? landing?.venue.id
+    if (!loyaltyVenueId) {
+      router.replace('/(customer)/wallet')
+      return
+    }
+
+    router.replace({
+      pathname: '/card/[cardId]',
+      params: { cardId: String(customerId), venueId: String(loyaltyVenueId) },
+    })
+  }
+
   async function handlePrimary() {
     if (!slug) return
 
@@ -125,8 +140,17 @@ export default function VenueJoinScreen() {
     setJoining(true)
     setError('')
     try {
-      await apiRequest(`/venues/${encodeURIComponent(slug)}/join`, { method: 'POST', token })
-      router.replace('/(customer)/wallet')
+      const response = await apiRequest<{ customer: { id: number }; joined?: boolean }>(
+        `/venues/${encodeURIComponent(slug)}/join`,
+        { method: 'POST', token },
+      )
+
+      if (response.joined === false) {
+        openExistingCard()
+        return
+      }
+
+      setJoinedCustomerId(response.customer.id)
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : 'Could not join venue.')
     } finally {
@@ -165,7 +189,14 @@ export default function VenueJoinScreen() {
 
   const venue = landing?.venue
   const logo = venue ? venueLogoUrl(venue) : null
-  const primaryLabel = isMember ? 'Open your card' : joining ? 'Joining…' : 'Start collecting rewards'
+  const showJoinSuccess = joinedCustomerId != null
+  const primaryLabel = isMember
+    ? 'Open your card'
+    : showJoinSuccess
+      ? 'View my stamp card'
+      : joining
+        ? 'Joining…'
+        : 'Start collecting rewards'
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -229,6 +260,12 @@ export default function VenueJoinScreen() {
             />
           </View>
 
+          {showJoinSuccess ? (
+            <View style={{ marginTop: space.sectionGap }}>
+              <FirstJoinNfcEducation variant="qr_join" />
+            </View>
+          ) : null}
+
           {error ? (
             <Text style={withAppFont({ marginTop: 12, fontSize: 14, color: colors.danger, textAlign: 'center' })}>{error}</Text>
           ) : null}
@@ -247,7 +284,14 @@ export default function VenueJoinScreen() {
       >
         <PrimaryButton
           label={primaryLabel}
-          onPress={() => void handlePrimary()}
+          onPress={() => {
+            if (showJoinSuccess && joinedCustomerId != null) {
+              openJoinedCard(joinedCustomerId)
+              return
+            }
+
+            void handlePrimary()
+          }}
           disabled={joining}
         />
         {isMember ? (

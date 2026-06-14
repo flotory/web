@@ -50,6 +50,14 @@ export function formatJoinSocialProof(social: VenueJoinSocialProof | null | unde
   return null
 }
 
+export const NFC_RETURN_VISIT_HEADLINE = 'Next visit, tap the NFC stand'
+
+export const VENUE_JOIN_NFC_EDUCATION = {
+  title: 'After you join',
+  headline: NFC_RETURN_VISIT_HEADLINE,
+  detail: 'Hold your phone near the Flotory stand at the counter on return visits.',
+} as const
+
 export const VENUE_JOIN_STEPS = [
   { label: 'Join free in the app', detail: 'Takes under 30 seconds' },
   { label: 'Visit us', detail: 'Come back whenever you like' },

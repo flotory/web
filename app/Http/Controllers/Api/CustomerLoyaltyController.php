@@ -123,6 +123,7 @@ class CustomerLoyaltyController extends Controller
 
         return response()->json([
             'customer' => $customer->load('venue'),
+            'joined' => $customer->wasRecentlyCreated,
         ], $customer->wasRecentlyCreated ? 201 : 200);
     }
 

@@ -10,6 +10,7 @@ import {
   formatJoinSocialProof,
   formatVenueJoinRewardHeadline,
   formatVisitsToUnlock,
+  VENUE_JOIN_NFC_EDUCATION,
   VENUE_JOIN_STEPS,
   type VenueJoinHeroReward,
   type VenueJoinSocialProof,
@@ -90,6 +91,12 @@ const stampSlots = computed(() => {
         </span>
       </li>
     </ol>
+
+    <div class="nfc-education" data-testid="venue-join-nfc-education">
+      <p class="nfc-education-kicker">{{ VENUE_JOIN_NFC_EDUCATION.title }}</p>
+      <p class="nfc-education-headline">{{ VENUE_JOIN_NFC_EDUCATION.headline }}</p>
+      <p class="nfc-education-detail">{{ VENUE_JOIN_NFC_EDUCATION.detail }}</p>
+    </div>
 
     <p v-if="socialLabel" class="social-proof">{{ socialLabel }}</p>
 
@@ -255,6 +262,37 @@ const stampSlots = computed(() => {
   font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.4;
+  color: var(--flotory-ink-muted);
+}
+
+.nfc-education {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--flotory-accent-border) 45%, var(--flotory-border));
+  background: color-mix(in srgb, var(--flotory-accent-soft) 55%, var(--flotory-surface));
+  padding: 0.95rem 1rem;
+}
+
+.nfc-education-kicker {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--flotory-accent-active);
+}
+
+.nfc-education-headline {
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--flotory-ink);
+}
+
+.nfc-education-detail {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.45;
   color: var(--flotory-ink-muted);
 }
 

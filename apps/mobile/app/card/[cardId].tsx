@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
 import CardVenueRewardsCarousel from '../../src/components/customer/CardVenueRewardsCarousel'
+import FirstJoinNfcEducation from '../../src/components/customer/FirstJoinNfcEducation'
 import StampScannedBanner from '../../src/components/customer/StampScannedBanner'
 import CustomerScreen from '../../src/components/ui/CustomerScreen'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
@@ -21,8 +22,9 @@ import { colors, space } from '../../src/theme'
 export default function CardDetailScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const params = useLocalSearchParams<{ cardId: string; venueId?: string }>()
+  const params = useLocalSearchParams<{ cardId: string; venueId?: string; nfcEducation?: string }>()
   const venueId = params.venueId ? String(params.venueId) : undefined
+  const showNfcEducation = params.nfcEducation === '1'
   const { data: payload, loading, refreshing, error, refresh, silentRefresh, reload } = useCardDetail(venueId)
   const fade = useFadeOnReady(Boolean(payload))
   const readyHapticDone = useRef(false)
@@ -139,6 +141,12 @@ export default function CardDetailScreen() {
       ) : null}
 
       <Animated.View style={{ opacity: fade }}>
+        {showNfcEducation ? (
+          <View style={{ paddingHorizontal: space.screenX, marginTop: 12, marginBottom: 4 }}>
+            <FirstJoinNfcEducation variant="nfc_first_stamp" />
+          </View>
+        ) : null}
+
         <CardDetailHeader
           venue={card.venue}
           promotion={promotion}
