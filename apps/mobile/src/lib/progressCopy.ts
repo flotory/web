@@ -1,7 +1,3 @@
-function visitWord(count: number): string {
-  return count === 1 ? 'visit' : 'visits'
-}
-
 function stampWord(count: number): string {
   return count === 1 ? 'stamp' : 'stamps'
 }
@@ -14,25 +10,25 @@ function rewardLabel(title: string | null | undefined): string {
   return trimmed
 }
 
-/** e.g. "2 visits to free coffee" */
+/** e.g. "2 stamps to free coffee" */
 export function visitsToRewardCopy(remaining: number, rewardTitle?: string | null): string {
   const reward = rewardLabel(rewardTitle)
   if (remaining <= 0) return `${reward} is ready`
-  return `${remaining} ${visitWord(remaining)} to ${reward}`
+  return `${remaining} ${stampWord(remaining)} to ${reward}`
 }
 
 /** e.g. "Only 2 left until free coffee" */
 export function heroProgressTitle(remaining: number, rewardTitle?: string | null): string {
   const reward = rewardLabel(rewardTitle)
   if (remaining <= 0) return `${reward} is ready`
-  if (remaining === 1) return 'One visit away'
+  if (remaining === 1) return 'One stamp away'
   return `Only ${remaining} left`
 }
 
 export function heroProgressSubtitle(remaining: number, rewardTitle?: string | null): string {
   const reward = rewardLabel(rewardTitle)
-  if (remaining <= 0) return 'Claim it on your next visit.'
-  return `Unlock ${reward} on your next visit.`
+  if (remaining <= 0) return 'Claim it on your next stamp.'
+  return `Unlock ${reward} on your next stamp.`
 }
 
 /** Secondary line under progress bar */

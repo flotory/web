@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
-import { Animated, Pressable, Text, View } from 'react-native'
+import { Animated, PanResponder, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { withAppFont } from '../../lib/typography'
@@ -26,11 +26,28 @@ export default function StampScannedBanner({
   const insets = useSafeAreaInsets()
   const opacity = useRef(new Animated.Value(0)).current
   const translateY = useRef(new Animated.Value(-10)).current
+  const dragY = useRef(new Animated.Value(0)).current
+  const dismissingRef = useRef(false)
+
+  const dismiss = (targetY = -24) => {
+    if (dismissingRef.current) return
+    dismissingRef.current = true
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: targetY, duration: 180, useNativeDriver: true }),
+      Animated.timing(dragY, { toValue: 0, duration: 120, useNativeDriver: true }),
+    ]).start(({ finished }) => {
+      if (finished) onDismiss()
+      dismissingRef.current = false
+    })
+  }
 
   useEffect(() => {
     if (!visible) {
       opacity.setValue(0)
       translateY.setValue(-10)
+      dragY.setValue(0)
+      dismissingRef.current = false
       return
     }
 
@@ -39,17 +56,31 @@ export default function StampScannedBanner({
       Animated.spring(translateY, { toValue: 0, friction: 9, tension: 100, useNativeDriver: true }),
     ]).start()
 
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: -6, duration: 200, useNativeDriver: true }),
-      ]).start(({ finished }) => {
-        if (finished) onDismiss()
-      })
-    }, autoHideMs)
+    const timer = setTimeout(() => dismiss(-6), autoHideMs)
 
     return () => clearTimeout(timer)
-  }, [visible, autoHideMs, onDismiss, opacity, translateY])
+  }, [visible, autoHideMs, dragY, onDismiss, opacity, translateY])
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 6,
+      onPanResponderMove: (_, gesture) => {
+        if (gesture.dy < 0) {
+          dragY.setValue(gesture.dy)
+        }
+      },
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dy < -22 || gesture.vy < -0.55) {
+          dismiss(-28)
+          return
+        }
+        Animated.spring(dragY, { toValue: 0, friction: 8, tension: 120, useNativeDriver: true }).start()
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(dragY, { toValue: 0, friction: 8, tension: 120, useNativeDriver: true }).start()
+      },
+    }),
+  ).current
 
   if (!visible) {
     return null
@@ -110,10 +141,11 @@ export default function StampScannedBanner({
         top: insets.top + 8,
         left: 14,
         right: 14,
-        zIndex: 100,
+        zIndex: 220,
         opacity,
-        transform: [{ translateY }],
+        transform: [{ translateY }, { translateY: dragY }],
       }}
+      {...panResponder.panHandlers}
     >
       {onPress ? (
         <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="View loyalty card">

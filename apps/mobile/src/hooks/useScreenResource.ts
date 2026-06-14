@@ -25,6 +25,7 @@ export function useScreenResource<T>({
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const loadRef = useRef(load)
+  const refreshCountRef = useRef(0)
 
   useEffect(() => {
     loadRef.current = load
@@ -34,7 +35,12 @@ export function useScreenResource<T>({
     async (fresh: boolean, mode: LoadMode) => {
       if (!enabled) return
 
-      if (mode === 'refresh') setRefreshing(true)
+      let refreshGeneration = 0
+      if (mode === 'refresh') {
+        refreshCountRef.current += 1
+        refreshGeneration = refreshCountRef.current
+        setRefreshing(true)
+      }
       if (mode === 'initial') setLoading(true)
 
       try {
@@ -47,7 +53,10 @@ export function useScreenResource<T>({
           setError(network.isConnected === false ? 'You appear to be offline. Reconnect and try again.' : errorMessage)
         }
       } finally {
-        if (mode === 'refresh') setRefreshing(false)
+        if (mode === 'refresh' && refreshGeneration === refreshCountRef.current) {
+          refreshCountRef.current = 0
+          setRefreshing(false)
+        }
         if (mode === 'initial') setLoading(false)
       }
     },
@@ -63,6 +72,8 @@ export function useScreenResource<T>({
     if (!enabled) {
       setData(null)
       setLoading(false)
+      setRefreshing(false)
+      refreshCountRef.current = 0
       setError('')
       return
     }

@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Image, Text, View } from 'react-native'
 
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, shadows } from '../../theme'
+import { colors, radius } from '../../theme'
 
 const HERO_HEIGHT = 200
 
@@ -34,7 +34,6 @@ export default function RedeemPassCard({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(215, 163, 93, 0.28)',
-        ...shadows.md,
       }}
     >
       <View style={{ height: HERO_HEIGHT, backgroundColor: colors.primarySoft }}>

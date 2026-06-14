@@ -4,10 +4,10 @@ import { ActivityIndicator, Animated, PanResponder, Text, View, type LayoutChang
 
 import { hapticSuccess } from '../../lib/haptics'
 import { withAppFont } from '../../lib/typography'
-import { colors, shadows } from '../../theme'
+import { colors } from '../../theme'
 
-const THUMB_SIZE = 52
-const TRACK_HEIGHT = 58
+const THUMB_SIZE = 54
+const TRACK_HEIGHT = 60
 const COMPLETE_RATIO = 0.82
 
 interface SlideToRedeemProps {
@@ -115,13 +115,12 @@ export default function SlideToRedeem({ onRedeem, disabled = false }: SlideToRed
       style={{
         height: TRACK_HEIGHT,
         borderRadius: TRACK_HEIGHT / 2,
-        backgroundColor: colors.primary,
+        backgroundColor: 'rgba(5, 13, 30, 0.92)',
         borderWidth: 1,
-        borderColor: colors.primarySoft,
+        borderColor: 'rgba(215, 163, 93, 0.35)',
         justifyContent: 'center',
         overflow: 'hidden',
         opacity: disabled ? 0.55 : 1,
-        ...shadows.button,
       }}
     >
       <Animated.Text
@@ -138,29 +137,28 @@ export default function SlideToRedeem({ onRedeem, disabled = false }: SlideToRed
           { opacity: labelOpacity },
         ]}
       >
-        Slide to redeem
+        Slide to redeem reward
       </Animated.Text>
-
       <Animated.View
         {...panResponder.panHandlers}
         style={{
           position: 'absolute',
-          left: 4,
+          left: 3,
           width: THUMB_SIZE,
           height: THUMB_SIZE,
           borderRadius: THUMB_SIZE / 2,
-          backgroundColor: colors.accent,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.accentBorder,
           alignItems: 'center',
           justifyContent: 'center',
           transform: [{ translateX: dragX }],
-          ...shadows.md,
-          shadowColor: colors.ink,
         }}
       >
         {submitting ? (
-          <ActivityIndicator color={colors.primary} size="small" />
+          <ActivityIndicator color={colors.accentActive} size="small" />
         ) : (
-          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+          <Ionicons name="chevron-forward" size={24} color={colors.accentActive} />
         )}
       </Animated.View>
     </View>

@@ -128,8 +128,8 @@ describe('stampUpdateSignature', () => {
     const normal = stampUpdateSignature(stampPayload())
     const completed = stampUpdateSignature(stampPayload({ cycle_completed: true, stamps: 0 }))
 
-    expect(normal).toBe('42:3:4:1:false')
-    expect(completed).toBe('42:3:0:1:true')
+    expect(normal).toBe('42:1:3:4:1:false')
+    expect(completed).toBe('42:1:3:0:1:true')
   })
 })
 

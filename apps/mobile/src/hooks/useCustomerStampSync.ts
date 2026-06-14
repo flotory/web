@@ -2,7 +2,6 @@ import { usePathname, useRouter, useSegments } from 'expo-router'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { hapticLightTap } from '../lib/haptics'
-import { isStampSignatureAcknowledged } from '../lib/stampAck'
 import { stampUpdateSignature } from '../lib/stampLiveUpdate'
 import { useRealtime } from '../providers/RealtimeProvider'
 import type { StampAddedPayload } from '../types/realtime'
@@ -27,7 +26,7 @@ export function useCustomerStampSync() {
   const router = useRouter()
   const pathname = usePathname()
   const segments = useSegments()
-  const { latestStamp, clearLatestStamp } = useRealtime()
+  const { latestStamp } = useRealtime()
   const lastNavigatedSignature = useRef('')
 
   const openCard = useCallback(
@@ -49,12 +48,6 @@ export function useCustomerStampSync() {
     }
 
     const signature = stampUpdateSignature(latestStamp)
-
-    if (isStampSignatureAcknowledged(signature)) {
-      clearLatestStamp()
-      return
-    }
-
     const onCard = isOnCardScreen(segments, pathname, latestStamp.customer.id)
 
     if (onCard) {
@@ -62,14 +55,11 @@ export function useCustomerStampSync() {
       return
     }
 
-    if (lastNavigatedSignature.current === signature) {
-      clearLatestStamp()
-      return
-    }
+    if (lastNavigatedSignature.current === signature) return
 
     lastNavigatedSignature.current = signature
     hapticLightTap()
     openCard(latestStamp)
-  }, [clearLatestStamp, latestStamp, pathname, segments, openCard])
+  }, [latestStamp, pathname, segments, openCard])
   return watchdog
 }

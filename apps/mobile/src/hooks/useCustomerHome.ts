@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useFocusEffect, useRouter } from 'expo-router'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { HomeRewardSlide } from '../components/customer/HomeRewardCarousel'
 import { buildHomeActivity, fetchCustomerCardsList } from '../lib/customerData'
@@ -8,12 +8,14 @@ import { sortHomeCampaigns } from '../lib/homeCampaigns'
 import { stampUpdateSignature } from '../lib/stampLiveUpdate'
 import { useAuth } from '../providers/AuthProvider'
 import { useRealtime } from '../providers/RealtimeProvider'
-import { colors } from '../theme'
 import type { RewardWalletItem, VenueRef } from '../types/loyalty'
 import { useFadeOnReady } from './useFadeOnReady'
 import { useCustomerSurfaceRefresh } from './useCustomerSurfaceRefresh'
 import { useRewardsWallet } from './useRewardsWallet'
 import { useScreenResource } from './useScreenResource'
+
+const PULL_REFRESH_TIMEOUT_MS = 10_000
+const PULL_REFRESH_MIN_VISIBLE_MS = 550
 
 export function useCustomerHome() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export function useCustomerHome() {
   const { latestStamp } = useRealtime()
   const lastUnlockHaptic = useRef<number | null>(null)
   const lastHomeStampSignature = useRef('')
+  const lastCycleRetrySignature = useRef('')
 
   const loadHomeCards = useCallback(
     (fresh: boolean) => {
@@ -39,7 +42,10 @@ export function useCustomerHome() {
   const walletQuery = useRewardsWallet({ refetchOnFocus: false })
 
   const loading = cardsQuery.loading || walletQuery.loading
-  const refreshing = cardsQuery.refreshing || walletQuery.refreshing
+  const [pullRefreshing, setPullRefreshing] = useState(false)
+  const pullRefreshGenerationRef = useRef(0)
+  const surfaceRefreshInFlightRef = useRef(false)
+  const refreshing = pullRefreshing
   const error = cardsQuery.error || walletQuery.error
   const cards = cardsQuery.data?.cards ?? []
   const walletItems = walletQuery.data?.items ?? []
@@ -64,12 +70,56 @@ export function useCustomerHome() {
   const silentRefreshCards = cardsQuery.silentRefresh
   const silentRefreshWallet = walletQuery.silentRefresh
 
+  const surfaceRefresh = useCallback(() => {
+    if (surfaceRefreshInFlightRef.current) {
+      return
+    }
+
+    surfaceRefreshInFlightRef.current = true
+    void Promise.allSettled([silentRefreshCards(), silentRefreshWallet()]).finally(() => {
+      surfaceRefreshInFlightRef.current = false
+    })
+  }, [silentRefreshCards, silentRefreshWallet])
+
   const refresh = useCallback(() => {
-    void refreshCards()
-    void refreshWallet()
+    pullRefreshGenerationRef.current += 1
+    const generation = pullRefreshGenerationRef.current
+    const startedAt = Date.now()
+    setPullRefreshing(true)
+
+    const timeout = setTimeout(() => {
+      if (generation === pullRefreshGenerationRef.current) {
+        setPullRefreshing(false)
+      }
+    }, PULL_REFRESH_TIMEOUT_MS)
+
+    void Promise.allSettled([refreshCards(), refreshWallet()]).finally(() => {
+      clearTimeout(timeout)
+      const elapsed = Date.now() - startedAt
+      const remaining = Math.max(PULL_REFRESH_MIN_VISIBLE_MS - elapsed, 0)
+      const finish = () => {
+        if (generation === pullRefreshGenerationRef.current) {
+          setPullRefreshing(false)
+        }
+      }
+      if (remaining > 0) {
+        setTimeout(finish, remaining)
+      } else {
+        finish()
+      }
+    })
   }, [refreshCards, refreshWallet])
 
-  useCustomerSurfaceRefresh(refresh)
+  useCustomerSurfaceRefresh(surfaceRefresh)
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        pullRefreshGenerationRef.current += 1
+        setPullRefreshing(false)
+      }
+    }, []),
+  )
 
   const reload = useCallback(() => {
     cardsQuery.reload()
@@ -101,45 +151,27 @@ export function useCustomerHome() {
     () =>
       [...cards]
         .filter((card) => card.venue)
-        .sort((a, b) => (b.summary?.pending_rewards_count ?? 0) - (a.summary?.pending_rewards_count ?? 0))
-        .slice(0, 3),
+        .sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999)),
     [cards],
   )
 
   const primaryReady = readyItems[0] ?? null
 
-  const featuredNextCard = useMemo(() => {
-    if (primaryReady) {
-      return null
-    }
-
-    const nextCards = [...cards]
-      .filter((card) => card.venue)
-      .sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999))
-
-    return nextCards[0] ?? null
-  }, [cards, primaryReady])
-
   const stableRewardSlidesRef = useRef<HomeRewardSlide[]>([])
   const rewardSlides = useMemo((): HomeRewardSlide[] => {
-    let slides: HomeRewardSlide[]
-    if (readyItems.length > 0) {
-      const rest = readyItems.length > 1 ? readyItems.slice(1) : []
-      slides = rest.map((item) => ({
-        id: `ready-${item.unlock_id}`,
-        kind: 'ready' as const,
-        item,
-      }))
-    } else {
-      const carouselCards = featuredNextCard
-        ? activeCards.filter((card) => card.id !== featuredNextCard.id)
-        : activeCards
-      slides = carouselCards.map((card) => ({
-        id: `next-${card.id}`,
-        kind: 'next' as const,
-        card,
-      }))
-    }
+    const readySlides = readyItems.map((item) => ({
+      id: `ready-${item.unlock_id}`,
+      kind: 'ready' as const,
+      item,
+    }))
+
+    const progressSlides = activeCards.map((card) => ({
+      id: `next-${card.id}`,
+      kind: 'next' as const,
+      card,
+    }))
+
+    const slides = [...readySlides, ...progressSlides]
 
     if (slides.length > 0 || !refreshing) {
       stableRewardSlidesRef.current = slides
@@ -147,7 +179,7 @@ export function useCustomerHome() {
     }
 
     return stableRewardSlidesRef.current
-  }, [activeCards, featuredNextCard, readyItems, refreshing])
+  }, [activeCards, readyItems, refreshing])
 
   const headerStampsLeft = useMemo(() => {
     if (readyItems.length > 0) return 0
@@ -160,36 +192,6 @@ export function useCustomerHome() {
     const nextCards = [...cards].filter((card) => card.venue).sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999))
     return nextCards[0]?.summary?.next_reward_title ?? 'your next reward'
   }, [cards, primaryReady])
-
-  const quickActions = useMemo(
-    () => [
-      {
-        id: 'scan',
-        label: 'Stamp',
-        subtitle: 'Tap NFC stand',
-        icon: 'radio-outline' as const,
-        tint: colors.lavender,
-        onPress: () => router.navigate('/(customer)/qr'),
-      },
-      {
-        id: 'wallet',
-        label: 'Wallet',
-        subtitle: 'Cards & rewards',
-        icon: 'wallet-outline' as const,
-        tint: colors.accentSoft,
-        onPress: () => router.navigate('/(customer)/wallet'),
-      },
-      {
-        id: 'venues',
-        label: 'Venues',
-        subtitle: 'Discover cafes',
-        icon: 'compass-outline' as const,
-        tint: colors.dangerSoft,
-        onPress: () => router.push('/(customer)/venues'),
-      },
-    ],
-    [router],
-  )
 
   const activity = useMemo(
     () => buildHomeActivity(cards, readyItems),
@@ -207,6 +209,7 @@ export function useCustomerHome() {
   useEffect(() => {
     if (!latestStamp) {
       lastHomeStampSignature.current = ''
+      lastCycleRetrySignature.current = ''
       return
     }
 
@@ -216,9 +219,31 @@ export function useCustomerHome() {
     }
     lastHomeStampSignature.current = signature
 
-    void silentRefreshCards()
-    void silentRefreshWallet()
-  }, [latestStamp, silentRefreshCards, silentRefreshWallet])
+    surfaceRefresh()
+  }, [latestStamp, surfaceRefresh])
+
+  // If the user leaves the card before the 5/5 celebration finishes, backend unlock
+  // propagation can lag behind the first Home refresh. Retry once for cycle-complete.
+  useEffect(() => {
+    if (!latestStamp?.cycle_completed) {
+      return
+    }
+    if (readyItems.length > 0) {
+      return
+    }
+
+    const signature = stampUpdateSignature(latestStamp)
+    if (lastCycleRetrySignature.current === signature) {
+      return
+    }
+    lastCycleRetrySignature.current = signature
+
+    const retry = setTimeout(() => {
+      surfaceRefresh()
+    }, 1200)
+
+    return () => clearTimeout(retry)
+  }, [latestStamp, readyItems.length, surfaceRefresh])
 
   return {
     role,
@@ -232,11 +257,9 @@ export function useCustomerHome() {
     campaignVenueById,
     readyItems,
     primaryReady,
-    featuredNextCard,
     rewardSlides,
     headerStampsLeft,
     headerRewardTitle,
-    quickActions,
     activity,
     fade,
     refresh,

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 
 import { hasVenueMapTarget, openVenueInMaps, type VenueMapTarget } from '../../lib/openMaps'
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, shadows, space } from '../../theme'
+import { colors, radius, space } from '../../theme'
 
 interface RedeemVenueInfoProps {
   venueName: string
@@ -23,7 +23,6 @@ export default function RedeemVenueInfo({ venueName, address, mapTarget }: Redee
         borderWidth: 1,
         borderColor: colors.border,
         gap: 12,
-        ...shadows.sm,
       }}
     >
       <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: colors.inkSoft, textTransform: 'uppercase' })}>

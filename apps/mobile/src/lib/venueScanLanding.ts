@@ -138,7 +138,7 @@ export function membershipFromWalletCard(
   card: { stamps: number; summary?: { stamps?: number; next_reward_stamps?: number | null; max_stamps?: number; stamps_to_next?: number | null; pending_rewards_count?: number } | null },
 ): ScanLandingMembership {
   const stamps = card.summary?.stamps ?? card.stamps
-  const target = Math.max(card.summary?.next_reward_stamps ?? card.summary?.max_stamps ?? 10, 1)
+  const target = Math.max(card.summary?.next_reward_stamps ?? card.summary?.max_stamps ?? 1, 1)
   const stampsToNext =
     card.summary?.stamps_to_next != null
       ? Math.max(card.summary.stamps_to_next, 0)

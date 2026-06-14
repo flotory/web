@@ -53,17 +53,27 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
   const ring = (
     <View
       style={{
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        borderWidth: 2,
-        borderColor: colors.accentBorder,
-        backgroundColor: dark ? colors.ink : colors.surface,
+        width: 54,
+        height: 54,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: dark ? 'rgba(215, 163, 93, 0.45)' : colors.accentBorder,
+        backgroundColor: dark ? 'rgba(5, 13, 30, 0.92)' : colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
         ...(dark && Platform.OS === 'ios' ? shadows.sm : {}),
       }}
     >
+      <View
+        style={{
+          position: 'absolute',
+          width: 44,
+          height: 44,
+          borderRadius: 11,
+          borderWidth: 1,
+          borderColor: dark ? 'rgba(215, 163, 93, 0.28)' : 'rgba(215, 163, 93, 0.4)',
+        }}
+      />
       <Text style={withAppFont({ fontSize: 14, fontWeight: '900', color: dark ? colors.accent : colors.accentActive, lineHeight: 16 })}>
         {multiplier}×
       </Text>

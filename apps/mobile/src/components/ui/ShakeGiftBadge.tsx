@@ -41,9 +41,9 @@ export default function ShakeGiftBadge({ style }: ShakeGiftBadgeProps) {
         {
           width: rewardReady.badgeSize,
           height: rewardReady.badgeSize,
-          borderRadius: rewardReady.badgeRadius,
-          backgroundColor: rewardReady.backgroundColor,
-          borderWidth: 1,
+          borderRadius: rewardReady.badgeSize / 2,
+          backgroundColor: '#F8E9CC',
+          borderWidth: 1.5,
           borderColor: rewardReady.borderColor,
           alignItems: 'center',
           justifyContent: 'center',
@@ -51,8 +51,18 @@ export default function ShakeGiftBadge({ style }: ShakeGiftBadgeProps) {
         style,
       ]}
     >
+      <View
+        style={{
+          position: 'absolute',
+          width: rewardReady.badgeSize - 8,
+          height: rewardReady.badgeSize - 8,
+          borderRadius: (rewardReady.badgeSize - 8) / 2,
+          borderWidth: 1,
+          borderColor: 'rgba(215, 163, 93, 0.45)',
+        }}
+      />
       <Animated.View style={{ transform: [{ rotate: bellRotate }] }}>
-        <Ionicons name={rewardReady.iconName} size={rewardReady.iconSize} color={rewardReady.iconColor} />
+        <Ionicons name={rewardReady.iconName} size={20} color={rewardReady.iconColor} />
       </Animated.View>
     </View>
   )

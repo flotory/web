@@ -15,7 +15,7 @@ const HIDDEN_TABS = new Set(['notifications'])
 const TAB_LABELS: Record<string, string> = {
   home: 'Home',
   wallet: 'Wallet',
-  qr: 'My QR',
+  qr: 'Stamp',
   venues: 'Venues',
   settings: 'Profile',
 }

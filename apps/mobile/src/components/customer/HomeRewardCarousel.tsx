@@ -14,6 +14,13 @@ interface HomeRewardCarouselProps {
   slides: HomeRewardSlide[]
 }
 
+function walletCardStampProgress(card: WalletCard) {
+  return {
+    collected: card.summary?.stamps ?? card.stamps,
+    target: card.summary?.next_reward_stamps ?? card.summary?.max_stamps ?? 1,
+  }
+}
+
 const transparent = { backgroundColor: 'transparent' as const }
 
 function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
@@ -73,6 +80,7 @@ function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
                 image_thumb: null,
               })}
               stampsToGo={item.card.summary?.stamps_to_next ?? null}
+              stampProgress={walletCardStampProgress(item.card)}
               cardId={item.card.id}
               venueId={item.card.venue_id}
               width={cardWidth}

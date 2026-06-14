@@ -7,6 +7,7 @@ interface CacheEntry<T> {
 
 const cache = new Map<string, CacheEntry<unknown>>()
 const inflight = new Map<string, Promise<unknown>>()
+const requestVersion = new Map<string, number>()
 
 export function readCache<T>(key: string, ttlMs = DEFAULT_TTL_MS): T | null {
   const entry = cache.get(key) as CacheEntry<T> | undefined
@@ -43,15 +44,23 @@ export async function fetchWithCache<T>(
   }
 
   const pending = inflight.get(key) as Promise<T> | undefined
-  if (pending) return pending
+  if (pending && !fresh) return pending
+
+  const version = (requestVersion.get(key) ?? 0) + 1
+  requestVersion.set(key, version)
 
   const promise = fetcher()
     .then((data) => {
-      writeCache(key, data)
+      // Ignore stale completions when a newer fresh request has started.
+      if (requestVersion.get(key) === version) {
+        writeCache(key, data)
+      }
       return data
     })
     .finally(() => {
-      inflight.delete(key)
+      if (requestVersion.get(key) === version) {
+        inflight.delete(key)
+      }
     })
 
   inflight.set(key, promise)

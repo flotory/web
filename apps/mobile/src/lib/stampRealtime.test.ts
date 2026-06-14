@@ -26,7 +26,7 @@ describe('decideStampPublish', () => {
   it('publishes a new stamp signature', () => {
     const decision = decideStampPublish(stampPayload(), '')
 
-    expect(decision).toEqual({ publish: true, signature: '42:3:4:1:false' })
+    expect(decision).toEqual({ publish: true, signature: '42:1:3:4:1:false' })
   })
 
   it('skips duplicate signatures from polling', () => {
@@ -43,7 +43,7 @@ describe('decideStampPublish', () => {
 
   it('skips signatures the user already acknowledged locally', () => {
     clearStampAckState()
-    acknowledgeStampSignature('42:3:4:1:false')
+    acknowledgeStampSignature('42:1:3:4:1:false')
 
     expect(decideStampPublish(stampPayload(), '')).toEqual({
       publish: false,

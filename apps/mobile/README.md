@@ -64,7 +64,7 @@ Tags must contain a Flotory tap URL (`https://flotory.com/t/...` or `flotory://t
 
 ### Rewards
 
-Ready rewards use **Slide to redeem** on Home, Wallet, and cafe cards (`POST /api/customer/rewards/unlocks/{unlock}/redeem`). There is no claim QR or staff scanner.
+Ready rewards use **Slide to redeem** on Home (carousel + redeem screen), Wallet, and cafe cards (`POST /api/customer/rewards/unlocks/{unlock}/redeem`). There is no claim QR or staff scanner.
 
 ## Run
 
@@ -156,7 +156,8 @@ Venue NFC setup guide for pilots: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE
 
 ## Architecture (customer app)
 
-- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center Stamp (`TabBarQrButton`), Venues, Profile; Notifications is a hidden stack route
+- **Tabs:** custom `CustomerTabBar` — Home, Wallet, center Stamp (NFC radio icon), Venues, Profile; Notifications is a hidden stack route
+- **Home:** unified rewards carousel (ready vouchers + in-progress cards), contextual NFC CTA (`HomeContextualCta`), campaigns carousel, activity feed
 - **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
 - **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useDiscoverVenues`, `useCardDetail`, `useNfcStampScan`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
@@ -221,4 +222,18 @@ When adding new screens or redesigning existing ones, prefer these primitives be
 ```bash
 npm --prefix apps/mobile run start -- --clear
 ```
+
+## TestFlight (EAS)
+
+Production iOS builds use [EAS Build](https://docs.expo.dev/build/introduction/) (`apps/mobile/eas.json`). From `apps/mobile` after tests pass:
+
+```bash
+npm run typecheck
+cd ../.. && npm run test:unit -- apps/mobile/src
+
+eas build --platform ios --profile production
+eas submit --platform ios --latest --profile production
+```
+
+`production` profile sets `EXPO_PUBLIC_API_BASE_URL=https://flotory.com/api` and auto-increments the iOS build number. Requires Expo account login and App Store Connect API key (or interactive Apple credentials on first submit).
 

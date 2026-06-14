@@ -4,10 +4,8 @@ import { useMemo } from 'react'
 import HomeActivitySection from '../src/components/customer/HomeActivitySection'
 import HomeCampaignCarousel from '../src/components/customer/HomeCampaignCarousel'
 import HomeEmptyHero from '../src/components/customer/HomeEmptyHero'
-import HomeQuickActions from '../src/components/customer/HomeQuickActions'
-import HomeReadyPassCard from '../src/components/customer/HomeReadyPassCard'
+import HomeContextualCta from '../src/components/customer/HomeContextualCta'
 import HomeRewardCarousel from '../src/components/customer/HomeRewardCarousel'
-import HomeRewardTicketCard from '../src/components/customer/HomeRewardTicketCard'
 import HomeSummaryStrip from '../src/components/customer/HomeSummaryStrip'
 import AnimatedSection from '../src/components/ui/AnimatedSection'
 import CustomerScreen from '../src/components/ui/CustomerScreen'
@@ -16,8 +14,6 @@ import HomeSectionHeader from '../src/components/ui/HomeSectionHeader'
 import { useCustomerHome } from '../src/hooks/useCustomerHome'
 import { greetingForHour } from '../src/lib/greeting'
 import { hapticLightTap } from '../src/lib/haptics'
-import { rewardImageUrl } from '../src/lib/media'
-import { heroProgressSubtitle, heroProgressTitle } from '../src/lib/progressCopy'
 import { useNfcStampScanAction } from '../src/providers/NfcStampScanProvider'
 import { space } from '../src/theme'
 
@@ -33,12 +29,8 @@ export default function CustomerHomeScreen() {
     homeCampaigns,
     campaignVenueById,
     readyItems,
-    primaryReady,
-    featuredNextCard,
     rewardSlides,
     headerStampsLeft,
-    headerRewardTitle,
-    quickActions,
     activity,
     fade,
     refresh,
@@ -47,47 +39,58 @@ export default function CustomerHomeScreen() {
 
   const { startScan } = useNfcStampScanAction()
 
-  const actions = useMemo(
-    () =>
-      quickActions.map((action) =>
-        action.id === 'scan'
-          ? {
-              ...action,
-              onPress: () => {
-                hapticLightTap()
-                void startScan()
-              },
-            }
-          : action,
-      ),
-    [quickActions, startScan],
-  )
+  const contextualCta = useMemo(() => {
+    const showEmpty = cards.length === 0 && readyItems.length === 0
+
+    if (showEmpty) {
+      return null
+    }
+
+    if (cards.length > 0 || readyItems.length > 0) {
+      return {
+        label: 'Tap NFC stand',
+        hint: 'Collect a stamp at the counter',
+        icon: 'radio-outline' as const,
+        onPress: () => {
+          hapticLightTap()
+          void startScan()
+        },
+      }
+    }
+
+    return {
+      label: 'Find a venue',
+      hint: 'Discover cafes near you',
+      icon: 'compass-outline' as const,
+      onPress: () => {
+        hapticLightTap()
+        router.push('/(customer)/venues')
+      },
+    }
+  }, [cards.length, readyItems.length, router, startScan])
 
   if (role !== 'customer') {
     return null
   }
 
-  const headerTitle = primaryReady
-    ? 'Your reward is ready'
-    : headerStampsLeft > 0
-      ? heroProgressTitle(headerStampsLeft, headerRewardTitle)
-      : undefined
+  const hasCarousel = rewardSlides.length > 0
+  const showEmpty = cards.length === 0 && readyItems.length === 0
+  const showSummaryStrip = (cards.length > 0 || readyItems.length > 0) && !hasCarousel
+  const readySlideCount = rewardSlides.filter((slide) => slide.kind === 'ready').length
+  const progressSlideCount = rewardSlides.length - readySlideCount
 
-  const headerSubtitle = primaryReady
-    ? `${headerRewardTitle} — tap below to redeem at the counter.`
-    : headerStampsLeft > 0
-      ? heroProgressSubtitle(headerStampsLeft, headerRewardTitle)
-      : cards.length === 0
-        ? 'Discover a cafe and start collecting visits.'
-        : undefined
+  const rewardsSectionTitle =
+    readySlideCount > 0 && progressSlideCount > 0
+      ? 'Ready & in progress'
+      : readySlideCount > 0
+        ? 'Ready to redeem'
+        : 'Keep collecting'
 
   const header = (
     <Animated.View style={{ opacity: fade, paddingHorizontal: space.screenX }}>
       <HomeScreenHeader
         greeting={greetingForHour()}
         name={firstName}
-        title={headerTitle}
-        subtitle={headerSubtitle}
         onNotificationsPress={() => {
           hapticLightTap()
           router.push('/(customer)/notifications')
@@ -95,13 +98,6 @@ export default function CustomerHomeScreen() {
       />
     </Animated.View>
   )
-
-  const showSummaryStrip = cards.length > 0 || readyItems.length > 0
-
-  const hasHeroReady = Boolean(primaryReady)
-  const hasFeaturedNext = Boolean(featuredNextCard)
-  const hasCarousel = rewardSlides.length > 0
-  const showEmpty = cards.length === 0 && !hasHeroReady
 
   return (
     <CustomerScreen
@@ -132,37 +128,21 @@ export default function CustomerHomeScreen() {
               <HomeSummaryStrip
                 cardCount={cards.length}
                 readyCount={readyItems.length}
-                stampsToGo={primaryReady ? null : headerStampsLeft > 0 ? headerStampsLeft : null}
+                stampsToGo={readyItems.length > 0 ? null : headerStampsLeft > 0 ? headerStampsLeft : null}
               />
             </View>
           ) : null}
 
-          {hasHeroReady ? (
-            <View style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
-              <HomeReadyPassCard item={primaryReady!} />
-            </View>
-          ) : hasFeaturedNext ? (
-            <View style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
-              <HomeRewardTicketCard
-                variant="next"
-                title={featuredNextCard!.summary?.next_reward_title ?? 'Your next reward'}
-                venue={featuredNextCard!.venue}
-                imageUri={rewardImageUrl({
-                  title: featuredNextCard!.summary?.next_reward_title ?? 'Reward',
-                  image: null,
-                  image_thumb: null,
-                })}
-                stampsToGo={featuredNextCard!.summary?.stamps_to_next ?? null}
-                stampProgress={{
-                  collected: featuredNextCard!.summary?.stamps ?? featuredNextCard!.stamps,
-                  target:
-                    featuredNextCard!.summary?.next_reward_stamps ??
-                    featuredNextCard!.summary?.max_stamps ??
-                    10,
-                }}
-                cardId={featuredNextCard!.id}
-                venueId={featuredNextCard!.venue_id}
-              />
+          {hasCarousel ? (
+            <View style={{ marginTop: space.sectionGap, gap: 14 }}>
+              <View style={{ paddingHorizontal: space.screenX }}>
+                <HomeSectionHeader
+                  title={rewardsSectionTitle}
+                  label="Your rewards"
+                  trailing={rewardSlides.length > 1 ? 'Swipe' : undefined}
+                />
+              </View>
+              <HomeRewardCarousel slides={rewardSlides} />
             </View>
           ) : showEmpty ? (
             <AnimatedSection style={{ marginTop: space.sectionGap, paddingHorizontal: space.screenX }}>
@@ -176,35 +156,28 @@ export default function CustomerHomeScreen() {
           {homeCampaigns.length > 0 ? (
             <View
               style={{
-                marginTop:
-                  hasHeroReady || hasFeaturedNext || showEmpty ? space.sectionY : space.sectionGap,
+                marginTop: hasCarousel || showEmpty ? space.sectionY : space.sectionGap,
               }}
             >
               <HomeCampaignCarousel campaigns={homeCampaigns} venueById={campaignVenueById} />
             </View>
           ) : null}
 
-          <View
-            style={{
-              marginTop:
-                homeCampaigns.length > 0 || hasHeroReady || hasFeaturedNext || showEmpty
-                  ? space.sectionY
-                  : space.sectionGap,
-            }}
-          >
-            <HomeQuickActions actions={actions} />
-          </View>
-
-          {hasCarousel ? (
-            <View style={{ marginTop: space.sectionY, gap: 14 }}>
-              <View style={{ paddingHorizontal: space.screenX }}>
-                <HomeSectionHeader
-                  title={readyItems.length > 0 ? 'More ready to redeem' : 'Keep collecting'}
-                  label={readyItems.length > 0 ? 'Rewards' : 'Your cards'}
-                  trailing={rewardSlides.length > 1 ? 'Swipe' : undefined}
-                />
-              </View>
-              <HomeRewardCarousel slides={rewardSlides} />
+          {contextualCta ? (
+            <View
+              style={{
+                marginTop:
+                  homeCampaigns.length > 0 || hasCarousel || showEmpty
+                    ? space.sectionY
+                    : space.sectionGap,
+              }}
+            >
+              <HomeContextualCta
+                label={contextualCta.label}
+                hint={contextualCta.hint}
+                icon={contextualCta.icon}
+                onPress={contextualCta.onPress}
+              />
             </View>
           ) : null}
 

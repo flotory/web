@@ -73,9 +73,11 @@ export default function ScreenGradientLayout({
     const body = scrollable ? (
       <ScrollView
         style={styles.transparentScroll}
-        contentContainerStyle={[{ paddingBottom: bottomPad }, contentContainerStyle]}
+        contentContainerStyle={[{ flexGrow: 1, paddingBottom: bottomPad }, contentContainerStyle]}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
+        alwaysBounceVertical
+        bounces
         directionalLockEnabled
         nestedScrollEnabled
       >

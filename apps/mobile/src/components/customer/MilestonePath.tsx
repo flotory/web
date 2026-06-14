@@ -51,6 +51,7 @@ export default function MilestonePath({
   const celebrateScale = useRef(new Animated.Value(1)).current
   const celebrateRotate = useRef(new Animated.Value(0)).current
   const celebrateGlow = useRef(new Animated.Value(0)).current
+  const celebrateBurst = useRef(new Animated.Value(0)).current
 
   const hasUpcomingGift = [...gifts].some((stamp) => stamp > collected && !claimed.has(stamp))
   const hasHighlight = highlightStamps.length > 0
@@ -106,12 +107,14 @@ export default function MilestonePath({
       celebrateScale.setValue(1)
       celebrateRotate.setValue(0)
       celebrateGlow.setValue(0)
+      celebrateBurst.setValue(0)
       return
     }
 
-    celebrateScale.setValue(0.9)
+    celebrateScale.setValue(0.82)
     celebrateRotate.setValue(0)
     celebrateGlow.setValue(0)
+    celebrateBurst.setValue(0)
 
     const wiggle = Animated.sequence([
       Animated.timing(celebrateRotate, { toValue: 1, duration: 80, easing: Easing.linear, useNativeDriver: true }),
@@ -122,20 +125,30 @@ export default function MilestonePath({
     ])
 
     Animated.parallel([
-      Animated.spring(celebrateScale, { toValue: 1.1, friction: 5, tension: 120, useNativeDriver: true }),
-      Animated.timing(celebrateGlow, { toValue: 0.42, duration: 260, useNativeDriver: true }),
+      Animated.spring(celebrateScale, { toValue: 1.22, friction: 4.5, tension: 145, useNativeDriver: true }),
+      Animated.timing(celebrateGlow, { toValue: 0.72, duration: 240, useNativeDriver: true }),
+      Animated.timing(celebrateBurst, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       wiggle,
     ]).start(() => {
       Animated.parallel([
         Animated.spring(celebrateScale, { toValue: 1, friction: 8, tension: 90, useNativeDriver: true }),
-        Animated.timing(celebrateGlow, { toValue: 0, duration: 480, useNativeDriver: true }),
+        Animated.timing(celebrateGlow, { toValue: 0, duration: 520, useNativeDriver: true }),
+        Animated.timing(celebrateBurst, { toValue: 0, duration: 220, useNativeDriver: true }),
       ]).start()
     })
-  }, [celebrateGiftStamp, celebrateGlow, celebrateRotate, celebrateScale])
+  }, [celebrateBurst, celebrateGiftStamp, celebrateGlow, celebrateRotate, celebrateScale])
 
   const celebrateRotateDeg = celebrateRotate.interpolate({
     inputRange: [-1, 0, 1],
     outputRange: [`-${motion.giftBellRotateDeg}deg`, '0deg', `${motion.giftBellRotateDeg}deg`],
+  })
+  const burstScale = celebrateBurst.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.7, 1.35],
+  })
+  const burstOpacity = celebrateBurst.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.5],
   })
 
   function wrapCelebrate(stamp: number, node: ReactNode) {
@@ -149,10 +162,25 @@ export default function MilestonePath({
           transform: [{ scale: celebrateScale }, { rotate: celebrateRotateDeg }],
           shadowColor: colors.accent,
           shadowOpacity: celebrateGlow,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 5 },
         }}
       >
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: -5,
+            right: -5,
+            top: -5,
+            bottom: -5,
+            borderRadius: 999,
+            borderWidth: 2,
+            borderColor: colors.accent,
+            opacity: burstOpacity,
+            transform: [{ scale: burstScale }],
+          }}
+        />
         {node}
       </Animated.View>
     )
@@ -208,9 +236,9 @@ export default function MilestonePath({
       textColor = colors.accentActive
     }
 
-    const content = isCelebrating ? null : filled ? '✓' : isGift ? '🎁' : showStampNumbers ? String(stamp) : ''
-    const celebrateBackground = colors.accentSoft
-    const celebrateBorder = colors.accent
+    const content = isCelebrating ? null : filled ? '✓' : showStampNumbers ? String(stamp) : ''
+    const celebrateBackground = colors.accent
+    const celebrateBorder = colors.accentActive
 
     const cell = (
       <View
@@ -226,7 +254,13 @@ export default function MilestonePath({
         }}
       >
         {isCelebrating ? (
-          <Ionicons name={rewardReady.iconName} size={Math.round(rewardReady.iconSize * sizeScale)} color={rewardReady.iconColor} />
+          <Ionicons name={rewardReady.iconName} size={Math.round((rewardReady.iconSize + 2) * sizeScale)} color={colors.primary} />
+        ) : isGift && !filled ? (
+          <Ionicons
+            name="gift-outline"
+            size={Math.round(13 * sizeScale)}
+            color={colors.accentActive}
+          />
         ) : content ? (
           <Text
             style={withAppFont({

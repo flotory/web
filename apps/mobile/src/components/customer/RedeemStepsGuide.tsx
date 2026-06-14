@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react'
 import { Text, View } from 'react-native'
 
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, shadows, space } from '../../theme'
+import { colors, radius, space } from '../../theme'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
 
@@ -35,7 +35,6 @@ export default function RedeemStepsGuide() {
         borderWidth: 1,
         borderColor: colors.border,
         gap: 16,
-        ...shadows.sm,
       }}
     >
       <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: colors.inkSoft, textTransform: 'uppercase' })}>

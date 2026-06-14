@@ -57,7 +57,7 @@ export default function HomeSummaryStrip({ cardCount, readyCount, stampsToGo }: 
     })
   } else if (stampsToGo != null && stampsToGo > 0) {
     pills.push({
-      label: stampsToGo === 1 ? 'Visit to go' : 'Visits to go',
+      label: stampsToGo === 1 ? 'Stamp to go' : 'Stamps to go',
       value: String(stampsToGo),
     })
   }

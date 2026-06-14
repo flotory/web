@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Animated, RefreshControl, View } from 'react-native'
+import { Animated, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
@@ -17,6 +18,7 @@ import { useCardStampAnimation } from '../../src/hooks/useCardStampAnimation'
 import { useFadeOnReady } from '../../src/hooks/useFadeOnReady'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { stampBannerCopy } from '../../src/lib/stampLiveUpdate'
+import { withAppFont } from '../../src/lib/typography'
 import { colors, space } from '../../src/theme'
 
 export default function CardDetailScreen() {
@@ -43,7 +45,8 @@ export default function CardDetailScreen() {
 
   const maxStamps = useMemo(() => {
     const required = payload?.journey?.milestones.map((item) => item.required_stamps) ?? []
-    return Math.max(10, ...required, payload?.next_reward?.required_stamps ?? 0)
+    const target = Math.max(0, ...required, payload?.next_reward?.required_stamps ?? 0)
+    return target > 0 ? target : 1
   }, [payload])
 
   const {
@@ -52,6 +55,8 @@ export default function CardDetailScreen() {
     celebrateGiftStamp,
     scanBanner,
     setScanBanner,
+    rewardUnlockedModal,
+    closeRewardUnlockedModal,
   } = useCardStampAnimation({
     payload,
     venueId,
@@ -77,6 +82,22 @@ export default function CardDetailScreen() {
       hapticSuccess()
     }
   }, [venueRewardSlides])
+
+  const modalOpacity = useRef(new Animated.Value(0)).current
+  const modalScale = useRef(new Animated.Value(0.94)).current
+
+  useEffect(() => {
+    if (!rewardUnlockedModal.visible) {
+      modalOpacity.setValue(0)
+      modalScale.setValue(0.94)
+      return
+    }
+
+    Animated.parallel([
+      Animated.timing(modalOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+      Animated.spring(modalScale, { toValue: 1, friction: 7, tension: 120, useNativeDriver: true }),
+    ]).start()
+  }, [modalOpacity, modalScale, rewardUnlockedModal.visible])
 
   if (loading && !payload) {
     return <CustomerScreen loading tabBarInset={false} header={null} children={null} />
@@ -112,6 +133,102 @@ export default function CardDetailScreen() {
 
   return (
     <>
+      {rewardUnlockedModal.visible ? (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 260,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
+          <Pressable
+            onPress={closeRewardUnlockedModal}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: 'rgba(5, 13, 30, 0.3)',
+            }}
+          />
+          <Animated.View
+            style={{
+              width: '100%',
+              maxWidth: 380,
+              borderRadius: 20,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.accentBorder,
+              paddingHorizontal: 20,
+              paddingVertical: 20,
+              shadowColor: colors.ink,
+              shadowOpacity: 0.16,
+              shadowRadius: 20,
+              shadowOffset: { width: 0, height: 12 },
+              elevation: 10,
+              opacity: modalOpacity,
+              transform: [{ scale: modalScale }],
+            }}
+          >
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: colors.accentSoft,
+                borderWidth: 1,
+                borderColor: colors.accentBorder,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="gift-outline" size={24} color={colors.accentActive} />
+            </View>
+            <Text
+              style={withAppFont({
+                marginTop: 12,
+                fontSize: 11,
+                fontWeight: '800',
+                color: colors.accentActive,
+                letterSpacing: 1,
+              })}
+            >
+              REWARD UNLOCKED
+            </Text>
+            <Text style={withAppFont({ marginTop: 6, fontSize: 24, fontWeight: '800', color: colors.ink, lineHeight: 30 })}>
+              {rewardUnlockedModal.title}
+            </Text>
+            <Text style={withAppFont({ marginTop: 5, fontSize: 14, fontWeight: '500', color: colors.inkMuted, lineHeight: 20 })}>
+              {rewardUnlockedModal.subtitle}
+            </Text>
+            <View style={{ marginTop: 16, height: 1, backgroundColor: 'rgba(5, 13, 30, 0.08)' }} />
+            <View style={{ marginTop: 14, alignItems: 'center' }}>
+              <Pressable
+                onPress={closeRewardUnlockedModal}
+                style={({ pressed }) => ({
+                  minWidth: 120,
+                  paddingHorizontal: 18,
+                  paddingVertical: 10,
+                  borderRadius: 999,
+                  backgroundColor: colors.primary,
+                  opacity: pressed ? 0.9 : 1,
+                  alignItems: 'center',
+                })}
+              >
+                <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: colors.primaryText })}>OK</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      ) : null}
       <StampScannedBanner
         visible={Boolean(scanBanner && bannerCopy)}
         title={bannerCopy?.title ?? ''}

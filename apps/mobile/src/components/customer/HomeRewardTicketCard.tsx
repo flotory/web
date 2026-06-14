@@ -1,21 +1,36 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Link } from 'expo-router'
 import { type ReactNode, useState } from 'react'
-import { Image, Platform, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import Svg, { Line } from 'react-native-svg'
 
 import { visitsToRewardCopy } from '../../lib/progressCopy'
 import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, shadows } from '../../theme'
+import { colors, radius, rewardReady, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
 
 const TICKET_RADIUS = 22
+const READY_BORDER = 'rgba(215, 163, 93, 0.22)'
+const READY_ACCENT_BORDER = 'rgba(215, 163, 93, 0.38)'
 
-function panelBorder() {
+function panelBorder(isReady = false) {
+  if (isReady) {
+    return {
+      borderColor: READY_BORDER,
+      borderWidth: StyleSheet.hairlineWidth,
+    } as const
+  }
+
   return {
-    borderColor: colors.border,
-    borderWidth: 1,
+    borderColor: 'rgba(5, 13, 30, 0.08)',
+    borderWidth: StyleSheet.hairlineWidth,
+  } as const
+}
+
+function readyVoucherSurface() {
+  return {
+    backgroundColor: '#FFFCF6',
   } as const
 }
 
@@ -34,11 +49,19 @@ export interface HomeRewardTicketCardProps {
   style?: StyleProp<ViewStyle>
   /** When false, cards are not wrapped in navigation links */
   linkable?: boolean
-  /** In-card visit progress (cafe card page) */
+  /** In-card stamp progress (cafe card page) */
   stampProgress?: { collected: number; target: number } | null
 }
 
-function TicketStampProgress({ collected, target }: { collected: number; target: number }) {
+function TicketStampProgress({
+  collected,
+  target,
+  completeLabel = 'Ready to claim',
+}: {
+  collected: number
+  target: number
+  completeLabel?: string
+}) {
   const slots = Math.min(Math.max(target, 1), 10)
   const filled = Math.min(Math.max(collected, 0), slots)
   const toGo = Math.max(target - collected, 0)
@@ -60,10 +83,10 @@ function TicketStampProgress({ collected, target }: { collected: number; target:
       </View>
       <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
-          {filled} of {target} visits
+          {filled} of {target} stamps
         </Text>
         <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? colors.accent : colors.ink })}>
-          {toGo <= 0 ? 'Ready to claim' : toGo === 1 ? '1 visit to go' : `${toGo} visits to go`}
+          {toGo <= 0 ? completeLabel : toGo === 1 ? '1 stamp to go' : `${toGo} stamps to go`}
         </Text>
       </View>
     </View>
@@ -87,15 +110,13 @@ function TicketCompactAction({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 9,
+        paddingHorizontal: 0,
+        paddingVertical: 2,
         borderRadius: 999,
-        borderWidth: 1,
-        borderColor: colors.accentBorder,
         backgroundColor: 'transparent',
       }, style]}
     >
-      <Ionicons name={icon} size={15} color={colors.accentActive} />
+      <Ionicons name={icon} size={15} color={colors.inkMuted} />
       <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>{label}</Text>
       <Ionicons name="chevron-forward" size={15} color={colors.inkSoft} />
     </View>
@@ -172,15 +193,17 @@ function RewardIllustration({
   venue?: VenueRef | null
 }) {
   const logo = venueLogoUrl(venue ?? undefined)
-  const showPhoto = variant === 'next' && (imageUri || logo)
+  const showPhoto = Boolean(imageUri || logo)
 
   return (
     <View
       style={{
         width: 88,
         height: 88,
-        borderRadius: 44,
-        backgroundColor: colors.bg,
+        borderRadius: 20,
+        backgroundColor: variant === 'ready' ? rewardReady.backgroundColor : 'rgba(243, 224, 185, 0.28)',
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: variant === 'ready' ? READY_BORDER : 'rgba(5, 13, 30, 0.09)',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
@@ -236,15 +259,16 @@ function RewardTicketShell({
     </View>
   )
 
-  const readyAccent = isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}
+  const readyAccent = isReady ? { borderLeftWidth: 3, borderLeftColor: READY_ACCENT_BORDER } : {}
+  const surfaceStyle = isReady ? readyVoucherSurface() : { backgroundColor: colors.surface }
 
   if (!splitTicket) {
     return shellFrame(
       <View
         style={{
-          backgroundColor: colors.surface,
+          ...surfaceStyle,
           borderRadius: TICKET_RADIUS,
-          ...panelBorder(),
+          ...panelBorder(isReady),
           ...readyAccent,
           overflow: 'hidden',
         }}
@@ -259,10 +283,10 @@ function RewardTicketShell({
     <>
       <View
         style={{
-          backgroundColor: colors.surface,
+          ...surfaceStyle,
           borderTopLeftRadius: TICKET_RADIUS,
           borderTopRightRadius: TICKET_RADIUS,
-          ...panelBorder(),
+          ...panelBorder(isReady),
           ...readyAccent,
           borderBottomWidth: 0,
           overflow: 'hidden',
@@ -277,14 +301,14 @@ function RewardTicketShell({
           flexDirection: 'row',
           alignItems: 'center',
           height: 22,
-          backgroundColor: colors.surface,
+          backgroundColor: isReady ? '#FFFCF6' : colors.surface,
           borderLeftWidth: 1,
           borderRightWidth: 1,
-          borderColor: colors.border,
+          borderColor: isReady ? READY_BORDER : colors.border,
           marginTop: -1,
           marginBottom: -1,
           zIndex: 2,
-          ...(isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}),
+          ...(isReady ? { borderLeftWidth: 3, borderLeftColor: READY_ACCENT_BORDER } : {}),
         }}
       >
         <TicketPerforation inset={22} />
@@ -292,12 +316,12 @@ function RewardTicketShell({
 
       <View
         style={{
-          backgroundColor: colors.surface,
+          ...surfaceStyle,
           borderBottomLeftRadius: TICKET_RADIUS,
           borderBottomRightRadius: TICKET_RADIUS,
-          ...panelBorder(),
+          ...panelBorder(isReady),
           borderTopWidth: 0,
-          ...(isReady ? { borderLeftWidth: 4, borderLeftColor: colors.rewardReadyAccent } : {}),
+          ...(isReady ? { borderLeftWidth: 3, borderLeftColor: READY_ACCENT_BORDER } : {}),
         }}
       >
         {footer}
@@ -323,7 +347,7 @@ export default function HomeRewardTicketCard({
   const isReady = variant === 'ready'
   const venueName = venue?.name ?? 'Venue'
   const resolvedImage = imageUri ?? rewardImageUrl({ title, image: null, image_thumb: null })
-  const showNextFooter = !isReady && linkable && cardId != null && venueId != null
+  const showNextFooter = false
 
   const top = (
     <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: isReady ? 20 : 16 }}>
@@ -338,20 +362,23 @@ export default function HomeRewardTicketCard({
               paddingHorizontal: 11,
               paddingVertical: 6,
               borderRadius: radius.button,
-              backgroundColor: isReady ? colors.accentSoft : colors.bg,
+              backgroundColor: isReady ? rewardReady.backgroundColor : colors.bg,
+              ...(isReady
+                ? { borderWidth: StyleSheet.hairlineWidth, borderColor: READY_BORDER }
+                : {}),
             }}
           >
             <Ionicons
               name={isReady ? 'gift-outline' : 'cafe-outline'}
               size={13}
-              color={isReady ? colors.accentActive : colors.inkMuted}
+              color={isReady ? rewardReady.iconColor : colors.inkMuted}
             />
             <Text
               style={withAppFont({
                 fontSize: 10,
                 fontWeight: '800',
                 letterSpacing: 0.85,
-                color: colors.ink,
+                color: isReady ? colors.accentActive : colors.ink,
               })}
             >
               {isReady ? 'READY TO REDEEM' : 'NEXT REWARD'}
@@ -394,7 +421,11 @@ export default function HomeRewardTicketCard({
             </View>
           ) : null}
           {stampProgress ? (
-            <TicketStampProgress collected={stampProgress.collected} target={stampProgress.target} />
+            <TicketStampProgress
+              collected={stampProgress.collected}
+              target={stampProgress.target}
+              completeLabel={isReady ? 'Unlocked' : 'Ready to claim'}
+            />
           ) : null}
           {isReady && linkable && unlockId ? (
             <TicketCompactAction label="Redeem reward" icon="gift-outline" />
@@ -406,11 +437,7 @@ export default function HomeRewardTicketCard({
     </View>
   )
 
-  const footer = showNextFooter ? (
-    <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 }}>
-      <TicketCompactAction label="View card" icon="card-outline" style={{ marginTop: 0 }} />
-    </View>
-  ) : null
+  const footer = null
 
   const body = (
     <RewardTicketShell

@@ -21,7 +21,7 @@ import { rewardImageUrl, venueLogoUrl } from '../../src/lib/media'
 import { redeemUnlock } from '../../src/lib/redeemUnlock'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors, radius, shadows, space, type as typography } from '../../src/theme'
+import { colors, radius, space, type as typography } from '../../src/theme'
 
 function RedeemSuccessHero({ title, venueName }: { title: string; venueName: string }) {
   return (
@@ -35,7 +35,6 @@ function RedeemSuccessHero({ title, venueName }: { title: string; venueName: str
         alignItems: 'center',
         borderWidth: 1,
         borderColor: 'rgba(215, 163, 93, 0.28)',
-        ...shadows.md,
       }}
     >
       <View
@@ -222,8 +221,6 @@ export default function RedeemRewardScreen() {
               borderTopColor: colors.border,
               backgroundColor: colors.surface,
               gap: 10,
-              ...shadows.md,
-              shadowOffset: { width: 0, height: -4 },
             }}
           >
             <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted, textAlign: 'center' })}>

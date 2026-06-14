@@ -43,6 +43,7 @@ export function cardRouteFromNfcStamp(response: NfcStampResponse, options?: { sh
 export function stampUpdateSignature(payload: StampAddedPayload): string {
   return [
     payload.customer.id,
+    payload.current_cycle,
     payload.previous_stamps,
     payload.stamps,
     payload.added_stamps,
@@ -115,8 +116,9 @@ export function stampBannerCopy(payload: StampAddedPayload): { title: string; su
   const count = payload.added_stamps
 
   if (payload.cycle_completed) {
+    const singleRewardJourney = payload.milestones.length === 1
     return {
-      title: 'Cycle complete!',
+      title: singleRewardJourney ? 'Reward unlocked!' : 'Cycle complete!',
       subtitle: venue,
     }
   }

@@ -153,7 +153,7 @@ function tokenFromNdefRecords(records: NdefRecord[]): string | null {
 
 function emptyTagError(): Error {
   return new Error(
-    'Could not read the NFC sticker. Hold the top of your iPhone on it for 2–3 seconds, then tap My QR again. If it still fails, use NFC Tools → Read to confirm the Flotory URL is on the chip.',
+    'Could not read the NFC sticker. Hold the top of your iPhone on it for 2–3 seconds, then tap Stamp again. If it still fails, use NFC Tools → Read to confirm the Flotory URL is on the chip.',
   )
 }
 
