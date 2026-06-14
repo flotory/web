@@ -42,7 +42,7 @@ class VenueDashboardController extends Controller
                 'stats' => [
                     'total_customers' => 0,
                     'active_customers' => 0,
-                    'visits_this_month' => 0,
+                    'visits_last_28_days' => 0,
                     'rewards_claimed' => 0,
                     'returning_customers' => 0,
                     'active_progressors' => 0,
@@ -220,7 +220,7 @@ class VenueDashboardController extends Controller
         $empty = ['previous' => 0, 'change_pct' => null];
 
         return [
-            'visits_this_month' => $empty,
+            'visits_last_28_days' => $empty,
             'returning_guests' => $empty,
             'rewards_unlocked' => $empty,
             'repeat_rate' => $empty,

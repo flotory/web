@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class VenueAnalyticsService
 {
+    public const ROLLING_WINDOW_DAYS = 28;
+
     public function __construct(private CustomerRetentionService $retention) {}
 
     /**
@@ -21,11 +23,11 @@ class VenueAnalyticsService
      */
     public function statsForVenue(Venue $venue): array
     {
+        [$windowStart, $windowEnd] = $this->currentRollingWindow();
+
         $totalCustomers = $venue->customers()->count();
         $totalVisits = $venue->visits()->count();
-        $visitsThisMonth = $venue->visits()
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->count();
+        $visitsLast28Days = $this->visitsBetween($venue, $windowStart, $windowEnd);
 
         $activeCustomers = $venue->customers()
             ->whereHas('visits', fn ($query) => $query->where(
@@ -35,9 +37,7 @@ class VenueAnalyticsService
             ))
             ->count();
 
-        $returningCustomers = $venue->customers()
-            ->has('visits', '>=', 2)
-            ->count();
+        $returningCustomers = $this->returningGuestsBetween($venue, $windowStart, $windowEnd);
 
         $rewardsClaimed = DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
@@ -48,7 +48,7 @@ class VenueAnalyticsService
         return [
             'total_customers' => $totalCustomers,
             'active_customers' => $activeCustomers,
-            'visits_this_month' => $visitsThisMonth,
+            'visits_last_28_days' => $visitsLast28Days,
             'rewards_claimed' => $rewardsClaimed,
             'returning_customers' => $returningCustomers,
             'total_visits' => $totalVisits,
@@ -151,7 +151,7 @@ class VenueAnalyticsService
 
         if ($stats['returning_customers'] > 0 && $totalCustomers > 0) {
             $insights[] = [
-                'text' => "{$stats['returning_customers']} of {$totalCustomers} customers have come back more than once",
+                'text' => "{$stats['returning_customers']} of {$totalCustomers} customers visited at least twice in the last ".self::ROLLING_WINDOW_DAYS.' days',
                 'tone' => 'positive',
             ];
         }
@@ -231,7 +231,7 @@ class VenueAnalyticsService
         $stats = [
             'total_customers' => 0,
             'active_customers' => 0,
-            'visits_this_month' => 0,
+            'visits_last_28_days' => 0,
             'rewards_claimed' => 0,
             'returning_customers' => 0,
             'total_visits' => 0,
@@ -311,7 +311,7 @@ class VenueAnalyticsService
 
         if ($stats['returning_customers'] > 0) {
             $insights[] = [
-                'text' => "{$stats['returning_customers']} returning customers (more than one visit)",
+                'text' => "{$stats['returning_customers']} returning guests with 2+ visits in the last ".self::ROLLING_WINDOW_DAYS.' days',
                 'tone' => 'positive',
             ];
         }
@@ -460,27 +460,25 @@ class VenueAnalyticsService
      */
     public function kpiTrendsForVenue(Venue $venue): array
     {
-        $activity = $this->monthlyActivityForVenue($venue, 2);
-        $visitsPrevious = $activity[0]['visits'] ?? 0;
-        $visitsCurrent = $activity[1]['visits'] ?? 0;
-
-        $monthStart = now()->startOfMonth();
-        $lastMonthStart = now()->copy()->subMonth()->startOfMonth();
-        $lastMonthEnd = now()->copy()->startOfMonth()->subSecond();
+        [$currentStart, $currentEnd] = $this->currentRollingWindow();
+        [$previousStart, $previousEnd] = $this->previousRollingWindow();
 
         return [
-            'visits_this_month' => $this->trendEntry($visitsPrevious, $visitsCurrent),
+            'visits_last_28_days' => $this->trendEntry(
+                $this->visitsBetween($venue, $previousStart, $previousEnd),
+                $this->visitsBetween($venue, $currentStart, $currentEnd),
+            ),
             'returning_guests' => $this->trendEntry(
-                $this->returningVisitorsBetween($venue, $lastMonthStart, $lastMonthEnd),
-                $this->returningVisitorsBetween($venue, $monthStart, now()),
+                $this->returningGuestsBetween($venue, $previousStart, $previousEnd),
+                $this->returningGuestsBetween($venue, $currentStart, $currentEnd),
             ),
             'rewards_unlocked' => $this->trendEntry(
-                $this->rewardUnlocksCreatedBetween($venue, $lastMonthStart, $lastMonthEnd),
-                $this->rewardUnlocksCreatedBetween($venue, $monthStart, now()),
+                $this->rewardUnlocksCreatedBetween($venue, $previousStart, $previousEnd),
+                $this->rewardUnlocksCreatedBetween($venue, $currentStart, $currentEnd),
             ),
             'repeat_rate' => $this->trendEntry(
-                $this->claimRateBetween($venue, $lastMonthStart, $lastMonthEnd),
-                $this->claimRateBetween($venue, $monthStart, now()),
+                $this->claimRateBetween($venue, $previousStart, $previousEnd),
+                $this->claimRateBetween($venue, $currentStart, $currentEnd),
             ),
         ];
     }
@@ -491,14 +489,11 @@ class VenueAnalyticsService
      */
     public function aggregateKpiTrends(Collection $venues): array
     {
-        $activity = $this->aggregateMonthlyActivity($venues, 2);
-        $visitsPrevious = $activity[0]['visits'] ?? 0;
-        $visitsCurrent = $activity[1]['visits'] ?? 0;
+        [$currentStart, $currentEnd] = $this->currentRollingWindow();
+        [$previousStart, $previousEnd] = $this->previousRollingWindow();
 
-        $monthStart = now()->startOfMonth();
-        $lastMonthStart = now()->copy()->subMonth()->startOfMonth();
-        $lastMonthEnd = now()->copy()->startOfMonth()->subSecond();
-
+        $visitsPrevious = 0;
+        $visitsCurrent = 0;
         $returningPrevious = 0;
         $returningCurrent = 0;
         $unlocksPrevious = 0;
@@ -509,13 +504,15 @@ class VenueAnalyticsService
         $unlockedCurrent = 0;
 
         foreach ($venues as $venue) {
-            $returningPrevious += $this->returningVisitorsBetween($venue, $lastMonthStart, $lastMonthEnd);
-            $returningCurrent += $this->returningVisitorsBetween($venue, $monthStart, now());
-            $unlocksPrevious += $this->rewardUnlocksCreatedBetween($venue, $lastMonthStart, $lastMonthEnd);
-            $unlocksCurrent += $this->rewardUnlocksCreatedBetween($venue, $monthStart, now());
+            $visitsPrevious += $this->visitsBetween($venue, $previousStart, $previousEnd);
+            $visitsCurrent += $this->visitsBetween($venue, $currentStart, $currentEnd);
+            $returningPrevious += $this->returningGuestsBetween($venue, $previousStart, $previousEnd);
+            $returningCurrent += $this->returningGuestsBetween($venue, $currentStart, $currentEnd);
+            $unlocksPrevious += $this->rewardUnlocksCreatedBetween($venue, $previousStart, $previousEnd);
+            $unlocksCurrent += $this->rewardUnlocksCreatedBetween($venue, $currentStart, $currentEnd);
 
-            [$claimedPrev, $unlockedPrev] = $this->claimCountsBetween($venue, $lastMonthStart, $lastMonthEnd);
-            [$claimedCurr, $unlockedCurr] = $this->claimCountsBetween($venue, $monthStart, now());
+            [$claimedPrev, $unlockedPrev] = $this->claimCountsBetween($venue, $previousStart, $previousEnd);
+            [$claimedCurr, $unlockedCurr] = $this->claimCountsBetween($venue, $currentStart, $currentEnd);
             $claimedPrevious += $claimedPrev;
             $claimedCurrent += $claimedCurr;
             $unlockedPrevious += $unlockedPrev;
@@ -530,7 +527,7 @@ class VenueAnalyticsService
             : 0.0;
 
         return [
-            'visits_this_month' => $this->trendEntry($visitsPrevious, $visitsCurrent),
+            'visits_last_28_days' => $this->trendEntry($visitsPrevious, $visitsCurrent),
             'returning_guests' => $this->trendEntry($returningPrevious, $returningCurrent),
             'rewards_unlocked' => $this->trendEntry($unlocksPrevious, $unlocksCurrent),
             'repeat_rate' => $this->trendEntry($repeatPrevious, $repeatCurrent),
@@ -570,11 +567,44 @@ class VenueAnalyticsService
             ->count();
     }
 
-    private function returningVisitorsBetween(Venue $venue, Carbon $start, Carbon $end): int
+    /**
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function currentRollingWindow(): array
     {
-        return $venue->customers()
-            ->has('visits', '>=', 2)
-            ->whereHas('visits', fn ($query) => $query->whereBetween('created_at', [$start, $end]))
+        return [
+            now()->subDays(self::ROLLING_WINDOW_DAYS)->startOfDay(),
+            now(),
+        ];
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function previousRollingWindow(): array
+    {
+        return [
+            now()->subDays(self::ROLLING_WINDOW_DAYS * 2)->startOfDay(),
+            now()->subDays(self::ROLLING_WINDOW_DAYS)->endOfDay(),
+        ];
+    }
+
+    private function visitsBetween(Venue $venue, Carbon $start, Carbon $end): int
+    {
+        return $venue->visits()
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+    }
+
+    private function returningGuestsBetween(Venue $venue, Carbon $start, Carbon $end): int
+    {
+        return (int) DB::table('visits')
+            ->where('venue_id', $venue->id)
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('customer_id')
+            ->havingRaw('COUNT(*) >= 2')
+            ->select('customer_id')
+            ->get()
             ->count();
     }
 

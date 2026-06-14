@@ -58,6 +58,6 @@ const trendLabel = computed(() => {
     <p class="mt-auto pt-3 text-sm leading-snug text-ink-muted">
       {{ description }}
     </p>
-    <p v-if="trendLabel" class="mt-1 text-xs font-medium text-ink-soft">vs last month</p>
+    <p v-if="trendLabel" class="mt-1 text-xs font-medium text-ink-soft">vs previous 28 days</p>
   </div>
 </template>

@@ -47,7 +47,7 @@ interface DashboardResponse {
     active_progressors: number
     returning_customers?: number
     total_visits: number
-    visits_this_month?: number
+    visits_last_28_days?: number
     milestones_claimed: number
     milestones_unlocked: number
     rewards_claimed?: number
@@ -55,7 +55,7 @@ interface DashboardResponse {
   }
   insights?: DashboardInsight[]
   kpi_trends?: {
-    visits_this_month?: { change_pct: number | null }
+    visits_last_28_days?: { change_pct: number | null }
     returning_guests?: { change_pct: number | null }
     rewards_unlocked?: { change_pct: number | null }
     repeat_rate?: { change_pct: number | null }
@@ -142,15 +142,15 @@ const stats = computed(() => {
 
   return [
     {
-      label: 'Visits this month',
-      value: dashboard.value?.stats.visits_this_month ?? 0,
-      trend: trends?.visits_this_month?.change_pct ?? null,
+      label: 'Visits (last 28 days)',
+      value: dashboard.value?.stats.visits_last_28_days ?? 0,
+      trend: trends?.visits_last_28_days?.change_pct ?? null,
       icon: ScanLine,
       tone: 'purple' as const,
     },
     {
-      label: 'Returning guests',
-      value: dashboard.value?.stats.returning_customers ?? dashboard.value?.stats.active_progressors ?? 0,
+      label: 'Returning guests (last 28 days)',
+      value: dashboard.value?.stats.returning_customers ?? 0,
       trend: trends?.returning_guests?.change_pct ?? null,
       icon: UsersRound,
       tone: 'amber' as const,
@@ -443,8 +443,8 @@ onMounted(loadDashboard)
           <div class="grid gap-3 sm:grid-cols-3">
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Visits</p>
-              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_this_month ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">this month</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_last_28_days ?? 0 }}</p>
+              <p class="text-xs font-semibold text-ink-muted">last 28 days</p>
             </div>
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Claim rate</p>
@@ -453,8 +453,8 @@ onMounted(loadDashboard)
             </div>
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Returning</p>
-              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? dashboard?.stats.active_progressors ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">repeat guests</p>
+              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? 0 }}</p>
+              <p class="text-xs font-semibold text-ink-muted">2+ visits in 28 days</p>
             </div>
           </div>
           <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-bold text-primary hover:text-primary-soft">

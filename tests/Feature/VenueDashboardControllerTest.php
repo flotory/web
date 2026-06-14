@@ -47,7 +47,7 @@ class VenueDashboardControllerTest extends TestCase
             ->assertJsonPath('venue.id', $venue->id)
             ->assertJsonPath('stats.total_customers', 1)
             ->assertJsonPath('stats.total_visits', 2)
-            ->assertJsonPath('stats.visits_this_month', 2)
+            ->assertJsonPath('stats.visits_last_28_days', 2)
             ->assertJsonPath('stats.active_customers', 1)
             ->assertJsonPath('stats.returning_customers', 1)
             ->assertJsonPath('stats.rewards_claimed', 1)
@@ -60,7 +60,7 @@ class VenueDashboardControllerTest extends TestCase
                     ['type', 'title', 'occurred_at'],
                 ],
                 'kpi_trends' => [
-                    'visits_this_month' => ['previous', 'change_pct'],
+                    'visits_last_28_days' => ['previous', 'change_pct'],
                     'returning_guests' => ['previous', 'change_pct'],
                     'rewards_unlocked' => ['previous', 'change_pct'],
                     'repeat_rate' => ['previous', 'change_pct'],
@@ -104,7 +104,7 @@ class VenueDashboardControllerTest extends TestCase
         $this->getJson("/api/dashboard?venue_id={$venue->id}")
             ->assertOk()
             ->assertJsonPath('has_loyalty_activity', false)
-            ->assertJsonPath('stats.visits_this_month', 0);
+            ->assertJsonPath('stats.visits_last_28_days', 0);
     }
 
     public function test_dashboard_aggregates_all_owner_venues(): void
@@ -219,6 +219,30 @@ class VenueDashboardControllerTest extends TestCase
             ->assertOk()
             ->assertJsonFragment(['title' => 'Stamp added for Activity Guest'])
             ->assertJsonFragment(['title' => 'Activity Guest joined loyalty']);
+    }
+
+    public function test_dashboard_rolling_window_excludes_visits_outside_last_28_days(): void
+    {
+        $owner = $this->createUser();
+        $recentGuest = $this->createUser(['email' => 'recent@example.com']);
+        $oldGuest = $this->createUser(['email' => 'old@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $recentCustomer = $this->createCustomer($venue, $recentGuest);
+        $this->createVisit($recentCustomer, $owner, ['created_at' => now()->subDays(5)]);
+        $this->createVisit($recentCustomer, $owner, ['created_at' => now()->subDays(2)]);
+
+        $oldCustomer = $this->createCustomer($venue, $oldGuest);
+        $this->createVisit($oldCustomer, $owner, ['created_at' => now()->subDays(40)]);
+        $this->createVisit($oldCustomer, $owner, ['created_at' => now()->subDays(35)]);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk()
+            ->assertJsonPath('stats.visits_last_28_days', 2)
+            ->assertJsonPath('stats.returning_customers', 1);
     }
 
     public function test_staff_cannot_access_dashboard(): void

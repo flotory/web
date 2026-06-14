@@ -35,7 +35,7 @@ interface DashboardResponse {
   venue?: { id: number; name: string; slug: string } | null
   stats: {
     active_customers: number
-    visits_this_month: number
+    visits_last_28_days: number
     rewards_claimed: number
     returning_customers: number
     total_customers: number
@@ -45,7 +45,7 @@ interface DashboardResponse {
   insights: DashboardInsight[]
   has_loyalty_activity: boolean
   kpi_trends?: {
-    visits_this_month?: { change_pct: number | null }
+    visits_last_28_days?: { change_pct: number | null }
     returning_guests?: { change_pct: number | null }
     rewards_unlocked?: { change_pct: number | null }
     repeat_rate?: { change_pct: number | null }
@@ -89,10 +89,10 @@ const kpiCards = computed(() => {
       trend: null,
     },
     {
-      label: 'Visits this month',
-      value: stats.visits_this_month,
-      description: 'Stamps recorded this calendar month',
-      trend: trends?.visits_this_month?.change_pct ?? null,
+      label: 'Visits (last 28 days)',
+      value: stats.visits_last_28_days,
+      description: 'Stamps recorded in the rolling 28-day window',
+      trend: trends?.visits_last_28_days?.change_pct ?? null,
     },
     {
       label: 'Rewards claimed',
@@ -101,9 +101,9 @@ const kpiCards = computed(() => {
       trend: trends?.repeat_rate?.change_pct ?? null,
     },
     {
-      label: 'Returning customers',
+      label: 'Returning guests (last 28 days)',
       value: stats.returning_customers,
-      description: 'Came back more than once',
+      description: 'Guests with at least two visits in the last 28 days',
       trend: trends?.returning_guests?.change_pct ?? null,
     },
   ]

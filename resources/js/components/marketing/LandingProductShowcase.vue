@@ -6,7 +6,7 @@ import progressCardSrc from '../../../images/marketing/hero-progress-card.png'
 import standSrc from '../../../images/marketing/hero-nfc-stand.png'
 
 const ownerStats = [
-  { label: 'Visits this month', value: '128', trend: '↑ 18%', icon: ScanLine },
+  { label: 'Visits (last 28 days)', value: '128', trend: '↑ 18%', icon: ScanLine },
   { label: 'Active members', value: '42', trend: '↑ 9%', icon: UsersRound },
   { label: 'Rewards claimed', value: '17', trend: null, icon: Gift },
 ]

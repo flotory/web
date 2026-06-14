@@ -80,7 +80,7 @@ const trendLabel = computed(() => {
           {{ trendLabel }}
         </p>
       </div>
-      <p class="mt-1 text-xs font-medium text-ink-soft">vs last month</p>
+      <p class="mt-1 text-xs font-medium text-ink-soft">vs previous 28 days</p>
     </div>
   </div>
 </template>

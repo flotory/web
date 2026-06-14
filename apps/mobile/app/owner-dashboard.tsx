@@ -12,7 +12,7 @@ interface DashboardPayload {
   } | null
   stats: {
     total_customers: number
-    visits_this_month?: number
+    visits_last_28_days?: number
     milestones_unlocked?: number
     returning_customers?: number
   }
@@ -28,8 +28,8 @@ export default function OwnerDashboardScreen() {
   const kpis = useMemo(() => {
     if (!dashboard) return []
     return [
-      { label: 'Visits this month', value: dashboard.stats.visits_this_month ?? 0 },
-      { label: 'Returning guests', value: dashboard.stats.returning_customers ?? 0 },
+      { label: 'Visits (last 28 days)', value: dashboard.stats.visits_last_28_days ?? 0 },
+      { label: 'Returning guests (28 days)', value: dashboard.stats.returning_customers ?? 0 },
       { label: 'Rewards unlocked', value: dashboard.stats.milestones_unlocked ?? 0 },
       { label: 'Customers', value: dashboard.stats.total_customers ?? 0 },
     ]
