@@ -2,11 +2,11 @@
 
 Effective date: [EFFECTIVE_DATE]
 
-These Terms of Service ("Terms") govern your access to and use of Flotory, including the Flotory mobile application, website, customer account, QR code loyalty features, venue discovery features, digital stamps, rewards, offers, campaigns, push notifications, and related services (together, the "Service").
+These Terms of Service ("Terms") govern your access to and use of Flotory, including the Flotory mobile application, website, customer account, venue join links and QR codes, NFC stamp stands, venue discovery features, digital stamps, rewards, offers, campaigns, in-app notifications, and related services (together, the "Service").
 
 The Service is operated by [LEGAL_ENTITY_NAME], with registered address at [REGISTERED_ADDRESS] ("Flotory", "we", "us", or "our").
 
-By creating an account, installing the Flotory mobile application, scanning a Flotory QR code, collecting stamps or rewards, or otherwise using the Service, you agree to these Terms. If you do not agree, do not use the Service.
+By creating an account, installing the Flotory mobile application, joining a venue through a Flotory link or QR code, tapping an NFC stamp stand, collecting stamps or rewards, or otherwise using the Service, you agree to these Terms. If you do not agree, do not use the Service.
 
 ## 1. Contact Information
 
@@ -41,11 +41,12 @@ Flotory provides a digital loyalty and rewards platform connecting customers wit
 Through the Service, you may:
 
 - discover participating venues;
-- collect digital stamps, points, or loyalty progress;
+- join venues through QR codes, invite links, or in-app discovery;
+- collect digital stamps and loyalty progress by tapping NFC stamp stands at participating venues;
 - receive digital rewards or offers;
-- scan QR codes at venues;
+- redeem rewards in the app when they are ready;
 - view participating venue information;
-- receive service, reward, campaign, or marketing notifications where permitted;
+- see reward, campaign, or service updates inside the app;
 - manage your customer loyalty activity.
 
 Features may vary by country, device, operating system, app version, venue, campaign, and availability.
@@ -74,17 +75,19 @@ Unless expressly stated otherwise:
 
 ## 7. Reward Redemption
 
-To redeem a reward, you may need to show a QR code, claim code, account screen, or other in-app proof to venue staff.
+When a reward is ready, you redeem it in the Flotory mobile app using the slide-to-redeem confirmation shown on your device. You may need to show that confirmation screen to venue staff at the counter.
 
-A reward may be marked as redeemed once scanned or confirmed by the venue. Once redeemed, the reward may not be restored unless required by law or agreed by the venue.
+A reward is marked as redeemed once you complete redemption in the app. Once redeemed, the reward may not be restored unless required by law or agreed by the venue.
+
+Flotory does not use a staff scanner or guest claim QR code for redemption in the current Service.
 
 Flotory is not responsible for a venue's insolvency, closure, change of ownership, refusal to honor a valid reward, stock shortages, operational issues, or failure to provide goods or services. Your rights against the venue under applicable consumer law remain unaffected.
 
-## 8. Campaigns, Offers, and Push Notifications
+## 8. Campaigns, Offers, and Notifications
 
-Venues may create campaigns, promotions, and offers through Flotory. Flotory reserves the right to review, approve, reject, modify, disable, or remove campaigns, offers, push notifications, or related content to protect users, comply with law, prevent spam, or protect the Service.
+Venues may create campaigns, promotions, and offers through Flotory. Flotory reserves the right to review, approve, reject, modify, disable, or remove campaigns, offers, in-app messages, or related content to protect users, comply with law, prevent spam, or protect the Service.
 
-You may receive push notifications if you enable them on your device or consent where required. You can disable push notifications in your device settings or app settings.
+You may see reward, campaign, or service updates inside the Flotory app. If we introduce device push notifications in a future version, we will ask for permission where required and you may disable them in your device or app settings.
 
 Marketing communications will be sent only where permitted by applicable law and, where required, your consent.
 
@@ -99,8 +102,8 @@ Some location-based features may not work if location access is disabled.
 You agree not to:
 
 - use the Service for unlawful, fraudulent, abusive, or harmful purposes;
-- attempt to manipulate stamps, rewards, QR codes, campaigns, or venue analytics;
-- share, sell, duplicate, reverse-engineer, or misuse QR codes or reward redemption screens;
+- attempt to manipulate stamps, rewards, NFC stands, campaigns, or venue analytics;
+- share, sell, duplicate, reverse-engineer, or misuse venue join links, NFC tap flows, or reward redemption screens;
 - create fake accounts or impersonate another person;
 - interfere with the Service, security systems, or other users;
 - scrape, harvest, copy, or extract data from the Service except as permitted by law;
@@ -176,9 +179,9 @@ Nothing in these Terms excludes or limits liability for death or personal injury
 
 ## 18. Third-Party Services
 
-The Service may rely on third-party services such as hosting providers, analytics providers, push notification services, app stores, map or location services, payment processors, authentication providers, or communication tools.
+The Service may rely on third-party services such as hosting providers, email delivery providers, authentication providers (including Google sign-in), app stores, and map or location services. Those providers are subject to their own terms and privacy policies. We are not responsible for third-party services outside our control.
 
-Third-party services may be subject to their own terms and privacy policies. We are not responsible for third-party services outside our control.
+If we add push notification, payment, or analytics services in the future, we will update these Terms or our Privacy Policy where required.
 
 ## 19. Changes to These Terms
 

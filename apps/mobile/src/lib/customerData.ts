@@ -85,7 +85,7 @@ export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletI
     for (const visit of card.recent_visits ?? []) {
       rows.push({
         id: `visit-${visit.id}`,
-        label: `+1 visit · ${venueName}`,
+        label: `Stamp added · ${venueName}`,
         time: formatRelativeTime(visit.created_at),
       })
     }

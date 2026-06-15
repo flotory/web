@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { useCalendlyIframeResize } from '@/composables/useCalendlyIframeResize'
 import { api } from '@/lib/api'
 import { buildCalendlyEmbedUrl, type DemoBookingConfig } from '@/lib/demoBooking'
+import { legalConfig } from '@/lib/legalConfig'
 
 const props = withDefaults(
   defineProps<{
@@ -49,7 +50,7 @@ async function loadBookingConfig() {
     const response = await api<DemoBookingConfig>('/public/demo-booking', { includeAuth: false })
     calendlyUrl.value = response.calendly_url
   } catch {
-    configError.value = 'Booking is temporarily unavailable. Email team@flotory.com and we will set up a time.'
+    configError.value = `Booking is temporarily unavailable. Email ${legalConfig.supportEmail} and we will set up a time.`
   } finally {
     loading.value = false
   }
@@ -77,7 +78,7 @@ onMounted(loadBookingConfig)
       v-else
       class="rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-5 text-sm font-semibold text-ink-muted"
     >
-      Online booking is not configured yet. Email team@flotory.com to schedule.
+      Online booking is not configured yet. Email {{ legalConfig.supportEmail }} to schedule.
     </p>
 
     <p v-if="calendlyIframeUrl && !loading" class="mt-2 text-center text-sm font-semibold text-ink-muted">

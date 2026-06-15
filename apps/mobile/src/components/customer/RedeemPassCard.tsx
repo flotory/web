@@ -149,7 +149,7 @@ export default function RedeemPassCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="ticket-outline" size={16} color={colors.accent} />
             <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.75)' })}>
-              Unlocked after {requiredStamps} {requiredStamps === 1 ? 'visit' : 'visits'}
+              Unlocked after {requiredStamps} {requiredStamps === 1 ? 'stamp' : 'stamps'}
             </Text>
           </View>
         ) : null}

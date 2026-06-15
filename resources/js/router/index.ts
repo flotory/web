@@ -23,6 +23,8 @@ import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
 import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage.vue'
+import TermsOfServicePage from '@/pages/TermsOfServicePage.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { sanitizeRedirect } from '@/lib/redirect'
@@ -55,6 +57,8 @@ const router = createRouter({
     { path: '/book-demo', name: 'book-demo', component: BookDemoPage, meta: { guest: true } },
     { path: '/demo', redirect: '/book-demo' },
     { path: '/app', name: 'mobile-app', component: MobileAppPage, meta: { guest: true } },
+    { path: '/privacy', name: 'privacy', component: PrivacyPolicyPage, meta: { guest: true } },
+    { path: '/terms', name: 'terms', component: TermsOfServicePage, meta: { guest: true } },
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
     { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { guest: true } },

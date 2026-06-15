@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { marketingCardClass } from '@/lib/marketingPage'
@@ -39,5 +40,9 @@ const appDeepLink = mobileAppDeepLink()
           <RouterLink to="/login?intent=owner" class="font-bold text-ink">Sign in to the dashboard</RouterLink>
         </p>
       </AppCard>
+
+      <div class="mt-10">
+        <MarketingFooter />
+      </div>
   </MarketingPageShell>
 </template>

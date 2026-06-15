@@ -4,7 +4,7 @@ import { type ReactNode, useState } from 'react'
 import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import Svg, { Line } from 'react-native-svg'
 
-import { visitsToRewardCopy } from '../../lib/progressCopy'
+import { stampsToRewardCopy } from '../../lib/progressCopy'
 import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, rewardReady, shadows } from '../../theme'
@@ -415,7 +415,7 @@ export default function HomeRewardTicketCard({
                 </>
               ) : (
                 <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.inkMuted })}>
-                  {stampsToGo != null ? visitsToRewardCopy(stampsToGo, title) : 'Keep collecting'}
+                  {stampsToGo != null ? stampsToRewardCopy(stampsToGo, title) : 'Keep collecting'}
                 </Text>
               )}
             </View>

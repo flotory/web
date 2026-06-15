@@ -43,6 +43,20 @@ test.describe('Public marketing and bridge pages', () => {
     }
   })
 
+  test('privacy and terms pages render legal content', async ({ page }) => {
+    await page.goto('/privacy')
+    await expect(page.getByRole('heading', { name: 'Flotory Privacy Policy' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Contact Details')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Privacy' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Terms' })).toBeVisible()
+
+    await page.goto('/terms')
+    await expect(page.getByRole('heading', { name: 'Flotory Terms of Service for End Users' })).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.getByText('Eligibility')).toBeVisible()
+  })
+
   test('demo alias redirects to book-demo', async ({ page }) => {
     await page.goto('/demo')
     await expect(page).toHaveURL(/\/book-demo$/)
@@ -68,7 +82,7 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByText('Your digital stamp card')).toBeVisible()
     await expect(page.getByTestId('venue-join-cta')).toBeVisible()
     await expect(page.getByTestId('venue-join-nfc-education')).toBeVisible()
-    await expect(page.getByText('Next visit, tap the NFC stand')).toBeVisible()
+    await expect(page.getByText('Next time, tap the NFC stand')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Get my stamp card' })).toBeVisible()
     await expect(page.getByText('Already a member? Tap the NFC stand at the counter')).toBeVisible()
   })

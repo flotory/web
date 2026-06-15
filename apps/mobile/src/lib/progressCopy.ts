@@ -11,11 +11,14 @@ function rewardLabel(title: string | null | undefined): string {
 }
 
 /** e.g. "2 stamps to free coffee" */
-export function visitsToRewardCopy(remaining: number, rewardTitle?: string | null): string {
+export function stampsToRewardCopy(remaining: number, rewardTitle?: string | null): string {
   const reward = rewardLabel(rewardTitle)
   if (remaining <= 0) return `${reward} is ready`
   return `${remaining} ${stampWord(remaining)} to ${reward}`
 }
+
+/** @deprecated Use stampsToRewardCopy */
+export const visitsToRewardCopy = stampsToRewardCopy
 
 /** e.g. "Only 2 left until free coffee" */
 export function heroProgressTitle(remaining: number, rewardTitle?: string | null): string {
@@ -34,7 +37,7 @@ export function heroProgressSubtitle(remaining: number, rewardTitle?: string | n
 /** Secondary line under progress bar */
 export function progressHintCopy(remaining: number, rewardTitle?: string | null): string {
   if (remaining <= 0) return rewardLabel(rewardTitle) + ' is ready to claim'
-  return visitsToRewardCopy(remaining, rewardTitle)
+  return stampsToRewardCopy(remaining, rewardTitle)
 }
 
 /** Compact numeric progress (kept subtle) */
@@ -56,7 +59,7 @@ export function walletCardProgressCopy(
     }
   }
   return {
-    primary: visitsToRewardCopy(toNext, nextTitle),
+    primary: stampsToRewardCopy(toNext, nextTitle),
     secondary: progressCountCopy(Math.min(stamps, max), max),
   }
 }

@@ -18,17 +18,20 @@ export function formatVenueJoinRewardHeadline(hero: VenueJoinHeroReward | null |
   return hero.title.trim()
 }
 
-export function formatVisitsToUnlock(requiredStamps: number): string {
+export function formatStampsToUnlock(requiredStamps: number): string {
   if (requiredStamps <= 0) {
-    return 'Start collecting on your first visit'
+    return 'Start collecting stamps'
   }
 
   if (requiredStamps === 1) {
-    return '1 visit to unlock'
+    return '1 stamp to unlock'
   }
 
-  return `${requiredStamps} visits to unlock`
+  return `${requiredStamps} stamps to unlock`
 }
+
+/** @deprecated Use formatStampsToUnlock */
+export const formatVisitsToUnlock = formatStampsToUnlock
 
 export function formatJoinSocialProof(social: VenueJoinSocialProof | null | undefined): string | null {
   if (!social) {
@@ -50,16 +53,19 @@ export function formatJoinSocialProof(social: VenueJoinSocialProof | null | unde
   return null
 }
 
-export const NFC_RETURN_VISIT_HEADLINE = 'Next visit, tap the NFC stand'
+export const NFC_RETURN_STAMP_HEADLINE = 'Next time, tap the NFC stand'
+
+/** @deprecated Use NFC_RETURN_STAMP_HEADLINE */
+export const NFC_RETURN_VISIT_HEADLINE = NFC_RETURN_STAMP_HEADLINE
 
 export const VENUE_JOIN_NFC_EDUCATION = {
   title: 'After you join',
-  headline: NFC_RETURN_VISIT_HEADLINE,
-  detail: 'Hold your phone near the Flotory stand at the counter on return visits.',
+  headline: NFC_RETURN_STAMP_HEADLINE,
+  detail: 'Hold your phone near the Flotory stand at the counter to collect stamps.',
 } as const
 
 export const VENUE_JOIN_STEPS = [
   { label: 'Join free in the app', detail: 'Takes under 30 seconds' },
-  { label: 'Visit us', detail: 'Come back whenever you like' },
-  { label: 'Tap NFC stand', detail: 'One tap per visit at the counter' },
+  { label: 'Come to the cafe', detail: 'Whenever you like' },
+  { label: 'Tap NFC stand', detail: 'Collect stamps at the counter' },
 ] as const

@@ -117,7 +117,7 @@ export default function WalletScreen() {
           <StateCard
             emoji="💳"
             title="No cards yet"
-            message="Discover venues nearby and start collecting visits toward your first reward."
+            message="Discover venues nearby and start collecting stamps toward your first reward."
             primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
           />
         </Animated.View>

@@ -112,7 +112,7 @@ export default function VenuesScreen() {
       <Text style={typography.label}>Explore</Text>
       <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>Venues</Text>
       <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
-        Find places nearby, join their loyalty cards, and collect visits with NFC.
+        Find places nearby, join their loyalty cards, and collect stamps with NFC.
       </Text>
     </Animated.View>
   )

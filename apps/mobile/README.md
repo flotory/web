@@ -206,7 +206,7 @@ When adding new screens or redesigning existing ones, prefer these primitives be
 
 ## Copy + Feedback Helpers
 
-- `src/lib/progressCopy.ts`: human progress lines (e.g. `2 visits to free coffee`)
+- `src/lib/progressCopy.ts`: human progress lines (e.g. `2 stamps to free coffee`)
 - `src/lib/haptics.ts`: `hapticTabChange`, `hapticLightTap`, `hapticSuccess` (tabs, CTAs, join/redeem)
 
 ## Media + Performance
@@ -236,4 +236,23 @@ eas submit --platform ios --latest --profile production
 ```
 
 `production` profile sets `EXPO_PUBLIC_API_BASE_URL=https://flotory.com/api` and auto-increments the iOS build number. Requires Expo account login and App Store Connect API key (or interactive Apple credentials on first submit).
+
+## App Store (public release)
+
+TestFlight is for internal testing. To sell to guests, submit for **App Store review**.
+
+1. Deploy `/privacy` and `/terms` on flotory.com (required URL for Connect)
+2. Copy listing copy from `store-listing/en-US/` into App Store Connect
+3. Upload screenshots (6.7" + 6.1" iPhone)
+4. Archive + upload a new build (increment build number in `app.json`)
+5. Submit for Review in Connect (not only TestFlight)
+
+Full checklist: [docs/APP_STORE_SUBMIT.md](../../docs/APP_STORE_SUBMIT.md)
+
+Local Xcode upload:
+
+```bash
+chmod +x apps/mobile/scripts/submit-app-store.sh
+./apps/mobile/scripts/submit-app-store.sh
+```
 

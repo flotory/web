@@ -47,7 +47,7 @@ export default function HomeEmptyHero({ onFindVenue, onStamp }: HomeEmptyHeroPro
         Start your first loyalty card
       </Text>
       <Text style={withAppFont({ marginTop: 8, fontSize: 15, lineHeight: 22, color: colors.inkMuted })}>
-        Find a cafe nearby, join their program, and collect visits with a tap at the NFC stand.
+        Find a cafe nearby, join their program, and collect stamps with a tap at the NFC stand.
       </Text>
 
       <View style={{ marginTop: 18, gap: 10 }}>

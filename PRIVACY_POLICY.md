@@ -4,7 +4,7 @@ Effective date: [EFFECTIVE_DATE]
 
 This Privacy Policy explains how [LEGAL_ENTITY_NAME], with registered address at [REGISTERED_ADDRESS] ("Flotory", "we", "us", or "our"), collects, uses, shares, and protects personal data when you use Flotory.
 
-Flotory is a SaaS loyalty and rewards platform for hospitality venues. It includes a customer mobile app, venue dashboard, QR code loyalty features, digital stamps, rewards, campaigns, push notifications, venue analytics, and discovery of participating venues.
+Flotory is a SaaS loyalty and rewards platform for hospitality venues. It includes a customer mobile app, venue owner dashboard, venue join links and QR codes, NFC stamp stands, digital stamps, rewards, campaigns, in-app notification history, venue analytics, and discovery of participating venues.
 
 This Privacy Policy is intended to comply with the General Data Protection Regulation (EU) 2016/679 ("GDPR"), applicable Polish data protection law, EU consumer expectations, Apple App Store requirements, and Google Play requirements.
 
@@ -23,7 +23,7 @@ If a Data Protection Officer is appointed, contact: [DPO_EMAIL]
 This Policy applies to:
 
 - customers using the Flotory mobile app, website, QR features, rewards, or venue discovery;
-- venue owners, staff, and administrators using the Flotory dashboard;
+- venue owners and platform administrators using the Flotory dashboard;
 - visitors to Flotory websites;
 - people who contact us for support, sales, or legal matters.
 
@@ -47,11 +47,11 @@ We collect personal data directly from you, from your device, from participating
 
 We may collect:
 
-- name;
 - email address;
 - password authentication data or login credentials;
+- Google account information when you choose "Continue with Google" (such as name and email from your Google profile);
 - profile information;
-- account role, such as customer, venue owner, staff, or administrator;
+- account role, such as customer, venue owner, or platform administrator;
 - language, preferences, and settings;
 - account creation date and account status.
 
@@ -60,11 +60,11 @@ We may collect:
 We may collect:
 
 - venues you join or interact with;
-- stamps, points, loyalty progress, rewards, reward unlocks, and redemptions;
-- QR scans and redemption confirmations;
+- stamps, loyalty progress, rewards, reward unlocks, and redemptions;
+- venue joins through QR codes, invite links, or in-app discovery;
+- NFC tap events at participating venue stamp stands;
 - campaign eligibility and participation;
-- visit-related loyalty events;
-- fraud prevention signals related to rewards or scans.
+- fraud prevention signals related to rewards or loyalty activity.
 
 ### 4.3 Device and Technical Data
 
@@ -73,21 +73,14 @@ We may collect:
 - device type, operating system, browser type, app version, and language settings;
 - device identifiers or app instance identifiers;
 - IP address and approximate location derived from IP address;
-- push notification tokens;
 - logs, crash reports, diagnostics, performance data, and security events;
 - cookie or similar technology identifiers where applicable.
 
-### 4.4 Push Notification Data
+### 4.4 In-App Notifications and Future Push Notifications
 
-If you enable notifications, we may collect and process:
+Today, Flotory may show reward, campaign, or service updates inside the mobile app when you use it. We do not currently collect push notification tokens from customer devices.
 
-- push notification token;
-- device platform;
-- notification preferences;
-- delivery and engagement data;
-- campaign or reward notification history.
-
-You can disable push notifications through your device settings or app settings.
+If we introduce device push notifications in a future version, we may collect a push notification token, device platform, and notification preferences only with your consent through your device or app settings. You will be able to disable push notifications at any time.
 
 ### 4.5 Location Data
 
@@ -100,17 +93,15 @@ If you allow location access, we may collect your device location to:
 
 Depending on your device settings, location may be approximate or precise. You can disable location access at any time in your device settings. We do not collect precise location data unless you enable permission and the feature requires it.
 
-### 4.6 Venue Owner and Staff Data
+### 4.6 Venue Owner and Administrator Data
 
-For venue dashboard users, we may collect:
+For venue dashboard and platform admin users, we may collect:
 
 - name;
 - business email address;
 - password authentication data or login credentials;
 - venue membership role;
-- invited staff email addresses;
 - activity logs and audit logs;
-- billing and subscription-related records;
 - support communications.
 
 ### 4.7 Venue and Business Data
@@ -119,7 +110,7 @@ We may collect:
 
 - venue name, address, category, opening information, and contact details;
 - venue logo, images, descriptions, campaigns, rewards, and listing content;
-- campaign rules, push notification content, and loyalty program settings;
+- campaign rules, notification content shown in the app, and loyalty program settings;
 - venue analytics, aggregated customer activity, and performance metrics.
 
 Some venue information may be public or visible to customers.
@@ -138,10 +129,10 @@ If you contact us, we may process:
 
 We receive personal data from:
 
-- you, when you register, use the app, scan QR codes, redeem rewards, or contact us;
-- participating venues, when they operate loyalty programs or scan QR codes;
+- you, when you register, use the app, join a venue, tap an NFC stamp stand, redeem rewards, or contact us;
+- participating venues, when they operate loyalty programs through Flotory;
 - your device, browser, operating system, or app store;
-- third-party providers, such as authentication, hosting, analytics, notification, map, or payment services;
+- third-party providers, such as authentication (including Google sign-in), hosting, email delivery, map, or infrastructure services;
 - public or business sources where relevant for venue listings.
 
 ## 6. Purposes and Legal Bases for Processing
@@ -153,9 +144,9 @@ We process personal data only where we have a lawful basis under GDPR.
 Purpose:
 
 - create and manage accounts;
-- operate loyalty programs, stamps, rewards, and QR codes;
+- operate loyalty programs, stamps, rewards, venue joins, and NFC stamp stands;
 - show venue listings and loyalty status;
-- provide venue dashboards and staff access;
+- provide venue dashboards to owners;
 - sync data across devices and systems.
 
 Legal basis:
@@ -179,21 +170,21 @@ Legal basis:
 - legitimate interests of Flotory, venues, and customers in operating loyalty programs;
 - compliance with legal obligations where applicable.
 
-### 6.3 Push Notifications and Marketing Communications
+### 6.3 In-App Notifications and Future Push Notifications
 
 Purpose:
 
-- send service notifications;
-- send reward, campaign, or venue notifications;
+- show reward, campaign, or service updates inside the app;
+- send service or account-related communications where permitted;
 - provide marketing or promotional communications where permitted.
 
 Legal basis:
 
-- consent where required by law or device settings;
+- performance of a contract for necessary account or reward communications;
 - legitimate interests for non-marketing service messages;
-- performance of a contract for necessary account or reward notifications.
+- consent where required by law or device settings for future push notifications or marketing.
 
-You can withdraw consent or opt out where applicable.
+You can opt out of marketing communications where applicable. If we introduce push notifications later, you will be able to disable them in device or app settings.
 
 ### 6.4 Location-Based Venue Discovery
 
@@ -238,16 +229,13 @@ Legal basis:
 - legal obligations;
 - establishment, exercise, or defense of legal claims.
 
-### 6.7 Billing and Subscriptions
+### 6.7 Future Billing for Venue Owners
 
-Purpose:
+If we introduce paid plans for venue owners in the future, we may process billing contact details, invoices, and payment-related records for those commercial relationships.
 
-- manage venue subscriptions;
-- process payments;
-- issue invoices;
-- maintain accounting records.
+Customers using the free guest mobile app do not provide payment card or billing data to Flotory for loyalty use.
 
-Legal basis:
+Legal basis where applicable:
 
 - performance of a contract;
 - legal obligations, including tax and accounting law;
@@ -274,8 +262,8 @@ Customers remain users of the Flotory platform. Venues do not own customer perso
 Venues may access limited customer information through Flotory only where necessary to:
 
 - operate loyalty programs;
-- verify stamps or rewards;
-- honor rewards;
+- verify stamp progress or reward eligibility;
+- honor rewards shown in the app;
 - manage venue-specific customer relationships within Flotory;
 - prevent fraud or abuse;
 - view analytics made available by Flotory.
@@ -291,13 +279,13 @@ We may share personal data with trusted service providers that help us operate F
 - cloud hosting and infrastructure providers;
 - database and storage providers;
 - email and transactional messaging providers;
-- push notification providers, including Apple Push Notification service and Firebase Cloud Messaging;
-- analytics, crash reporting, and performance monitoring providers;
-- payment processors and billing providers;
+- authentication providers, including Google sign-in;
 - map, geolocation, or venue discovery providers;
-- authentication providers;
+- app store distribution partners, including Apple App Store and Google Play;
 - customer support tools;
 - professional advisers, such as lawyers, accountants, auditors, and insurers.
+
+If we introduce push notifications, payment processing, or additional analytics services in the future, we may use additional providers and will update this Policy where required.
 
 Where required, we use data processing agreements with processors and require appropriate confidentiality, security, and data protection safeguards.
 
@@ -307,7 +295,7 @@ Third-party providers may process data in the European Economic Area or other co
 
 When you install or use the Flotory mobile app through Apple App Store or Google Play, Apple or Google may process personal data independently under their own privacy policies and marketplace terms.
 
-Flotory may receive app installation, crash, device, subscription, or analytics information from Apple, Google, or related services where permitted.
+Flotory may receive app installation, crash, device, or marketplace-related information from Apple, Google, or related services where permitted.
 
 You should review Apple and Google privacy notices for information about their independent processing.
 
@@ -333,10 +321,9 @@ Typical retention periods include:
 
 - account data: for the life of the account and a reasonable period after deletion for security, legal, and backup purposes;
 - loyalty and reward history: as needed to operate loyalty programs, resolve disputes, prevent fraud, and comply with legal obligations;
-- push tokens: until disabled, invalidated, or no longer needed;
-- location data: retained only as necessary for the feature, analytics, security, or legal purposes;
+- location data: retained only as necessary for the feature, security, or legal purposes;
 - support communications: retained for a reasonable period to handle issues and maintain records;
-- billing and accounting records: retained for the period required by tax and accounting law;
+- billing and accounting records: retained for the period required by tax and accounting law if and when paid venue plans are offered;
 - logs and security records: retained for a limited period appropriate to security and troubleshooting needs;
 - backups: retained according to backup cycles and deleted or overwritten in the ordinary course.
 
@@ -344,7 +331,7 @@ We may retain aggregated or anonymized data indefinitely where it no longer iden
 
 ## 12. Account and Data Deletion
 
-You may request deletion of your account or personal data by contacting [PRIVACY_EMAIL] or using in-app deletion tools where available.
+You may request deletion of your account or personal data by contacting [PRIVACY_EMAIL].
 
 After a deletion request, we will delete or anonymize personal data unless we must retain it for:
 
@@ -381,7 +368,6 @@ Where processing is based on consent, you may withdraw consent at any time.
 
 Examples:
 
-- disable push notifications in device settings;
 - disable location permission in device settings;
 - unsubscribe from marketing emails;
 - change app privacy preferences where available.

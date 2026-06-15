@@ -37,7 +37,7 @@ describe('venueScanLanding mobile', () => {
     ).toEqual([
       { icon: 'stamps', text: '4 / 5 stamps on your card' },
       { icon: 'stamps', text: '1 stamp to next reward' },
-      { icon: 'nfc', text: 'Tap the NFC stand at the counter for each visit' },
+      { icon: 'nfc', text: 'Tap the NFC stand at the counter to collect stamps' },
     ])
     expect(formatMemberStampCaption({ stamps: 4, target: 5, stampsToNext: 1, pendingRewardsCount: 0 })).toBe(
       '1 stamp to your next reward',

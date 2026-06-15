@@ -6,6 +6,7 @@ import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import LandingHeroVisual from '@/components/marketing/LandingHeroVisual.vue'
 import LandingProductShowcase from '@/components/marketing/LandingProductShowcase.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 
 const trustPoints = [
@@ -192,6 +193,10 @@ const flowSteps = [
           </RouterLink>
         </p>
       </AppCard>
+    </section>
+
+    <section class="relative mx-auto max-w-5xl px-5 pb-12 sm:px-6 sm:pb-16">
+      <MarketingFooter />
     </section>
   </main>
 </template>

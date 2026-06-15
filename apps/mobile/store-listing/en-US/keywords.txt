@@ -1,0 +1,1 @@
+loyalty,stamps,rewards,NFC,cafe,coffee,restaurant,wallet,discount,bakery

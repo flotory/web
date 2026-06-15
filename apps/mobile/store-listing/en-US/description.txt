@@ -1,0 +1,20 @@
+Collect digital stamp cards at your favorite cafes and restaurants — no paper, no POS.
+
+Flotory is a loyalty wallet for hospitality venues. Join a venue once with a QR code, then tap the NFC stand on every visit to collect stamps toward rewards.
+
+WHAT GUESTS CAN DO
+• Join venues via QR or in-app discovery
+• Tap NFC stands at the counter to collect stamps
+• Track progress on your wallet and home screen
+• Slide to redeem when your reward is ready
+• See nearby venues and campaigns
+
+HOW IT WORKS
+1. Scan the venue QR or open your invite link
+2. Install Flotory and create a free account
+3. On return visits, tap the NFC stand at the counter
+4. Unlock rewards and slide to redeem in the app
+
+Built for independent cafes, wine bars, bakeries, and restaurants. No staff scanner required.
+
+Venue owners manage loyalty from flotory.com.

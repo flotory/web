@@ -51,7 +51,7 @@ export function formatHeroRewardLine(hero: VenueHeroReward | null | undefined, v
 }
 
 export function formatHeroSubtitle(venueName: string): string {
-  return `Collect stamps every visit and unlock rewards from ${venueName}.`
+  return `Collect stamps when you tap the NFC stand and unlock rewards from ${venueName}.`
 }
 
 export function formatMemberStampCaption(membership: ScanLandingMembership): string {
@@ -104,7 +104,7 @@ export function buildScanLandingQuickFacts(options: {
 
     facts.push({
       icon: 'nfc',
-      text: 'Tap the NFC stand at the counter for each visit',
+      text: 'Tap the NFC stand at the counter to collect stamps',
     })
 
     return facts

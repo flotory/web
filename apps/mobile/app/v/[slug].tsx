@@ -296,7 +296,7 @@ export default function VenueJoinScreen() {
         />
         {isMember ? (
           <Text style={withAppFont({ marginTop: 10, fontSize: 12, lineHeight: 18, color: colors.inkMuted, textAlign: 'center' })}>
-            No need to scan the join QR again — tap the NFC stand when you visit.
+            No need to scan the join QR again — tap the NFC stand at the counter.
           </Text>
         ) : null}
       </View>

@@ -9,7 +9,7 @@ import { rewardThumbUrl } from '@/lib/rewardMedia'
 import {
   formatJoinSocialProof,
   formatVenueJoinRewardHeadline,
-  formatVisitsToUnlock,
+  formatStampsToUnlock,
   VENUE_JOIN_NFC_EDUCATION,
   VENUE_JOIN_STEPS,
   type VenueJoinHeroReward,
@@ -33,7 +33,7 @@ const props = defineProps<{
 const stepIcons = [Smartphone, Store, Nfc]
 
 const rewardHeadline = computed(() => formatVenueJoinRewardHeadline(props.heroReward))
-const visitsLabel = computed(() => formatVisitsToUnlock(props.heroReward?.required_stamps ?? 0))
+const stampsLabel = computed(() => formatStampsToUnlock(props.heroReward?.required_stamps ?? 0))
 const socialLabel = computed(() => formatJoinSocialProof(props.socialProof))
 const stampSlots = computed(() => {
   const total = props.heroReward?.required_stamps ?? 0
@@ -72,7 +72,7 @@ const stampSlots = computed(() => {
           />
         </div>
 
-        <p class="reward-meta">{{ visitsLabel }}</p>
+        <p class="reward-meta">{{ stampsLabel }}</p>
       </div>
     </div>
 

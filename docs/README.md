@@ -18,6 +18,7 @@ Small, focused docs — one topic per file. Start here.
 | [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign templates, API, owner UI |
 | [ADMIN_ACCESS.md](./ADMIN_ACCESS.md) | Platform admin and venue listing approval |
 | [NFC_VENUE_SETUP.md](./NFC_VENUE_SETUP.md) | Program NFC stands, pilot checklist, troubleshooting |
+| [APP_STORE_SUBMIT.md](./APP_STORE_SUBMIT.md) | iOS App Store listing, legal URLs, submit checklist |
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Shipped phases + what's next |
 
 ## Operations
