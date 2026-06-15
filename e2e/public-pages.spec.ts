@@ -54,7 +54,7 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByRole('heading', { name: 'Flotory Terms of Service for End Users' })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(page.getByText('Eligibility')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Eligibility' })).toBeVisible()
   })
 
   test('demo alias redirects to book-demo', async ({ page }) => {
