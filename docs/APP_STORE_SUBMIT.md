@@ -1,32 +1,34 @@
-# App Store submission (iOS)
+# App Store (iOS)
 
-Step 2 after Apple Developer enrollment: publish legal URLs, complete App Store Connect listing, and submit a production build for review.
+Ops guide for Flotory on App Store Connect (`com.flotory.mobile`).
 
-## Prerequisites
+## Current status
 
 | Item | Status |
 |------|--------|
-| Apple Developer Program ($99/yr) | Enrolled |
-| App in App Store Connect (`com.flotory.mobile`) | Created |
-| Team ID `U353R2K2MJ` | In `app.json` / Xcode signing |
-| TestFlight build processing | Build 16 (1.0.15) or newer |
+| Apple Developer Program | Enrolled |
+| Legal URLs | Live — https://flotory.com/privacy · https://flotory.com/terms |
+| Version **1.0.15** submitted for review | Build **16** (in review; manual release selected) |
+| Local `app.json` | Build **17**, `supportsTablet: false` (for next upload if Apple rejects or you ship an update) |
+| Team ID | `U353R2K2MJ` |
 
-## 1. Deploy legal pages (required)
+**While waiting for review:** confirm production demo login works (`customer@example.com` / `password` on https://flotory.com).
 
-App Store Connect requires a **public privacy policy URL**.
+## After approval (do first)
 
-After deploying web changes:
+1. App Store Connect → **Release this version** (manual release was selected at submit).
+2. Copy the public App Store URL.
+3. Set `FLOTORY_IOS_UPDATE_URL` in production `.env` (or keep `https://flotory.com/app` as redirect until you paste the real link).
+4. Update landing, `/app`, and venue bridge CTAs with the install link.
+5. Share the app link with venues you are onboarding.
 
-- https://flotory.com/privacy
-- https://flotory.com/terms
+## Resubmit or new version
 
-Update contact details in `resources/js/lib/legalConfig.ts` before production deploy (entity name, registered address). Public contact is currently `flotoryapp@gmail.com`.
+Bump `apps/mobile/app.json` **buildNumber** before every upload (must increase). Bump **version** when shipping user-facing release notes.
 
-## 2. App Store Connect listing
+### Listing copy
 
-Open [App Store Connect → Flotory → App Information](https://appstoreconnect.apple.com).
-
-Copy from `apps/mobile/store-listing/en-US/`:
+Paste from `apps/mobile/store-listing/en-US/`:
 
 | Field | File |
 |-------|------|
@@ -35,10 +37,11 @@ Copy from `apps/mobile/store-listing/en-US/`:
 | Description | `description.txt` |
 | Keywords | `keywords.txt` |
 | Promotional text | `promotional_text.txt` |
+| Review notes | `review_notes.txt` |
 
-### Screenshots (required)
+### Screenshots (iPhone)
 
-Upload for **6.7"** (iPhone 15 Pro Max) and **6.1"** (iPhone 15 Pro) at minimum:
+Upload for **6.7"** and **6.1"** at minimum. iPad screenshots are **not** required — `supportsTablet` is `false`.
 
 | # | Screen | Why |
 |---|--------|-----|
@@ -48,92 +51,72 @@ Upload for **6.7"** (iPhone 15 Pro Max) and **6.1"** (iPhone 15 Pro) at minimum:
 | 4 | Slide to redeem | Redemption UX |
 | 5 | Venues — nearby discovery | Optional |
 
-Capture on a physical iPhone (Simulator screenshots are not accepted for device frames). Xcode → Window → Devices and Simulators → Screenshot, or iPhone side button + volume.
+Capture on a physical iPhone. Resize with `apps/mobile/store-listing/resize-for-app-store.sh` if needed. Output goes to `store-listing/ready-*/` (gitignored).
 
 ### App Information
 
 | Field | Value |
 |-------|--------|
-| Primary category | Food & Drink (or Lifestyle) |
+| Primary category | Food & Drink |
 | Privacy Policy URL | `https://flotory.com/privacy` |
 | Support URL | `https://flotory.com/app` |
 | Marketing URL | `https://flotory.com` |
-| Copyright | `© 2026 Flotory` |
-| Age rating | Complete questionnaire → likely **4+** |
-| Encryption | No (`ITSAppUsesNonExemptEncryption: false` in `app.json`) |
+| Copyright | `© 2026 Narek Divdaryan` |
+| Age rating | **13+** (completed at submit) |
+| Encryption | No (`ITSAppUsesNonExemptEncryption: false`) |
+
+Contact entity: `resources/js/lib/legalConfig.ts` · public email `flotoryapp@gmail.com`.
 
 ### App Privacy (nutrition labels)
 
-Declare data collected per `PRIVACY_POLICY.md` **as implemented today**:
+Declare per `PRIVACY_POLICY.md` **as implemented today**:
 
-- **Contact info** — email (account); name if provided or from Google sign-in
+- **Contact info** — email; name if provided or from Google sign-in
 - **Identifiers** — user ID
 - **Location** — coarse (nearby venues) when permission granted — linked to user, not used for tracking
-- **Do not declare yet:** push notification data, payment info, third-party advertising analytics
+- **Product interaction** — loyalty stamps and redemptions
+- **Do not declare:** push tokens, payment info, advertising analytics
 
-NFC: tag URL only; no payment data in the guest app. Google sign-in: disclose third-party authentication if Connect asks.
+### Upload build
 
-## 3. Upload a production build
-
-Bump version in `apps/mobile/app.json` before each App Store submit (build number must increase).
-
-### Option A — Xcode (current workflow)
+**Option A — Xcode**
 
 ```bash
 cd apps/mobile
 npm run prebuild:ios
 cd ios && pod install
-
-xcodebuild -workspace Flotory.xcworkspace -scheme Flotory \
-  -configuration Release -archivePath /tmp/Flotory.xcarchive \
-  -destination 'generic/platform=iOS' DEVELOPMENT_TEAM=U353R2K2MJ \
-  -allowProvisioningUpdates archive
-
-xcodebuild -exportArchive -archivePath /tmp/Flotory.xcarchive \
-  -exportPath /tmp/Flotory-export \
-  -exportOptionsPlist ExportOptions.plist \
-  -allowProvisioningUpdates
+# Archive + export in Xcode, or:
+apps/mobile/scripts/submit-app-store.sh
 ```
 
-Or run `apps/mobile/scripts/submit-app-store.sh`.
-
-### Option B — EAS
+**Option B — EAS**
 
 ```bash
 cd apps/mobile
-eas login
 eas build --platform ios --profile production
 eas submit --platform ios --latest --profile production
 ```
 
-## 4. Submit for review
+### Submit for review
 
-1. App Store Connect → **Distribution** → iOS App → **+ Version**
-2. Select the uploaded build (not only TestFlight)
-3. Paste **App Review Information** from `store-listing/en-US/review_notes.txt`
-4. Add demo account credentials if prompted
-5. **Submit for Review**
+1. Connect → **Distribution** → iOS App → version row
+2. Attach the new build (not TestFlight-only)
+3. Paste review notes + demo account (`customer@example.com` / `password`)
+4. **Submit for Review**
 
 Typical review: 24–48 hours.
 
-## 5. After approval
-
-1. Copy the App Store URL from Connect
-2. Set `FLOTORY_IOS_UPDATE_URL` in production `.env` to that URL (or keep `https://flotory.com/app` until Play Store ships)
-3. Update venue join bridge and landing CTAs with the install link
-4. Share the app link with venues you are onboarding
-
-## Checklist
+## Checklist (new submit)
 
 ```
-□ legalConfig.ts updated (entity, address, emails)
+□ legalConfig.ts current (entity, address, emails)
 □ /privacy and /terms live on flotory.com
-□ Screenshots uploaded (6.7" + 6.1")
-□ Listing copy pasted from store-listing/
-□ Privacy nutrition labels completed
-□ New build uploaded (build number incremented)
-□ Review notes + demo account submitted
-□ Submit for Review clicked
+□ iPhone screenshots (6.7" + 6.1")
+□ Listing copy from store-listing/en-US/
+□ Privacy nutrition labels match PRIVACY_POLICY.md
+□ buildNumber incremented in app.json
+□ Review notes + demo account attached
+□ Submit for Review
 ```
 
 See also: [apps/mobile/README.md](../apps/mobile/README.md).

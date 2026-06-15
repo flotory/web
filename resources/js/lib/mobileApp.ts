@@ -1,4 +1,4 @@
-/** Web routes and deep links for the Flotory mobile app (customers + staff). */
+/** Web routes and deep links for the Flotory customer mobile app. */
 
 export const MOBILE_APP_PATH = '/app'
 
