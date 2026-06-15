@@ -46,7 +46,7 @@ test.describe('Public marketing and bridge pages', () => {
   test('privacy and terms pages render legal content', async ({ page }) => {
     await page.goto('/privacy')
     await expect(page.getByRole('heading', { name: 'Flotory Privacy Policy' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Contact Details')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Contact Details' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Privacy' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Terms' })).toBeVisible()
 
