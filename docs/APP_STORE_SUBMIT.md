@@ -121,7 +121,7 @@ Typical review: 24–48 hours.
 1. Copy the App Store URL from Connect
 2. Set `FLOTORY_IOS_UPDATE_URL` in production `.env` to that URL (or keep `https://flotory.com/app` until Play Store ships)
 3. Update venue join bridge and landing CTAs with the install link
-4. Announce to pilot venues
+4. Share the app link with venues you are onboarding
 
 ## Checklist
 

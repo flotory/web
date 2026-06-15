@@ -90,7 +90,7 @@ API: `POST /api/customer/rewards/unlocks/{unlock}/redeem`
 - [ ] Test with your own phone: join → tap → see stamp → test redeem if a reward is ready
 - [ ] Place QR for **join** and NFC for **stamps** at the counter
 
-Owners configure rewards and campaigns on the web. NFC stand provisioning is **admin** today — contact Flotory support or use admin access for pilots.
+Owners configure rewards and campaigns on the web. NFC stand provisioning is **admin** today — contact Flotory support or use admin access during venue onboarding.
 
 ---
 

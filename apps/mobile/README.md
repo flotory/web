@@ -152,7 +152,7 @@ Flows in `.maestro/mobile`:
 
 `03-stamp-redeem` uses `flotory://t/{token}` — same backend path as a physical NFC tag, without radio hardware. Token is seeded on Demo Cafe (`DatabaseSeeder::DEMO_CAFE_NFC_TOKEN`).
 
-Venue NFC setup guide for pilots: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE_SETUP.md).
+Venue NFC setup guide: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE_SETUP.md).
 
 ## Architecture (customer app)
 

@@ -19,7 +19,7 @@ High-level phases. Detailed rules live in [BUSINESS_RULES.md](./BUSINESS_RULES.m
 
 | Phase | What |
 | --- | --- |
-| **Pilot validation** | One real venue live for 2+ weeks; measure repeat visits and redemptions |
+| **MVP ship** | App Store approval, production demo login, venue go-live path (listing → join → NFC → redeem) |
 | **1 polish** | Email deliverability, NFC edge cases, onboarding copy |
 
 ## Planned (next)

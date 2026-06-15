@@ -133,7 +133,7 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |
 
-**10/10 means:** every critical API contract and business invariant is regression-tested. It does **not** replace manual checks for Google OAuth on device, polling-based refresh behavior, or pilot onboarding UX (see table below).
+**10/10 means:** every critical API contract and business invariant is regression-tested. It does **not** replace manual checks for Google OAuth on device, polling-based refresh behavior, or venue onboarding UX (see table below).
 
 ---
 
@@ -167,7 +167,7 @@ Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` (guarded by `Datab
 | Mobile Google sign-in | PHPUnit mocks token verify; real device needs correct Google redirect URIs (`flotory://`, see [apps/mobile/README.md](../apps/mobile/README.md)) |
 | Web Google sign-in / Maps | Web OAuth callback and API keys differ per environment |
 | Admin listing review UI | Partial API coverage; visual checklist flow |
-| Pilot venue onboarding | Real address, photos, admin approval |
+| Venue onboarding | Real address, photos, admin approval |
 
 Post-deploy checklist: [deploy/DEPLOY.md § Post-deploy checks](../deploy/DEPLOY.md#post-deploy-checks).
 

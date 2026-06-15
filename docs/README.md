@@ -17,7 +17,7 @@ Small, focused docs — one topic per file. Start here.
 | [MVP_DECISIONS.md](./MVP_DECISIONS.md) | Locked decisions — do not undo without approval |
 | [CAMPAIGNS.md](./CAMPAIGNS.md) | Campaign templates, API, owner UI |
 | [ADMIN_ACCESS.md](./ADMIN_ACCESS.md) | Platform admin and venue listing approval |
-| [NFC_VENUE_SETUP.md](./NFC_VENUE_SETUP.md) | Program NFC stands, pilot checklist, troubleshooting |
+| [NFC_VENUE_SETUP.md](./NFC_VENUE_SETUP.md) | Program NFC stands, venue go-live checklist, troubleshooting |
 | [APP_STORE_SUBMIT.md](./APP_STORE_SUBMIT.md) | iOS App Store listing, legal URLs, submit checklist |
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Shipped phases + what's next |
 
@@ -33,9 +33,9 @@ Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 ## Stage
 
-**MVP** — validating product–market fit with real venues.
+**MVP** — complete product ready to onboard the first venue customer.
 
-**Current focus:** first pilot venue — listing approval → join → NFC stamp → unlock → slide redeem.
+**Current focus:** App Store approval and end-to-end go-live — listing approval → join → NFC stamp → unlock → slide redeem.
 
 **Not in scope yet:** billing, POS integrations, push delivery, staff scanner / claim QR / team invites.
 
