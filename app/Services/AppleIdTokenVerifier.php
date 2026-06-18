@@ -47,7 +47,7 @@ class AppleIdTokenVerifier
         return [
             'apple_id' => $appleId,
             'email' => $email !== '' ? $email : null,
-            'name' => 'Guest',
+            'name' => '',
         ];
     }
 
