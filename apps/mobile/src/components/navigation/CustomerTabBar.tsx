@@ -32,7 +32,12 @@ function tabIcon(name: string, focused: boolean, color: string, size: number) {
   return <Ionicons name={focused ? pair.on : pair.off} size={size} color={color} />
 }
 
-export default function CustomerTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function CustomerTabBar({
+  state,
+  descriptors,
+  navigation,
+  guestMode = false,
+}: BottomTabBarProps & { guestMode?: boolean }) {
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const { startScan, scanning: nfcScanning } = useNfcStampScanAction()

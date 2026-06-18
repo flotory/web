@@ -1,10 +1,12 @@
-import { Redirect, useLocalSearchParams } from 'expo-router'
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
+import * as AppleAuthentication from 'expo-apple-authentication'
 
 import GoogleLogo from '../src/components/ui/GoogleLogo'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../src/lib/api'
+import { isAppleSignInAvailable, startAppleSignIn } from '../src/lib/appleAuth'
 import { startGoogleBrowserSignIn } from '../src/lib/googleBrowserAuth'
 import { withAppFont } from '../src/lib/typography'
 import { useAuth } from '../src/providers/AuthProvider'
@@ -23,6 +25,7 @@ function readParam(value: string | string[] | undefined): string | null {
 }
 
 export default function LoginScreen() {
+  const router = useRouter()
   const { signIn, signUp, signInWithToken, token, role, booting } = useAuth()
   const { redirect, oauth_token, error: oauthError } = useLocalSearchParams<{
     redirect?: string | string[]
@@ -36,7 +39,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [appleLoading, setAppleLoading] = useState(false)
+  const [appleAvailable, setAppleAvailable] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    void isAppleSignInAvailable().then(setAppleAvailable)
+  }, [])
 
   useEffect(() => {
     if (readParam(oauthError) === 'google_auth_failed') {
@@ -122,7 +131,30 @@ export default function LoginScreen() {
     }
   }
 
-  const busy = submitting || googleLoading
+  async function handleAppleSignIn() {
+    setAppleLoading(true)
+    setError('')
+
+    try {
+      const result = await startAppleSignIn()
+      if (result.status === 'cancelled') {
+        return
+      }
+
+      if (result.status === 'error') {
+        setError(result.message)
+        return
+      }
+
+      await signInWithToken(result.auth.token)
+    } catch (exception) {
+      setError(exception instanceof ApiError ? exception.message : 'Apple sign-in failed. Please try again.')
+    } finally {
+      setAppleLoading(false)
+    }
+  }
+
+  const busy = submitting || googleLoading || appleLoading
 
   return (
     <ScreenGradientLayout scrollable tabBarInset={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
@@ -131,6 +163,16 @@ export default function LoginScreen() {
       <Text style={{ color: colors.inkMuted }}>
         {isRegisterMode ? 'Create your account' : 'Sign in'}
       </Text>
+
+      {appleAvailable ? (
+        <AppleAuthentication.AppleAuthenticationButton
+          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+          cornerRadius={999}
+          style={{ width: '100%', height: 48, opacity: busy ? 0.6 : 1 }}
+          onPress={() => void handleAppleSignIn()}
+        />
+      ) : null}
 
       <Pressable
         testID="login-google-button"
@@ -211,6 +253,10 @@ export default function LoginScreen() {
         <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '600' })}>
           {isRegisterMode ? 'Already have an account? Sign in' : 'New customer? Create account'}
         </Text>
+      </Pressable>
+
+      <Pressable onPress={() => router.push('/(customer)/venues')} style={{ alignItems: 'center', paddingTop: 10 }}>
+        <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>Browse venues without signing in</Text>
       </Pressable>
     </View>
     </ScreenGradientLayout>

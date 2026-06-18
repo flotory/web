@@ -1,4 +1,3 @@
-import * as Linking from 'expo-linking'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Image, Text, View } from 'react-native'
@@ -13,7 +12,6 @@ import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
 import StateCard from '../../src/components/ui/StateCard'
 import { ApiError, apiRequest } from '../../src/lib/api'
 import { fetchCustomerCards, findWalletCardForLoyaltyVenue } from '../../src/lib/customerData'
-import { webAppOrigin } from '../../src/lib/config'
 import { venueLogoUrl } from '../../src/lib/media'
 import { membershipFromWalletCard, type VenueHeroReward, type VenueSocialProof } from '../../src/lib/venueScanLanding'
 import { useAuth } from '../../src/providers/AuthProvider'
@@ -128,7 +126,7 @@ export default function VenueJoinScreen() {
     }
 
     if (!token) {
-      await Linking.openURL(`${webAppOrigin()}/v/${encodeURIComponent(slug)}`)
+      router.push(`/login?redirect=${encodeURIComponent(`/v/${slug}`)}`)
       return
     }
 

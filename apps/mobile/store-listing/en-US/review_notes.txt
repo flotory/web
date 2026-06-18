@@ -1,18 +1,30 @@
 Flotory is a customer loyalty wallet for hospitality venues (cafes, bakeries, wine bars).
 
+GUEST BROWSING (no account required)
+Open the app → Venues tab lists published venues without signing in. Registration is only required for loyalty features (join, stamp, redeem).
+
+SIGN IN OPTIONS
+- Sign in with Apple
+- Continue with Google
+- Email and password
+
 TEST ACCOUNT (production)
 Email: customer@example.com
 Password: password
 
 After sign-in, the demo account has stamp cards and may have a reward ready to redeem at Demo Cafe.
 
+ACCOUNT DELETION
+Profile → Delete account (type DELETE to confirm). Password required for email accounts; OAuth accounts confirm with DELETE only.
+
+NFC DEMO VIDEO
+See the demo video URL in App Review Information (physical iPhone + programmed NFC tag).
+
 NFC
 The app reads NFC tags programmed with Flotory tap URLs at participating venue counters. NFC requires a physical iPhone (not Simulator). Reviewers without a tag can open this deep link after sign-in to simulate a tap (same API as a physical stand):
 flotory://t/democafenfcstandlocaltest00001
 
 Venue join bridge (web): https://flotory.com/v/demo-cafe
-
-No special hardware beyond a standard NFC-capable iPhone is required.
 
 Privacy: https://flotory.com/privacy
 Support: flotoryapp@gmail.com

@@ -169,13 +169,18 @@ export async function fetchCardDetail(token: string, venueId: string, fresh = fa
   }
 }
 
-export async function fetchDiscoverVenues(token: string, fresh = false): Promise<DiscoverVenuesData> {
-  const venuesKey = `${cacheKey('customer', token)}:discover-venues`
+export async function fetchDiscoverVenues(token: string | null, fresh = false): Promise<DiscoverVenuesData> {
+  const venuesKey = token ? `${cacheKey('customer', token)}:discover-venues` : 'public:discover-venues'
   const venues = await fetchWithCache(
     venuesKey,
     () => apiRequest<{ venues: DiscoverVenue[] }>('/venues/discover', { token }).then((response) => response.venues),
     fresh,
   )
+
+  if (!token) {
+    return { venues, cardsByVenue: {} }
+  }
+
   const cards = await fetchCustomerCards(token, fresh)
   const cardsByVenue: Record<number, WalletCard> = {}
   for (const card of cards) {

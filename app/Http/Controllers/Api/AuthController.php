@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AppleAuthRequest;
+use App\Http\Requests\DeleteAccountRequest;
 use App\Http\Requests\GoogleAuthRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
+use App\Services\AppleIdTokenVerifier;
+use App\Services\AppleOAuthUserService;
 use App\Services\GoogleIdTokenVerifier;
 use App\Services\GoogleOAuthUserService;
+use App\Services\UserAccountDeletionService;
 use App\Services\WebLoginGateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,6 +63,32 @@ class AuthController extends Controller
         ]);
     }
 
+    public function apple(
+        AppleAuthRequest $request,
+        AppleIdTokenVerifier $verifier,
+        AppleOAuthUserService $appleUsers,
+    ): JsonResponse {
+        $profile = $verifier->verify($request->string('id_token')->toString());
+
+        if ($profile === null) {
+            throw ValidationException::withMessages([
+                'id_token' => 'Apple sign-in could not be verified.',
+            ]);
+        }
+
+        $name = $request->string('name')->trim()->toString();
+        if ($name !== '') {
+            $profile['name'] = $name;
+        }
+
+        $user = $appleUsers->findOrCreate($profile)->load('activeVenue');
+
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken($request->string('device_name', 'flotory-mobile')->toString())->plainTextToken,
+        ]);
+    }
+
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::query()->where('email', $request->string('email')->toString())->first();
@@ -91,6 +122,18 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $request->user()?->currentAccessToken()?->delete();
+
+        return response()->json(status: 204);
+    }
+
+    public function deleteAccount(DeleteAccountRequest $request, UserAccountDeletionService $deletion): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
+
+        $deletion->delete($user, $request->string('password')->toString() ?: null);
 
         return response()->json(status: 204);
     }

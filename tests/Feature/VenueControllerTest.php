@@ -153,6 +153,19 @@ class VenueControllerTest extends TestCase
             ->assertJsonPath('venues.0.joined_count', 1);
     }
 
+    public function test_discover_is_public_and_guests_see_zero_join_status(): void
+    {
+        $user = $this->createUser();
+        $venue = $this->createPublishedVenue(['name' => 'Public Discover Cafe']);
+        $this->createCustomer($venue, $user);
+
+        $this->getJson('/api/venues/discover')
+            ->assertOk()
+            ->assertJsonCount(1, 'venues')
+            ->assertJsonPath('venues.0.name', 'Public Discover Cafe')
+            ->assertJsonPath('venues.0.joined_count', 0);
+    }
+
     public function test_public_landing_returns_venue_and_milestones(): void
     {
         $venue = $this->createPublishedVenue([

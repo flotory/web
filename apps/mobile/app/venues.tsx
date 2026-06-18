@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router'
 import { useCallback, useMemo, useState } from 'react'
-import { Animated, Text, View } from 'react-native'
+import { Animated, Pressable, Text, View } from 'react-native'
 
 import DiscoverCategoryPills, { type DiscoverCategoryFilter } from '../src/components/customer/DiscoverCategoryPills'
 import DiscoverLocationBanner from '../src/components/customer/DiscoverLocationBanner'
@@ -16,7 +16,8 @@ import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
 import { collectDiscoverVenueLocations, sortDiscoverVenuesByNearestLocation } from '../src/lib/distance'
 import { useAuth } from '../src/providers/AuthProvider'
-import { space, type as typography } from '../src/theme'
+import { colors, space, type as typography } from '../src/theme'
+import { withAppFont } from '../src/lib/typography'
 
 const KNOWN_CATEGORIES = new Set(['cafe', 'restaurant', 'bar', 'bakery'])
 
@@ -50,7 +51,8 @@ function resultsLabel(count: number, hasFilters: boolean): string {
 
 export default function VenuesScreen() {
   const router = useRouter()
-  const { role } = useAuth()
+  const { token, role } = useAuth()
+  const isGuest = !token
   const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
   const {
     status: locationStatus,
@@ -103,17 +105,38 @@ export default function VenuesScreen() {
     router.push(`/v/${venue.slug}`)
   }
 
-  if (role !== 'customer') {
+  if (role && role !== 'customer') {
     return null
   }
 
   const header = (
     <Animated.View style={{ opacity: fade, paddingHorizontal: space.screenX }}>
-      <Text style={typography.label}>Explore</Text>
-      <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>Venues</Text>
-      <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
-        Find places nearby, join their loyalty cards, and collect stamps with NFC.
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={typography.label}>Explore</Text>
+          <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>Venues</Text>
+          <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
+            {isGuest
+              ? 'Browse participating cafes and bars. Sign in to collect stamps and redeem rewards.'
+              : 'Find places nearby, join their loyalty cards, and collect stamps with NFC.'}
+          </Text>
+        </View>
+        {isGuest ? (
+          <Pressable
+            onPress={() => router.push('/login')}
+            style={({ pressed }) => ({
+              marginTop: 4,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              borderRadius: 999,
+              backgroundColor: colors.primary,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 14 })}>Sign in</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </Animated.View>
   )
 
@@ -134,8 +157,8 @@ export default function VenuesScreen() {
               message: 'Check your connection and try again.',
               primaryLabel: 'Try again',
               onPrimary: reload,
-              secondaryLabel: 'Open wallet',
-              onSecondary: () => router.push('/(customer)/wallet'),
+              secondaryLabel: isGuest ? 'Sign in' : 'Open wallet',
+              onSecondary: () => router.push(isGuest ? '/login' : '/(customer)/wallet'),
             }
           : undefined
       }

@@ -25,9 +25,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'google']);
+Route::post('/auth/apple', [AuthController::class, 'apple']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/venues/discover', [VenueController::class, 'discover']);
 Route::get('/public/venues/{slug}/landing', [VenueController::class, 'publicLanding']);
 Route::get('/public/nfc/t/{token}', [NfcStampController::class, 'show']);
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
@@ -38,9 +40,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::delete('/auth/account', [AuthController::class, 'deleteAccount']);
     Route::get('/campaigns/templates', [VenueCampaignController::class, 'templates']);
 
-    Route::get('/venues/discover', [VenueController::class, 'discover']);
     Route::apiResource('venues', VenueController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('/venues/current', [VenueController::class, 'current']);
     Route::get('/venues/{venue}', [VenueController::class, 'show']);

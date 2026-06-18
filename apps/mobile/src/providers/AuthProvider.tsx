@@ -14,6 +14,7 @@ interface AuthContextValue {
   signInWithToken: (sessionToken: string) => Promise<void>
   refreshUser: () => Promise<void>
   signOut: () => Promise<void>
+  deleteAccount: (input: { confirmation: string; password?: string }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -135,8 +136,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null)
   }
 
+  async function deleteAccount(input: { confirmation: string; password?: string }) {
+    if (!token) {
+      throw new Error('Not signed in.')
+    }
+
+    await apiRequest<void>('/auth/account', {
+      method: 'DELETE',
+      token,
+      body: {
+        confirmation: input.confirmation,
+        ...(input.password ? { password: input.password } : {}),
+      },
+    })
+
+    await clearToken()
+    setToken(null)
+    setUser(null)
+    setRole(null)
+  }
+
   const value = useMemo<AuthContextValue>(
-    () => ({ booting, token, user, role, signIn, signUp, signInWithToken, refreshUser, signOut }),
+    () => ({ booting, token, user, role, signIn, signUp, signInWithToken, refreshUser, signOut, deleteAccount }),
     [booting, token, user, role],
   )
 

@@ -69,100 +69,104 @@ function NfcStampingOverlay() {
   )
 }
 
+function GuestStampOrchestrator() {
+  return null
+}
+
 export default function CustomerTabsLayout() {
   const { token, role } = useAuth()
+  const isGuest = !token
 
   if (token && role === null) {
     return null
   }
 
-  if (!token) {
-    return <Redirect href="/login" />
-  }
-
-  if (role === 'owner') {
+  if (token && role === 'owner') {
     return <Redirect href="/owner-dashboard" />
   }
 
-  if (role !== 'customer') {
+  if (token && role !== 'customer') {
     return <Redirect href="/" />
   }
 
   return (
     <NfcStampScanProvider>
-    <View style={{ flex: 1 }}>
-      <Tabs
-      tabBar={(props) => <CustomerTabBar {...props} />}
-      screenListeners={{
-        tabPress: () => {
-          hapticTabChange()
-        },
-      }}
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.ink,
-        tabBarInactiveTintColor: colors.inkSoft,
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          href: role === 'customer' ? undefined : null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: 'Wallet',
-          href: role === 'customer' ? undefined : null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'wallet' : 'wallet-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="qr"
-        options={{
-          title: 'Stamp',
-          href: role === 'customer' ? undefined : null,
-          tabBarLabel: () => null,
-        }}
-      />
-      <Tabs.Screen
-        name="venues"
-        options={{
-          title: 'Venues',
-          href: role === 'customer' ? undefined : null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'location' : 'location-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Profile',
-          href: role === 'customer' ? undefined : null,
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Notifications',
-          href: null,
-        }}
-      />
-    </Tabs>
-      <CustomerStampOrchestrator />
-      <NfcStampingOverlay />
-    </View>
+      <View style={{ flex: 1 }}>
+        <Tabs
+          tabBar={(props) => <CustomerTabBar {...props} guestMode={isGuest} />}
+          screenListeners={{
+            tabPress: () => {
+              hapticTabChange()
+            },
+          }}
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: colors.ink,
+            tabBarInactiveTintColor: colors.inkSoft,
+          }}
+        >
+          <Tabs.Screen
+            name="home"
+            options={{
+              title: 'Home',
+              href: isGuest ? null : undefined,
+              tabBarIcon: ({ color, size, focused }) => (
+                <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="wallet"
+            options={{
+              title: 'Wallet',
+              href: isGuest ? null : undefined,
+              tabBarIcon: ({ color, size, focused }) => (
+                <Ionicons name={focused ? 'wallet' : 'wallet-outline'} color={color} size={size} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="qr"
+            options={{
+              title: 'Stamp',
+              href: isGuest ? null : undefined,
+              tabBarLabel: () => null,
+            }}
+          />
+          <Tabs.Screen
+            name="venues"
+            options={{
+              title: 'Venues',
+              tabBarIcon: ({ color, size, focused }) => (
+                <Ionicons name={focused ? 'location' : 'location-outline'} color={color} size={size} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: isGuest ? 'Sign in' : 'Profile',
+              href: isGuest ? null : undefined,
+              tabBarIcon: ({ color, size, focused }) => (
+                <Ionicons
+                  name={isGuest ? (focused ? 'log-in' : 'log-in-outline') : focused ? 'person' : 'person-outline'}
+                  color={color}
+                  size={size}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="notifications"
+            options={{
+              title: 'Notifications',
+              href: null,
+            }}
+          />
+        </Tabs>
+        {isGuest ? <GuestStampOrchestrator /> : <CustomerStampOrchestrator />}
+        {!isGuest ? <NfcStampingOverlay /> : null}
+      </View>
     </NfcStampScanProvider>
   )
 }

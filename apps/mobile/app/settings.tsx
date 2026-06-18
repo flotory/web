@@ -137,6 +137,14 @@ export default function SettingsScreen() {
             onPress={() => openWeb('/')}
             external
           />
+          <View style={{ height: 1, backgroundColor: colors.border }} />
+          <ProfileMenuRow
+            icon="trash-outline"
+            label="Delete account"
+            subtitle="Permanently remove your data"
+            onPress={() => router.push('/profile/delete-account')}
+            destructive
+          />
         </View>
 
         <View style={{ marginTop: space.sectionY }}>

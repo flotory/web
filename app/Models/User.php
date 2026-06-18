@@ -26,6 +26,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'email',
         'google_id',
         'google_avatar',
+        'apple_id',
         'password',
         'is_admin',
         'active_venue_id',

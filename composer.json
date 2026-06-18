@@ -9,6 +9,7 @@
     "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.27",
     "laravel/tinker": "^2.10",
+    "firebase/php-jwt": "^6.11",
     "resend/resend-laravel": "^1.4",
     "spatie/laravel-activitylog": "^5.0"
   },

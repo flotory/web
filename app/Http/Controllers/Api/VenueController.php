@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRestaurantRequest;
 use App\Models\RewardUnlock;
+use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\VenueAddressUpdateService;
@@ -14,6 +15,7 @@ use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class VenueController extends Controller
 {
@@ -57,7 +59,7 @@ class VenueController extends Controller
 
     public function discover(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->optionalAuthenticatedUser($request);
 
         return response()->json([
             'venues' => Venue::query()
@@ -74,13 +76,28 @@ class VenueController extends Controller
                     'visits',
                     'rewards',
                     'branches',
-                    'customers as joined_count' => fn ($query) => $query->where('user_id', $user->id),
+                    'customers as joined_count' => fn ($query) => $user instanceof User
+                        ? $query->where('user_id', $user->id)
+                        : $query->whereRaw('0 = 1'),
                 ])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Venue $venue): array => $this->presentDiscoverVenue($venue))
                 ->values(),
         ]);
+    }
+
+    private function optionalAuthenticatedUser(Request $request): ?User
+    {
+        $bearer = $request->bearerToken();
+        if (! is_string($bearer) || trim($bearer) === '') {
+            return null;
+        }
+
+        $token = PersonalAccessToken::findToken($bearer);
+        $user = $token?->tokenable;
+
+        return $user instanceof User ? $user : null;
     }
 
     /**

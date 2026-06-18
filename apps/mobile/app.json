@@ -14,7 +14,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "buildNumber": "17",
+      "buildNumber": "18",
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
@@ -23,7 +23,8 @@
         "NFCReaderUsageDescription": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
       },
       "entitlements": {
-        "com.apple.developer.nfc.readersession.formats": ["TAG"]
+        "com.apple.developer.nfc.readersession.formats": ["TAG"],
+        "com.apple.developer.applesignin": ["Default"]
       }
     },
     "android": {
@@ -63,6 +64,7 @@
         }
       ],
       "expo-web-browser",
+      "expo-apple-authentication",
       [
         "react-native-nfc-manager",
         {

@@ -331,7 +331,7 @@ We may retain aggregated or anonymized data indefinitely where it no longer iden
 
 ## 12. Account and Data Deletion
 
-You may request deletion of your account or personal data by contacting [PRIVACY_EMAIL].
+You can delete your Flotory account in the mobile app under **Profile → Delete account**. You can also request deletion by contacting [PRIVACY_EMAIL].
 
 After a deletion request, we will delete or anonymize personal data unless we must retain it for:
 

@@ -6,6 +6,8 @@ export interface MobileUser {
   email: string
   is_admin: boolean
   active_venue_id?: number | null
+  google_id?: string | null
+  apple_id?: string | null
 }
 
 export interface AuthResponse {

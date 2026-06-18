@@ -10,7 +10,7 @@ export default function IndexScreen() {
   }
 
   if (!token) {
-    return <Redirect href="/login" />
+    return <Redirect href="/(customer)/venues" />
   }
 
   if (role === 'owner') {

@@ -16,4 +16,8 @@ return [
         // Server key — Laravel Time Zone API (IP-restricted in production).
         'maps_server_key' => env('GOOGLE_MAPS_SERVER_API_KEY', env('GOOGLE_MAPS_API_KEY')),
     ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID', 'com.flotory.mobile'),
+    ],
 ];

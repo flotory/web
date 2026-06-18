@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\AppleIdTokenVerifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -217,6 +218,76 @@ class AuthControllerTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('id_token');
+    }
+
+    public function test_apple_auth_creates_user_and_token(): void
+    {
+        $this->mock(AppleIdTokenVerifier::class, function ($mock): void {
+            $mock->shouldReceive('verify')
+                ->once()
+                ->with('fake-apple-id-token')
+                ->andReturn([
+                    'apple_id' => 'apple-user-123',
+                    'email' => 'mobile.apple@example.com',
+                    'name' => 'Mobile Apple User',
+                ]);
+        });
+
+        $response = $this->postJson('/api/auth/apple', [
+            'id_token' => 'fake-apple-id-token',
+            'name' => 'Mobile Apple User',
+            'device_name' => 'phpunit',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('user.email', 'mobile.apple@example.com')
+            ->assertJsonPath('user.apple_id', 'apple-user-123')
+            ->assertJsonStructure(['user', 'token']);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'mobile.apple@example.com',
+            'apple_id' => 'apple-user-123',
+        ]);
+    }
+
+    public function test_customer_can_delete_account_from_mobile(): void
+    {
+        $customer = $this->createUser(['email' => 'delete-me@example.com']);
+        $venue = $this->createVenue();
+        $this->createCustomer($venue, $customer);
+
+        Sanctum::actingAs($customer);
+
+        $this->deleteJson('/api/auth/account', [
+            'confirmation' => 'DELETE',
+            'password' => 'password',
+        ])
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'delete-me@example.com',
+        ]);
+    }
+
+    public function test_owner_cannot_delete_account_while_managing_venues(): void
+    {
+        $owner = $this->createUser(['email' => 'owner-delete@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->deleteJson('/api/auth/account', [
+            'confirmation' => 'DELETE',
+            'password' => 'password',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('account');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'owner-delete@example.com',
+        ]);
     }
 
     public function test_reset_password_rejects_invalid_token(): void
