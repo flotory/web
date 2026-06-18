@@ -89,6 +89,11 @@ class VenueController extends Controller
 
     private function optionalAuthenticatedUser(Request $request): ?User
     {
+        $user = $request->user();
+        if ($user instanceof User) {
+            return $user;
+        }
+
         $bearer = $request->bearerToken();
         if (! is_string($bearer) || trim($bearer) === '') {
             return null;

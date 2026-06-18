@@ -7,6 +7,7 @@ use App\Services\AppleIdTokenVerifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
 
