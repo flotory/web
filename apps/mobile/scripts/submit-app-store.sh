@@ -4,8 +4,7 @@ set -euo pipefail
 # Archive and upload Flotory iOS to App Store Connect (same flow as TestFlight).
 # Run from repo root or apps/mobile.
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-MOBILE="$ROOT/apps/mobile"
+MOBILE="$(cd "$(dirname "$0")/.." && pwd)"
 IOS="$MOBILE/ios"
 TEAM_ID="${DEVELOPMENT_TEAM:-U353R2K2MJ}"
 ARCHIVE_PATH="${ARCHIVE_PATH:-/tmp/Flotory.xcarchive}"

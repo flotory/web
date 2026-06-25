@@ -5,6 +5,7 @@ import type { HomeRewardSlide } from '../components/customer/HomeRewardCarousel'
 import { buildHomeActivity, fetchCustomerCardsList } from '../lib/customerData'
 import { hapticSuccess } from '../lib/haptics'
 import { sortHomeCampaigns } from '../lib/homeCampaigns'
+import { profileFirstName } from '../lib/profileDisplay'
 import { stampUpdateSignature } from '../lib/stampLiveUpdate'
 import { useAuth } from '../providers/AuthProvider'
 import { useRealtime } from '../providers/RealtimeProvider'
@@ -128,10 +129,7 @@ export function useCustomerHome() {
 
   const fade = useFadeOnReady(!loading && !error)
 
-  const firstName = useMemo(() => {
-    const name = user?.name?.trim() ?? 'there'
-    return name.split(/\s+/)[0] ?? name
-  }, [user?.name])
+  const firstName = useMemo(() => profileFirstName(user), [user])
 
   const homeCampaigns = useMemo(
     () => sortHomeCampaigns(cardsQuery.data?.home_campaigns ?? []),

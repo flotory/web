@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { Gift, Nfc, QrCode, Smartphone, Store } from '@lucide/vue'
+import { Nfc, Smartphone, Store } from '@lucide/vue'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import LandingHeroVisual from '@/components/marketing/LandingHeroVisual.vue'
+import LandingHowItWorks from '@/components/marketing/LandingHowItWorks.vue'
 import LandingProductShowcase from '@/components/marketing/LandingProductShowcase.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import MarketingFooter from '@/components/layout/MarketingFooter.vue'
@@ -25,7 +26,7 @@ const features = [
   {
     icon: Nfc,
     title: 'NFC at the counter',
-    copy: 'One tap per visit. No POS integration and no staff scanner.',
+    copy: 'One tap adds one stamp. No POS integration and no staff scanner.',
   },
   {
     icon: Store,
@@ -34,11 +35,6 @@ const features = [
   },
 ]
 
-const flowSteps = [
-  { icon: QrCode, title: 'Guest joins', copy: 'QR or discover listing' },
-  { icon: Nfc, title: 'Tap for stamp', copy: 'NFC stand at counter' },
-  { icon: Gift, title: 'Unlock reward', copy: 'Claim in the app' },
-]
 </script>
 
 <template>
@@ -148,20 +144,17 @@ const flowSteps = [
       data-testid="landing-how-it-works"
     >
       <AppCard wrapper-class="border-border/70 bg-surface/95 p-8 sm:p-10 lg:p-12">
-        <p class="text-center text-xs font-semibold uppercase tracking-[0.14em] text-accent-active sm:text-sm">How it works</p>
-        <div class="mt-8 grid gap-5 sm:grid-cols-3 sm:gap-6 lg:mt-10 lg:gap-8">
-          <div
-            v-for="(step, index) in flowSteps"
-            :key="step.title"
-            class="flow-card"
-          >
-            <div class="flow-card-head">
-              <span class="flow-card-step">{{ index + 1 }}</span>
-              <component :is="step.icon" :size="22" :stroke-width="2.2" class="text-accent-active" />
-            </div>
-            <p class="mt-4 text-base font-bold text-ink">{{ step.title }}</p>
-            <p class="mt-2 text-sm leading-7 text-ink-muted sm:text-base">{{ step.copy }}</p>
-          </div>
+        <div class="mx-auto max-w-3xl text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-active sm:text-sm">How it works</p>
+          <h2 class="mt-3 text-2xl font-black tracking-tight text-ink sm:text-3xl">
+            From first visit to reward redemption.
+          </h2>
+          <p class="mt-3 text-sm leading-7 text-ink-muted sm:text-base sm:leading-8">
+            Guests join once, collect stamps with NFC, and redeem in the app. Owners set rewards from the web dashboard.
+          </p>
+        </div>
+        <div class="mt-8 lg:mt-10">
+          <LandingHowItWorks />
         </div>
       </AppCard>
     </section>
@@ -278,38 +271,6 @@ const flowSteps = [
   height: 3rem;
   border-radius: 1rem;
   background: var(--flotory-accent-soft);
-  color: var(--flotory-accent-active);
-}
-
-.flow-card {
-  border-radius: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--flotory-border) 70%, transparent);
-  background: color-mix(in srgb, var(--flotory-surface-muted) 45%, var(--flotory-surface));
-  padding: 1.35rem 1.25rem;
-}
-
-@media (min-width: 768px) {
-  .flow-card {
-    padding: 1.65rem 1.5rem;
-  }
-}
-
-.flow-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.flow-card-step {
-  display: inline-flex;
-  width: 1.75rem;
-  height: 1.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: var(--flotory-accent-soft);
-  font-size: 0.8rem;
-  font-weight: 800;
   color: var(--flotory-accent-active);
 }
 

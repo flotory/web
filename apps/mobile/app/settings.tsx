@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router'
+import { Redirect, useFocusEffect, useRouter } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { useCallback, useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -9,17 +9,21 @@ import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { webAppOrigin } from '../src/lib/config'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
+import { profileDisplayName, profileInitials } from '../src/lib/profileDisplay'
 import { withAppFont } from '../src/lib/typography'
 
 export default function SettingsScreen() {
   const router = useRouter()
-  const { user, signOut, refreshUser } = useAuth()
-  const cardsQuery = useCustomerCards({ refetchOnFocus: true })
+  const { user, signOut, refreshUser, token, booting } = useAuth()
+  const cardsQuery = useCustomerCards({ refetchOnFocus: Boolean(token) })
 
   useFocusEffect(
     useCallback(() => {
+      if (!token) {
+        return
+      }
       void refreshUser()
-    }, [refreshUser]),
+    }, [refreshUser, token]),
   )
 
   const stats = useMemo(() => {
@@ -31,17 +35,22 @@ export default function SettingsScreen() {
     }
   }, [cardsQuery.data])
 
-  const initials = (user?.name ?? '?')
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const displayName = profileDisplayName(user)
+  const initials = profileInitials(user)
 
   const webOrigin = webAppOrigin()
 
   function openWeb(path: string) {
     void Linking.openURL(`${webOrigin}${path}`)
+  }
+
+  async function handleSignOut() {
+    await signOut()
+    router.replace('/(customer)/venues')
+  }
+
+  if (!booting && !token) {
+    return <Redirect href="/(customer)/venues" />
   }
 
   return (
@@ -63,7 +72,7 @@ export default function SettingsScreen() {
             <Text style={withAppFont({ color: colors.primaryText, fontSize: 28, fontWeight: '800' })}>{initials}</Text>
           </View>
           <Text style={withAppFont({ marginTop: 14, fontSize: 22, fontWeight: '700', color: colors.ink })}>
-            {user?.name ?? 'Guest'}
+            {displayName}
           </Text>
           <Text style={{ ...typography.body, marginTop: 4 }}>{user?.email}</Text>
         </View>
@@ -149,7 +158,7 @@ export default function SettingsScreen() {
 
         <View style={{ marginTop: space.sectionY }}>
           <Pressable
-            onPress={() => void signOut()}
+            onPress={() => void handleSignOut()}
             style={({ pressed }) => ({
               backgroundColor: colors.surface,
               borderRadius: radius.card,

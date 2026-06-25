@@ -28,9 +28,11 @@ test.describe('Public marketing and bridge pages', () => {
 
     const howItWorks = page.getByTestId('landing-how-it-works')
     await expect(howItWorks).toBeVisible()
-    await expect(howItWorks.getByText('Guest joins')).toBeVisible()
-    await expect(howItWorks.getByText('Tap for stamp')).toBeVisible()
-    await expect(howItWorks.getByText('Unlock reward')).toBeVisible()
+    await expect(howItWorks.getByRole('heading', { name: 'From first visit to reward redemption.' })).toBeVisible()
+    await expect(page.getByTestId('landing-flow-step-join')).toBeVisible()
+    await expect(page.getByTestId('landing-flow-step-stamp')).toBeVisible()
+    await expect(page.getByTestId('landing-flow-step-milestone')).toBeVisible()
+    await expect(page.getByTestId('landing-flow-step-redeem')).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'Ready to launch at your venue?' })).toBeVisible()
   })

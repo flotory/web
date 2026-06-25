@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router'
 import { Animated, View } from 'react-native'
 import { useMemo } from 'react'
 
@@ -14,10 +15,12 @@ import HomeSectionHeader from '../src/components/ui/HomeSectionHeader'
 import { useCustomerHome } from '../src/hooks/useCustomerHome'
 import { greetingForHour } from '../src/lib/greeting'
 import { hapticLightTap } from '../src/lib/haptics'
+import { useAuth } from '../src/providers/AuthProvider'
 import { useNfcStampScanAction } from '../src/providers/NfcStampScanProvider'
 import { space } from '../src/theme'
 
 export default function CustomerHomeScreen() {
+  const { token, booting } = useAuth()
   const {
     role,
     router,
@@ -68,6 +71,10 @@ export default function CustomerHomeScreen() {
       },
     }
   }, [cards.length, readyItems.length, router, startScan])
+
+  if (!booting && !token) {
+    return <Redirect href="/(customer)/venues" />
+  }
 
   if (role !== 'customer') {
     return null

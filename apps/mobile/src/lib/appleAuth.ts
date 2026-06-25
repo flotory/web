@@ -2,6 +2,7 @@ import * as AppleAuthentication from 'expo-apple-authentication'
 import { Platform } from 'react-native'
 
 import { apiRequest } from './api'
+import { displayNameFromAppleEmail } from './profileDisplay'
 import type { AuthResponse } from '../types/auth'
 
 export async function isAppleSignInAvailable(): Promise<boolean> {
@@ -42,11 +43,13 @@ export async function startAppleSignIn(): Promise<
       .join(' ')
       .trim()
 
+    const derivedName = fullName || displayNameFromAppleEmail(credential.email)
+
     const auth = await apiRequest<AuthResponse>('/auth/apple', {
       method: 'POST',
       body: {
         id_token: credential.identityToken,
-        ...(fullName ? { name: fullName } : {}),
+        ...(derivedName ? { name: derivedName } : {}),
         device_name: 'flotory-mobile',
       },
     })

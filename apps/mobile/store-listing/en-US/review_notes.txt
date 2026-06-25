@@ -17,8 +17,8 @@ After sign-in, the demo account has stamp cards and may have a reward ready to r
 ACCOUNT DELETION
 Profile → Delete account (type DELETE to confirm). Password required for email accounts; OAuth accounts confirm with DELETE only.
 
-NFC DEMO VIDEO
-See the demo video URL in App Review Information (physical iPhone + programmed NFC tag).
+NFC DEMO VIDEO (Guideline 2.1 — physical iPhone + programmed NFC tag)
+https://drive.google.com/file/d/1VeQlbZ9OiHTwIk9EvAD2KbOJ6AQMVxlU/view?usp=sharing
 
 NFC
 The app reads NFC tags programmed with Flotory tap URLs at participating venue counters. NFC requires a physical iPhone (not Simulator). Reviewers without a tag can open this deep link after sign-in to simulate a tap (same API as a physical stand):

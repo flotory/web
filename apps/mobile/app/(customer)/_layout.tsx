@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CustomerStampOrchestrator from '../../src/components/customer/CustomerStampOrchestrator'
 import CustomerTabBar from '../../src/components/navigation/CustomerTabBar'
+import GuestRouteGuard from '../../src/components/navigation/GuestRouteGuard'
 import { hapticTabChange } from '../../src/lib/haptics'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
@@ -92,6 +93,7 @@ export default function CustomerTabsLayout() {
   return (
     <NfcStampScanProvider>
       <View style={{ flex: 1 }}>
+        {isGuest ? <GuestRouteGuard /> : null}
         <Tabs
           tabBar={(props) => <CustomerTabBar {...props} guestMode={isGuest} />}
           screenListeners={{

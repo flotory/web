@@ -11,6 +11,7 @@ import { useNfcStampScanAction } from '../../providers/NfcStampScanProvider'
 import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../theme'
 
 const HIDDEN_TABS = new Set(['notifications'])
+const GUEST_TABS = new Set(['venues'])
 
 const TAB_LABELS: Record<string, string> = {
   home: 'Home',
@@ -48,7 +49,11 @@ export default function CustomerTabBar({
     notchDepth: 16,
   })
 
-  const visibleRoutes = state.routes.filter((route) => !HIDDEN_TABS.has(route.name))
+  const visibleRoutes = state.routes.filter((route) => {
+    if (HIDDEN_TABS.has(route.name)) return false
+    if (guestMode && !GUEST_TABS.has(route.name)) return false
+    return true
+  })
 
   return (
     <View

@@ -1,116 +1,172 @@
 <script setup lang="ts">
-import { Gift, ScanLine, UsersRound } from '@lucide/vue'
+import type { Component } from 'vue'
+import { ArrowRight, BarChart3, Gift, Nfc, Smartphone, UsersRound } from '@lucide/vue'
 
-import backgroundSrc from '../../../images/marketing/hero-cafe-background.png'
-import progressCardSrc from '../../../images/marketing/hero-progress-card.png'
-import standSrc from '../../../images/marketing/hero-nfc-stand.png'
+type ShowcasePanel = {
+  step: string
+  testId: string
+  icon: Component
+  title: string
+  copy: string
+  accent?: boolean
+  stat?: { value: string; label: string }
+  metrics?: Array<{ icon: Component; value: string; label: string }>
+}
 
-const ownerStats = [
-  { label: 'Visits (last 28 days)', value: '128', trend: '↑ 18%', icon: ScanLine },
-  { label: 'Active members', value: '42', trend: '↑ 9%', icon: UsersRound },
-  { label: 'Rewards claimed', value: '17', trend: null, icon: Gift },
+const STAMP_COLLECTED = 5
+const STAMP_TOTAL = 10
+const MILESTONE_STAMPS = [5, 10]
+
+function isMilestoneStamp(position: number): boolean {
+  return MILESTONE_STAMPS.includes(position)
+}
+
+function isStampFilled(position: number): boolean {
+  if (isMilestoneStamp(position)) return false
+  if (position < MILESTONE_STAMPS[0]) return position <= STAMP_COLLECTED
+  return position > MILESTONE_STAMPS[0] && position < STAMP_TOTAL && position <= STAMP_COLLECTED
+}
+
+function isMilestoneReached(position: number): boolean {
+  return isMilestoneStamp(position) && position <= STAMP_COLLECTED
+}
+
+const panels: ShowcasePanel[] = [
+  {
+    step: '01',
+    testId: 'landing-product-panel-guest',
+    icon: Smartphone,
+    title: 'Guest wallet',
+    copy: 'Join from QR or discover venues. Track stamps and slide to redeem.',
+    stat: { value: `${STAMP_COLLECTED}/${STAMP_TOTAL}`, label: 'stamps on card' },
+  },
+  {
+    step: '02',
+    testId: 'landing-product-panel-nfc',
+    icon: Nfc,
+    title: 'NFC at counter',
+    copy: 'Each tap at the counter adds one stamp to the guest wallet. No POS and no staff scanner.',
+    stat: { value: '+1', label: 'stamp per tap' },
+    accent: true,
+  },
+  {
+    step: '03',
+    testId: 'landing-product-panel-owner',
+    icon: BarChart3,
+    title: 'Owner dashboard',
+    copy: 'See visits, active members, and rewards claimed from flotory.com.',
+    metrics: [
+      { icon: BarChart3, value: '128', label: 'Visits' },
+      { icon: UsersRound, value: '42', label: 'Members' },
+      { icon: Gift, value: '17', label: 'Redeemed' },
+    ],
+  },
 ]
 </script>
 
 <template>
-  <div class="showcase-grid" data-testid="landing-product-showcase">
-    <article class="showcase-panel" data-testid="landing-product-panel-guest">
-      <p class="showcase-kicker">Guest wallet</p>
-      <div class="wallet-scene">
-        <img
-          :src="progressCardSrc"
-          alt=""
-          class="wallet-card"
-          tabindex="-1"
-        >
-        <div class="wallet-stamps" aria-hidden="true">
-          <span
-            v-for="n in 6"
-            :key="n"
-            class="wallet-stamp"
-            :class="{ 'wallet-stamp--filled': n <= 4 }"
-          />
-        </div>
-        <p class="wallet-caption">4 / 6 stamps · reward ready soon</p>
-      </div>
-    </article>
-
-    <article class="showcase-panel showcase-panel--nfc" data-testid="landing-product-panel-nfc">
-      <p class="showcase-kicker">NFC at counter</p>
-      <div class="nfc-scene">
-        <img
-          :src="backgroundSrc"
-          alt=""
-          class="nfc-background"
-          tabindex="-1"
-        >
-        <img
-          :src="standSrc"
-          alt=""
-          class="nfc-stand"
-          tabindex="-1"
-        >
-        <span class="nfc-glow" aria-hidden="true" />
-      </div>
-      <p class="showcase-caption">One tap per visit — no staff scanner</p>
-    </article>
-
-    <article class="showcase-panel" data-testid="landing-product-panel-owner">
-      <p class="showcase-kicker">Owner dashboard</p>
-      <div class="owner-stats">
-        <div
-          v-for="stat in ownerStats"
-          :key="stat.label"
-          class="owner-stat"
-        >
-          <div class="owner-stat-icon" aria-hidden="true">
-            <component :is="stat.icon" :size="18" :stroke-width="2.2" />
-          </div>
-          <div class="owner-stat-copy">
-            <p class="owner-stat-label">{{ stat.label }}</p>
-            <div class="owner-stat-value-row">
-              <p class="owner-stat-value">{{ stat.value }}</p>
-              <p v-if="stat.trend" class="owner-stat-trend">{{ stat.trend }}</p>
-            </div>
+  <div class="showcase" data-testid="landing-product-showcase">
+    <template v-for="(panel, index) in panels" :key="panel.testId">
+      <article
+        class="showcase-panel"
+        :class="{ 'showcase-panel--accent': panel.accent }"
+        :data-testid="panel.testId"
+      >
+        <div class="showcase-panel-head">
+          <span class="showcase-step">{{ panel.step }}</span>
+          <div
+            class="showcase-icon"
+            :class="{ 'showcase-icon--accent': panel.accent }"
+            aria-hidden="true"
+          >
+            <component :is="panel.icon" :size="22" :stroke-width="2.2" />
           </div>
         </div>
+
+        <h3 class="showcase-title">{{ panel.title }}</h3>
+        <p class="showcase-copy">{{ panel.copy }}</p>
+
+        <div v-if="panel.stat" class="showcase-stat">
+          <div class="showcase-stamp-row" v-if="panel.step === '01'" aria-hidden="true">
+            <template v-for="n in STAMP_TOTAL" :key="n">
+              <span
+                v-if="isMilestoneStamp(n)"
+                class="showcase-stamp showcase-stamp--reward"
+                :class="{ 'showcase-stamp--reward-reached': isMilestoneReached(n) }"
+              >
+                <Gift :size="11" :stroke-width="2.4" />
+              </span>
+              <span
+                v-else
+                class="showcase-stamp"
+                :class="{ 'showcase-stamp--filled': isStampFilled(n) }"
+              />
+            </template>
+          </div>
+          <div v-else-if="panel.accent" class="showcase-nfc-pulse" aria-hidden="true">
+            <span class="showcase-nfc-ring" />
+            <span class="showcase-nfc-core" />
+          </div>
+          <p class="showcase-stat-value">{{ panel.stat.value }}</p>
+          <p class="showcase-stat-label">{{ panel.stat.label }}</p>
+        </div>
+
+        <ul v-if="panel.metrics" class="showcase-metrics">
+          <li
+            v-for="metric in panel.metrics"
+            :key="metric.label"
+            class="showcase-metric"
+          >
+            <span class="showcase-metric-icon" aria-hidden="true">
+              <component :is="metric.icon" :size="16" :stroke-width="2.2" />
+            </span>
+            <span class="showcase-metric-copy">
+              <span class="showcase-metric-value">{{ metric.value }}</span>
+              <span class="showcase-metric-label">{{ metric.label }}</span>
+            </span>
+          </li>
+        </ul>
+      </article>
+
+      <div
+        v-if="index < panels.length - 1"
+        class="showcase-connector"
+        aria-hidden="true"
+      >
+        <ArrowRight :size="18" :stroke-width="2.2" class="showcase-connector-icon showcase-connector-icon--desktop" />
+        <ArrowRight :size="18" :stroke-width="2.2" class="showcase-connector-icon showcase-connector-icon--mobile" />
       </div>
-      <div class="owner-chart" aria-hidden="true">
-        <span class="owner-chart-bar owner-chart-bar--1" />
-        <span class="owner-chart-bar owner-chart-bar--2" />
-        <span class="owner-chart-bar owner-chart-bar--3" />
-        <span class="owner-chart-bar owner-chart-bar--4" />
-        <span class="owner-chart-bar owner-chart-bar--5" />
-      </div>
-      <p class="showcase-caption">Visits, members, and rewards in one place</p>
-    </article>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.showcase-grid {
+.showcase {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.85rem;
+  max-width: 56rem;
+  margin-inline: auto;
 }
 
 @media (min-width: 768px) {
-  .showcase-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
+  .showcase {
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: stretch;
+    gap: 0.75rem;
   }
 }
 
 .showcase-panel {
   display: flex;
   flex-direction: column;
-  border-radius: 1.5rem;
+  border-radius: 1.35rem;
   border: 1px solid color-mix(in srgb, var(--flotory-border) 75%, transparent);
   background: linear-gradient(
     165deg,
     var(--flotory-surface) 0%,
     color-mix(in srgb, var(--flotory-surface-muted) 35%, var(--flotory-surface)) 100%
   );
-  padding: 1.35rem 1.2rem 1.2rem;
+  padding: 1.35rem 1.2rem 1.25rem;
   box-shadow: 0 12px 30px color-mix(in srgb, var(--flotory-primary) 5%, transparent);
 }
 
@@ -120,205 +176,234 @@ const ownerStats = [
   }
 }
 
-.showcase-panel--nfc {
-  border-color: color-mix(in srgb, var(--flotory-accent-border) 40%, var(--flotory-border));
+.showcase-panel--accent {
+  border-color: color-mix(in srgb, var(--flotory-accent-border) 42%, var(--flotory-border));
   background: linear-gradient(
     165deg,
-    color-mix(in srgb, var(--flotory-accent-soft) 30%, var(--flotory-surface)) 0%,
+    color-mix(in srgb, var(--flotory-accent-soft) 32%, var(--flotory-surface)) 0%,
     var(--flotory-surface) 100%
   );
 }
 
-.showcase-kicker {
+.showcase-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.showcase-step {
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--flotory-accent-active);
 }
 
-.showcase-caption {
-  margin-top: 0.85rem;
-  font-size: 0.8rem;
+.showcase-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--flotory-surface-muted) 65%, var(--flotory-surface));
+  color: var(--flotory-ink);
+}
+
+.showcase-icon--accent {
+  background: var(--flotory-accent-soft);
+  color: var(--flotory-accent-active);
+}
+
+.showcase-title {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--flotory-ink);
+}
+
+.showcase-copy {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.55;
   color: var(--flotory-ink-muted);
 }
 
-.wallet-scene {
-  margin-top: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.showcase-stat {
+  margin-top: auto;
+  padding-top: 1rem;
+  text-align: center;
 }
 
-.wallet-card {
-  display: block;
-  width: min(100%, 11.5rem);
-  height: auto;
-  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--flotory-primary) 12%, transparent));
-}
-
-.wallet-stamps {
-  display: flex;
+.showcase-stamp-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1.15rem);
   justify-content: center;
-  gap: 0.35rem;
-  margin-top: 0.85rem;
+  gap: 0.32rem;
+  margin-bottom: 0.55rem;
 }
 
-.wallet-stamp {
-  width: 0.7rem;
-  height: 0.7rem;
+.showcase-stamp {
+  width: 0.62rem;
+  height: 0.62rem;
   border-radius: 9999px;
   border: 1.5px solid color-mix(in srgb, var(--flotory-border) 90%, transparent);
 }
 
-.wallet-stamp--filled {
+.showcase-stamp--filled {
   border-color: var(--flotory-accent);
   background: var(--flotory-accent);
 }
 
-.wallet-caption {
-  margin-top: 0.55rem;
-  font-size: 0.78rem;
+.showcase-stamp--reward {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-color: color-mix(in srgb, var(--flotory-accent-border) 55%, var(--flotory-border));
+  background: color-mix(in srgb, var(--flotory-accent-soft) 55%, var(--flotory-surface));
+  color: color-mix(in srgb, var(--flotory-accent-active) 65%, var(--flotory-ink-muted));
+}
+
+.showcase-stamp--reward-reached {
+  border-color: color-mix(in srgb, var(--flotory-accent-border) 70%, var(--flotory-border));
+  background: var(--flotory-accent-soft);
+  color: var(--flotory-accent-active);
+}
+
+.showcase-nfc-pulse {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0 0 0.5rem;
+  margin-inline: auto;
+}
+
+.showcase-nfc-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid color-mix(in srgb, var(--flotory-accent) 50%, transparent);
+  animation: showcase-nfc-ring 2.4s ease-out infinite;
+}
+
+.showcase-nfc-core {
+  position: absolute;
+  inset: 0.5rem;
+  border-radius: 9999px;
+  background: var(--flotory-accent);
+  opacity: 0.88;
+}
+
+.showcase-stat-value {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--flotory-ink);
+}
+
+.showcase-stat-label {
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--flotory-ink-muted);
 }
 
-.nfc-scene {
-  position: relative;
-  margin-top: 0.9rem;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  border-radius: 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--flotory-border) 70%, transparent);
-}
-
-.nfc-background {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.nfc-stand {
-  position: absolute;
-  right: 14%;
-  bottom: 8%;
-  width: 42%;
-  height: auto;
-  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--flotory-primary) 18%, transparent));
-}
-
-.nfc-glow {
-  position: absolute;
-  left: 58%;
-  top: 52%;
-  width: 18%;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--flotory-accent) 55%, transparent) 0%,
-    transparent 72%
-  );
-  animation: nfc-glow-pulse 2.6s ease-in-out infinite;
-}
-
-.owner-stats {
-  margin-top: 0.9rem;
+.showcase-metrics {
+  margin-top: auto;
+  padding-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.5rem;
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
 }
 
-.owner-stat {
+.showcase-metric {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  border-radius: 1rem;
+  gap: 0.6rem;
+  border-radius: 0.85rem;
   border: 1px solid color-mix(in srgb, var(--flotory-border) 65%, transparent);
-  background: color-mix(in srgb, var(--flotory-surface-elevated, var(--flotory-surface)) 90%, var(--flotory-surface));
-  padding: 0.65rem 0.75rem;
+  background: color-mix(in srgb, var(--flotory-surface-elevated, var(--flotory-surface)) 88%, var(--flotory-surface));
+  padding: 0.5rem 0.6rem;
 }
 
-.owner-stat-icon {
+.showcase-metric-icon {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.7rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.55rem;
   background: var(--flotory-accent-soft);
   color: var(--flotory-accent-active);
   flex-shrink: 0;
 }
 
-.owner-stat-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--flotory-ink-muted);
-}
-
-.owner-stat-value-row {
+.showcase-metric-copy {
   display: flex;
   align-items: baseline;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
-.owner-stat-value {
-  font-size: 1.15rem;
+.showcase-metric-value {
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: -0.02em;
   color: var(--flotory-ink);
 }
 
-.owner-stat-trend {
+.showcase-metric-label {
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--flotory-success, #1f8a4c);
+  font-weight: 600;
+  color: var(--flotory-ink-muted);
 }
 
-.owner-chart {
+.showcase-connector {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  height: 3.25rem;
-  margin-top: 0.85rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid color-mix(in srgb, var(--flotory-border) 55%, transparent);
+  color: var(--flotory-accent-active);
+  opacity: 0.75;
 }
 
-.owner-chart-bar {
-  width: 0.55rem;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--flotory-accent) 70%, var(--flotory-ink-muted));
+.showcase-connector-icon--mobile {
+  transform: rotate(90deg);
 }
 
-.owner-chart-bar--1 { height: 42%; }
-.owner-chart-bar--2 { height: 68%; }
-.owner-chart-bar--3 { height: 54%; }
-.owner-chart-bar--4 { height: 88%; }
-.owner-chart-bar--5 { height: 62%; }
+.showcase-connector-icon--desktop {
+  display: none;
+}
 
-@keyframes nfc-glow-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.92);
+@media (min-width: 768px) {
+  .showcase-connector-icon--mobile {
+    display: none;
   }
 
-  50% {
-    opacity: 0.95;
-    transform: scale(1.08);
+  .showcase-connector-icon--desktop {
+    display: block;
+  }
+}
+
+@keyframes showcase-nfc-ring {
+  0% {
+    transform: scale(0.78);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nfc-glow {
+  .showcase-nfc-ring {
     animation: none;
-    opacity: 0.6;
+    opacity: 0.35;
   }
 }
 </style>

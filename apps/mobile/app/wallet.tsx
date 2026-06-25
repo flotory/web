@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { Redirect, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { Animated, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,6 +9,7 @@ import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/Cust
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
+import { useAuth } from '../src/providers/AuthProvider'
 import { useCustomerSurfaceRefresh } from '../src/hooks/useCustomerSurfaceRefresh'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { withAppFont } from '../src/lib/typography'
@@ -17,6 +18,7 @@ import { colors, radius, space, tabBar } from '../src/theme'
 export default function WalletScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
+  const { token, booting } = useAuth()
   const [search, setSearch] = useState('')
   const { data: cards, loading, refreshing, error, refresh, reload, silentRefresh } = useCustomerCards()
   useCustomerSurfaceRefresh(() => {
@@ -31,6 +33,10 @@ export default function WalletScreen() {
     if (!query) return cardList
     return cardList.filter((item) => (item.venue?.name ?? '').toLowerCase().includes(query))
   }, [cardList, search])
+
+  if (!booting && !token) {
+    return <Redirect href="/(customer)/venues" />
+  }
 
   if (loading) {
     return (
@@ -115,8 +121,8 @@ export default function WalletScreen() {
       {!error && cardList.length === 0 ? (
         <Animated.View style={{ flex: 1, opacity: fade, justifyContent: 'center', paddingHorizontal: space.screenX }}>
           <StateCard
-            emoji="💳"
-            title="No cards yet"
+            icon="ticket-outline"
+            title="No stamp cards yet"
             message="Discover venues nearby and start collecting stamps toward your first reward."
             primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
           />
