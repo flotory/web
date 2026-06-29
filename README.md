@@ -132,9 +132,10 @@ curl -s http://localhost:8000/api/public/app-config
 
 If you see “Google address search is not configured”, the key is missing from `.env` or Docker was not restarted after adding it.
 
-OAuth preserves owner signup intent:
+OAuth owner login:
 
-- **Owner** (`intent=owner` from homepage): continues to `/my-venues?create=1` (create first venue).
+- **Provisioned owners** (`intent=owner` on login): sign in to the dashboard if they already have a venue membership.
+- **New prospects** are sent to **`/book-demo`** — owner self-registration and venue creation are disabled.
 - **Customers** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding flows
@@ -145,14 +146,27 @@ OAuth preserves owner signup intent:
 2. Taps **Open in Flotory app** → joins in the mobile app (register or Google sign-in).
 3. Collects stamps via **NFC tap** at the counter; redeems with **slide to redeem** when a reward is ready.
 
-### Owner (homepage — web)
+### Owner (sales-led — web)
 
-1. Clicks **Get started free** → `/register?intent=owner`.
-2. Creates account (email or Google).
-3. Lands on **My Venues** with the create form open — add venue name, address, and details.
-4. Opens **Dashboard** once the venue exists; configure rewards, campaigns, listing, and NFC stands from the owner workspace.
+**Post-demo pipeline (email only, no venue yet):**
+
+1. Prospect books **`/book-demo`** or contacts sales.
+2. Admin opens **Owner onboarding** (`/admin/owner-onboarding`) and sends an invitation (email + optional business name).
+3. Owner registers via the expiring `/register?invite=…` link, creates their venue, uploads files at **My Venues → Files & docs**, and submits for review.
+4. Platform admin approves at **Venue listings** (`/admin/venues`).
+
+**Ops-heavy provisioning (venue exists before the owner signs in):**
+
+1. Admin creates a draft venue at **Manage venues → Create venue** (creates or matches the owner user by email with a random password).
+2. Share login instructions: owner uses **Forgot password** on `/login` or Google sign-in with the same email.
 
 New venues start as **`draft`**. Guests cannot join via `/v/{slug}` until the owner completes the **listing checklist**, submits for review, and a platform admin approves at `/admin/venues`.
+
+Invitation links expire after **`FLOTORY_OWNER_INVITATION_TTL_DAYS`** (default 7). Configure in `.env`:
+
+```env
+FLOTORY_OWNER_INVITATION_TTL_DAYS=7
+```
 
 **Listing workflow:** owners upload raw files at **My Venues → Files & docs**. Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner files, then approve.
 

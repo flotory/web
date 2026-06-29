@@ -184,7 +184,7 @@ onMounted(loadVenues)
         <p class="mt-2 text-sm font-medium text-ink-muted">Optional note for the owner.</p>
         <textarea
           v-model="rejectNote"
-          class="mt-4 h-28 w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+          class="mt-4 h-28 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
           placeholder="Tell the owner what to fix before resubmitting."
         />
         <div class="mt-4 flex flex-wrap gap-2">
@@ -210,7 +210,7 @@ onMounted(loadVenues)
         </p>
         <textarea
           v-model="unpublishNote"
-          class="mt-4 h-28 w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+          class="mt-4 h-28 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
           placeholder="Explain why the listing was taken offline."
         />
         <div class="mt-4 flex flex-wrap gap-2">

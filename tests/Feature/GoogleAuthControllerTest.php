@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\OwnerInvitation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
@@ -43,7 +44,7 @@ class GoogleAuthControllerTest extends TestCase
         ], session('google_auth.intent'));
     }
 
-    public function test_callback_creates_new_owner_and_redirects_with_token(): void
+    public function test_callback_redirects_new_owner_intent_to_book_demo_without_creating_user(): void
     {
         $googleUser = Mockery::mock(SocialiteUser::class);
         $googleUser->shouldReceive('getId')->andReturn('google-123');
@@ -70,12 +71,82 @@ class GoogleAuthControllerTest extends TestCase
             ->get('/auth/google/callback');
 
         $response->assertRedirect();
-        $this->assertStringContainsString('oauth_token=', $response->headers->get('Location'));
+        $this->assertStringContainsString('/book-demo', $response->headers->get('Location'));
+        $this->assertStringNotContainsString('oauth_token=', $response->headers->get('Location'));
 
-        $this->assertDatabaseHas('users', [
+        $this->assertDatabaseMissing('users', [
             'email' => 'google@example.com',
-            'google_id' => 'google-123',
         ]);
+    }
+
+    public function test_callback_logs_in_existing_owner_with_membership(): void
+    {
+        $owner = $this->createUser(['email' => 'google-owner@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $googleUser = Mockery::mock(SocialiteUser::class);
+        $googleUser->shouldReceive('getId')->andReturn('google-owner-123');
+        $googleUser->shouldReceive('getName')->andReturn('Google Owner');
+        $googleUser->shouldReceive('getEmail')->andReturn('google-owner@example.com');
+        $googleUser->shouldReceive('getAvatar')->andReturn(null);
+
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('user')
+            ->once()
+            ->andReturn($googleUser);
+
+        $response = $this
+            ->withSession([
+                'google_auth.intent' => [
+                    'intent' => 'owner',
+                ],
+            ])
+            ->get('/auth/google/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('oauth_token=', $response->headers->get('Location'));
+    }
+
+    public function test_callback_logs_in_invited_owner_without_membership(): void
+    {
+        $invited = $this->createUser(['email' => 'invited-google@example.com']);
+
+        OwnerInvitation::query()->create([
+            'email' => 'invited-google@example.com',
+            'accepted_at' => now(),
+            'token' => 'google-invite-token',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $googleUser = Mockery::mock(SocialiteUser::class);
+        $googleUser->shouldReceive('getId')->andReturn('google-invited-123');
+        $googleUser->shouldReceive('getName')->andReturn('Invited Google');
+        $googleUser->shouldReceive('getEmail')->andReturn('invited-google@example.com');
+        $googleUser->shouldReceive('getAvatar')->andReturn(null);
+
+        Socialite::shouldReceive('driver')
+            ->with('google')
+            ->andReturnSelf();
+
+        Socialite::shouldReceive('user')
+            ->once()
+            ->andReturn($googleUser);
+
+        $response = $this
+            ->withSession([
+                'google_auth.intent' => [
+                    'intent' => 'owner',
+                ],
+            ])
+            ->get('/auth/google/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('oauth_token=', $response->headers->get('Location'));
+        $this->assertStringNotContainsString('owner_pending', $response->headers->get('Location'));
     }
 
     public function test_callback_rejects_new_web_user_without_owner_intent(): void
@@ -190,7 +261,7 @@ class GoogleAuthControllerTest extends TestCase
         ], session('google_auth.intent'));
     }
 
-    public function test_callback_uses_owner_default_redirect(): void
+    public function test_callback_uses_owner_default_redirect_for_unprovisioned_user(): void
     {
         $googleUser = Mockery::mock(SocialiteUser::class);
         $googleUser->shouldReceive('getId')->andReturn('google-789');
@@ -216,10 +287,12 @@ class GoogleAuthControllerTest extends TestCase
             ])
             ->get('/auth/google/callback');
 
-        $this->assertStringContainsString('redirect=%2Fmy-venues%3Fcreate%3D1', $response->headers->get('Location'));
+        $response->assertRedirect();
+        $this->assertStringContainsString('/book-demo', $response->headers->get('Location'));
 
-        $user = User::query()->where('email', 'guest@example.com')->firstOrFail();
-        $this->assertSame('Guest', $user->name);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'guest@example.com',
+        ]);
     }
 
     public function test_redirect_stores_mobile_intent(): void

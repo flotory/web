@@ -700,7 +700,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                   ref="titleInput"
                   v-model="title"
                   required
-                  class="mt-2 h-12 w-full rounded-2xl border bg-surface-muted px-4 text-sm font-medium outline-none focus:bg-surface"
+                  class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
                   :class="fieldErrors.title ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                   placeholder="Free signature coffee"
                 >
@@ -716,7 +716,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                     min="1"
                     max="100"
                     type="number"
-                    class="h-12 w-full rounded-2xl border bg-surface-muted px-4 pr-14 text-sm font-medium outline-none focus:bg-surface"
+                    class="h-12 w-full rounded-2xl border border-border bg-surface px-4 pr-14 text-sm font-medium text-ink outline-none focus:border-ink-soft"
                     :class="fieldErrors.required_stamps ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                   >
                   <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">stamps</span>
@@ -730,7 +730,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
                 id="reward-description"
                 v-model="description"
                 rows="2"
-                class="mt-2 w-full rounded-2xl border bg-surface-muted px-4 py-3 text-sm font-medium outline-none focus:bg-surface"
+                class="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
                 :class="fieldErrors.description ? 'border-danger focus:border-danger' : 'border-border focus:border-ink-soft'"
                 placeholder="Reward regular guests with a free signature coffee they'll talk about."
               />

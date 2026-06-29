@@ -7,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 
 class WebLoginGateService
 {
+    public function __construct(private OwnerInvitationService $ownerInvitations) {}
     /** Device names sent by the Vue web app and web Google OAuth. */
     public const WEB_DEVICE_NAMES = ['browser', 'web', 'google-oauth-web'];
 
@@ -22,7 +23,8 @@ class WebLoginGateService
             return true;
         }
 
-        return $user->memberships()->where('role', 'owner')->exists();
+        return $user->memberships()->where('role', 'owner')->exists()
+            || $this->ownerInvitations->userHasAcceptedInvitation($user);
     }
 
     public function rejectUnlessAllowedOnWeb(User $user, string $deviceName): void

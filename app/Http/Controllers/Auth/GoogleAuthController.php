@@ -49,9 +49,22 @@ class GoogleAuthController extends Controller
             ]));
         }
 
+        $ownerIntent = $this->sanitizeIntent($intent['intent'] ?? null);
         $user = User::query()->firstWhere('email', $googleUser->getEmail());
 
-        if (! $user) {
+        if ($ownerIntent === 'owner' && ! $this->isMobileIntent($intent)) {
+            if (! $user instanceof User) {
+                return redirect($this->buildFrontendPath('/book-demo', []));
+            }
+
+            if (! $this->webLoginGate->mayAuthenticateOnWeb($user)) {
+                return redirect($this->buildFrontendPath('/book-demo', [
+                    'notice' => 'owner_pending',
+                ]));
+            }
+        }
+
+        if (! $user instanceof User) {
             $user = User::query()->create([
                 'name' => $googleUser->getName() ?: 'Guest',
                 'email' => $googleUser->getEmail(),
@@ -108,7 +121,7 @@ class GoogleAuthController extends Controller
     private function sanitizeRedirect(mixed $path, ?string $intent = null): string
     {
         if (! is_string($path) || $path === '') {
-            return $intent === 'owner' ? '/my-venues?create=1' : '/app';
+            return $intent === 'owner' ? '/book-demo' : '/app';
         }
 
         if (! Str::startsWith($path, '/')) {

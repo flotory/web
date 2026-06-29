@@ -40,11 +40,18 @@ Staff scanner, team invites, and claim QR were **removed** in the 2026 pivot —
 
 ## Owner journey (web)
 
-1. **Sign up** — Homepage → register with `intent=owner`.
-2. **Create venue** — **My Venues** (`/my-venues?create=1`): name, address, category.
-3. **Launch** — Listing checklist (setup files, rewards) → **Submit for listing** → admin approves → **published**.
-4. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics.
-5. **NFC** — Platform admin (or owner via support) provisions NFC stands; program tags with tap URL.
+Sales-led onboarding (default after a demo):
+
+1. **Invite** — Flotory admin sends an owner invitation from **Owner onboarding** (`/admin/owner-onboarding`): email + optional business name.
+2. **Register** — Owner opens `/register?invite=…`, sets a password (invite expires after `FLOTORY_OWNER_INVITATION_TTL_DAYS`, default 7).
+3. **Create venue** — **My Venues** (`/my-venues?create=1`): name, address, category. Only users with an accepted invitation may self-create a venue (one per invite).
+4. **Launch** — Upload files on **Files & docs**, complete listing checklist → **Submit for listing** → platform admin approves → **published**.
+5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics.
+6. **NFC** — Platform admin provisions NFC stands; program tags with tap URL.
+
+**Ops-heavy path:** admin provisions the venue first at **Manage venues → Create venue**; owner resets password or uses Google with the same email.
+
+Public self-serve owner signup (`/register?intent=owner`) is disabled — prospects use **Book a demo** or **Contact us**.
 
 ## MVP scope (current)
 
@@ -52,7 +59,7 @@ Staff scanner, team invites, and claim QR were **removed** in the 2026 pivot —
 
 - Dashboard, my-venues, rewards, campaigns, analytics, customers CRM, settings
 - Public venue bridge `/v/:slug`
-- Platform admin: listing review, manage venues, NFC tags, palette, activity log
+- Platform admin: listing review, **owner onboarding** (sales invites), manage venues, NFC tags, palette, activity log
 
 **Mobile (customers — iOS focus)**
 

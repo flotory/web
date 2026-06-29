@@ -129,6 +129,8 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | NFC tap + HTTP contract | `tests/Unit/NfcStampServiceTest.php`, `tests/Feature/NfcStampControllerTest.php` |
 | Campaigns | `tests/Unit/CampaignServiceTest.php`, `tests/Unit/CampaignEngineTest.php`, `tests/Feature/VenueCampaignControllerTest.php` |
 | Publication & listing | `tests/Unit/VenuePublicationServiceTest.php`, `tests/Feature/AdminVenueReviewControllerTest.php`, `tests/Feature/VenueControllerTest.php` |
+| Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` |
+| Google OAuth (web + mobile) | `tests/Feature/GoogleAuthControllerTest.php` |
 | Rewards CRUD & purge | `tests/Feature/RewardControllerTest.php` |
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |
@@ -146,8 +148,10 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | `e2e/web-routes.spec.ts` | Owner dashboard / rewards / campaigns; `/app` and `/v/:slug` bridge pages |
 | `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, customers + profile, seeded rewards, analytics, workspace settings, venue filter switch |
 | `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible |
-| `e2e/owner-signup.spec.ts` | Owner register → My Venues create form; bad venue URL guard |
-| `e2e/admin-routes.spec.ts` | Admin venue listings (published filter), manage venues, activity log, owner-route guard |
+| `e2e/owner-signup.spec.ts` | Public owner intent redirects to book-demo; `create=1` without invite blocked |
+| `e2e/owner-invitation.spec.ts` | Register without invite → `/app`; invalid invite; sales-led register → venue setup |
+| `e2e/contact.spec.ts` | Contact form submission |
+| `e2e/admin-routes.spec.ts` | Admin venue listings, **owner onboarding**, manage venues, activity log, owner-route guard |
 | `e2e/public-pages.spec.ts` | Landing hero, legacy `/home` redirects, `/demo` alias, NFC tap bridge (+ invalid token), venue slug bridge |
 | `e2e/book-demo.spec.ts` | `/book-demo` loads Calendly iframe without signup |
 
@@ -167,7 +171,7 @@ Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` (guarded by `Datab
 | Mobile Google sign-in | PHPUnit mocks token verify; real device needs correct Google redirect URIs (`flotory://`, see [apps/mobile/README.md](../apps/mobile/README.md)) |
 | Web Google sign-in / Maps | Web OAuth callback and API keys differ per environment |
 | Admin listing review UI | Partial API coverage; visual checklist flow |
-| Venue onboarding | Real address, photos, admin approval |
+| Venue onboarding | Google address picker + file uploads; API invite/create path in `OwnerInvitationTest` |
 
 Post-deploy checklist: [deploy/DEPLOY.md § Post-deploy checks](../deploy/DEPLOY.md#post-deploy-checks).
 

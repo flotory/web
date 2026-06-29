@@ -14,6 +14,7 @@ use App\Services\AppleIdTokenVerifier;
 use App\Services\AppleOAuthUserService;
 use App\Services\GoogleIdTokenVerifier;
 use App\Services\GoogleOAuthUserService;
+use App\Services\OwnerInvitationService;
 use App\Services\UserAccountDeletionService;
 use App\Services\WebLoginGateService;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,10 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function __construct(private WebLoginGateService $webLoginGate) {}
+    public function __construct(
+        private WebLoginGateService $webLoginGate,
+        private OwnerInvitationService $ownerInvitations,
+    ) {}
 
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -114,8 +118,13 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return response()->json([
-            'user' => $request->user()->load('activeVenue'),
+            'user' => $user->load('activeVenue'),
+            'capabilities' => [
+                'may_create_venue' => $this->ownerInvitations->userMaySelfCreateVenue($user),
+            ],
         ]);
     }
 

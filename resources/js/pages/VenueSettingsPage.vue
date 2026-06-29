@@ -342,7 +342,7 @@ onMounted(loadVenue)
           <div class="grid gap-4 md:grid-cols-[1fr_180px]">
             <div>
               <label class="text-sm font-bold text-ink-muted" for="edit-venue-name">Venue name</label>
-              <input id="edit-venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface">
+              <input id="edit-venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft">
             </div>
             <div>
               <label class="text-sm font-bold text-ink-muted" for="edit-venue-slug">Slug</label>
@@ -351,7 +351,7 @@ onMounted(loadVenue)
                 v-model="slug"
                 :disabled="slugLocked"
                 :readonly="slugLocked"
-                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface disabled:cursor-not-allowed disabled:opacity-70"
+                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft disabled:cursor-not-allowed disabled:opacity-70"
               >
               <p v-if="slugLocked" class="mt-2 text-xs font-medium text-ink-muted">
                 Locked after publish so printed QR codes keep working.
@@ -362,7 +362,7 @@ onMounted(loadVenue)
               <select
                 id="edit-venue-category"
                 v-model="category"
-                class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface-muted bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+                class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
                 :style="selectChevronStyle"
               >
                 <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
@@ -370,7 +370,7 @@ onMounted(loadVenue)
             </div>
             <div>
               <label class="text-sm font-bold text-ink-muted" for="edit-venue-website">Website optional</label>
-              <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="https://example.com">
+              <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
             </div>
             <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />
             <div class="md:col-span-2">
@@ -436,7 +436,7 @@ onMounted(loadVenue)
               id="branch-name"
               v-model="branchName"
               required
-              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
               placeholder="Mio Gelato · Vake"
             >
           </div>

@@ -12,7 +12,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass } from '@/lib/authForm'
-import { hasOwnerMembership, ownerVenueSetupLocation, resolvePostLoginDestination } from '@/lib/venueRoles'
+import { BOOK_DEMO_PATH, hasOwnerMembership, OWNER_VENUE_SETUP_PATH, resolvePostLoginDestination } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -30,7 +30,7 @@ const error = ref('')
 const authIntent = computed(() => (route.query.intent === 'owner' ? 'owner' : null))
 const postAuthPath = computed(() => {
   if (authIntent.value === 'owner') {
-    return '/my-venues?create=1'
+    return '/dashboard'
   }
 
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
@@ -42,7 +42,11 @@ function ownerPostAuthDestination() {
     return '/dashboard'
   }
 
-  return ownerVenueSetupLocation()
+  if (auth.mayCreateVenue) {
+    return OWNER_VENUE_SETUP_PATH
+  }
+
+  return BOOK_DEMO_PATH
 }
 
 function continueWithGoogle() {
@@ -73,7 +77,7 @@ async function submit() {
 
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
     await router.push(
-      resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+      resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue),
     )
   } catch {
     error.value = 'Signed in, but we could not open your workspace. Please refresh and try again.'
@@ -98,7 +102,7 @@ onMounted(() => {
 
         const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
         await router.replace(
-          resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId),
+          resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue),
         )
       })
       .catch(() => {
@@ -126,14 +130,14 @@ onMounted(() => {
       </RouterLink>
 
       <AppCard :wrapper-class="marketingCardClass">
-      <AppBadge :tone="authIntent === 'owner' ? 'amber' : 'blue'">{{ authIntent === 'owner' ? 'Launch Flotory' : 'Welcome back' }}</AppBadge>
-      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ authIntent === 'owner' ? 'Continue venue setup' : 'Log in' }}</h1>
+      <AppBadge :tone="authIntent === 'owner' ? 'amber' : 'blue'">{{ authIntent === 'owner' ? 'Owner login' : 'Welcome back' }}</AppBadge>
+      <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">{{ authIntent === 'owner' ? 'Sign in to your dashboard' : 'Log in' }}</h1>
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        {{ authIntent === 'owner' ? 'Sign in to continue creating your venue and launch loyalty.' : 'Venue owners and platform admins only. Customers use the Flotory mobile app.' }}
+        {{ authIntent === 'owner' ? 'For provisioned venue owners only. New venues are onboarded by the Flotory team after a demo call.' : 'Venue owners and platform admins only. Customers use the Flotory mobile app.' }}
       </p>
 
       <AppButton
-        class="mt-6 w-full border border-border bg-surface-muted text-ink shadow-sm transition hover:bg-surface-muted"
+        class="mt-6 w-full border border-border bg-surface text-ink shadow-sm transition hover:bg-surface-muted/40"
         size="lg"
         :disabled="loading || oauthLoading"
         @click="continueWithGoogle"
@@ -178,19 +182,11 @@ onMounted(() => {
         </AppButton>
       </form>
 
-      <p class="mt-5 text-center text-sm text-ink-muted">
-        New here?
-        <RouterLink
-          :to="authIntent === 'owner' ? '/register?intent=owner' : '/register'"
-          class="font-bold text-ink"
-        >
-          Create an account
-        </RouterLink>
-      </p>
-
-      <p class="mt-4 text-center text-sm text-ink-muted">
-        Guest collecting rewards?
-        <RouterLink to="/app" class="font-bold text-ink">Get the mobile app</RouterLink>
+      <p v-if="authIntent === 'owner'" class="mt-5 text-center text-sm text-ink-muted">
+        Not onboarded yet?
+        <RouterLink to="/book-demo" class="font-bold text-ink">Book a demo</RouterLink>
+        or
+        <RouterLink to="/contact" class="font-bold text-ink">contact us</RouterLink>
       </p>
       </AppCard>
   </MarketingPageShell>

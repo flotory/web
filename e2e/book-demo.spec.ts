@@ -4,6 +4,7 @@ test.describe('Book demo page', () => {
   test('loads without signup', async ({ page }) => {
     await page.goto('/book-demo')
     await expect(page.getByRole('heading', { name: 'Book a 30-minute walkthrough' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('1–3 business days')).toBeVisible()
     await expect(page.locator('iframe[title="Book a Flotory demo on Calendly"]')).toBeVisible({ timeout: 15_000 })
     await expect(page.getByRole('link', { name: 'Open Calendly in a new tab' })).toBeVisible()
   })

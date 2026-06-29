@@ -6,6 +6,7 @@ import CustomersPage from '@/pages/CustomersPage.vue'
 import CustomerProfilePage from '@/pages/CustomerProfilePage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
 import BookDemoPage from '@/pages/BookDemoPage.vue'
+import ContactPage from '@/pages/ContactPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import MobileAppPage from '@/pages/MobileAppPage.vue'
@@ -15,6 +16,7 @@ import RewardsPage from '@/pages/RewardsPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminActivityPage from '@/pages/AdminActivityPage.vue'
+import AdminOwnerOnboardingPage from '@/pages/AdminOwnerOnboardingPage.vue'
 import AdminPalettePage from '@/pages/AdminPalettePage.vue'
 import AdminManageVenuesPage from '@/pages/AdminManageVenuesPage.vue'
 import AdminVenueEditPage from '@/pages/AdminVenueEditPage.vue'
@@ -55,19 +57,20 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'landing', component: LandingPage },
     { path: '/book-demo', name: 'book-demo', component: BookDemoPage, meta: { guest: true } },
+    { path: '/contact', name: 'contact', component: ContactPage, meta: { guest: true } },
     { path: '/demo', redirect: '/book-demo' },
     { path: '/app', name: 'mobile-app', component: MobileAppPage, meta: { guest: true } },
     { path: '/privacy', name: 'privacy', component: PrivacyPolicyPage, meta: { guest: true } },
     { path: '/terms', name: 'terms', component: TermsOfServicePage, meta: { guest: true } },
     { path: '/login', name: 'login', component: LoginPage, meta: { guest: true } },
-    { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true } },
+    { path: '/register', name: 'register', component: RegisterPage, meta: { guest: true, inviteFlow: true } },
     { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { guest: true } },
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { guest: true } },
     { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
     { path: '/t/:token', name: 'nfc-tap', component: () => import('@/pages/NfcTapBridgePage.vue'), meta: { guest: true } },
-    { path: '/onboarding', redirect: { path: '/my-venues', query: { create: '1' } } },
-    { path: '/onboarding/create-venue', redirect: { path: '/my-venues', query: { create: '1' } } },
-    { path: '/onboarding/:pathMatch(.*)*', redirect: { path: '/my-venues', query: { create: '1' } } },
+    { path: '/onboarding', redirect: '/book-demo' },
+    { path: '/onboarding/create-venue', redirect: '/book-demo' },
+    { path: '/onboarding/:pathMatch(.*)*', redirect: '/book-demo' },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -82,6 +85,7 @@ const router = createRouter({
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/owner-onboarding', name: 'admin-owner-onboarding', component: AdminOwnerOnboardingPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues', name: 'admin-manage-venues', component: AdminManageVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues/:id', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues/:id/design', name: 'admin-venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
@@ -105,7 +109,7 @@ async function workspaceHomePath() {
   const workspace = useWorkspaceStore()
   await workspace.bootstrap()
 
-  return resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
+  return resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
 }
 
 function isRemovedCustomerStaffPath(path: string): boolean {
@@ -120,8 +124,20 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const workspace = useWorkspaceStore()
 
+  if (to.name === 'register' && to.query.intent === 'owner') {
+    return { path: '/book-demo' }
+  }
+
+  if (to.name === 'register' && typeof to.query.invite !== 'string') {
+    return { path: '/app' }
+  }
+
   if (!auth.booted && auth.token) {
     await auth.fetchUser()
+  }
+
+  if (to.name === 'my-venues' && to.query.create === '1' && !auth.mayCreateVenue) {
+    return { path: '/book-demo' }
   }
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
@@ -149,7 +165,7 @@ router.beforeEach(async (to) => {
 
     const ownerMember = hasOwnerMembership(workspace.activeVenues)
     const home = needsWorkspaceContext
-      ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
+      ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
       : await workspaceHomePath()
 
     const allowWithoutMembership = to.meta.allowWithoutMembership === true
@@ -178,6 +194,7 @@ router.beforeEach(async (to) => {
     if (
       to.name === 'my-venues'
       && !ownerMember
+      && !auth.mayCreateVenue
       && to.query.intent !== 'owner'
       && to.query.create !== '1'
     ) {
@@ -209,7 +226,7 @@ router.beforeEach(async (to) => {
     if (auth.user?.is_admin) {
       destination = ADMIN_HOME_PATH
     } else if (hasOwnerMembership(workspace.activeVenues)) {
-      destination = ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId)
+      destination = ownerBootstrapPath(false, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
     }
 
     if (destination === to.path) {
@@ -225,6 +242,7 @@ router.beforeEach(async (to) => {
     && to.name !== 'venue-landing'
     && to.name !== 'mobile-app'
     && to.name !== 'book-demo'
+    && to.name !== 'contact'
     && !to.meta.inviteFlow
   ) {
     await workspace.bootstrap()
@@ -232,7 +250,7 @@ router.beforeEach(async (to) => {
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
     if (to.name === 'login' && redirect) {
       if (isRemovedCustomerStaffPath(redirect)) {
-        return { path: resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId) }
+        return { path: resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue) }
       }
 
       return {
@@ -241,6 +259,7 @@ router.beforeEach(async (to) => {
           auth.user?.is_admin,
           workspace.activeVenues,
           workspace.effectiveVenueId,
+          auth.mayCreateVenue,
         ),
       }
     }
@@ -250,10 +269,14 @@ router.beforeEach(async (to) => {
         return { path: '/dashboard' }
       }
 
-      return { path: '/my-venues', query: { create: '1' } }
+      if (auth.mayCreateVenue) {
+        return { path: '/my-venues', query: { create: '1' } }
+      }
+
+      return { path: '/book-demo' }
     }
 
-    const destination = ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId)
+    const destination = ownerBootstrapPath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
     if (destination === to.path) {
       return true
     }

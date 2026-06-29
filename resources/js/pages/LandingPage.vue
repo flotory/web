@@ -14,7 +14,7 @@ const trustPoints = [
   'NFC stamps at the counter',
   'No POS required',
   'Multi-location ready',
-  'Setup in minutes',
+  'Onboarded in 1–3 business days',
 ]
 
 const features = [
@@ -31,7 +31,7 @@ const features = [
   {
     icon: Store,
     title: 'Owner dashboard',
-    copy: 'Visits, rewards, and branches in one place.',
+    copy: 'Visits, rewards, and branches in one place — with hands-on launch support from our team.',
   },
 ]
 
@@ -52,8 +52,8 @@ const features = [
         <RouterLink to="/login" class="hidden md:inline-flex">
           <AppButton variant="ghost">Log in</AppButton>
         </RouterLink>
-        <RouterLink to="/register?intent=owner">
-          <AppButton size="sm" class="btn-glow">Start free</AppButton>
+        <RouterLink to="/book-demo">
+          <AppButton size="sm" class="btn-glow">Book a demo</AppButton>
         </RouterLink>
       </div>
     </header>
@@ -77,18 +77,20 @@ const features = [
         </p>
 
         <div class="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-          <RouterLink to="/register?intent=owner">
-            <AppButton size="lg" class="btn-glow w-full min-w-[11.5rem] sm:w-auto">Start free</AppButton>
-          </RouterLink>
           <RouterLink to="/book-demo?utm_source=landing&utm_campaign=hero">
-            <AppButton size="lg" variant="secondary" class="w-full min-w-[11.5rem] sm:w-auto">
+            <AppButton size="lg" class="btn-glow w-full min-w-[11.5rem] sm:w-auto">
               Book a demo
+            </AppButton>
+          </RouterLink>
+          <RouterLink to="/contact">
+            <AppButton size="lg" variant="secondary" class="w-full min-w-[11.5rem] sm:w-auto">
+              Contact us
             </AppButton>
           </RouterLink>
         </div>
 
         <p class="text-sm font-medium text-ink-muted sm:text-base">
-          Free to start · 30-minute owner walkthrough
+          Personally onboarded · Typical launch in 1–3 business days
         </p>
       </div>
 
@@ -165,17 +167,17 @@ const features = [
           Ready to launch at your venue?
         </h2>
         <p class="mx-auto mt-4 max-w-lg text-sm leading-8 text-ink-soft sm:mt-5 sm:text-base lg:text-lg">
-          Set up rewards, place NFC stands at the counter, and go public after a quick listing review.
+          Every venue is personally onboarded by the Flotory team. We set up rewards, NFC stands, and listing review — typically within 1–3 business days.
         </p>
         <div class="mt-9 flex flex-col items-center justify-center gap-4 sm:mt-10 sm:flex-row lg:mt-12">
-          <RouterLink to="/register?intent=owner">
+          <RouterLink to="/book-demo?utm_source=landing&utm_campaign=footer">
             <AppButton size="lg" variant="secondary" class="btn-glow w-full min-w-[11.5rem] border-accent-border/40 sm:w-auto">
-              Start free
+              Book a demo
             </AppButton>
           </RouterLink>
-          <RouterLink to="/book-demo?utm_source=landing&utm_campaign=footer">
+          <RouterLink to="/contact">
             <AppButton size="lg" variant="ghost" class="w-full min-w-[11.5rem] text-primary-text hover:bg-white/10 hover:text-primary-text sm:w-auto">
-              Book a demo
+              Contact us
             </AppButton>
           </RouterLink>
         </div>

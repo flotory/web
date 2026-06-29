@@ -13,6 +13,9 @@ import { legalConfig } from '@/lib/legalConfig'
       <RouterLink to="/terms" class="font-semibold text-ink-soft hover:text-ink">
         Terms
       </RouterLink>
+      <RouterLink to="/contact" class="font-semibold text-ink-soft hover:text-ink">
+        Contact
+      </RouterLink>
       <a :href="`mailto:${legalConfig.supportEmail}`" class="font-semibold text-ink-soft hover:text-ink">
         Support
       </a>

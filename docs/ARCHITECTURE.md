@@ -148,9 +148,16 @@ Rate limits (`config/loyalty.php` → `nfc.*`): debounce per user+tag; max stamp
 
 ### Owner workspace (web)
 
-1. Register with owner intent → `/my-venues?create=1`
-2. Listing checklist → submit → admin approve → `published`
-3. Dashboard, rewards, campaigns, customers, analytics, NFC stand setup
+**Sales-led (default):**
+
+1. Admin sends invite → owner registers via `/register?invite=…`
+2. Owner creates venue at `/my-venues?create=1` (requires accepted invitation)
+3. Listing checklist → submit → admin approve → `published`
+4. Dashboard, rewards, campaigns, customers, analytics, NFC stand setup
+
+**Provisioned venue:** admin creates venue + owner user at **Manage venues**; owner uses forgot-password or Google.
+
+Public `intent=owner` self-signup is blocked.
 
 ## Frontend (web)
 
@@ -168,16 +175,16 @@ Customer wallet, NFC stamp, and slide redeem live in **`apps/mobile`** — see [
 
 ## API summary
 
-**Public:** auth register/login, venue landing, NFC tag resolve, app config, demo booking.
+**Public:** auth register/login, venue landing, NFC tag resolve, app config, demo booking, **`GET/POST /api/public/owner-invitations/{token}`** (invite preview + accept).
 
 **Authenticated (highlights):**
 
-- Venues: CRUD, discover, join, customers CRM, dashboard, setup files
+- Venues: CRUD (create gated by accepted owner invitation), discover, join, customers CRM, dashboard, setup files
 - Rewards: nested CRUD + archive/reactivate/purge
 - Campaigns: templates, CRUD, preview, activate/pause/end
 - Customer: cards, wallet, card detail, **`POST .../unlocks/{unlock}/redeem`**
 - NFC: **`POST /api/nfc/t/{token}/stamp`**
-- Admin: listing review, manage venues, NFC tags, palette, activity
+- Admin: listing review, **owner invitations** (`/api/admin/owner-invitations`), manage venues, NFC tags, palette, activity
 
 Full list: `routes/api.php`.
 

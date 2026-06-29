@@ -2,11 +2,13 @@ import { MOBILE_APP_PATH } from '@/lib/mobileApp'
 import { isOwnerWorkspacePath, isSafeInternalRedirect } from '@/lib/redirect'
 import type { Venue } from '@/types'
 
-/** Where new owners land to create their first venue. */
-export const OWNER_VENUE_SETUP_PATH = '/my-venues'
+export const BOOK_DEMO_PATH = '/book-demo'
 
-export function ownerVenueSetupLocation(): { path: string; query: { create: string } } {
-  return { path: OWNER_VENUE_SETUP_PATH, query: { create: '1' } }
+/** Invited owners create their first venue here after registration. */
+export const OWNER_VENUE_SETUP_PATH = '/my-venues?create=1'
+
+export function ownerVenueSetupLocation(): { path: string; query?: Record<string, string> } {
+  return { path: '/my-venues', query: { create: '1' } }
 }
 
 export const ADMIN_HOME_PATH = '/admin/venues'
@@ -31,6 +33,7 @@ export function resolveAuthenticatedHomePath(
   isAdmin: boolean | undefined,
   activeVenues: Venue[],
   _effectiveVenueId: number | null,
+  mayCreateVenue = false,
 ): string {
   if (isPlatformAdmin(isAdmin)) {
     return ADMIN_HOME_PATH
@@ -40,6 +43,10 @@ export function resolveAuthenticatedHomePath(
 
   if (active.some((venue) => venue.membership_role === 'owner')) {
     return '/dashboard'
+  }
+
+  if (mayCreateVenue) {
+    return OWNER_VENUE_SETUP_PATH
   }
 
   if (active.length > 0) {
@@ -54,8 +61,9 @@ export function ownerBootstrapPath(
   isAdmin: boolean | undefined,
   activeVenues: Venue[],
   effectiveVenueId: number | null,
+  mayCreateVenue = false,
 ): string {
-  return resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
+  return resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId, mayCreateVenue)
 }
 
 /** Honors an explicit redirect unless it would send a venue owner to the mobile app by mistake. */
@@ -64,18 +72,23 @@ export function resolvePostLoginDestination(
   isAdmin: boolean | undefined,
   activeVenues: Venue[],
   effectiveVenueId: number | null,
+  mayCreateVenue = false,
 ): string {
-  const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId)
+  const home = resolveAuthenticatedHomePath(isAdmin, activeVenues, effectiveVenueId, mayCreateVenue)
   const hasOwner = hasOwnerMembership(activeVenues)
 
   if (!redirect) {
-    return hasOwner ? home : ownerBootstrapPath(isAdmin, activeVenues, effectiveVenueId)
+    return hasOwner ? home : ownerBootstrapPath(isAdmin, activeVenues, effectiveVenueId, mayCreateVenue)
   }
 
   const safe = isSafeInternalRedirect(redirect) ? redirect : home
 
   if (safe.startsWith('/onboarding')) {
-    return `${OWNER_VENUE_SETUP_PATH}?create=1`
+    return mayCreateVenue ? OWNER_VENUE_SETUP_PATH : BOOK_DEMO_PATH
+  }
+
+  if (safe.includes('create=1')) {
+    return mayCreateVenue ? OWNER_VENUE_SETUP_PATH : BOOK_DEMO_PATH
   }
 
   if (
@@ -94,7 +107,7 @@ export function resolvePostLoginDestination(
   }
 
   if (isOwnerWorkspacePath(safe) && !hasOwner) {
-    return `${OWNER_VENUE_SETUP_PATH}?create=1`
+    return mayCreateVenue ? safe : BOOK_DEMO_PATH
   }
 
   return safe

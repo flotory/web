@@ -31,19 +31,54 @@ export async function loginAs(page: Page, email: string, password = DEMO_PASSWOR
   await page.waitForURL((url) => !url.pathname.endsWith('/login'), { timeout: 15_000 })
 }
 
-export async function registerOwnerAs(
+export async function createOwnerInvitation(
   page: Page,
-  options: { name: string; email: string; password?: string },
-): Promise<void> {
-  const password = options.password ?? DEMO_PASSWORD
+  email: string,
+  businessName?: string,
+): Promise<{ registerUrl: string; token: string }> {
+  const result = await page.evaluate(
+    async ({ email, businessName }) => {
+      const authToken = localStorage.getItem('auth_token')
+      const response = await fetch('/api/admin/owner-invitations', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          email,
+          business_name: businessName,
+        }),
+      })
 
-  await page.goto('/register?intent=owner')
-  await expect(page.getByRole('heading', { name: 'Launch loyalty in minutes' })).toBeVisible({ timeout: 30_000 })
-  await page.locator('#name').fill(options.name)
-  await page.locator('#email').fill(options.email)
-  await page.locator('#password').fill(password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL((url) => url.pathname === '/my-venues', { timeout: 15_000 })
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`owner invitation failed: ${response.status} ${body}`)
+      }
+
+      const payload = (await response.json()) as { register_url: string; invitation: { token?: string } }
+      const registerUrl = payload.register_url
+      const token = payload.invitation?.token
+        ?? new URL(registerUrl, window.location.origin).searchParams.get('invite')
+        ?? ''
+
+      if (!registerUrl || !token) {
+        throw new Error('owner invitation response missing register_url or token')
+      }
+
+      return { registerUrl, token }
+    },
+    { email, businessName },
+  )
+
+  expect(result.registerUrl).toContain('/register?invite=')
+
+  const registerPath = result.registerUrl.startsWith('http')
+    ? `${new URL(result.registerUrl).pathname}${new URL(result.registerUrl).search}`
+    : result.registerUrl
+
+  return { registerUrl: registerPath, token: result.token }
 }
 
 export async function selectVenueIfPresent(page: Page, venueName: string): Promise<void> {

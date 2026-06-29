@@ -108,7 +108,7 @@ onMounted(() => {
         type="text"
         maxlength="120"
         placeholder="Label (optional) — e.g. Counter stand #1"
-        class="h-12 flex-1 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+        class="h-12 flex-1 rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
       >
       <AppButton type="submit" :disabled="saving">Create tag</AppButton>
     </form>

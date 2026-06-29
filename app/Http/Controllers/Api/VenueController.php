@@ -8,6 +8,7 @@ use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
+use App\Services\OwnerInvitationService;
 use App\Services\VenueAddressUpdateService;
 use App\Services\VenuePublicationService;
 use App\Services\VenueTimezoneService;
@@ -23,6 +24,7 @@ class VenueController extends Controller
         private VenueAddressUpdateService $venueAddresses,
         private VenuePublicationService $publication,
         private VenueTimezoneService $timezones,
+        private OwnerInvitationService $ownerInvitations,
     ) {}
     public function index(Request $request): JsonResponse
     {
@@ -224,6 +226,12 @@ class VenueController extends Controller
         $user = $request->user();
         VenueAccess::assertNotPlatformAdmin($user);
 
+        if (! $this->ownerInvitations->userMaySelfCreateVenue($user)) {
+            return response()->json([
+                'message' => 'Venue setup is handled by the Flotory team. Book a demo to get started.',
+            ], 403);
+        }
+
         $location = $this->venueAddresses->normalizedLocation([
             'address' => $request->input('address'),
             'latitude' => $request->input('latitude'),
@@ -262,6 +270,8 @@ class VenueController extends Controller
         $user->forceFill([
             'active_venue_id' => $venue->id,
         ])->save();
+
+        $this->ownerInvitations->attachVenueToAcceptedInvitation($user, $venue);
 
         return response()->json([
             'venue' => $this->presentVenue($venue->fresh()),

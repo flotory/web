@@ -18,9 +18,22 @@ After `php artisan migrate:fresh --seed` (or Docker equivalent), all passwords a
 
 ### Activity log in the UI
 
-- Sidebar nav: **Venue listings** (approve/reject owner submissions), **Manage venues**, **Activity log**
-- Direct URLs: `/admin/venues`, `/admin/manage-venues`, `/admin/activity`
+- Sidebar nav: **Venue listings** (approve/reject owner submissions), **Owner onboarding** (post-demo sales invites), **Manage venues**, **Activity log**
+- Direct URLs: `/admin/venues`, `/admin/owner-onboarding`, `/admin/manage-venues`, `/admin/activity`
 - Dedicated platform sidebar (left on desktop) — not the owner dashboard
+
+### Owner onboarding (sales pipeline)
+
+After a demo, when you have the owner's email but no venue yet:
+
+1. Open **Owner onboarding** (`/admin/owner-onboarding`).
+2. Send an invitation (email + optional business name). The owner receives a link to `/register?invite=…`.
+3. Track pipeline stages: **Invited** → **Registered** → **Venue draft** → **Pending review** → **Published**.
+4. Revoke pending invites or copy the registration link from the list.
+
+Invitations expire after `FLOTORY_OWNER_INVITATION_TTL_DAYS` (default **7**). Set in `.env` on the server.
+
+Owners who already manage a venue cannot receive a duplicate sales invite — they should log in directly.
 
 ### Venue listing setup (owner files → admin crop → approve)
 

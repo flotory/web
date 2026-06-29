@@ -1,20 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-import { loginAs, registerOwnerAs } from './helpers/auth'
+import { loginAs } from './helpers/auth'
 
 test.describe('Owner signup and venue access', () => {
-  test('owner registration opens My Venues create form', async ({ page }) => {
-    const email = `owner-e2e-${Date.now()}@example.com`
+  test('owner registration redirects to book demo', async ({ page }) => {
+    await page.goto('/register?intent=owner')
 
-    await registerOwnerAs(page, {
-      name: 'E2E Owner',
-      email,
-    })
-
-    await expect(page).toHaveURL(/\/my-venues\?create=1$/)
-    await expect(page.getByRole('heading', { name: 'My Venues', exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Create venue', exact: true })).toBeVisible()
-    await expect(page.locator('#venue-name')).toBeVisible()
+    await expect(page).toHaveURL(/\/book-demo$/)
+    await expect(page.getByRole('heading', { name: 'Book a 30-minute walkthrough' })).toBeVisible({ timeout: 15_000 })
   })
 
   test('unknown venue settings URL returns to My Venues', async ({ page }) => {

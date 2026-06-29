@@ -8,6 +8,13 @@ interface AuthResponse {
   token: string
 }
 
+interface MeResponse {
+  user: User
+  capabilities?: {
+    may_create_venue?: boolean
+  }
+}
+
 function normalizeUser(user: User & { is_admin?: boolean | 0 | 1 }): User {
   return {
     ...user,
@@ -19,6 +26,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('auth_token'),
     user: null as User | null,
+    mayCreateVenue: false,
     booted: false,
   }),
   getters: {
@@ -39,6 +47,7 @@ export const useAuthStore = defineStore('auth', {
       }
 
       this.setSession(response.user, response.token)
+      await this.refreshCapabilities()
     },
     async register(payload: {
       name: string
@@ -52,20 +61,36 @@ export const useAuthStore = defineStore('auth', {
       })
 
       this.setSession(response.user, response.token)
+      await this.refreshCapabilities()
     },
     async fetchUser() {
       if (!this.token) {
         this.booted = true
+        this.mayCreateVenue = false
         return
       }
 
       try {
-        const response = await api<{ user: User }>('/auth/me')
+        const response = await api<MeResponse>('/auth/me')
         this.user = normalizeUser(response.user)
+        this.mayCreateVenue = response.capabilities?.may_create_venue === true
       } catch {
         this.clearSession()
       } finally {
         this.booted = true
+      }
+    },
+    async refreshCapabilities() {
+      if (!this.token) {
+        this.mayCreateVenue = false
+        return
+      }
+
+      try {
+        const response = await api<MeResponse>('/auth/me')
+        this.mayCreateVenue = response.capabilities?.may_create_venue === true
+      } catch {
+        this.mayCreateVenue = false
       }
     },
     async loginWithToken(token: string) {
@@ -94,6 +119,7 @@ export const useAuthStore = defineStore('auth', {
     clearSession() {
       this.user = null
       this.token = null
+      this.mayCreateVenue = false
       this.booted = true
       localStorage.removeItem('auth_token')
     },

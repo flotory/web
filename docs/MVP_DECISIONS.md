@@ -54,10 +54,10 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 |----------|--------|
 | No business logic in Vue | Display API data; loyalty rules stay in Laravel services. |
 | Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
-| Owner signup | Register with owner intent → **My Venues** create form. |
+| Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **My Venues** create form. Public `intent=owner` blocked. |
 | Venue listing status | `draft` → `pending_review` → `published`. Customers join only when **published**. |
 | Venue slug after publish | **Locked** once `published` — owner and admin APIs reject slug changes; QR links stay valid. |
-| Post-login routing (web) | Owners → dashboard; non-owners → `/app` (mobile download). |
+| Post-login routing (web) | Owners → dashboard; invited owners without venue → `/my-venues?create=1`; others → `/app`. |
 | Customer primary surface | **Mobile app only**: Stamp (NFC), Wallet, slide redeem. |
 | Owner campaigns | `/campaigns` workspace; dashboard links for recommendations. |
 

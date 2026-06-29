@@ -99,6 +99,39 @@ class AdminVenueManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_provision_venue_for_new_owner(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->postJson('/api/admin/manage-venues', [
+            'name' => 'Sales Harbor Cafe',
+            'owner_email' => 'sales-owner@example.com',
+            'owner_name' => 'Sales Owner',
+            'category' => 'cafe',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('venue.name', 'Sales Harbor Cafe');
+
+        $venueId = $response->json('venue.id');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'sales-owner@example.com',
+            'name' => 'Sales Owner',
+        ]);
+
+        $owner = \App\Models\User::query()->where('email', 'sales-owner@example.com')->firstOrFail();
+
+        $this->assertDatabaseHas('venue_users', [
+            'venue_id' => $venueId,
+            'user_id' => $owner->id,
+            'role' => 'owner',
+        ]);
+
+        $this->assertSame($venueId, $owner->fresh()->active_venue_id);
+    }
+
     public function test_non_admin_cannot_access_manage_venues_api(): void
     {
         $owner = $this->createUser();
@@ -108,6 +141,10 @@ class AdminVenueManagementControllerTest extends TestCase
         Sanctum::actingAs($owner);
 
         $this->getJson('/api/admin/manage-venues')->assertForbidden();
+        $this->postJson('/api/admin/manage-venues', [
+            'name' => 'Blocked',
+            'owner_email' => 'blocked@example.com',
+        ])->assertForbidden();
         $this->getJson("/api/admin/manage-venues/{$venue->id}")->assertForbidden();
         $this->putJson("/api/admin/manage-venues/{$venue->id}", [
             'name' => 'Blocked',

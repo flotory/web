@@ -27,11 +27,17 @@ test.describe('Admin routes', () => {
     await expect(page.getByRole('heading', { name: 'Venue listings', exact: true })).toBeVisible()
   })
 
-  test('manage venues and activity log screens load', async ({ page }) => {
+  test('manage venues, owner onboarding, and activity log screens load', async ({ page }) => {
     await page.goto('/admin/manage-venues')
     await expect(page.getByRole('heading', { name: 'Manage venues', exact: true })).toBeVisible({
       timeout: 15_000,
     })
+
+    await page.goto('/admin/owner-onboarding')
+    await expect(page.getByRole('heading', { name: 'Owner onboarding', exact: true })).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.getByRole('heading', { name: 'Send invitation' })).toBeVisible()
 
     await page.goto('/admin/activity')
     await expect(page.getByRole('heading', { name: 'Activity log', exact: true })).toBeVisible({

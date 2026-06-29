@@ -42,7 +42,7 @@ Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 ## What Flotory does
 
-Venues get QR onboarding and **NFC stamp stands**. Customers join via scan (once **published**), tap NFC for **stamps**, and **slide to redeem** unlocked perks. Owners register on the web, create venues in **My Venues**, submit a **listing** for admin approval, configure rewards and stamp **campaigns**, and view analytics.
+Venues get QR onboarding and **NFC stamp stands**. Customers join via scan (once **published**), tap NFC for **stamps**, and **slide to redeem** unlocked perks. Owners are onboarded **sales-led** (admin invitation → register → create venue in **My Venues**), submit a **listing** for admin approval, configure rewards and stamp **campaigns**, and view analytics.
 
 ## Terminology
 

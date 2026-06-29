@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
 
     <div class="relative mt-2">
       <div
-        class="flex h-12 items-center rounded-2xl border border-border bg-surface-muted focus-within:border-ink-soft focus-within:bg-surface"
+        class="flex h-12 items-center rounded-2xl border border-border bg-surface focus-within:border-ink-soft"
       >
         <button
           type="button"
@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
           <input
             v-model="countryQuery"
             type="search"
-            class="h-9 w-full rounded-xl border border-border bg-surface-muted px-3 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+            class="h-9 w-full rounded-xl border border-border bg-surface px-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
             placeholder="Search country"
             @click.stop
           >

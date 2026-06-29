@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { FileUp, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
@@ -51,6 +51,7 @@ const phone = ref('')
 const website = ref('')
 
 const activeVenues = computed(() => workspace.activeVenues)
+const mayCreateVenue = computed(() => auth.mayCreateVenue)
 
 const totals = computed(() => ({
   venues: activeVenues.value.length,
@@ -98,6 +99,10 @@ function resetForm() {
 }
 
 function openCreateForm() {
+  if (!mayCreateVenue.value) {
+    return
+  }
+
   resetForm()
   formOpen.value = true
 }
@@ -148,6 +153,11 @@ async function createVenue() {
         formOpen.value = false
         await auth.fetchUser()
         await loadVenues()
+
+        const created = workspace.activeVenues[0]
+        if (created) {
+          await router.push(`/my-venues/${created.id}/setup-files`)
+        }
       } catch (exception) {
         error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
         throw exception
@@ -195,9 +205,10 @@ function closeDeleteModal() {
 }
 
 onMounted(async () => {
+  await auth.refreshCapabilities()
   await loadVenues()
 
-  if (route.query.create === '1' || activeVenues.value.length === 0) {
+  if (mayCreateVenue.value && (route.query.create === '1' || activeVenues.value.length === 0)) {
     openCreateForm()
   }
 })
@@ -216,7 +227,7 @@ onMounted(async () => {
         </span>
       </template>
       <template #actions>
-        <AppButton @click="openCreateForm">
+        <AppButton v-if="mayCreateVenue" @click="openCreateForm">
           <Plus class="size-4" />
           Create venue
         </AppButton>
@@ -227,17 +238,17 @@ onMounted(async () => {
       <div class="grid gap-3 md:grid-cols-[1.3fr_0.85fr_0.85fr]">
         <input
           v-model="search"
-          class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
+          class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
           placeholder="Search venue"
         >
-        <select v-model="typeFilter" class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-semibold outline-none focus:border-ink-soft focus:bg-surface">
+        <select v-model="typeFilter" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
           <option value="all">All types</option>
           <option value="cafe">Cafe</option>
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
           <option value="bakery">Bakery</option>
         </select>
-        <select v-model="sortBy" class="h-11 rounded-2xl border border-border bg-surface-muted px-4 text-sm font-semibold outline-none focus:border-ink-soft focus:bg-surface">
+        <select v-model="sortBy" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
           <option value="activity">Sort by activity</option>
           <option value="name">Sort by name</option>
           <option value="customers">Sort by customers</option>
@@ -245,7 +256,7 @@ onMounted(async () => {
       </div>
     </AppCard>
 
-    <AppCard v-if="formOpen" wrapper-class="mb-5">
+    <AppCard v-if="formOpen && mayCreateVenue" wrapper-class="mb-5">
       <form class="grid gap-4" @submit.prevent="createVenue">
         <div class="flex items-start justify-between gap-4">
           <div>
@@ -260,15 +271,15 @@ onMounted(async () => {
         <div class="grid gap-4 md:grid-cols-[1fr_180px]">
           <div>
             <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name</label>
-            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="Harbor Coffee">
+            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="Harbor Coffee">
           </div>
           <div>
             <label class="text-sm font-bold text-ink-muted" for="venue-slug">Slug</label>
-            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="harbor-coffee">
+            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="harbor-coffee">
           </div>
           <div>
             <label class="text-sm font-bold text-ink-muted" for="venue-website">Website optional</label>
-            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface" placeholder="https://example.com">
+            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
           </div>
           <VenueAddressInput
             id="venue-address"
@@ -318,13 +329,30 @@ onMounted(async () => {
     />
 
     <EmptyState
-      v-else-if="!loading && !activeVenues.length && !error"
+      v-else-if="!loading && !activeVenues.length && !error && mayCreateVenue"
       class="mb-5"
       :icon="Store"
       title="Create your first venue"
-      description="Set up a loyalty program and start collecting stamps from guests."
+      description="Set up your venue profile, upload branding, and submit for Flotory review."
     >
       <AppButton @click="openCreateForm">Create venue</AppButton>
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="!loading && !activeVenues.length && !error"
+      class="mb-5"
+      :icon="Store"
+      title="No venues in your workspace"
+      description="New venues are onboarded by the Flotory team after a demo call — typically within 1–3 business days."
+    >
+      <div class="flex flex-wrap justify-center gap-2">
+        <RouterLink to="/book-demo">
+          <AppButton>Book a demo</AppButton>
+        </RouterLink>
+        <RouterLink to="/contact">
+          <AppButton variant="secondary">Contact us</AppButton>
+        </RouterLink>
+      </div>
     </EmptyState>
 
     <div v-if="!loading && filteredVenues.length" class="grid gap-5 lg:grid-cols-2">

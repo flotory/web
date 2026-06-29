@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AdminStoreVenueRequest;
 use App\Http\Requests\AdminUpdateVenueRequest;
+use App\Models\User;
 use App\Models\Venue;
+use App\Models\VenueUser;
 use App\Services\VenueAddressUpdateService;
 use App\Services\VenueBrandingService;
 use App\Services\VenuePublicationService;
@@ -12,6 +15,8 @@ use App\Services\VenueTimezoneService;
 use App\Support\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminVenueManagementController extends Controller
 {
@@ -65,6 +70,83 @@ class AdminVenueManagementController extends Controller
                 'total' => $venues->total(),
             ],
         ]);
+    }
+
+    public function store(AdminStoreVenueRequest $request): JsonResponse
+    {
+        $ownerEmail = $request->string('owner_email')->toString();
+        $owner = User::query()->firstWhere('email', $ownerEmail);
+
+        if (! $owner instanceof User) {
+            $owner = User::query()->create([
+                'name' => $request->filled('owner_name')
+                    ? $request->string('owner_name')->toString()
+                    : Str::before($ownerEmail, '@'),
+                'email' => $ownerEmail,
+                'password' => Hash::make(Str::password(32)),
+                'is_admin' => false,
+            ]);
+        } elseif ($request->filled('owner_name')) {
+            $owner->forceFill([
+                'name' => $request->string('owner_name')->toString(),
+            ])->save();
+        }
+
+        $location = $this->venueAddresses->normalizedLocation([
+            'address' => $request->input('address'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
+            'google_place_id' => $request->input('google_place_id'),
+        ]);
+
+        $this->venueAddresses->assertCanApply(new Venue, $location, enforceDailyLimit: false);
+
+        $venue = Venue::create([
+            'name' => $request->string('name')->toString(),
+            'slug' => $request->filled('slug')
+                ? $request->string('slug')->toString()
+                : Str::slug($request->string('name')->toString()).'-'.Str::lower(Str::random(5)),
+            'category' => $request->string('category')->toString() ?: 'cafe',
+            'logo' => null,
+            'logo_thumb' => null,
+            'cover_image' => null,
+            'address' => $location['address'],
+            'latitude' => $location['latitude'],
+            'longitude' => $location['longitude'],
+            'google_place_id' => $location['google_place_id'],
+            'phone' => $request->string('phone')->toString() ?: null,
+            'website' => $request->string('website')->toString() ?: null,
+            'status' => Venue::STATUS_DRAFT,
+        ]);
+
+        VenueUser::create([
+            'venue_id' => $venue->id,
+            'user_id' => $owner->id,
+            'role' => 'owner',
+        ]);
+
+        $this->timezones->applyToVenue($venue, $location['latitude'], $location['longitude']);
+
+        $owner->forceFill([
+            'active_venue_id' => $venue->id,
+        ])->save();
+
+        AuditLog::record(
+            description: 'venue.admin_created',
+            subject: $venue->fresh(),
+            causer: $request->user(),
+            event: 'created',
+            properties: [
+                'venue_id' => $venue->id,
+                'owner_user_id' => $owner->id,
+            ],
+        );
+
+        $venue = $this->freshDetailVenue($venue);
+
+        return response()->json([
+            'venue' => $this->presentDetailVenue($venue),
+        ], 201);
     }
 
     public function show(int $venue): JsonResponse

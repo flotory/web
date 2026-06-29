@@ -12,8 +12,8 @@ test.describe('Public marketing and bridge pages', () => {
     })
     await expect(page.getByText('No POS. No staff scanner.')).toBeVisible()
     await expect(page.getByTestId('landing-hero-visual')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Start free' }).first()).toBeVisible()
     await expect(page.getByRole('link', { name: 'Book a demo' }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Contact us' }).first()).toBeVisible()
     await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible()
 
     await expect(page.getByTestId('landing-trust-strip')).toBeVisible()
@@ -63,6 +63,13 @@ test.describe('Public marketing and bridge pages', () => {
     await page.goto('/demo')
     await expect(page).toHaveURL(/\/book-demo$/)
     await expect(page.getByRole('heading', { name: 'Book a 30-minute walkthrough' })).toBeVisible()
+    await expect(page.getByText('1–3 business days')).toBeVisible()
+  })
+
+  test('contact page renders', async ({ page }) => {
+    await page.goto('/contact')
+    await expect(page.getByRole('heading', { name: 'Get in touch' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('link', { name: 'Book a demo' })).toBeVisible()
   })
 
   test('nfc tap bridge loads the seeded Demo Cafe stand', async ({ page }) => {

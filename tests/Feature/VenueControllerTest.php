@@ -15,7 +15,7 @@ class VenueControllerTest extends TestCase
     use BuildsLoyaltyData;
     use RefreshDatabase;
 
-    public function test_owner_can_create_a_venue_and_becomes_its_active_owner(): void
+    public function test_owner_cannot_self_create_a_venue(): void
     {
         $user = $this->createUser([
             'name' => 'Venue Owner',
@@ -24,38 +24,21 @@ class VenueControllerTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/venues', [
+        $this->postJson('/api/venues', [
             'name' => 'Sunrise Cafe',
             'category' => 'cafe',
             'address' => '1 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
             'google_place_id' => 'test-place-sunrise',
-        ]);
+        ])
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Venue setup is handled by the Flotory team. Book a demo to get started.');
 
-        $response
-            ->assertCreated()
-            ->assertJsonPath('venue.name', 'Sunrise Cafe')
-            ->assertJsonPath('venue.category', 'cafe');
-
-        $venueId = $response->json('venue.id');
-
-        $this->assertDatabaseHas('venues', [
-            'id' => $venueId,
-            'name' => 'Sunrise Cafe',
-            'category' => 'cafe',
-        ]);
-
-        $this->assertDatabaseHas('venue_users', [
-            'venue_id' => $venueId,
-            'user_id' => $user->id,
-            'role' => 'owner',
-        ]);
-
-        $this->assertSame($venueId, $user->fresh()->active_venue_id);
+        $this->assertDatabaseCount('venues', 0);
     }
 
-    public function test_owner_can_create_venue_with_custom_slug(): void
+    public function test_owner_cannot_create_venue_with_custom_slug(): void
     {
         $user = $this->createUser();
 
@@ -64,9 +47,7 @@ class VenueControllerTest extends TestCase
         $this->postJson('/api/venues', [
             'name' => 'Custom Slug Cafe',
             'slug' => 'custom-slug-cafe',
-        ])
-            ->assertCreated()
-            ->assertJsonPath('venue.slug', 'custom-slug-cafe');
+        ])->assertForbidden();
     }
 
     public function test_non_member_cannot_view_a_private_venue(): void
@@ -346,20 +327,21 @@ class VenueControllerTest extends TestCase
             ]),
         ]);
 
-        $user = $this->createUser();
-        Sanctum::actingAs($user);
+        $admin = $this->createUser(['is_admin' => true]);
+        Sanctum::actingAs($admin);
 
-        $response = $this->postJson('/api/venues', [
+        $response = $this->postJson('/api/admin/manage-venues', [
             'name' => 'Timezone Cafe',
+            'owner_email' => 'timezone-owner@example.com',
             'category' => 'cafe',
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
         ])->assertCreated();
 
-        $this->assertSame('Europe/Warsaw', $response->json('venue.timezone'));
+        $venueId = $response->json('venue.id');
         $this->assertDatabaseHas('venues', [
-            'id' => $response->json('venue.id'),
+            'id' => $venueId,
             'timezone' => 'Europe/Warsaw',
         ]);
     }

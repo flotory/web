@@ -35,10 +35,16 @@ const appDeepLink = mobileAppDeepLink()
           </p>
         </div>
 
-        <p class="mt-8 text-center text-sm text-ink-muted">
-          Venue owner?
-          <RouterLink to="/login?intent=owner" class="font-bold text-ink">Sign in to the dashboard</RouterLink>
-        </p>
+        <div class="mt-8 space-y-3 text-center">
+          <p class="text-sm font-semibold text-ink-muted">Venue owner?</p>
+          <RouterLink to="/book-demo" class="block">
+            <AppButton class="w-full" size="lg" variant="secondary">Book a demo</AppButton>
+          </RouterLink>
+          <p class="text-sm text-ink-muted">
+            Already onboarded?
+            <RouterLink to="/login?intent=owner" class="font-bold text-ink">Log in to the dashboard</RouterLink>
+          </p>
+        </div>
       </AppCard>
 
       <div class="mt-10">

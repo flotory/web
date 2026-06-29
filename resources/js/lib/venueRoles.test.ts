@@ -5,6 +5,7 @@ import type { Venue } from '@/types'
 
 import {
   ADMIN_HOME_PATH,
+  BOOK_DEMO_PATH,
   hasOwnerMembership,
   isPlatformAdmin,
   isVenueOwner,
@@ -46,6 +47,7 @@ describe('membership helpers', () => {
   it('delegates owner bootstrap to authenticated home', () => {
     expect(ownerBootstrapPath(false, [venue(1)], 1)).toBe('/dashboard')
     expect(ownerBootstrapPath(false, [], null)).toBe(MOBILE_APP_PATH)
+    expect(ownerBootstrapPath(false, [], null, true)).toBe('/my-venues?create=1')
   })
 })
 
@@ -57,11 +59,12 @@ describe('resolveAuthenticatedHomePath', () => {
   it('routes venue owners to the dashboard and everyone else to the mobile app page', () => {
     expect(resolveAuthenticatedHomePath(false, [venue(1)], 1)).toBe('/dashboard')
     expect(resolveAuthenticatedHomePath(false, [], null)).toBe(MOBILE_APP_PATH)
+    expect(resolveAuthenticatedHomePath(false, [], null, true)).toBe('/my-venues?create=1')
   })
 })
 
 describe('ownerVenueSetupLocation', () => {
-  it('opens the My Venues create form', () => {
+  it('sends invited owners to venue setup', () => {
     expect(ownerVenueSetupLocation()).toEqual({
       path: '/my-venues',
       query: { create: '1' },
@@ -78,10 +81,12 @@ describe('resolvePostLoginDestination', () => {
     expect(resolvePostLoginDestination(null, false, [], null)).toBe(MOBILE_APP_PATH)
   })
 
-  it('maps legacy onboarding URLs to My Venues setup', () => {
+  it('maps legacy onboarding URLs to book demo unless invited to create a venue', () => {
     expect(resolvePostLoginDestination('/onboarding/create-venue', false, [], null))
-      .toBe('/my-venues?create=1')
+      .toBe(BOOK_DEMO_PATH)
     expect(resolvePostLoginDestination('/onboarding', false, [], null))
+      .toBe(BOOK_DEMO_PATH)
+    expect(resolvePostLoginDestination('/onboarding/create-venue', false, [], null, true))
       .toBe('/my-venues?create=1')
   })
 
@@ -90,9 +95,10 @@ describe('resolvePostLoginDestination', () => {
     expect(resolvePostLoginDestination('/wallet', false, [venue(1)], 1)).toBe('/dashboard')
   })
 
-  it('sends new owners to My Venues when targeting owner workspace routes', () => {
-    expect(resolvePostLoginDestination('/dashboard', false, [], null)).toBe('/my-venues?create=1')
-    expect(resolvePostLoginDestination('/rewards', false, [], null)).toBe('/my-venues?create=1')
+  it('sends users without owner membership to book demo when targeting owner workspace routes', () => {
+    expect(resolvePostLoginDestination('/dashboard', false, [], null)).toBe(BOOK_DEMO_PATH)
+    expect(resolvePostLoginDestination('/rewards', false, [], null)).toBe(BOOK_DEMO_PATH)
+    expect(resolvePostLoginDestination('/dashboard', false, [], null, true)).toBe('/dashboard')
   })
 
   it('keeps explicit admin routes and falls back from owner workspace paths', () => {

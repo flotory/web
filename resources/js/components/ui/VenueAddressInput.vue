@@ -232,7 +232,7 @@ watch(address, (value) => {
       :id="id"
       ref="inputRef"
       :disabled="disabled"
-      class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+      class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft disabled:cursor-not-allowed disabled:opacity-60"
       :placeholder="placeholder"
       autocomplete="off"
     >

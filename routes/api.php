@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\VenueListingController;
 use App\Http\Controllers\Api\PublicAppConfigController;
 use App\Http\Controllers\Api\PublicDemoBookingController;
 use App\Http\Controllers\Api\PublicPaletteController;
+use App\Http\Controllers\Api\PublicOwnerInvitationController;
+use App\Http\Controllers\Api\AdminOwnerInvitationController;
+use App\Http\Controllers\Api\ContactInquiryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
 use App\Http\Controllers\Api\NfcStampController;
@@ -35,6 +38,10 @@ Route::get('/public/nfc/t/{token}', [NfcStampController::class, 'show']);
 Route::get('/public/palette', [PublicPaletteController::class, 'show']);
 Route::get('/public/app-config', [PublicAppConfigController::class, 'show']);
 Route::get('/public/demo-booking', [PublicDemoBookingController::class, 'show']);
+Route::post('/contact', [ContactInquiryController::class, 'store'])->middleware('throttle:6,1');
+Route::get('/public/owner-invitations/{token}', [PublicOwnerInvitationController::class, 'show']);
+Route::post('/public/owner-invitations/{token}/accept', [PublicOwnerInvitationController::class, 'accept'])
+    ->middleware('throttle:12,1');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -88,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/venues/{venue}/reject', [AdminVenueReviewController::class, 'reject']);
         Route::post('/venues/{venue}/unpublish', [AdminVenueReviewController::class, 'unpublish']);
         Route::get('/manage-venues', [AdminVenueManagementController::class, 'index']);
+        Route::post('/manage-venues', [AdminVenueManagementController::class, 'store']);
         Route::get('/manage-venues/{venue}', [AdminVenueManagementController::class, 'show']);
         Route::put('/manage-venues/{venue}', [AdminVenueManagementController::class, 'update']);
         Route::post('/manage-venues/{venue}/logo', [AdminVenueManagementController::class, 'uploadLogo']);
@@ -98,6 +106,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/manage-venues/{venue}/nfc-tags', [AdminNfcTagController::class, 'store']);
         Route::patch('/nfc-tags/{nfcTag}', [AdminNfcTagController::class, 'update']);
         Route::get('/manage-venues/{venue}/setup-files', [AdminVenueSetupFileController::class, 'index']);
+        Route::get('/owner-invitations', [AdminOwnerInvitationController::class, 'index']);
+        Route::post('/owner-invitations', [AdminOwnerInvitationController::class, 'store']);
+        Route::delete('/owner-invitations/{invitation}', [AdminOwnerInvitationController::class, 'destroy']);
         Route::get('/palette', [AdminPaletteController::class, 'show']);
         Route::patch('/palette', [AdminPaletteController::class, 'update']);
         Route::post('/palette/reset', [AdminPaletteController::class, 'reset']);

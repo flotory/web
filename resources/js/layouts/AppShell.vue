@@ -39,6 +39,7 @@ const nav = computed(() => {
   if (auth.isAdmin) {
     return [
       { label: 'Venue listings', to: '/admin/venues', icon: '▣' },
+      { label: 'Owner onboarding', to: '/admin/owner-onboarding', icon: '✉' },
       { label: 'Manage venues', to: '/admin/manage-venues', icon: '⌂' },
       { label: 'Design palette', to: '/admin/palette', icon: '◐' },
       { label: 'Activity log', to: '/admin/activity', icon: '◫' },
