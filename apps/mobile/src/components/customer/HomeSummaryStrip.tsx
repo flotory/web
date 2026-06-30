@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows } from '../../theme'
@@ -38,26 +39,28 @@ function SummaryPill({ label, value, accent }: { label: string; value: string; a
 }
 
 export default function HomeSummaryStrip({ cardCount, readyCount, stampsToGo }: HomeSummaryStripProps) {
+  const { t } = useTranslation()
+
   if (cardCount === 0 && readyCount === 0) {
     return null
   }
 
   const pills: Array<{ label: string; value: string; accent?: boolean }> = [
     {
-      label: cardCount === 1 ? 'Loyalty card' : 'Loyalty cards',
+      label: t('home.loyaltyCard', { count: cardCount }),
       value: String(cardCount),
     },
   ]
 
   if (readyCount > 0) {
     pills.push({
-      label: readyCount === 1 ? 'Ready now' : 'Ready now',
+      label: t('home.readyNow'),
       value: String(readyCount),
       accent: true,
     })
   } else if (stampsToGo != null && stampsToGo > 0) {
     pills.push({
-      label: stampsToGo === 1 ? 'Stamp to go' : 'Stamps to go',
+      label: t('home.stampToGo', { count: stampsToGo }),
       value: String(stampsToGo),
     })
   }

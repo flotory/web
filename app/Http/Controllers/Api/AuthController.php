@@ -135,6 +135,22 @@ class AuthController extends Controller
         return response()->json(status: 204);
     }
 
+    public function updateLocale(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'locale' => ['required', 'string', 'in:en,hy'],
+        ]);
+
+        $user = $request->user();
+        $user->forceFill([
+            'locale' => $validated['locale'],
+        ])->save();
+
+        return response()->json([
+            'user' => $user->fresh()->load('activeVenue'),
+        ]);
+    }
+
     public function deleteAccount(DeleteAccountRequest $request, UserAccountDeletionService $deletion): JsonResponse
     {
         $user = $request->user();

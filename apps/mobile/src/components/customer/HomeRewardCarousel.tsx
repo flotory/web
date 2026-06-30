@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { rewardImageUrl } from '../../lib/media'
 import HomeRewardTicketCard from './HomeRewardTicketCard'
@@ -24,6 +25,7 @@ function walletCardStampProgress(card: WalletCard) {
 const transparent = { backgroundColor: 'transparent' as const }
 
 function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
+  const { t } = useTranslation()
   const { width: screenWidth } = useWindowDimensions()
 
   const cardWidth = screenWidth - space.screenX * 2 - carousel.rewardCardPeek
@@ -72,10 +74,10 @@ function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
           ) : (
             <HomeRewardTicketCard
               variant="next"
-              title={item.card.summary?.next_reward_title ?? 'Your next reward'}
+              title={item.card.summary?.next_reward_title ?? t('home.nextReward')}
               venue={item.card.venue}
               imageUri={rewardImageUrl({
-                title: item.card.summary?.next_reward_title ?? 'Reward',
+                title: item.card.summary?.next_reward_title ?? t('home.reward'),
                 image: null,
                 image_thumb: null,
               })}

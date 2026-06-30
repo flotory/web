@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
+import { getActiveLocale } from '@/i18n'
 
 const REQUEST_ID_HEADER = 'X-Request-Id'
 
@@ -69,6 +70,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   const headers = new Headers(options.headers)
 
   headers.set('Accept', 'application/json')
+  headers.set('Accept-Language', getActiveLocale())
 
   let body = options.body
   if (body && !(body instanceof FormData)) {

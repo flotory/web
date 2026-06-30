@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows } from '../../theme'
@@ -10,6 +11,8 @@ interface HomeEmptyHeroProps {
 }
 
 export default function HomeEmptyHero({ onFindVenue, onStamp }: HomeEmptyHeroProps) {
+  const { t } = useTranslation()
+
   return (
     <View
       style={{
@@ -44,10 +47,10 @@ export default function HomeEmptyHero({ onFindVenue, onStamp }: HomeEmptyHeroPro
           lineHeight: 30,
         })}
       >
-        Start your first loyalty card
+        {t('home.startFirstCard')}
       </Text>
       <Text style={withAppFont({ marginTop: 8, fontSize: 15, lineHeight: 22, color: colors.inkMuted })}>
-        Find a cafe nearby, join their program, and collect stamps with a tap at the NFC stand.
+        {t('home.emptyMessage')}
       </Text>
 
       <View style={{ marginTop: 18, gap: 10 }}>
@@ -61,7 +64,7 @@ export default function HomeEmptyHero({ onFindVenue, onStamp }: HomeEmptyHeroPro
             opacity: pressed ? 0.92 : 1,
           })}
         >
-          <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.primaryText })}>Find a venue</Text>
+          <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.primaryText })}>{t('home.findVenue')}</Text>
         </Pressable>
         {onStamp ? (
           <Pressable
@@ -76,7 +79,7 @@ export default function HomeEmptyHero({ onFindVenue, onStamp }: HomeEmptyHeroPro
               opacity: pressed ? 0.92 : 1,
             })}
           >
-            <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.ink })}>Collect a stamp</Text>
+            <Text style={withAppFont({ fontSize: 15, fontWeight: '800', color: colors.ink })}>{t('home.collectStamp')}</Text>
           </Pressable>
         ) : null}
       </View>

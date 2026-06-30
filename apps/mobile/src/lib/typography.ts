@@ -1,12 +1,12 @@
 import type { TextStyle } from 'react-native'
 
-/** Plus Jakarta Sans — modern, warm, friendly (loaded in app/_layout.tsx). */
+/** Noto Sans Armenian covers Armenian and Latin for the Armenia launch. */
 export const fonts = {
-  regular: 'PlusJakartaSans_400Regular',
-  medium: 'PlusJakartaSans_500Medium',
-  semiBold: 'PlusJakartaSans_600SemiBold',
-  bold: 'PlusJakartaSans_700Bold',
-  extraBold: 'PlusJakartaSans_800ExtraBold',
+  regular: 'NotoSansArmenian_400Regular',
+  medium: 'NotoSansArmenian_500Medium',
+  semiBold: 'NotoSansArmenian_600SemiBold',
+  bold: 'NotoSansArmenian_700Bold',
+  extraBold: 'NotoSansArmenian_800ExtraBold',
 } as const
 
 export type FontWeightName = '400' | '500' | '600' | '700' | '800' | 'normal' | 'bold'
@@ -16,7 +16,7 @@ export function fontFamilyForWeight(weight?: TextStyle['fontWeight']): string {
 
   if (value === '800' || value === '900') return fonts.extraBold
   if (value === '700' || value === 'bold') return fonts.bold
-  if (value === '600') return fonts.semiBold ?? 'PlusJakartaSans_600SemiBold'
+  if (value === '600') return fonts.semiBold
   if (value === '500') return fonts.medium
 
   return fonts.regular

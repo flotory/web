@@ -24,6 +24,7 @@ class User extends Authenticatable implements CanResetPasswordContract
     protected $fillable = [
         'name',
         'email',
+        'locale',
         'google_id',
         'google_avatar',
         'apple_id',

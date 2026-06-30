@@ -7,7 +7,7 @@ type ComponentWithDefaultProps = {
 }
 
 /**
- * Apply Plus Jakarta Sans as the app default before any screen renders.
+ * Apply the app font as the default before any screen renders.
  * Inline styles with fontWeight should use withAppFont() for the matching font file.
  */
 export function applyDefaultAppTypography() {

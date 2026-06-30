@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router'
 import { Animated, View } from 'react-native'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import HomeActivitySection from '../src/components/customer/HomeActivitySection'
 import HomeCampaignCarousel from '../src/components/customer/HomeCampaignCarousel'
@@ -13,13 +14,14 @@ import CustomerScreen from '../src/components/ui/CustomerScreen'
 import HomeScreenHeader from '../src/components/ui/HomeScreenHeader'
 import HomeSectionHeader from '../src/components/ui/HomeSectionHeader'
 import { useCustomerHome } from '../src/hooks/useCustomerHome'
-import { greetingForHour } from '../src/lib/greeting'
+import { greetingKeyForHour } from '../src/lib/greeting'
 import { hapticLightTap } from '../src/lib/haptics'
 import { useAuth } from '../src/providers/AuthProvider'
 import { useNfcStampScanAction } from '../src/providers/NfcStampScanProvider'
 import { space } from '../src/theme'
 
 export default function CustomerHomeScreen() {
+  const { t } = useTranslation()
   const { token, booting } = useAuth()
   const {
     role,
@@ -51,8 +53,8 @@ export default function CustomerHomeScreen() {
 
     if (cards.length > 0 || readyItems.length > 0) {
       return {
-        label: 'Tap NFC stand',
-        hint: 'Collect a stamp at the counter',
+        label: t('home.tapNfcStand'),
+        hint: t('home.collectStampAtCounter'),
         icon: 'radio-outline' as const,
         onPress: () => {
           hapticLightTap()
@@ -62,15 +64,15 @@ export default function CustomerHomeScreen() {
     }
 
     return {
-      label: 'Find a venue',
-      hint: 'Discover cafes near you',
+      label: t('home.findVenue'),
+      hint: t('home.discoverCafesNearYou'),
       icon: 'compass-outline' as const,
       onPress: () => {
         hapticLightTap()
         router.push('/(customer)/venues')
       },
     }
-  }, [cards.length, readyItems.length, router, startScan])
+  }, [cards.length, readyItems.length, router, startScan, t])
 
   if (!booting && !token) {
     return <Redirect href="/(customer)/venues" />
@@ -88,15 +90,15 @@ export default function CustomerHomeScreen() {
 
   const rewardsSectionTitle =
     readySlideCount > 0 && progressSlideCount > 0
-      ? 'Ready & in progress'
+      ? t('home.readyAndInProgress')
       : readySlideCount > 0
-        ? 'Ready to redeem'
-        : 'Keep collecting'
+        ? t('home.readyToRedeem')
+        : t('home.keepCollecting')
 
   const header = (
     <Animated.View style={{ opacity: fade, paddingHorizontal: space.screenX }}>
       <HomeScreenHeader
-        greeting={greetingForHour()}
+        greeting={t(greetingKeyForHour())}
         name={firstName}
         onNotificationsPress={() => {
           hapticLightTap()
@@ -118,11 +120,11 @@ export default function CustomerHomeScreen() {
       errorState={
         error
           ? {
-              title: 'Could not load home',
-              message: 'Pull to refresh or try again in a moment.',
-              primaryLabel: 'Try again',
+              title: t('home.loadErrorTitle'),
+              message: t('home.loadErrorMessage'),
+              primaryLabel: t('venues.tryAgain'),
               onPrimary: reload,
-              secondaryLabel: 'Open wallet',
+              secondaryLabel: t('venues.openWallet'),
               onSecondary: () => router.push('/(customer)/wallet'),
             }
           : undefined
@@ -145,8 +147,8 @@ export default function CustomerHomeScreen() {
               <View style={{ paddingHorizontal: space.screenX }}>
                 <HomeSectionHeader
                   title={rewardsSectionTitle}
-                  label="Your rewards"
-                  trailing={rewardSlides.length > 1 ? 'Swipe' : undefined}
+                  label={t('home.yourRewards')}
+                  trailing={rewardSlides.length > 1 ? t('home.swipe') : undefined}
                 />
               </View>
               <HomeRewardCarousel slides={rewardSlides} />

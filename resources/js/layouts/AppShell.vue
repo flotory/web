@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
@@ -12,6 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
+const { t } = useI18n()
 
 const isWorkspace = computed(() => {
   if (route.meta.adminOnly === true && auth.isAdmin) {
@@ -38,22 +40,22 @@ const nav = computed(() => {
 
   if (auth.isAdmin) {
     return [
-      { label: 'Venue listings', to: '/admin/venues', icon: '▣' },
-      { label: 'Owner onboarding', to: '/admin/owner-onboarding', icon: '✉' },
-      { label: 'Manage venues', to: '/admin/manage-venues', icon: '⌂' },
-      { label: 'Design palette', to: '/admin/palette', icon: '◐' },
-      { label: 'Activity log', to: '/admin/activity', icon: '◫' },
+      { label: t('nav.venueListings'), to: '/admin/venues', icon: '▣' },
+      { label: t('nav.ownerOnboarding'), to: '/admin/owner-onboarding', icon: '✉' },
+      { label: t('nav.manageVenues'), to: '/admin/manage-venues', icon: '⌂' },
+      { label: t('nav.designPalette'), to: '/admin/palette', icon: '◐' },
+      { label: t('nav.activityLog'), to: '/admin/activity', icon: '◫' },
     ]
   }
 
   return [
-    { label: 'Dashboard', to: '/dashboard', icon: '◈' },
-    { label: 'My Venues', to: '/my-venues', icon: '⌂' },
-    { label: 'Customers', to: '/customers', icon: '◍' },
-    { label: 'Rewards', to: '/rewards', icon: '★' },
-    { label: 'Campaigns', to: '/campaigns', icon: '✦' },
-    { label: 'Analytics', to: '/analytics', icon: '◔' },
-    { label: 'Workspace', to: '/settings', icon: '⚙' },
+    { label: t('nav.dashboard'), to: '/dashboard', icon: '◈' },
+    { label: t('nav.myVenues'), to: '/my-venues', icon: '⌂' },
+    { label: t('nav.customers'), to: '/customers', icon: '◍' },
+    { label: t('nav.rewards'), to: '/rewards', icon: '★' },
+    { label: t('nav.campaigns'), to: '/campaigns', icon: '✦' },
+    { label: t('nav.analytics'), to: '/analytics', icon: '◔' },
+    { label: t('nav.workspace'), to: '/settings', icon: '⚙' },
   ]
 })
 
@@ -72,7 +74,7 @@ async function logout() {
     <aside
       class="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar-bg px-4 py-5 md:flex"
     >
-      <RouterLink :to="logoPath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover" aria-label="Dashboard">
+      <RouterLink :to="logoPath" class="block rounded-2xl px-3 py-2 transition hover:bg-sidebar-hover" :aria-label="t('common.dashboard')">
         <FlotoryLogo size="lg" inverted />
       </RouterLink>
 
@@ -113,18 +115,18 @@ async function logout() {
         class="mt-4 w-full rounded-2xl border border-sidebar-border px-4 py-3 text-left text-sm font-bold text-sidebar-text-muted transition hover:border-accent/40 hover:bg-sidebar-hover hover:text-sidebar-text"
         @click="logout"
       >
-        Logout
+        {{ t('common.logout') }}
       </button>
     </aside>
 
     <div class="bg-workspace-gradient min-h-screen">
       <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <RouterLink :to="logoPath" aria-label="Dashboard">
+          <RouterLink :to="logoPath" :aria-label="t('common.dashboard')">
             <FlotoryLogo />
           </RouterLink>
           <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border" @click="logout">
-            Logout
+            {{ t('common.logout') }}
           </button>
         </div>
         <div

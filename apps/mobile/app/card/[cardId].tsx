@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Animated, Pressable, RefreshControl, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CardDetailHeader from '../../src/components/customer/CardDetailHeader'
@@ -22,6 +23,7 @@ import { withAppFont } from '../../src/lib/typography'
 import { colors, space } from '../../src/theme'
 
 export default function CardDetailScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ cardId: string; venueId?: string; nfcEducation?: string }>()
@@ -115,10 +117,10 @@ export default function CardDetailScreen() {
           <View style={{ marginTop: space.sectionY }}>
             <StateCard
               emoji="🎫"
-              title="Card not found"
-              message="This loyalty card may have been removed. Check your wallet or discover a new venue."
-              primaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
-              secondaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+              title={t('card.notFoundTitle')}
+              message={t('card.notFoundMessage')}
+              primaryAction={{ label: t('venues.openWallet'), onPress: () => router.replace('/(customer)/wallet') }}
+              secondaryAction={{ label: t('wallet.browseVenues'), onPress: () => router.push('/(customer)/venues') }}
             />
           </View>
         </View>
@@ -201,7 +203,7 @@ export default function CardDetailScreen() {
                 letterSpacing: 1,
               })}
             >
-              REWARD UNLOCKED
+              {t('card.rewardUnlocked')}
             </Text>
             <Text style={withAppFont({ marginTop: 6, fontSize: 24, fontWeight: '800', color: colors.ink, lineHeight: 30 })}>
               {rewardUnlockedModal.title}
@@ -223,7 +225,7 @@ export default function CardDetailScreen() {
                   alignItems: 'center',
                 })}
               >
-                <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: colors.primaryText })}>OK</Text>
+                <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: colors.primaryText })}>{t('card.ok')}</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -248,10 +250,10 @@ export default function CardDetailScreen() {
           <View style={{ marginTop: 12 }}>
             <StateCard
               emoji="⚠️"
-              title="Could not load card"
-              message="Try again or return to your wallet."
-              primaryAction={{ label: 'Try again', onPress: reload }}
-              secondaryAction={{ label: 'Open wallet', onPress: () => router.replace('/(customer)/wallet') }}
+              title={t('card.loadErrorTitle')}
+              message={t('card.loadErrorMessage')}
+              primaryAction={{ label: t('venues.tryAgain'), onPress: reload }}
+              secondaryAction={{ label: t('venues.openWallet'), onPress: () => router.replace('/(customer)/wallet') }}
             />
           </View>
         </View>

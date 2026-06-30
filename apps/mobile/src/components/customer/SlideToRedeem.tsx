@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Animated, PanResponder, Text, View, type LayoutChangeEvent } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { hapticSuccess } from '../../lib/haptics'
 import { withAppFont } from '../../lib/typography'
@@ -16,6 +17,7 @@ interface SlideToRedeemProps {
 }
 
 export default function SlideToRedeem({ onRedeem, disabled = false }: SlideToRedeemProps) {
+  const { t } = useTranslation()
   const [trackWidth, setTrackWidth] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const dragX = useRef(new Animated.Value(0)).current
@@ -137,7 +139,7 @@ export default function SlideToRedeem({ onRedeem, disabled = false }: SlideToRed
           { opacity: labelOpacity },
         ]}
       >
-        Slide to redeem reward
+        {t('redeem.slideToRedeem')}
       </Animated.Text>
       <Animated.View
         {...panResponder.panHandlers}

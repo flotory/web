@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import RedeemPassCard from '../../src/components/customer/RedeemPassCard'
@@ -24,6 +25,8 @@ import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../../src/theme'
 
 function RedeemSuccessHero({ title, venueName }: { title: string; venueName: string }) {
+  const { t } = useTranslation()
+
   return (
     <LinearGradient
       colors={['#071225', colors.primary, '#0c1a30']}
@@ -51,7 +54,7 @@ function RedeemSuccessHero({ title, venueName }: { title: string; venueName: str
         <Ionicons name="checkmark" size={40} color={colors.primary} />
       </View>
       <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: colors.accent })}>
-        REDEEMED
+        {t('redeem.redeemedBadge')}
       </Text>
       <Text
         style={withAppFont({
@@ -63,7 +66,7 @@ function RedeemSuccessHero({ title, venueName }: { title: string; venueName: str
           letterSpacing: -0.4,
         })}
       >
-        Enjoy your reward!
+        {t('redeem.enjoyReward')}
       </Text>
       <Text
         style={withAppFont({
@@ -74,13 +77,14 @@ function RedeemSuccessHero({ title, venueName }: { title: string; venueName: str
           textAlign: 'center',
         })}
       >
-        {title} at {venueName} is marked as used. Thanks for visiting.
+        {t('redeem.redeemedMessage', { title, venueName })}
       </Text>
     </LinearGradient>
   )
 }
 
 export default function RedeemRewardScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { token } = useAuth()
@@ -114,10 +118,10 @@ export default function RedeemRewardScreen() {
         <View style={{ padding: space.screenX, paddingTop: 56 }}>
           <StateCard
             emoji="🎁"
-            title="Could not load reward"
-            message={error ?? 'This reward link is invalid.'}
-            primaryAction={{ label: 'Try again', onPress: reload }}
-            secondaryAction={{ label: 'Go home', onPress: () => router.replace('/(customer)/home') }}
+            title={t('redeem.loadErrorTitle')}
+            message={error ?? t('redeem.invalidLink')}
+            primaryAction={{ label: t('venues.tryAgain'), onPress: reload }}
+            secondaryAction={{ label: t('redeem.goHome'), onPress: () => router.replace('/(customer)/home') }}
           />
         </View>
       </ScreenGradientLayout>
@@ -131,9 +135,9 @@ export default function RedeemRewardScreen() {
         <View style={{ padding: space.screenX, paddingTop: 56 }}>
           <StateCard
             emoji="✓"
-            title="Already redeemed"
-            message="This reward is no longer in your wallet."
-            primaryAction={{ label: 'Go home', onPress: () => router.replace('/(customer)/home') }}
+            title={t('redeem.alreadyRedeemedTitle')}
+            message={t('redeem.alreadyRedeemedMessage')}
+            primaryAction={{ label: t('redeem.goHome'), onPress: () => router.replace('/(customer)/home') }}
           />
         </View>
       </ScreenGradientLayout>
@@ -168,21 +172,21 @@ export default function RedeemRewardScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View>
-            <Text style={typography.label}>Redeem</Text>
+            <Text style={typography.label}>{t('redeem.redeem')}</Text>
             <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>
-              {redeemed ? 'All set' : 'Your reward'}
+              {redeemed ? t('redeem.allSet') : t('redeem.yourReward')}
             </Text>
             <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
               {redeemed
-                ? 'This reward has been confirmed. Hope you enjoy it!'
-                : 'Show this pass at the counter, then slide below when staff are ready.'}
+                ? t('redeem.confirmedMessage')
+                : t('redeem.instructions')}
             </Text>
           </View>
 
           {redeemed ? (
             <>
               <RedeemSuccessHero title={item.reward.title} venueName={venueName} />
-              <PrimaryButton label="Back to home" onPress={() => router.replace('/(customer)/home')} icon="home-outline" />
+              <PrimaryButton label={t('redeem.backToHome')} onPress={() => router.replace('/(customer)/home')} icon="home-outline" />
             </>
           ) : (
             <>
@@ -224,7 +228,7 @@ export default function RedeemRewardScreen() {
             }}
           >
             <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted, textAlign: 'center' })}>
-              Show at the counter · slide when ready
+              {t('redeem.counterHint')}
             </Text>
             {redeemError ? (
               <Text style={withAppFont({ color: colors.danger, fontWeight: '600', textAlign: 'center', fontSize: 13 })}>
@@ -235,7 +239,7 @@ export default function RedeemRewardScreen() {
               disabled={!token}
               onRedeem={async () => {
                 if (!token) {
-                  throw new Error('Sign in required')
+                  throw new Error(t('redeem.signInRequired'))
                 }
 
                 setRedeemError('')

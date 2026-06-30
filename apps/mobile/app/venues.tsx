@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 import { useCallback, useMemo, useState } from 'react'
 import { Animated, Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import DiscoverCategoryPills, { type DiscoverCategoryFilter } from '../src/components/customer/DiscoverCategoryPills'
 import DiscoverLocationBanner from '../src/components/customer/DiscoverLocationBanner'
@@ -16,6 +17,7 @@ import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
 import { collectDiscoverVenueLocations, sortDiscoverVenuesByNearestLocation } from '../src/lib/distance'
 import { useAuth } from '../src/providers/AuthProvider'
+import { useLocalePreference } from '../src/providers/LocaleProvider'
 import { colors, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
 
@@ -39,18 +41,20 @@ function matchesCategoryFilter(venue: DiscoverVenue, filter: DiscoverCategoryFil
   }
 }
 
-function resultsLabel(count: number, hasFilters: boolean): string {
+function resultsLabel(count: number, hasFilters: boolean, t: (key: string, options?: Record<string, unknown>) => string): string {
   if (count === 0) {
-    return hasFilters ? 'No matches' : 'No venues yet'
+    return hasFilters ? t('venues.noMatches') : t('venues.noVenues')
   }
   if (count === 1) {
-    return '1 venue'
+    return t('venues.oneVenue')
   }
-  return `${count} venues`
+  return t('venues.manyVenues', { count })
 }
 
 export default function VenuesScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const { locale, setLocale } = useLocalePreference()
   const { token, role } = useAuth()
   const isGuest = !token
   const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
@@ -105,6 +109,10 @@ export default function VenuesScreen() {
     router.push(`/v/${venue.slug}`)
   }
 
+  function toggleLocale() {
+    void setLocale(locale === 'hy' ? 'en' : 'hy')
+  }
+
   if (role && role !== 'customer') {
     return null
   }
@@ -113,19 +121,34 @@ export default function VenuesScreen() {
     <Animated.View style={{ opacity: fade, paddingHorizontal: space.screenX }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={typography.label}>Explore</Text>
-          <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>Venues</Text>
+          <Text style={typography.label}>{t('venues.eyebrow')}</Text>
+          <Text style={{ ...typography.hero, marginTop: 6, fontSize: 30, lineHeight: 36 }}>{t('venues.title')}</Text>
           <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
-            {isGuest
-              ? 'Browse participating cafes and bars. Sign in to collect stamps and redeem rewards.'
-              : 'Find places nearby, join their loyalty cards, and collect stamps with NFC.'}
+            {isGuest ? t('venues.guestIntro') : t('venues.customerIntro')}
           </Text>
         </View>
-        {isGuest ? (
+        <View style={{ alignItems: 'flex-end', gap: 8 }}>
+          <Pressable
+            onPress={toggleLocale}
+            style={({ pressed }) => ({
+              marginTop: 4,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 999,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.border,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '800', fontSize: 13 })}>
+              {locale === 'hy' ? 'EN' : 'Հայ'}
+            </Text>
+          </Pressable>
+          {isGuest ? (
           <Pressable
             onPress={() => router.push('/login')}
             style={({ pressed }) => ({
-              marginTop: 4,
               paddingHorizontal: 14,
               paddingVertical: 10,
               borderRadius: 999,
@@ -133,9 +156,10 @@ export default function VenuesScreen() {
               opacity: pressed ? 0.9 : 1,
             })}
           >
-            <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 14 })}>Sign in</Text>
+            <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 14 })}>{t('common.signIn')}</Text>
           </Pressable>
-        ) : null}
+          ) : null}
+        </View>
       </View>
     </Animated.View>
   )
@@ -153,11 +177,11 @@ export default function VenuesScreen() {
       errorState={
         error
           ? {
-              title: 'Could not load venues',
-              message: 'Check your connection and try again.',
-              primaryLabel: 'Try again',
+              title: t('venues.loadErrorTitle'),
+              message: t('venues.loadErrorMessage'),
+              primaryLabel: t('venues.tryAgain'),
               onPrimary: reload,
-              secondaryLabel: isGuest ? 'Sign in' : 'Open wallet',
+              secondaryLabel: isGuest ? t('common.signIn') : t('venues.openWallet'),
               onSecondary: () => router.push(isGuest ? '/login' : '/(customer)/wallet'),
             }
           : undefined
@@ -179,10 +203,10 @@ export default function VenuesScreen() {
 
           <View style={{ paddingHorizontal: space.screenX }}>
             <HomeSectionHeader
-              title={resultsLabel(filtered.length, hasActiveFilters)}
-              label="Nearby"
+              title={resultsLabel(filtered.length, hasActiveFilters, t)}
+              label={t('venues.nearby')}
               trailing={
-                hasActiveFilters ? 'Filtered' : sortedByDistance ? 'Nearest first' : undefined
+                hasActiveFilters ? t('venues.filtered') : sortedByDistance ? t('venues.nearestFirst') : undefined
               }
             />
           </View>
@@ -209,10 +233,10 @@ export default function VenuesScreen() {
             <View style={{ paddingHorizontal: space.screenX, marginTop: space.sectionY }}>
               <StateCard
                 emoji="🔍"
-                title="No venues found"
-                message="Try another search or category, or browse all venues."
+                title={t('venues.emptyTitle')}
+                message={t('venues.emptyMessage')}
                 primaryAction={{
-                  label: 'Clear filters',
+                  label: t('venues.clearFilters'),
                   onPress: () => {
                     setSearch('')
                     setCategoryFilter('all')

@@ -4,6 +4,8 @@
 
 Flotory is digital loyalty for independent cafes, bars, restaurants, and bakeries. Guests join via a venue QR bridge, collect **stamps** with **NFC stands** (or in-app NFC on iPhone), and **slide to redeem** unlocked rewards in the mobile app. **Owners** run everything from the **web dashboard**.
 
+Flotory launches in Armenia with **English** as the fallback language and **Armenian** as the first localized language. Venue names, reward titles, and campaign content remain owner-authored content; localization covers the app and dashboard chrome.
+
 **Tagline value:** Turn occasional customers into regulars.
 
 ## Problem
@@ -66,6 +68,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 - Tabs: Home, Wallet, **Stamp** (NFC), Venues, Profile
 - Slide-to-redeem rewards
 - Google + email auth
+- English + Armenian app chrome for discovery, join, NFC, wallet, card, redeem, login, notifications, and profile settings
 
 **API**
 
@@ -73,6 +76,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 - Self-redeem: `POST /api/customer/rewards/unlocks/{unlock}/redeem`
 - Stamp campaigns (4 templates)
 - Venue listing workflow (`draft` → `pending_review` → `published`)
+- User locale preference (`users.locale`, currently `en` or `hy`) for web/admin and mobile sessions
 
 **Venue categories:** cafe, bar, restaurant, bakery.
 

@@ -2,6 +2,7 @@ import { Redirect, Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CustomerStampOrchestrator from '../../src/components/customer/CustomerStampOrchestrator'
@@ -14,6 +15,7 @@ import { NfcStampScanProvider, useNfcStampScanAction } from '../../src/providers
 import { colors, shadows } from '../../src/theme'
 
 function NfcStampingOverlay() {
+  const { t } = useTranslation()
   const { scanning } = useNfcStampScanAction()
   const insets = useSafeAreaInsets()
   const opacity = useRef(new Animated.Value(0)).current
@@ -64,7 +66,7 @@ function NfcStampingOverlay() {
       >
         <Ionicons name="scan-outline" size={16} color={colors.accent} />
         <ActivityIndicator size="small" color={colors.accent} />
-        <Text style={withAppFont({ fontSize: 14, fontWeight: '800', color: colors.primaryText })}>Stamping...</Text>
+        <Text style={withAppFont({ fontSize: 14, fontWeight: '800', color: colors.primaryText })}>{t('tabs.stamping')}</Text>
       </View>
     </Animated.View>
   )
@@ -75,6 +77,7 @@ function GuestStampOrchestrator() {
 }
 
 export default function CustomerTabsLayout() {
+  const { t } = useTranslation()
   const { token, role } = useAuth()
   const isGuest = !token
 
@@ -110,7 +113,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="home"
             options={{
-              title: 'Home',
+              title: t('tabs.home'),
               href: isGuest ? null : undefined,
               tabBarIcon: ({ color, size, focused }) => (
                 <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
@@ -120,7 +123,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="wallet"
             options={{
-              title: 'Wallet',
+              title: t('tabs.wallet'),
               href: isGuest ? null : undefined,
               tabBarIcon: ({ color, size, focused }) => (
                 <Ionicons name={focused ? 'wallet' : 'wallet-outline'} color={color} size={size} />
@@ -130,7 +133,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="qr"
             options={{
-              title: 'Stamp',
+              title: t('tabs.stamp'),
               href: isGuest ? null : undefined,
               tabBarLabel: () => null,
             }}
@@ -138,7 +141,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="venues"
             options={{
-              title: 'Venues',
+              title: t('tabs.venues'),
               tabBarIcon: ({ color, size, focused }) => (
                 <Ionicons name={focused ? 'location' : 'location-outline'} color={color} size={size} />
               ),
@@ -147,7 +150,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="settings"
             options={{
-              title: isGuest ? 'Sign in' : 'Profile',
+              title: isGuest ? t('tabs.signIn') : t('tabs.profile'),
               href: isGuest ? null : undefined,
               tabBarIcon: ({ color, size, focused }) => (
                 <Ionicons
@@ -161,7 +164,7 @@ export default function CustomerTabsLayout() {
           <Tabs.Screen
             name="notifications"
             options={{
-              title: 'Notifications',
+              title: t('notifications.title'),
               href: null,
             }}
           />

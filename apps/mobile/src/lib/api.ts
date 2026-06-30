@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config'
+import { currentLocale } from '../i18n/runtime'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -46,6 +47,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     method: options.method ?? 'GET',
     headers: {
       Accept: 'application/json',
+      'Accept-Language': currentLocale(),
       'Content-Type': 'application/json',
       ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     },

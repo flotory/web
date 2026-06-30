@@ -2,6 +2,7 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import * as AppleAuthentication from 'expo-apple-authentication'
+import { useTranslation } from 'react-i18next'
 
 import GoogleLogo from '../src/components/ui/GoogleLogo'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
@@ -25,6 +26,7 @@ function readParam(value: string | string[] | undefined): string | null {
 }
 
 export default function LoginScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const { signIn, signUp, signInWithToken, token, role, booting } = useAuth()
   const { redirect, oauth_token, error: oauthError } = useLocalSearchParams<{
@@ -49,9 +51,9 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (readParam(oauthError) === 'google_auth_failed') {
-      setError('Google sign-in could not be completed. Try again or use email and password.')
+      setError(t('login.googleCouldNotComplete'))
     }
-  }, [oauthError])
+  }, [oauthError, t])
 
   useEffect(() => {
     const oauthToken = readParam(oauth_token)
@@ -66,7 +68,7 @@ export default function LoginScreen() {
     void signInWithToken(oauthToken)
       .catch(() => {
         if (!cancelled) {
-          setError('Google sign-in failed. Please try again.')
+          setError(t('login.googleFailed'))
         }
       })
       .finally(() => {
@@ -78,7 +80,7 @@ export default function LoginScreen() {
     return () => {
       cancelled = true
     }
-  }, [booting, oauth_token, signInWithToken, token])
+  }, [booting, oauth_token, signInWithToken, token, t])
 
   if (booting) {
     return null
@@ -102,7 +104,7 @@ export default function LoginScreen() {
         await signIn(email.trim(), password)
       }
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Could not authenticate.')
+      setError(exception instanceof ApiError ? exception.message : t('login.authFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -125,7 +127,7 @@ export default function LoginScreen() {
 
       await signInWithToken(result.oauthToken)
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Google sign-in failed. Please try again.')
+      setError(exception instanceof ApiError ? exception.message : t('login.googleFailed'))
     } finally {
       setGoogleLoading(false)
     }
@@ -148,7 +150,7 @@ export default function LoginScreen() {
 
       await signInWithToken(result.auth.token)
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Apple sign-in failed. Please try again.')
+      setError(exception instanceof ApiError ? exception.message : t('login.appleFailed'))
     } finally {
       setAppleLoading(false)
     }
@@ -159,9 +161,9 @@ export default function LoginScreen() {
   return (
     <ScreenGradientLayout scrollable tabBarInset={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
     <View style={{ padding: 20, gap: 12 }}>
-      <Text style={withAppFont({ fontSize: 28, fontWeight: '800' })}>Flotory Mobile</Text>
+      <Text style={withAppFont({ fontSize: 28, fontWeight: '800' })}>{t('login.title')}</Text>
       <Text style={{ color: colors.inkMuted }}>
-        {isRegisterMode ? 'Create your account' : 'Sign in'}
+        {isRegisterMode ? t('login.createAccountSubtitle') : t('login.signInSubtitle')}
       </Text>
 
       {appleAvailable ? (
@@ -193,13 +195,13 @@ export default function LoginScreen() {
       >
         <GoogleLogo size={20} />
         <Text style={withAppFont({ color: colors.ink, fontWeight: '700' })}>
-          {googleLoading ? 'Connecting Google...' : 'Continue with Google'}
+          {googleLoading ? t('login.connectingGoogle') : t('login.continueWithGoogle')}
         </Text>
       </Pressable>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        <Text style={withAppFont({ color: colors.inkSoft, fontSize: 12, fontWeight: '700', letterSpacing: 1.2 })}>OR</Text>
+        <Text style={withAppFont({ color: colors.inkSoft, fontSize: 12, fontWeight: '700', letterSpacing: 1.2 })}>{t('login.or')}</Text>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
 
@@ -208,7 +210,7 @@ export default function LoginScreen() {
           testID="login-name-input"
           value={name}
           onChangeText={setName}
-          placeholder="Full name"
+          placeholder={t('login.fullName')}
           style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
         />
       ) : null}
@@ -218,7 +220,7 @@ export default function LoginScreen() {
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
-        placeholder="Email"
+        placeholder={t('login.email')}
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
       <TextInput
@@ -226,7 +228,7 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        placeholder="Password"
+        placeholder={t('login.password')}
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
 
@@ -245,18 +247,18 @@ export default function LoginScreen() {
         }}
       >
         <Text style={withAppFont({ color: colors.primaryText, fontWeight: '700' })}>
-          {submitting ? 'Please wait...' : isRegisterMode ? 'Create account' : 'Sign in'}
+          {submitting ? t('login.pleaseWait') : isRegisterMode ? t('login.createAccount') : t('common.signIn')}
         </Text>
       </Pressable>
 
       <Pressable onPress={() => setIsRegisterMode((value) => !value)} style={{ alignItems: 'center', paddingTop: 2 }}>
         <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '600' })}>
-          {isRegisterMode ? 'Already have an account? Sign in' : 'New customer? Create account'}
+          {isRegisterMode ? t('login.alreadyHaveAccount') : t('login.newCustomer')}
         </Text>
       </Pressable>
 
       <Pressable onPress={() => router.push('/(customer)/venues')} style={{ alignItems: 'center', paddingTop: 10 }}>
-        <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>Browse venues without signing in</Text>
+        <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>{t('login.browseWithoutSignIn')}</Text>
       </Pressable>
     </View>
     </ScreenGradientLayout>

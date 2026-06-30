@@ -231,6 +231,8 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **Y9.** Owner dashboard focuses on **operations** (KPIs, insights, NFC stand setup, mobile-app CTA) — not a post-launch setup tutorial.
 
+**Y10.** Supported UI languages are **English** (`en`, fallback) and **Armenian** (`hy`). Static app/dashboard chrome may be localized; venue names, reward titles, campaign names, and owner-entered descriptions are user content and must not be machine-translated by the platform.
+
 ---
 
 ## Documented exceptions

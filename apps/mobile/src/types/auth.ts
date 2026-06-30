@@ -5,6 +5,7 @@ export interface MobileUser {
   name: string
   email: string
   is_admin: boolean
+  locale?: 'en' | 'hy' | null
   active_venue_id?: number | null
   google_id?: string | null
   apple_id?: string | null

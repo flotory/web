@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Image, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import VenueScanRewardHeroCard from '../../src/components/customer/VenueScanRewardHeroCard'
@@ -39,6 +40,7 @@ interface LandingPayload {
 }
 
 export default function VenueJoinScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { slug } = useLocalSearchParams<{ slug: string }>()
@@ -67,7 +69,7 @@ export default function VenueJoinScreen() {
           setExistingCard(findWalletCardForLoyaltyVenue(cards, loyaltyVenueId) ?? null)
         }
       } catch {
-        setError('Venue link unavailable.')
+        setError(t('join.unavailable'))
         setLanding(null)
       } finally {
         setLoading(false)
@@ -75,7 +77,7 @@ export default function VenueJoinScreen() {
     }
 
     void load()
-  }, [slug, token, role])
+  }, [slug, token, role, t])
 
   const membership = useMemo(
     () => (existingCard ? membershipFromWalletCard(existingCard) : null),
@@ -131,7 +133,7 @@ export default function VenueJoinScreen() {
     }
 
     if (role === 'owner') {
-      setError('Venue owner accounts cannot join customer loyalty cards.')
+      setError(t('join.ownerCannotJoin'))
       return
     }
 
@@ -150,7 +152,7 @@ export default function VenueJoinScreen() {
 
       setJoinedCustomerId(response.customer.id)
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Could not join venue.')
+      setError(exception instanceof ApiError ? exception.message : t('join.couldNotJoin'))
     } finally {
       setJoining(false)
     }
@@ -175,9 +177,9 @@ export default function VenueJoinScreen() {
           <View style={{ marginTop: space.sectionY }}>
             <StateCard
               emoji="🔗"
-              title="Venue not found"
+              title={t('join.notFoundTitle')}
               message={error}
-              primaryAction={{ label: 'Browse venues', onPress: () => router.replace('/(customer)/venues') }}
+              primaryAction={{ label: t('wallet.browseVenues'), onPress: () => router.replace('/(customer)/venues') }}
             />
           </View>
         </View>
@@ -189,12 +191,12 @@ export default function VenueJoinScreen() {
   const logo = venue ? venueLogoUrl(venue) : null
   const showJoinSuccess = joinedCustomerId != null
   const primaryLabel = isMember
-    ? 'Open your card'
+    ? t('join.openCard')
     : showJoinSuccess
-      ? 'View my stamp card'
+      ? t('join.viewStampCard')
       : joining
-        ? 'Joining…'
-        : 'Start collecting rewards'
+        ? t('join.joining')
+        : t('join.startCollecting')
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -232,18 +234,18 @@ export default function VenueJoinScreen() {
               />
             )}
             <Text style={withAppFont({ marginTop: 14, fontSize: 24, fontWeight: '800', color: colors.ink, textAlign: 'center' })}>
-              {venue?.name ?? 'Venue'}
+              {venue?.name ?? t('common.venue')}
             </Text>
             {isMember ? (
               <Text style={withAppFont({ marginTop: 8, fontSize: 14, fontWeight: '700', color: colors.accent, textAlign: 'center' })}>
-                You are already a member
+                {t('join.alreadyMember')}
               </Text>
             ) : null}
           </View>
 
           <View style={{ marginTop: space.sectionGap }}>
             <VenueScanRewardHeroCard
-              venueName={venue?.name ?? 'Venue'}
+              venueName={venue?.name ?? t('common.venue')}
               category={venue?.category}
               hero={landing?.hero_reward}
               membership={membership}
@@ -294,7 +296,7 @@ export default function VenueJoinScreen() {
         />
         {isMember ? (
           <Text style={withAppFont({ marginTop: 10, fontSize: 12, lineHeight: 18, color: colors.inkMuted, textAlign: 'center' })}>
-            No need to scan the join QR again — tap the NFC stand at the counter.
+            {t('join.memberHint')}
           </Text>
         ) : null}
       </View>

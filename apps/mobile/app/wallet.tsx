@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Redirect, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { Animated, Pressable, Text, TextInput, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import WalletStackedCards from '../src/components/customer/WalletStackedCards'
@@ -16,6 +17,7 @@ import { withAppFont } from '../src/lib/typography'
 import { colors, radius, space, tabBar } from '../src/theme'
 
 export default function WalletScreen() {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { token, booting } = useAuth()
@@ -48,12 +50,12 @@ export default function WalletScreen() {
     <View style={{ paddingHorizontal: space.screenX }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={withAppFont({ fontSize: 34, fontWeight: '800', color: colors.ink, letterSpacing: -0.8 })}>
-          Wallet
+          {t('wallet.title')}
         </Text>
         <Pressable
           onPress={() => router.push('/(customer)/venues')}
           accessibilityRole="button"
-          accessibilityLabel="Discover venues"
+          accessibilityLabel={t('wallet.discoverVenues')}
           style={{
             width: 40,
             height: 40,
@@ -83,7 +85,7 @@ export default function WalletScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search venues"
+            placeholder={t('wallet.searchPlaceholder')}
             placeholderTextColor={colors.inkSoft}
             style={{
               flex: 1,
@@ -108,11 +110,11 @@ export default function WalletScreen() {
       errorState={
         error
           ? {
-              title: 'Could not load wallet',
-              message: 'Check your connection and try again.',
-              primaryLabel: 'Try again',
+              title: t('wallet.loadErrorTitle'),
+              message: t('wallet.loadErrorMessage'),
+              primaryLabel: t('venues.tryAgain'),
               onPrimary: reload,
-              secondaryLabel: 'Browse venues',
+              secondaryLabel: t('wallet.browseVenues'),
               onSecondary: () => router.push('/(customer)/venues'),
             }
           : undefined
@@ -122,9 +124,9 @@ export default function WalletScreen() {
         <Animated.View style={{ flex: 1, opacity: fade, justifyContent: 'center', paddingHorizontal: space.screenX }}>
           <StateCard
             icon="ticket-outline"
-            title="No stamp cards yet"
-            message="Discover venues nearby and start collecting stamps toward your first reward."
-            primaryAction={{ label: 'Browse venues', onPress: () => router.push('/(customer)/venues') }}
+            title={t('wallet.emptyTitle')}
+            message={t('wallet.emptyMessage')}
+            primaryAction={{ label: t('wallet.browseVenues'), onPress: () => router.push('/(customer)/venues') }}
           />
         </Animated.View>
       ) : !error ? (

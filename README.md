@@ -4,12 +4,13 @@
 
 Modern hospitality loyalty platform for independent cafes, bars, restaurants, and venues.
 
-The MVP focuses on venue QR onboarding, digital stamp cards, **NFC stamp stands** (`https://flotory.com/t/{token}`), customer slide-to-redeem rewards, multi-venue owner workspaces, Google sign-in, and retention analytics.
+The MVP focuses on venue QR onboarding, digital stamp cards, **NFC stamp stands** (`https://flotory.com/t/{token}`), customer slide-to-redeem rewards, multi-venue owner workspaces, Google sign-in, English/Armenian localization, and retention analytics.
 
 ## Stack
 
 - Laravel 12, PHP 8.4, MySQL, Sanctum, REST APIs, Laravel Socialite (Google)
-- Vue 3, Vite, Pinia, Vue Router, TailwindCSS, shadcn-vue style components
+- Vue 3, Vite, Pinia, Vue Router, TailwindCSS, vue-i18n, shadcn-vue style components
+- Expo + React Native mobile app with i18next localization
 - Monolith architecture for VPS deployment
 
 ## Production deploy

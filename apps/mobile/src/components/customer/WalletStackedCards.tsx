@@ -1,4 +1,5 @@
 import { RefreshControl, ScrollView, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import WalletHeroCard from './WalletHeroCard'
 import StateCard from '../ui/StateCard'
@@ -22,14 +23,16 @@ export default function WalletStackedCards({
   emptySearch,
   onClearSearch,
 }: WalletStackedCardsProps) {
+  const { t } = useTranslation()
+
   if (emptySearch) {
     return (
       <View style={{ paddingHorizontal: space.screenX, paddingTop: space.sectionGap }}>
         <StateCard
           emoji="🔍"
-          title="No matches"
-          message="Try a different venue name."
-          primaryAction={{ label: 'Clear search', onPress: () => onClearSearch?.() }}
+          title={t('wallet.noMatches')}
+          message={t('wallet.noMatchesMessage')}
+          primaryAction={{ label: t('wallet.clearSearch'), onPress: () => onClearSearch?.() }}
         />
       </View>
     )

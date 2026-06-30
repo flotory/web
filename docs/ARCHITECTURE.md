@@ -11,8 +11,8 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 | API | Laravel 12, PHP 8.4, MySQL |
 | Auth | Laravel Sanctum (bearer tokens) |
 | OAuth | Laravel Socialite (Google) via web routes; mobile via web OAuth → `flotory://login?oauth_token=...` |
-| Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS |
-| Mobile | Expo + React Native (`apps/mobile`) |
+| Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS, vue-i18n |
+| Mobile | Expo + React Native (`apps/mobile`), i18next |
 | Uploads | Local filesystem under `public/uploads/` |
 | Deploy | Docker on VPS; Nginx → Laravel |
 
@@ -66,7 +66,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 
 | Model | Table | Purpose |
 |-------|-------|---------|
-| `User` | `users` | Login identity. `is_admin` for platform admin. `active_venue_id` for workspace selection. |
+| `User` | `users` | Login identity. `is_admin` for platform admin. `active_venue_id` for workspace selection. `locale` stores UI language (`en` or `hy`). |
 | `Venue` | `venues` | Workspace. Slug, category, branding, geo, `status` (`draft` \| `pending_review` \| `published`), soft deletes. |
 | `VenueUser` | `venue_users` | Membership pivot: `role` = `owner` (product is owner-only; legacy `staff` rows may exist in old data). |
 | `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `stamps`. |
@@ -127,6 +127,19 @@ Rate limits (`config/loyalty.php` → `nfc.*`): debounce per user+tag; max stamp
 - Google web: `/auth/google/redirect` → callback → `oauth_token` on login page
 - Google mobile: in-app browser → same web flow → `flotory://login?oauth_token=...`
 - Sanctum bearer token for API
+
+## Localization
+
+Supported UI locales are `en` and `hy`; English is the fallback. Locale is stored on `users.locale` and exposed by `/api/auth/me`. Authenticated clients save changes through `PUT /api/auth/locale`; web and mobile also persist the selected locale locally for pre-auth/guest screens.
+
+| Surface | Implementation |
+| ------- | -------------- |
+| Web owner/admin SPA | `resources/js/i18n`, `resources/js/stores/locale.ts`, `vue-i18n` |
+| Mobile customer app | `apps/mobile/src/i18n`, `LocaleProvider`, `react-i18next` |
+| API requests | Web and mobile send `Accept-Language` for future backend message localization |
+| Fonts | Mobile uses Noto Sans Armenian so Armenian UI text renders without missing glyphs |
+
+Static UI chrome is translated. Venue names, reward titles, campaign names, and descriptions are persisted user content and are displayed as entered.
 
 ## Main flows
 

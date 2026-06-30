@@ -98,6 +98,34 @@ class AuthControllerTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 1);
     }
 
+    public function test_authenticated_user_can_update_locale(): void
+    {
+        $user = $this->createUser(['email' => 'locale@example.com', 'locale' => 'en']);
+        Sanctum::actingAs($user);
+
+        $this->putJson('/api/auth/locale', [
+            'locale' => 'hy',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.locale', 'hy');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'locale@example.com',
+            'locale' => 'hy',
+        ]);
+    }
+
+    public function test_locale_update_rejects_unsupported_locale(): void
+    {
+        Sanctum::actingAs($this->createUser(['email' => 'unsupported-locale@example.com']));
+
+        $this->putJson('/api/auth/locale', [
+            'locale' => 'ru',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('locale');
+    }
+
     public function test_web_login_allows_platform_admin(): void
     {
         $this->createUser(['email' => 'admin@flotory.com', 'is_admin' => true]);

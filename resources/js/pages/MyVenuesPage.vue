@@ -234,7 +234,7 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <AppCard wrapper-class="mb-5 border-border/80 bg-surface/95 backdrop-blur">
+    <AppCard v-if="activeVenues.length" wrapper-class="mb-5 border-border/80 bg-surface/95 backdrop-blur">
       <div class="grid gap-3 md:grid-cols-[1.3fr_0.85fr_0.85fr]">
         <input
           v-model="search"
@@ -329,7 +329,7 @@ onMounted(async () => {
     />
 
     <EmptyState
-      v-else-if="!loading && !activeVenues.length && !error && mayCreateVenue"
+      v-else-if="!loading && !activeVenues.length && !error && mayCreateVenue && !formOpen"
       class="mb-5"
       :icon="Store"
       title="Create your first venue"
@@ -415,7 +415,6 @@ onMounted(async () => {
             <FileUp class="size-4" />
             Files & docs
           </AppButton>
-          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push('/app')">Mobile app</AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>
         </div>

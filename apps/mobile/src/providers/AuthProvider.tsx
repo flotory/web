@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { apiRequest } from '../lib/api'
 import { clearToken, getToken, saveToken } from '../lib/session'
+import { resolveLocale } from '../i18n'
+import { useLocalePreference } from './LocaleProvider'
 import type { AuthResponse, MobileUser, UserRole, VenueMembership } from '../types/auth'
 
 interface AuthContextValue {
@@ -26,6 +28,7 @@ function deriveRole(venues: VenueMembership[]): UserRole {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { setLocale } = useLocalePreference()
   const [booting, setBooting] = useState(true)
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<MobileUser | null>(null)
@@ -35,7 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const me = await apiRequest<{ user: MobileUser }>('/auth/me', { token: sessionToken })
     const venues = await apiRequest<{ venues: VenueMembership[] }>('/venues', { token: sessionToken })
       .catch(() => ({ venues: [] }))
+    const locale = resolveLocale(me.user.locale)
 
+    if (locale) {
+      await setLocale(locale)
+    }
     setUser(me.user)
     setRole(deriveRole(venues.venues))
   }

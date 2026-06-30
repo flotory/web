@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
 
@@ -12,14 +13,6 @@ import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../
 
 const HIDDEN_TABS = new Set(['notifications'])
 const GUEST_TABS = new Set(['venues'])
-
-const TAB_LABELS: Record<string, string> = {
-  home: 'Home',
-  wallet: 'Wallet',
-  qr: 'Stamp',
-  venues: 'Venues',
-  settings: 'Profile',
-}
 
 function tabIcon(name: string, focused: boolean, color: string, size: number) {
   const icons: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
@@ -39,6 +32,7 @@ export default function CustomerTabBar({
   navigation,
   guestMode = false,
 }: BottomTabBarProps & { guestMode?: boolean }) {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const { startScan, scanning: nfcScanning } = useNfcStampScanAction()
@@ -101,7 +95,14 @@ export default function CustomerTabBar({
             const index = state.routes.findIndex((item) => item.key === route.key)
             const focused = state.index === index
             const isQr = route.name === 'qr'
-            const label = TAB_LABELS[route.name] ?? options.title ?? route.name
+            const labels: Record<string, string> = {
+              home: t('tabs.home'),
+              wallet: t('tabs.wallet'),
+              qr: t('tabs.stamp'),
+              venues: t('tabs.venues'),
+              settings: guestMode ? t('tabs.signIn') : t('tabs.profile'),
+            }
+            const label = labels[route.name] ?? options.title ?? route.name
             const tint = focused ? colors.ink : colors.inkSoft
 
             const onPress = () => {

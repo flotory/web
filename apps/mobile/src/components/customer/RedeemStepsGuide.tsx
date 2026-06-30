@@ -1,31 +1,34 @@
 import { Ionicons } from '@expo/vector-icons'
 import type { ComponentProps } from 'react'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, space } from '../../theme'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
 
-const STEPS: { icon: IoniconName; title: string; body: string }[] = [
+const STEPS: { icon: IoniconName; titleKey: string; bodyKey: string }[] = [
   {
     icon: 'phone-portrait-outline',
-    title: 'Show this screen',
-    body: 'Hold your phone up at the counter so staff can see your reward.',
+    titleKey: 'redeem.showScreenTitle',
+    bodyKey: 'redeem.showScreenBody',
   },
   {
     icon: 'arrow-forward-circle-outline',
-    title: 'Slide to confirm',
-    body: 'When they are ready, slide the button below to redeem.',
+    titleKey: 'redeem.slideTitle',
+    bodyKey: 'redeem.slideBody',
   },
   {
     icon: 'cafe-outline',
-    title: 'Enjoy your treat',
-    body: 'Your reward is marked as used — no QR code needed.',
+    titleKey: 'redeem.enjoyTreatTitle',
+    bodyKey: 'redeem.enjoyTreatBody',
   },
 ]
 
 export default function RedeemStepsGuide() {
+  const { t } = useTranslation()
+
   return (
     <View
       style={{
@@ -38,11 +41,11 @@ export default function RedeemStepsGuide() {
       }}
     >
       <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: colors.inkSoft, textTransform: 'uppercase' })}>
-        How it works
+        {t('redeem.howItWorks')}
       </Text>
 
       {STEPS.map((step, index) => (
-        <View key={step.title} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+        <View key={step.titleKey} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
           <View
             style={{
               width: 40,
@@ -58,8 +61,8 @@ export default function RedeemStepsGuide() {
             <Ionicons name={step.icon} size={20} color={index === 1 ? colors.accentActive : colors.ink} />
           </View>
           <View style={{ flex: 1, gap: 3, paddingTop: 2 }}>
-            <Text style={withAppFont({ fontSize: 16, fontWeight: '800', color: colors.ink })}>{step.title}</Text>
-            <Text style={withAppFont({ fontSize: 14, lineHeight: 20, color: colors.inkMuted })}>{step.body}</Text>
+            <Text style={withAppFont({ fontSize: 16, fontWeight: '800', color: colors.ink })}>{t(step.titleKey)}</Text>
+            <Text style={withAppFont({ fontSize: 14, lineHeight: 20, color: colors.inkMuted })}>{t(step.bodyKey)}</Text>
           </View>
         </View>
       ))}

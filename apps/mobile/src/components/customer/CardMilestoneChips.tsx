@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { ScrollView, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import HomeSectionHeader from '../ui/HomeSectionHeader'
@@ -12,11 +13,13 @@ interface CardMilestoneChipsProps {
 }
 
 export default function CardMilestoneChips({ milestones, stamps }: CardMilestoneChipsProps) {
+  const { t } = useTranslation()
+
   if (!milestones.length) return null
 
   return (
     <View style={{ marginTop: 22 }}>
-      <HomeSectionHeader title="All milestones" label="Reward path" />
+      <HomeSectionHeader title={t('card.allMilestones')} label={t('card.rewardPath')} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

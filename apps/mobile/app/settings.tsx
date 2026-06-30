@@ -2,18 +2,24 @@ import { Redirect, useFocusEffect, useRouter } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { useCallback, useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import ProfileMenuRow from '../src/components/customer/ProfileMenuRow'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
+import { apiRequest } from '../src/lib/api'
 import { webAppOrigin } from '../src/lib/config'
 import { useAuth } from '../src/providers/AuthProvider'
+import { localeOptions, type AppLocale } from '../src/i18n'
+import { useLocalePreference } from '../src/providers/LocaleProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 import { profileDisplayName, profileInitials } from '../src/lib/profileDisplay'
 import { withAppFont } from '../src/lib/typography'
 
 export default function SettingsScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const { locale, setLocale } = useLocalePreference()
   const { user, signOut, refreshUser, token, booting } = useAuth()
   const cardsQuery = useCustomerCards({ refetchOnFocus: Boolean(token) })
 
@@ -49,6 +55,17 @@ export default function SettingsScreen() {
     router.replace('/(customer)/venues')
   }
 
+  async function handleLocaleChange(nextLocale: AppLocale) {
+    await setLocale(nextLocale)
+    if (!token) return
+
+    await apiRequest('/auth/locale', {
+      method: 'PUT',
+      token,
+      body: { locale: nextLocale },
+    }).catch(() => undefined)
+  }
+
   if (!booting && !token) {
     return <Redirect href="/(customer)/venues" />
   }
@@ -56,7 +73,7 @@ export default function SettingsScreen() {
   return (
     <ScreenGradientLayout scrollable tabBarInset>
       <View style={{ paddingHorizontal: space.screenX, paddingBottom: space.sectionY }}>
-        <Text style={typography.hero}>Profile</Text>
+        <Text style={typography.hero}>{t('settings.profile')}</Text>
 
         <View style={{ marginTop: space.sectionY, alignItems: 'center' }}>
           <View
@@ -79,9 +96,9 @@ export default function SettingsScreen() {
 
         <View style={{ marginTop: space.sectionY, flexDirection: 'row', gap: 10 }}>
           {[
-            { label: 'Venues', value: String(stats.venues), accent: false },
-            { label: 'Stamps', value: String(stats.stamps), accent: false },
-            { label: 'Ready', value: String(stats.rewards), accent: stats.rewards > 0 },
+            { label: t('settings.venues'), value: String(stats.venues), accent: false },
+            { label: t('settings.stamps'), value: String(stats.stamps), accent: false },
+            { label: t('settings.ready'), value: String(stats.rewards), accent: stats.rewards > 0 },
           ].map((item) => (
             <View
               key={item.label}
@@ -119,38 +136,69 @@ export default function SettingsScreen() {
             borderColor: colors.border,
           }}
         >
-          <Text style={{ ...typography.label, marginTop: 14, marginBottom: 4 }}>Account</Text>
+          <Text style={{ ...typography.label, marginTop: 14, marginBottom: 4 }}>{t('settings.account')}</Text>
           <ProfileMenuRow
             icon="notifications-outline"
-            label="Notifications"
-            subtitle="Offers and reward updates"
+            label={t('settings.notifications')}
+            subtitle={t('settings.notificationSubtitle')}
             onPress={() => router.push('/(customer)/notifications')}
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow
+            icon="language-outline"
+            label={t('settings.language')}
+            subtitle={t('settings.languageSubtitle')}
+          />
+          <View style={{ flexDirection: 'row', gap: 10, paddingBottom: 14 }}>
+            {localeOptions.map((option) => {
+              const selected = option.value === locale
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => void handleLocaleChange(option.value)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: selected ? colors.accentActive : colors.border,
+                    backgroundColor: selected ? colors.accentSoft : colors.surface,
+                    paddingVertical: 10,
+                    alignItems: 'center',
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <Text style={withAppFont({ color: selected ? colors.accentActive : colors.inkMuted, fontWeight: '800' })}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+          <View style={{ height: 1, backgroundColor: colors.border }} />
+          <ProfileMenuRow
             icon="lock-closed-outline"
-            label="Change password"
+            label={t('settings.changePassword')}
             onPress={() => router.push('/profile/change-password')}
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow
             icon="key-outline"
-            label="Forgot password"
+            label={t('settings.forgotPassword')}
             onPress={() => openWeb('/forgot-password')}
             external
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow
             icon="globe-outline"
-            label="About Flotory"
+            label={t('settings.about')}
             onPress={() => openWeb('/')}
             external
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow
             icon="trash-outline"
-            label="Delete account"
-            subtitle="Permanently remove your data"
+            label={t('settings.deleteAccount')}
+            subtitle={t('settings.deleteAccountSubtitle')}
             onPress={() => router.push('/profile/delete-account')}
             destructive
           />
@@ -169,7 +217,7 @@ export default function SettingsScreen() {
               opacity: pressed ? 0.92 : 1,
             })}
           >
-            <Text style={withAppFont({ color: colors.danger, fontWeight: '800', fontSize: 16 })}>Sign out</Text>
+            <Text style={withAppFont({ color: colors.danger, fontWeight: '800', fontSize: 16 })}>{t('settings.signOut')}</Text>
           </Pressable>
         </View>
       </View>

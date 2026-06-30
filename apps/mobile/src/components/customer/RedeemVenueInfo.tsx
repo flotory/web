@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { hasVenueMapTarget, openVenueInMaps, type VenueMapTarget } from '../../lib/openMaps'
 import { withAppFont } from '../../lib/typography'
@@ -12,6 +13,7 @@ interface RedeemVenueInfoProps {
 }
 
 export default function RedeemVenueInfo({ venueName, address, mapTarget }: RedeemVenueInfoProps) {
+  const { t } = useTranslation()
   const canNavigate = hasVenueMapTarget(mapTarget)
 
   return (
@@ -26,7 +28,7 @@ export default function RedeemVenueInfo({ venueName, address, mapTarget }: Redee
       }}
     >
       <Text style={withAppFont({ fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: colors.inkSoft, textTransform: 'uppercase' })}>
-        Redeem at
+        {t('redeem.redeemAt')}
       </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
@@ -47,7 +49,7 @@ export default function RedeemVenueInfo({ venueName, address, mapTarget }: Redee
           {address?.trim() ? (
             <Text style={withAppFont({ fontSize: 14, lineHeight: 20, color: colors.inkMuted })}>{address.trim()}</Text>
           ) : (
-            <Text style={withAppFont({ fontSize: 14, color: colors.inkMuted })}>Ask staff for the pickup counter.</Text>
+            <Text style={withAppFont({ fontSize: 14, color: colors.inkMuted })}>{t('redeem.askStaff')}</Text>
           )}
         </View>
       </View>
@@ -69,7 +71,7 @@ export default function RedeemVenueInfo({ venueName, address, mapTarget }: Redee
           })}
         >
           <Ionicons name="map-outline" size={18} color={colors.ink} />
-          <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>Get directions</Text>
+          <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.ink })}>{t('redeem.getDirections')}</Text>
         </Pressable>
       ) : null}
     </View>

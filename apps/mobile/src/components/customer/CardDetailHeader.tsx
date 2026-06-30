@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { ComponentProps } from 'react'
 import { Image, Platform, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useTranslation } from 'react-i18next'
 
 import CardMilestoneChips from './CardMilestoneChips'
 import CardPromotionSticker from './CardPromotionSticker'
@@ -47,6 +48,7 @@ export default function CardDetailHeader({
   animatingSlots = [],
   celebrateGiftStamp = null,
 }: CardDetailHeaderProps) {
+  const { t } = useTranslation()
   const cover = venueCoverUrl(venue ?? undefined)
   const logo = venueLogoUrl(venue ?? undefined)
   const categoryLabel = venue?.category ? formatVenueCategoryLabel(venue.category) : null
@@ -165,7 +167,7 @@ export default function CardDetailHeader({
                 })}
                 numberOfLines={2}
               >
-                {venue?.name ?? 'Loyalty card'}
+                {venue?.name ?? t('card.loyaltyCard')}
               </Text>
               {categoryLabel ? (
                 <Text

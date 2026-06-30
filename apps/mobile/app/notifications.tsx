@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CustomerScreen from '../src/components/ui/CustomerScreen'
@@ -9,6 +10,7 @@ import { StickyBackHeader } from '../src/components/ui/StickyBackButton'
 import { space, type as typography } from '../src/theme'
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
@@ -16,7 +18,7 @@ export default function NotificationsScreen() {
     <>
       <StickyBackHeader topInset={insets.top} onPress={() => router.back()} />
       <View style={{ paddingHorizontal: space.screenX }}>
-        <ScreenHeader title="Notifications" subtitle="Updates from your favorite spots." />
+        <ScreenHeader title={t('notifications.title')} subtitle={t('notifications.subtitle')} />
       </View>
     </>
   )
@@ -26,11 +28,11 @@ export default function NotificationsScreen() {
       <View style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
         <StateCard
           emoji="🔔"
-          title="You're all caught up"
-          message="When venues send offers or your rewards are ready, they'll show up here."
+          title={t('notifications.emptyTitle')}
+          message={t('notifications.emptyMessage')}
         />
         <Text style={{ ...typography.caption, marginTop: space.sectionY, textAlign: 'center' }}>
-          Push alerts are coming soon.
+          {t('notifications.comingSoon')}
         </Text>
       </View>
     </CustomerScreen>

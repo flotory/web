@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { Link } from 'expo-router'
 import { type ReactNode, useState } from 'react'
 import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import Svg, { Line } from 'react-native-svg'
 
-import { stampsToRewardCopy } from '../../lib/progressCopy'
 import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, rewardReady, shadows } from '../../theme'
@@ -56,12 +56,13 @@ export interface HomeRewardTicketCardProps {
 function TicketStampProgress({
   collected,
   target,
-  completeLabel = 'Ready to claim',
+  completeLabel,
 }: {
   collected: number
   target: number
-  completeLabel?: string
+  completeLabel: string
 }) {
+  const { t } = useTranslation()
   const slots = Math.min(Math.max(target, 1), 10)
   const filled = Math.min(Math.max(collected, 0), slots)
   const toGo = Math.max(target - collected, 0)
@@ -83,10 +84,10 @@ function TicketStampProgress({
       </View>
       <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
-          {filled} of {target} stamps
+          {t('home.progressCount', { current: filled, target })}
         </Text>
         <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? colors.accent : colors.ink })}>
-          {toGo <= 0 ? completeLabel : toGo === 1 ? '1 stamp to go' : `${toGo} stamps to go`}
+          {toGo <= 0 ? completeLabel : t('home.stampToGoInline', { count: toGo })}
         </Text>
       </View>
     </View>
@@ -344,8 +345,9 @@ export default function HomeRewardTicketCard({
   linkable = true,
   stampProgress = null,
 }: HomeRewardTicketCardProps) {
+  const { t } = useTranslation()
   const isReady = variant === 'ready'
-  const venueName = venue?.name ?? 'Venue'
+  const venueName = venue?.name ?? t('common.venue')
   const resolvedImage = imageUri ?? rewardImageUrl({ title, image: null, image_thumb: null })
   const showNextFooter = false
 
@@ -381,7 +383,7 @@ export default function HomeRewardTicketCard({
                 color: isReady ? colors.accentActive : colors.ink,
               })}
             >
-              {isReady ? 'READY TO REDEEM' : 'NEXT REWARD'}
+              {isReady ? t('redeem.readyToRedeem') : t('home.nextRewardBadge')}
             </Text>
           </View>
 
@@ -411,11 +413,11 @@ export default function HomeRewardTicketCard({
               {isReady ? (
                 <>
                   <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />
-                  <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.accent })}>Ready now</Text>
+                  <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.accent })}>{t('home.readyNow')}</Text>
                 </>
               ) : (
                 <Text style={withAppFont({ fontSize: 14, fontWeight: '700', color: colors.inkMuted })}>
-                  {stampsToGo != null ? stampsToRewardCopy(stampsToGo, title) : 'Keep collecting'}
+                  {stampsToGo != null ? t('home.stampsToReward', { count: stampsToGo, reward: title }) : t('home.keepCollecting')}
                 </Text>
               )}
             </View>
@@ -424,11 +426,11 @@ export default function HomeRewardTicketCard({
             <TicketStampProgress
               collected={stampProgress.collected}
               target={stampProgress.target}
-              completeLabel={isReady ? 'Unlocked' : 'Ready to claim'}
+              completeLabel={isReady ? t('home.unlocked') : t('home.readyToClaim')}
             />
           ) : null}
           {isReady && linkable && unlockId ? (
-            <TicketCompactAction label="Redeem reward" icon="gift-outline" />
+            <TicketCompactAction label={t('home.redeemReward')} icon="gift-outline" />
           ) : null}
         </View>
 

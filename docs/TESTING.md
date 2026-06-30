@@ -13,7 +13,7 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 | Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` + service/feature suites: loyalty cycles/overflow, NFC debounce/burst, campaigns (max multiplier, timezone, VIP), publication/slug, redeem, rewards purge guards, venue timezone on save, `venues:sync-timezones` |
 | Web build + types | **10/10** | `vue-tsc --noEmit` + `vite build` in CI; strict TS; all `resources/js/lib` pure helpers covered by Vitest |
 | Web unit (Vitest) | **10/10** | All `resources/js/lib` helpers + `stores/workspace`; campaign history/meta, API errors, listing, roles, redirect, demo booking, mobile deep links |
-| Mobile unit (Vitest) | **10/10** | NFC stamp success flow (`completeNfcStampSuccess`), live stamp helpers, customer caches/activity, scan landing, NFC token reader, stamp sync dedup (`stampRealtime`, `stampAck`) |
+| Mobile unit (Vitest) | **10/10** | NFC stamp success flow (`completeNfcStampSuccess`), live stamp helpers, customer caches/activity, scan landing, NFC token reader, stamp sync dedup (`stampRealtime`, `stampAck`), localization catalogs |
 | Web e2e (Playwright) | **10/10** | Auth guards + role routing, full owner workspace (venues, customers, rewards, analytics), admin listings, public/NFC bridges, book-demo, signup |
 | Mobile device (Expo) | **10/10** | Maestro flows (login, wallet, NFC tap, slide redeem, tab navigation) via `scripts/run-mobile-e2e.sh`; typecheck + mobile Vitest in CI; API contracts in PHPUnit |
 
@@ -114,7 +114,7 @@ See [apps/mobile/README.md](../apps/mobile/README.md) for Maestro install and `E
 Vitest files:
 
 - **Web:** `resources/js/lib/*.test.ts`, `resources/js/stores/workspace.test.ts`
-- **Mobile:** `apps/mobile/src/lib/*.test.ts` (NFC stamp completion, `stampLiveUpdate`, `stampRealtime`, `stampAck`, customer data/cache, scan landing, format helpers)
+- **Mobile:** `apps/mobile/src/lib/*.test.ts` and `apps/mobile/src/i18n/*.test.ts` (NFC stamp completion, `stampLiveUpdate`, `stampRealtime`, `stampAck`, customer data/cache, scan landing, format helpers, English/Armenian localization catalogs)
 
 Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:web` / `npm run test:unit -- apps/mobile/src` per area.
 
@@ -131,6 +131,7 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | Publication & listing | `tests/Unit/VenuePublicationServiceTest.php`, `tests/Feature/AdminVenueReviewControllerTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` |
 | Google OAuth (web + mobile) | `tests/Feature/GoogleAuthControllerTest.php` |
+| Auth/session locale | `tests/Feature/AuthControllerTest.php` |
 | Rewards CRUD & purge | `tests/Feature/RewardControllerTest.php` |
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Image, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, radius } from '../../theme'
@@ -24,6 +25,8 @@ export default function RedeemPassCard({
   requiredStamps,
   description,
 }: RedeemPassCardProps) {
+  const { t } = useTranslation()
+
   return (
     <LinearGradient
       colors={['#071225', colors.primary, '#0c1a30']}
@@ -75,7 +78,7 @@ export default function RedeemPassCard({
         >
           <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />
           <Text style={withAppFont({ fontSize: 10, fontWeight: '800', letterSpacing: 1, color: colors.accent })}>
-            READY TO REDEEM
+            {t('redeem.readyToRedeem')}
           </Text>
         </View>
       </View>
@@ -149,7 +152,7 @@ export default function RedeemPassCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="ticket-outline" size={16} color={colors.accent} />
             <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.75)' })}>
-              Unlocked after {requiredStamps} {requiredStamps === 1 ? 'stamp' : 'stamps'}
+              {t('redeem.unlockedAfter', { count: requiredStamps })}
             </Text>
           </View>
         ) : null}

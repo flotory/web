@@ -1,10 +1,10 @@
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-} from '@expo-google-fonts/plus-jakarta-sans'
+  NotoSansArmenian_400Regular,
+  NotoSansArmenian_500Medium,
+  NotoSansArmenian_600SemiBold,
+  NotoSansArmenian_700Bold,
+  NotoSansArmenian_800ExtraBold,
+} from '@expo-google-fonts/noto-sans-armenian'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -16,6 +16,7 @@ import BootSplashScreen, { BOOT_SPLASH_BACKGROUND } from '../src/components/ui/B
 import ForceUpdateScreen from '../src/components/ui/ForceUpdateScreen'
 import { useAppUpdateGate } from '../src/hooks/useAppUpdateGate'
 import { AuthProvider, useAuth } from '../src/providers/AuthProvider'
+import { LocaleProvider } from '../src/providers/LocaleProvider'
 import { RealtimeProvider } from '../src/providers/RealtimeProvider'
 import { ThemeProvider } from '../src/providers/ThemeProvider'
 import { applyDefaultAppTypography } from '../src/setupTypography'
@@ -27,11 +28,11 @@ function RootNavigator() {
   const { booting } = useAuth()
   const updateGate = useAppUpdateGate()
   const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    PlusJakartaSans_800ExtraBold,
+    NotoSansArmenian_400Regular,
+    NotoSansArmenian_500Medium,
+    NotoSansArmenian_600SemiBold,
+    NotoSansArmenian_700Bold,
+    NotoSansArmenian_800ExtraBold,
   })
 
   useEffect(() => {
@@ -61,13 +62,15 @@ export default function RootLayout() {
   return (
     <View style={styles.appRoot}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <RealtimeProvider>
-              <RootNavigator />
-            </RealtimeProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <LocaleProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <RealtimeProvider>
+                <RootNavigator />
+              </RealtimeProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </LocaleProvider>
       </SafeAreaProvider>
     </View>
   )

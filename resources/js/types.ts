@@ -53,6 +53,7 @@ export interface User {
   name: string
   email: string
   is_admin: boolean
+  locale?: 'en' | 'hy' | null
   active_venue_id?: number | null
   active_venue?: Venue | null
 }

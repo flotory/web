@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, screenWallpaperBaseColor, type as typography } from '../../theme'
@@ -22,6 +23,7 @@ export default function HomeScreenHeader({
   onNotificationsPress,
   unreadCount = 0,
 }: HomeScreenHeaderProps) {
+  const { t } = useTranslation()
   const showUnreadBadge = unreadCount > 0
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
@@ -49,7 +51,9 @@ export default function HomeScreenHeader({
         disabled={!onNotificationsPress}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={showUnreadBadge ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+        accessibilityLabel={
+          showUnreadBadge ? t('home.notificationsUnread', { count: unreadCount }) : t('home.notifications')
+        }
         style={({ pressed }) => ({
           width: 44,
           height: 44,
