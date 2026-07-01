@@ -7,6 +7,7 @@ export default {
     failed: 'Չհաջողվեց',
     logout: 'Դուրս գալ',
     dashboard: 'Վահանակ',
+    account: 'Հաշիվ',
   },
   nav: {
     dashboard: 'Վահանակ',
