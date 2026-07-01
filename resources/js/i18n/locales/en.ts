@@ -7,6 +7,7 @@ export default {
     failed: 'Failed',
     logout: 'Logout',
     dashboard: 'Dashboard',
+    account: 'Account',
   },
   nav: {
     dashboard: 'Dashboard',

@@ -111,12 +111,24 @@ async function logout() {
         </RouterLink>
       </nav>
 
-      <button
-        class="mt-4 w-full rounded-2xl border border-sidebar-border px-4 py-3 text-left text-sm font-bold text-sidebar-text-muted transition hover:border-accent/40 hover:bg-sidebar-hover hover:text-sidebar-text"
-        @click="logout"
-      >
-        {{ t('common.logout') }}
-      </button>
+      <div class="mt-4 space-y-2">
+        <RouterLink
+          to="/account"
+          :class="[
+            'flex w-full items-center gap-3 rounded-2xl border border-sidebar-border px-4 py-3 text-left text-sm font-bold transition hover:border-accent/40 hover:bg-sidebar-hover hover:text-sidebar-text',
+            route.path === '/account' ? 'border-accent/40 bg-sidebar-hover text-sidebar-text' : 'text-sidebar-text-muted',
+          ]"
+        >
+          <span class="grid size-7 shrink-0 place-items-center rounded-xl bg-white/5 text-sidebar-text-muted">◎</span>
+          <span>{{ t('common.account') }}</span>
+        </RouterLink>
+        <button
+          class="w-full rounded-2xl border border-sidebar-border px-4 py-3 text-left text-sm font-bold text-sidebar-text-muted transition hover:border-accent/40 hover:bg-sidebar-hover hover:text-sidebar-text"
+          @click="logout"
+        >
+          {{ t('common.logout') }}
+        </button>
+      </div>
     </aside>
 
     <div class="bg-workspace-gradient min-h-screen">
@@ -125,9 +137,17 @@ async function logout() {
           <RouterLink :to="logoPath" :aria-label="t('common.dashboard')">
             <FlotoryLogo />
           </RouterLink>
-          <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border" @click="logout">
-            {{ t('common.logout') }}
-          </button>
+          <div class="flex items-center gap-2">
+            <RouterLink
+              to="/account"
+              class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border"
+            >
+              {{ t('common.account') }}
+            </RouterLink>
+            <button class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border" @click="logout">
+              {{ t('common.logout') }}
+            </button>
+          </div>
         </div>
         <div
           v-if="workspace.hasMembership && workspace.activeVenues.length > 1"
