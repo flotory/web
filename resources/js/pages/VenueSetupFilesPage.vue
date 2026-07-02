@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText, FileUp, Trash2 } from '@lucide/vue'
+import { FileText, FileUp, Plus, Trash2 } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -12,6 +12,7 @@ import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage, isVenueAccessDenied } from '@/lib/api'
 import { VENUE_ACCESS_DENIED_MESSAGE } from '@/lib/venueWorkspace'
 import { listingStatusLabel } from '@/lib/venueListing'
+import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import type { Venue } from '@/types'
 
@@ -37,6 +38,8 @@ const uploading = ref(false)
 const error = ref('')
 
 const fileInput = ref<HTMLInputElement | null>(null)
+const isDragging = ref(false)
+const dragDepth = ref(0)
 
 const venueStatus = computed(() => venue.value?.status ?? 'draft')
 
@@ -82,10 +85,37 @@ async function loadPage() {
   }
 }
 
-async function uploadFiles(event: Event) {
-  const input = event.target as HTMLInputElement
-  const selected = input.files ? Array.from(input.files) : []
-  input.value = ''
+function openFilePicker() {
+  if (!canEdit.value || uploading.value) return
+  fileInput.value?.click()
+}
+
+function onDragEnter(event: DragEvent) {
+  event.preventDefault()
+  if (!canEdit.value || uploading.value) return
+  dragDepth.value += 1
+  isDragging.value = true
+}
+
+function onDragLeave(event: DragEvent) {
+  event.preventDefault()
+  dragDepth.value = Math.max(0, dragDepth.value - 1)
+  if (dragDepth.value === 0) {
+    isDragging.value = false
+  }
+}
+
+function onDrop(event: DragEvent) {
+  event.preventDefault()
+  dragDepth.value = 0
+  isDragging.value = false
+  if (!canEdit.value || uploading.value) return
+
+  const selected = event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : []
+  void uploadSelectedFiles(selected)
+}
+
+async function uploadSelectedFiles(selected: File[]) {
   if (!selected.length) return
 
   uploading.value = true
@@ -116,6 +146,13 @@ async function uploadFiles(event: Event) {
   }
 
   uploading.value = false
+}
+
+async function uploadFiles(event: Event) {
+  const input = event.target as HTMLInputElement
+  const selected = input.files ? Array.from(input.files) : []
+  input.value = ''
+  await uploadSelectedFiles(selected)
 }
 
 async function removeFile(file: VenueSetupFileRecord) {
@@ -199,7 +236,7 @@ onMounted(loadPage)
             accept="image/png,image/jpeg,image/webp,image/gif,.pdf,.doc,.docx,.txt"
             @change="uploadFiles"
           >
-          <AppButton variant="secondary" :disabled="!canEdit || uploading" @click="fileInput?.click()">
+          <AppButton variant="secondary" :disabled="!canEdit || uploading" @click="openFilePicker">
             <FileUp class="size-4" />
             {{ uploading ? 'Uploading…' : 'Upload files' }}
           </AppButton>
@@ -207,39 +244,78 @@ onMounted(loadPage)
 
         <p v-if="error" class="mt-4 text-sm font-semibold text-danger">{{ error }}</p>
 
-        <ul v-if="files.length" class="mt-5 space-y-2">
-          <li
-            v-for="file in files"
-            :key="file.id"
-            class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-3 py-2.5"
-          >
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface border border-border">
-                <img v-if="file.is_image" :src="file.path" :alt="file.original_name" class="size-full object-cover">
-                <FileText v-else class="size-4 text-ink-muted" />
+        <div
+          class="mt-5 rounded-2xl border border-dashed px-4 py-6 transition"
+          :class="cn(
+            canEdit ? 'border-border bg-surface-muted/60' : 'border-border bg-surface-muted/40',
+            canEdit && isDragging && 'border-accent bg-accent/5',
+            canEdit && !uploading && 'cursor-pointer',
+          )"
+          @dragenter="onDragEnter"
+          @dragleave="onDragLeave"
+          @dragover.prevent
+          @drop.prevent="onDrop"
+          @click="canEdit && !files.length ? openFilePicker() : undefined"
+        >
+          <ul v-if="files.length" class="space-y-2">
+            <li
+              v-for="file in files"
+              :key="file.id"
+              class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2.5"
+            >
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-muted border border-border">
+                  <img v-if="file.is_image" :src="file.path" :alt="file.original_name" class="size-full object-cover">
+                  <FileText v-else class="size-4 text-ink-muted" />
+                </div>
+                <div class="min-w-0">
+                  <a
+                    :href="file.path"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="block truncate text-sm font-semibold text-ink hover:text-primary-soft"
+                    @click.stop
+                  >
+                    {{ file.original_name }}
+                  </a>
+                  <p class="text-xs font-medium text-ink-muted">{{ formatSize(file.byte_size) }}</p>
+                </div>
               </div>
-              <div class="min-w-0">
-                <a
-                  :href="file.path"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block truncate text-sm font-semibold text-ink hover:text-primary-soft"
-                >
-                  {{ file.original_name }}
-                </a>
-                <p class="text-xs font-medium text-ink-muted">{{ formatSize(file.byte_size) }}</p>
-              </div>
-            </div>
-            <AppButton v-if="canEdit" variant="ghost" size="sm" @click="removeFile(file)">
-              <Trash2 class="size-4" />
-            </AppButton>
-          </li>
-        </ul>
+              <AppButton v-if="canEdit" variant="ghost" size="sm" @click.stop="removeFile(file)">
+                <Trash2 class="size-4" />
+              </AppButton>
+            </li>
+          </ul>
 
-        <p v-else class="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/60 px-4 py-8 text-center text-sm font-medium text-ink-muted">
-          <template v-if="canEdit">No files yet. Upload your logo, menus, or any documents to continue setup.</template>
-          <template v-else>No setup files on record for this venue.</template>
-        </p>
+          <div v-if="!files.length" class="py-4 text-center">
+            <button
+              v-if="canEdit"
+              type="button"
+              class="mx-auto grid size-14 place-items-center rounded-full border border-border bg-surface text-ink shadow-sm transition hover:border-accent/40 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="uploading"
+              aria-label="Upload files"
+              @click.stop="openFilePicker"
+            >
+              <Plus class="size-6" />
+            </button>
+            <p class="mt-4 text-sm font-medium text-ink-muted">
+              <template v-if="canEdit">
+                {{ isDragging ? 'Drop files to upload' : 'No files yet. Upload your logo, menus, or any documents to continue setup.' }}
+              </template>
+              <template v-else>No setup files on record for this venue.</template>
+            </p>
+            <p v-if="canEdit && !isDragging" class="mt-2 text-xs font-medium text-ink-muted/80">
+              Click + or drag and drop files here
+            </p>
+          </div>
+
+          <p
+            v-else-if="canEdit"
+            class="mt-4 border-t border-dashed border-border pt-4 text-center text-xs font-medium text-ink-muted"
+          >
+            {{ isDragging ? 'Drop files to upload' : 'Drag and drop more files here' }}
+          </p>
+        </div>
       </AppCard>
     </div>
   </AppShell>
