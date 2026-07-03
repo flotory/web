@@ -67,8 +67,6 @@ class VenueAnalyticsService
     /**
      * @return list<array{month: string, label: string, visits: int}>
      */
-    public const MONTHLY_ACTIVITY_MONTHS = 12;
-
     public function monthlyActivityForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
         $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);

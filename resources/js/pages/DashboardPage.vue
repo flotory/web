@@ -32,7 +32,7 @@ import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
-import type { Customer, Venue } from '@/types'
+import type { Venue } from '@/types'
 import type { Campaign } from '@/lib/campaignTemplates'
 
 interface DashboardInsight {
@@ -52,7 +52,6 @@ interface DashboardResponse {
   venue: Pick<Venue, 'id' | 'name' | 'slug'> | null
   venues_count: number
   period?: DashboardPeriodMeta
-  has_loyalty_activity?: boolean
   stats: {
     total_customers: number
     active_progressors: number
@@ -73,18 +72,6 @@ interface DashboardResponse {
     rewards_unlocked?: { change_pct: number | null }
     repeat_rate?: { change_pct: number | null }
   }
-  most_loyal_customers: Customer[]
-  monthly_activity: Array<{ month: string; label?: string; visits: number }>
-  milestone_conversions: Array<{
-    reward_id: number
-    title: string
-    required_stamps: number
-    unlocked_count: number
-    claimed_count: number
-    claim_rate: number
-    venue_id?: number
-    venue_name?: string
-  }>
   venue_summaries: Array<{
     venue_id: number
     venue_name: string
@@ -170,14 +157,6 @@ const listingBadge = computed(() => {
   }
 })
 
-const conversionOverview = computed(() => {
-  const rows = dashboard.value?.milestone_conversions ?? []
-  const unlocked = rows.reduce((sum, row) => sum + row.unlocked_count, 0)
-  const claimed = rows.reduce((sum, row) => sum + row.claimed_count, 0)
-  const rate = unlocked > 0 ? Math.round((claimed / unlocked) * 1000) / 10 : 0
-  return { unlocked, claimed, rate }
-})
-
 const stats = computed(() => {
   const trends = dashboard.value?.kpi_trends
 
@@ -213,18 +192,10 @@ const stats = computed(() => {
   ]
 })
 
-const hasCustomers = computed(() => (dashboard.value?.stats.total_customers ?? 0) > 0)
 const insights = computed(() => dashboard.value?.insights ?? [])
 const activeCampaigns = computed(() => dashboard.value?.active_campaigns ?? [])
 const recentActivity = computed(() => dashboard.value?.recent_activity ?? [])
 const recentActivityRows = computed(() => recentActivity.value.slice(0, 3))
-const monthlyActivityRows = computed(() => dashboard.value?.monthly_activity ?? [])
-const maxMonthlyVisits = computed(() => Math.max(1, ...monthlyActivityRows.value.map((row) => row.visits)))
-const topConversionRows = computed(() =>
-  [...(dashboard.value?.milestone_conversions ?? [])]
-    .sort((a, b) => b.unlocked_count - a.unlocked_count)
-    .slice(0, 3),
-)
 
 function insightToneClass(tone: DashboardInsight['tone']) {
   switch (tone) {
@@ -514,66 +485,6 @@ onMounted(() => {
       @edit="openCampaignEditor"
       @end="endCampaign"
     />
-
-    <AppCard wrapper-class="mt-6">
-      <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <PageSection title="Analytics preview" description="Monthly visits and reward performance from this venue." />
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
-              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Visits</p>
-              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_last_28_days ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">{{ periodLabel }}</p>
-            </div>
-            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
-              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Claim rate</p>
-              <p class="mt-1 text-2xl font-black text-ink">{{ conversionOverview.rate }}%</p>
-              <p class="text-xs font-semibold text-ink-muted">{{ conversionOverview.claimed }} of {{ conversionOverview.unlocked }} claimed</p>
-            </div>
-            <div class="rounded-2xl bg-surface-muted p-3 border border-border">
-              <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Returning</p>
-              <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">2+ visits in range</p>
-            </div>
-          </div>
-          <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-bold text-primary hover:text-primary-soft">
-            Open full analytics →
-          </RouterLink>
-        </div>
-        <div class="rounded-2xl bg-surface-muted p-4 border border-border">
-          <div class="mb-3 flex items-center justify-between gap-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">{{ periodLabel }}</p>
-            <p class="text-xs font-semibold text-ink-muted">{{ maxMonthlyVisits }} peak visits</p>
-          </div>
-          <div class="flex h-28 items-end gap-2">
-            <div
-              v-for="row in monthlyActivityRows"
-              :key="row.month"
-              class="flex h-full flex-1 flex-col justify-end gap-2"
-            >
-              <div
-                class="min-h-2 rounded-t-xl bg-chart/80"
-                :style="{ height: `${Math.max(row.visits > 0 ? 10 : 4, (row.visits / maxMonthlyVisits) * 100)}%` }"
-                :title="`${row.month}: ${row.visits} visits`"
-              />
-              <p class="truncate text-center text-[10px] font-bold uppercase text-ink-soft">
-                {{ row.label ?? row.month }}
-              </p>
-            </div>
-          </div>
-          <div v-if="topConversionRows.length" class="mt-4 space-y-2 border-t border-border pt-4">
-            <div
-              v-for="row in topConversionRows"
-              :key="`${row.reward_id}-${row.venue_id ?? 'venue'}`"
-              class="flex items-center justify-between gap-3 text-xs font-semibold text-ink-muted"
-            >
-              <span class="truncate">{{ row.title }}</span>
-              <span class="shrink-0 font-bold text-ink">{{ row.claim_rate }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </AppCard>
 
     <AppCard v-if="dashboard?.venue_summaries?.length && workspace.activeVenues.length > 1" wrapper-class="mt-6">
       <h2 class="text-xl font-black text-ink">Other venues</h2>
