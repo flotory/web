@@ -296,6 +296,27 @@ class VenueControllerTest extends TestCase
             ->assertJsonPath('venue.category', 'bar');
     }
 
+    public function test_owner_can_update_average_check_amount(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/venues/{$venue->id}", [
+            'name' => $venue->name,
+            'average_check_amount' => 5,
+        ])
+            ->assertOk()
+            ->assertJsonPath('venue.average_check_amount', '5.00');
+
+        $this->assertDatabaseHas('venues', [
+            'id' => $venue->id,
+            'average_check_amount' => 5,
+        ]);
+    }
+
     public function test_staff_can_view_venue_and_customers(): void
     {
         $owner = $this->createUser();

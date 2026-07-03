@@ -197,9 +197,6 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           :tabindex="canManageMilestone(slot.milestone) ? 0 : undefined"
           class="group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border transition duration-200"
           :class="[
-            isProminent
-              ? 'min-h-[5.75rem] sm:min-h-[6.75rem] md:min-h-[7.5rem]'
-              : 'h-[4.75rem] sm:h-[5.25rem]',
             rewardCardClass(slot),
             editable && canManageMilestone(slot.milestone) && 'cursor-pointer',
             animatingSlots?.includes(slot.position) && 'animate-stamp-pop',
@@ -209,14 +206,11 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           @keydown.enter.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
           @keydown.space.prevent="canManageMilestone(slot.milestone) && selectMilestone(slot.milestone.id)"
         >
-          <div
-            class="relative min-h-0 overflow-hidden bg-surface-muted"
-            :class="isProminent ? 'flex-[1.35]' : 'flex-[1.15]'"
-          >
+          <div class="relative aspect-square w-full overflow-hidden bg-surface-muted">
             <img
               :src="rewardThumbUrl(slot.milestone)"
               :alt="slot.milestone.title"
-              class="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+              class="size-full object-cover object-center transition duration-300 group-hover:scale-[1.02]"
             >
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
 

@@ -54,11 +54,11 @@ const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string[]> = {
 }
 
 const REWARD_DEFAULTS = {
-  drink: '/images/defaults/photo-1509042239860-f550ce710b93-800x600.jpg',
-  dessert: '/images/defaults/photo-1551024506-0bccd828d307-800x600.jpg',
-  free_item: '/images/defaults/photo-1504674900247-0877df9cc836-800x600.jpg',
-  discount: '/images/defaults/photo-1555396273-367ea4eb4db5-800x600.jpg',
-  special: '/images/defaults/photo-1501339847302-ac426a4a7cbb-800x600.jpg',
+  drink: '/images/defaults/rewards/free-coffee.png',
+  dessert: '/images/defaults/rewards/chocolate-cake.png',
+  free_item: '/images/defaults/rewards/free-coffee.png',
+  discount: '/images/defaults/rewards/ice-cream-cone.png',
+  special: '/images/defaults/rewards/free-coffee.png',
 } as const
 
 function normalizeCategory(category: string | null | undefined): VenueCategory {
@@ -98,8 +98,9 @@ export function rewardImageUrl(reward?: { image?: string | null; image_thumb?: s
   const uploaded = resolveMediaUrl(reward?.image_thumb ?? reward?.image)
   if (uploaded) return uploaded
   const title = (reward?.title ?? '').toLowerCase()
+  if (title.includes('cake') || title.includes('dessert') || title.includes('pastry')) return resolveMediaUrl(REWARD_DEFAULTS.dessert)
+  if (title.includes('ice cream') || title.includes('icecream')) return resolveMediaUrl(REWARD_DEFAULTS.free_item)
   if (title.includes('coffee') || title.includes('drink')) return resolveMediaUrl(REWARD_DEFAULTS.drink)
-  if (title.includes('dessert') || title.includes('cake') || title.includes('pastry')) return resolveMediaUrl(REWARD_DEFAULTS.dessert)
   if (title.includes('%') || title.includes('discount') || title.includes('off')) return resolveMediaUrl(REWARD_DEFAULTS.discount)
   if (title.includes('free')) return resolveMediaUrl(REWARD_DEFAULTS.free_item)
   return resolveMediaUrl(REWARD_DEFAULTS.special)

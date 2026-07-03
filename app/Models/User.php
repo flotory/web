@@ -25,6 +25,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'name',
         'email',
         'locale',
+        'currency',
         'google_id',
         'google_avatar',
         'apple_id',
@@ -45,7 +46,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
-            'birthday' => 'date',
+            'birthday' => 'date:Y-m-d',
         ];
     }
 

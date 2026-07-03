@@ -8,7 +8,10 @@ export function rewardCategoryFromTitle(title: string): RewardCategory {
   if (normalized.includes('vip') || normalized.includes('exclusive')) {
     return 'vip'
   }
-  if (normalized.includes('dessert') || normalized.includes('cake') || normalized.includes('sweet')) {
+  if (normalized.includes('dessert') || normalized.includes('cake') || normalized.includes('sweet') || normalized.includes('pastry')) {
+    return 'dessert'
+  }
+  if (normalized.includes('ice cream') || normalized.includes('icecream')) {
     return 'dessert'
   }
   if (

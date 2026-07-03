@@ -33,11 +33,11 @@ const rewardTemplates: RewardTemplate[] = [
     id: 'cafe-starter',
     name: 'Cafe Starter',
     emoji: '☕',
-    description: 'Fast wins for coffee shops',
+    description: 'Ice cream, coffee, and cake milestones for cafes',
     rewards: [
-      { title: '50% off one coffee', required_stamps: 5, description: 'Half price on any coffee after five stamps.' },
+      { title: '50% off ice cream', required_stamps: 5, description: 'Half price on any ice cream after five stamps.' },
       { title: 'Free coffee', required_stamps: 10, description: 'A complimentary coffee on the house.' },
-      { title: 'Free coffee', required_stamps: 15, description: 'Another free coffee for loyal regulars.' },
+      { title: 'Free piece of cake', required_stamps: 15, description: 'A complimentary slice of cake for loyal regulars.' },
     ],
   },
   {
@@ -740,27 +740,30 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 
           <section class="rounded-2xl border border-border bg-surface-muted/80 p-4 sm:p-5">
             <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">2. Reward visual</p>
-            <p class="mt-1 text-sm text-ink-muted">Square crop for the loyalty card. JPG or PNG, max 5 MB.</p>
-            <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
-              <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-border bg-surface-muted shadow-inner">
-                <img
-                  :src="imagePreviewUrl ?? rewardImageUrl({
-                    title: title || 'reward',
-                    image: removeImage ? null : (editingReward?.image ?? null),
-                    image_thumb: removeImage ? null : (editingReward?.image_thumb ?? null),
-                  })"
-                  alt=""
-                  class="reward-media-img"
-                >
+            <p class="mt-1 text-sm text-ink-muted">1:1 square image — same crop guests see on the loyalty card. JPG or PNG, max 5 MB.</p>
+            <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div class="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0">
+                <div class="reward-media-frame reward-media-frame--editor rounded-2xl border border-border bg-surface-muted shadow-inner">
+                  <img
+                    :src="imagePreviewUrl ?? rewardImageUrl({
+                      title: title || 'reward',
+                      image: removeImage ? null : (editingReward?.image ?? null),
+                      image_thumb: removeImage ? null : (editingReward?.image_thumb ?? null),
+                    })"
+                    alt=""
+                    class="reward-media-img"
+                  >
+                </div>
+                <p class="mt-2 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-soft">1:1 preview</p>
               </div>
-              <div class="flex flex-col gap-3">
+              <div class="flex min-w-0 flex-1 flex-col gap-3">
                 <p class="text-sm font-semibold text-ink-muted">
                   {{ imageFile?.name ?? (removeImage ? 'Image will be removed on save' : (editingReward?.image ? 'Current milestone image' : 'No image yet — fallback will be used')) }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <ImageCropUpload
                     preset="square"
-                    modal-title="Crop reward image"
+                    modal-title="Crop reward image (1:1)"
                     :disabled="imageCropDisabled"
                     @crop="onRewardImageCrop"
                   >
@@ -934,8 +937,8 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
 }
 
 .reward-media-frame--editor {
-  width: 180px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 220px;
   flex-shrink: 0;
 }
 

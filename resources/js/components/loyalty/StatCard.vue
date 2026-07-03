@@ -8,6 +8,7 @@ const props = defineProps<{
   label: string
   value: string | number
   trend?: number | null
+  trendComparisonLabel?: string
   icon: Component
   tone?: 'purple' | 'amber' | 'green' | 'blue'
 }>()
@@ -80,7 +81,9 @@ const trendLabel = computed(() => {
           {{ trendLabel }}
         </p>
       </div>
-      <p class="mt-1 text-xs font-medium text-ink-soft">vs previous 28 days</p>
+      <p v-if="trendLabel && trendComparisonLabel" class="mt-1 text-xs font-medium text-ink-soft">
+        {{ trendComparisonLabel }}
+      </p>
     </div>
   </div>
 </template>

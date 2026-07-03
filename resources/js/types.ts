@@ -23,6 +23,7 @@ export interface Venue {
   } | null
   phone?: string | null
   website?: string | null
+  average_check_amount?: number | null
   status?: VenueListingStatus | null
   review_note?: string | null
   submitted_at?: string | null
@@ -54,6 +55,8 @@ export interface User {
   email: string
   is_admin: boolean
   locale?: 'en' | 'hy' | null
+  currency?: 'USD' | 'AMD' | null
+  birthday?: string | null
   active_venue_id?: number | null
   active_venue?: Venue | null
 }

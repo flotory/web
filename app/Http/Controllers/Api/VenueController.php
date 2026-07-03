@@ -310,6 +310,9 @@ class VenueController extends Controller
             'google_place_id' => $location['google_place_id'],
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
+            'average_check_amount' => $request->filled('average_check_amount')
+                ? $request->input('average_check_amount')
+                : ($request->has('average_check_amount') ? null : $venue->average_check_amount),
         ]);
 
         $venue = $venue->fresh();

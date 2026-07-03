@@ -15,10 +15,9 @@ test.describe('Admin routes', () => {
     await expect(page.getByRole('button', { name: 'Published' })).toBeVisible()
   })
 
-  test('published filter shows seeded demo venues', async ({ page }) => {
+  test('published filter shows the demo venue', async ({ page }) => {
     await page.getByRole('button', { name: 'Published' }).click()
     await expect(page.getByText('Demo Cafe')).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Harbor Coffee')).toBeVisible()
   })
 
   test('admin cannot open owner dashboard', async ({ page }) => {

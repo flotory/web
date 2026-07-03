@@ -45,7 +45,9 @@ Route::post('/public/owner-invitations/{token}/accept', [PublicOwnerInvitationCo
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/locale', [AuthController::class, 'updateLocale']);
+    Route::put('/auth/currency', [AuthController::class, 'updateCurrency']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::delete('/auth/account', [AuthController::class, 'deleteAccount']);

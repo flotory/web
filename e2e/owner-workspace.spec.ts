@@ -9,11 +9,10 @@ test.describe('Owner workspace', () => {
     await selectVenueIfPresent(page, 'Demo Cafe')
   })
 
-  test('lists seeded venues and opens venue settings', async ({ page }) => {
+  test('lists the demo venue and opens venue settings', async ({ page }) => {
     await page.goto('/my-venues')
     await expect(page.getByRole('heading', { name: 'My Venues', exact: true })).toBeVisible()
     await expect(page.locator('main').getByRole('heading', { name: 'Demo Cafe' })).toBeVisible()
-    await expect(page.locator('main').getByRole('heading', { name: 'Harbor Coffee' })).toBeVisible()
 
     const venueId = await demoCafeVenueId(page)
     const settingsReady = page.waitForResponse(
@@ -47,7 +46,7 @@ test.describe('Owner workspace', () => {
     await expect(page.getByRole('heading', { name: 'Rewards', exact: true })).toBeVisible()
     await rewardsReady
 
-    await expect(page.getByAltText('50% off one coffee')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByAltText('50% off ice cream')).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText('Free coffee', { exact: true }).first()).toBeVisible()
   })
 
@@ -68,12 +67,8 @@ test.describe('Owner workspace', () => {
     await expect(page.locator('main').getByRole('heading', { name: 'Demo Cafe' })).toBeVisible()
   })
 
-  test('switches venue context from the workspace filter', async ({ page }) => {
-    const select = page.locator('select').first()
-    await expect(select).toBeVisible({ timeout: 10_000 })
-
-    await select.selectOption({ label: 'Harbor Coffee' })
+  test('keeps Demo Cafe as the active workspace venue', async ({ page }) => {
     await page.goto('/dashboard')
-    await expect(page.getByRole('heading', { name: 'Harbor Coffee' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: 'Demo Cafe' })).toBeVisible({ timeout: 15_000 })
   })
 })

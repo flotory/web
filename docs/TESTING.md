@@ -27,7 +27,7 @@ Runs on every push to `main` and on pull requests. Badge: [![Tests](https://gith
 
 | Job | Command (simplified) | Purpose |
 | --- | -------------------- | ------- |
-| **PHPUnit** | `php artisan test` | 282 feature + unit tests (MySQL not required; in-memory/SQLite per test) |
+| **PHPUnit** | `php artisan test` | Feature + unit tests (MySQL not required; in-memory/SQLite per test) |
 | **Frontend build** | `npm ci` → `npm run build` → `npm run test:unit:web` | Typecheck, Vite production build, web Vitest |
 | **Playwright smoke** | Build assets → `scripts/run-e2e-smoke.sh` | Browser smokes on SQLite + demo seed (`--env=e2e`) |
 | **Mobile typecheck** | `npm ci` (apps/mobile) → typecheck + mobile Vitest via root |
@@ -131,7 +131,9 @@ Run `npm run test:unit` for the full suite (~100 tests) or `npm run test:unit:we
 | Publication & listing | `tests/Unit/VenuePublicationServiceTest.php`, `tests/Feature/AdminVenueReviewControllerTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` |
 | Google OAuth (web + mobile) | `tests/Feature/GoogleAuthControllerTest.php` |
-| Auth/session locale | `tests/Feature/AuthControllerTest.php` |
+| Auth/session locale & profile | `tests/Feature/AuthControllerTest.php` |
+| Owner dashboard & date-range analytics | `tests/Unit/DashboardPeriodTest.php`, `tests/Feature/VenueDashboardControllerTest.php`, `resources/js/lib/dashboardPeriod.test.ts` |
+| Demo seed data (campaigns, rewards) | `tests/Feature/DatabaseSeederDemoCampaignsTest.php`, `tests/Feature/DatabaseSeederDemoRewardsTest.php`, `tests/Feature/DemoShowcaseSeederTest.php` |
 | Rewards CRUD & purge | `tests/Feature/RewardControllerTest.php` |
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |
@@ -160,7 +162,7 @@ Shared helpers: `e2e/helpers/auth.ts` (login, register, venue select, logout), `
 
 Customer stamp/redeem API contracts are in PHPUnit; device tap flows are in Maestro (`.maestro/mobile`); mobile stamp sync dedup is in Vitest.
 
-Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` (guarded by `DatabaseSeederDemoCampaignsTest`).
+Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` + `DemoShowcaseSeeder` (guarded by `DatabaseSeederDemoCampaignsTest`, `DatabaseSeederDemoRewardsTest`, `DemoShowcaseSeederTest`).
 
 ---
 

@@ -214,13 +214,17 @@ All seeded accounts use password **`password`** (re-ensured on each Docker app s
 | **Venue owner** | `owner@example.com` | Web: My Venues, dashboard, rewards, campaigns, analytics |
 | **Customer** | `customer@example.com` | Mobile: Home, Wallet, **Stamp** (NFC), Venues — 7 stamps at Demo Cafe with a **ready reward** to slide-redeem |
 
-Additional seeded customers (same password): `maya@example.com`, `alex@example.com`, and others — useful for CRM and dashboard demos.
+Demo Cafe is the single showcase venue: ~280 guests, ~50–150 visits per month across the last 12 months, milestone unlocks, and claimed rewards for sales demos. Log in as `owner@example.com` to explore dashboard and analytics.
+
+**Demo Cafe milestones** (5 / 10 / 15 stamps): **50% off ice cream**, **Free coffee**, **Free piece of cake** — each with a square reward photo under `public/images/defaults/rewards/`.
+
+**Dashboard date range** — owner dashboard and analytics accept `?period=` presets (`7d`, `14d`, `28d` default, `2m`, `3m`, `6m`, `12m`) or custom `from` / `to` dates. KPI trends compare against the **previous period of equal length** (e.g. last 6 months vs the 6 months before).
 
 Demo Cafe includes an NFC tag (`Counter stand`, token `democafenfcstandlocaltest00001`) and active campaigns after `db:seed`. Setup guide: [docs/NFC_VENUE_SETUP.md](docs/NFC_VENUE_SETUP.md).
 
-### Large demo dataset (6 months of activity)
+### Optional large-scale stress dataset
 
-For analytics, dashboards, and load-style demos, seed ~150 venues, ~2,400 guests, and ~12,000 stamp visits spread over the last 6 months:
+For multi-venue load-style demos, seed ~150 venues, ~2,400 guests, and ~12,000 stamp visits:
 
 ```bash
 # After migrate (keeps owner@ / customer@ demo accounts from the default seeder)

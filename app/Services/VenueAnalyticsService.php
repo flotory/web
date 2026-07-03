@@ -8,6 +8,7 @@ use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
 use App\Models\Visit;
+use App\Support\DashboardPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +22,15 @@ class VenueAnalyticsService
     /**
      * @return array<string, mixed>
      */
-    public function statsForVenue(Venue $venue): array
+    public function statsForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
-        [$windowStart, $windowEnd] = $this->currentRollingWindow();
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
 
         $totalCustomers = $venue->customers()->count();
         $totalVisits = $venue->visits()->count();
-        $visitsLast28Days = $this->visitsBetween($venue, $windowStart, $windowEnd);
+        $periodVisits = $this->visitsBetween($venue, $period->start, $period->end);
+        $rewardsUnlockedInPeriod = $this->rewardUnlocksBetween($venue, $period->start, $period->end);
+        $claimRateInPeriod = $this->claimRateBetween($venue, $period->start, $period->end);
 
         $activeCustomers = $venue->customers()
             ->whereHas('visits', fn ($query) => $query->where(
@@ -37,31 +40,26 @@ class VenueAnalyticsService
             ))
             ->count();
 
-        $returningCustomers = $this->returningGuestsBetween($venue, $windowStart, $windowEnd);
+        $returningCustomers = $this->returningGuestsBetween($venue, $period->start, $period->end);
 
-        $rewardsClaimed = DB::table('reward_unlocks')
-            ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
-            ->whereNotNull('reward_unlocks.claimed_at')
-            ->count();
+        $rewardsClaimedInPeriod = $this->rewardsClaimedBetween($venue, $period->start, $period->end);
 
         return [
             'total_customers' => $totalCustomers,
             'active_customers' => $activeCustomers,
-            'visits_last_28_days' => $visitsLast28Days,
-            'rewards_claimed' => $rewardsClaimed,
+            'visits_last_28_days' => $periodVisits,
+            'rewards_unlocked_last_28_days' => $rewardsUnlockedInPeriod,
+            'claim_rate_last_28_days' => $claimRateInPeriod,
+            'rewards_claimed' => $rewardsClaimedInPeriod,
             'returning_customers' => $returningCustomers,
             'total_visits' => $totalVisits,
             'active_progressors' => $returningCustomers,
-            'milestones_claimed' => $rewardsClaimed,
-            'milestones_unlocked' => DB::table('reward_unlocks')
-                ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-                ->where('rewards.venue_id', $venue->id)
-                ->count(),
+            'milestones_claimed' => $rewardsClaimedInPeriod,
+            'milestones_unlocked' => $this->rewardUnlocksBetween($venue, $period->start, $period->end),
             'cycles_completed' => DB::table('customer_reward_cycles')
                 ->join('customers', 'customer_reward_cycles.customer_id', '=', 'customers.id')
                 ->where('customers.venue_id', $venue->id)
-                ->whereNotNull('customer_reward_cycles.completed_at')
+                ->whereBetween('customer_reward_cycles.completed_at', [$period->start, $period->end])
                 ->count(),
         ];
     }
@@ -69,39 +67,127 @@ class VenueAnalyticsService
     /**
      * @return list<array{month: string, label: string, visits: int}>
      */
-    public function monthlyActivityForVenue(Venue $venue, int $months = 6): array
+    public const MONTHLY_ACTIVITY_MONTHS = 12;
+
+    public function monthlyActivityForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
-        $monthExpression = DB::connection()->getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', created_at)"
-            : 'DATE_FORMAT(created_at, "%Y-%m")';
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+
+        return $this->activitySeriesForVenue($venue, $period)['rows'];
+    }
+
+    /**
+     * @return array{bucket: string, rows: list<array{month: string, label: string, visits: int}>}
+     */
+    public function activitySeriesForVenue(Venue $venue, ?DashboardPeriod $period = null): array
+    {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+        $bucket = $this->activityBucketForPeriod($period);
 
         $raw = $venue->visits()
-            ->selectRaw("{$monthExpression} as month, COUNT(*) as visits")
-            ->groupBy('month')
-            ->pluck('visits', 'month');
+            ->whereBetween('created_at', [$period->start, $period->end])
+            ->get(['created_at'])
+            ->groupBy(fn (Visit $visit) => $this->activityBucketKey($visit->created_at, $bucket))
+            ->map(fn (Collection $visits) => $visits->count());
 
         $rows = [];
 
-        for ($offset = $months - 1; $offset >= 0; $offset--) {
-            $date = now()->startOfMonth()->subMonths($offset);
-            $key = $date->format('Y-m');
+        foreach ($this->activityBucketKeys($period, $bucket) as [$key, $label]) {
             $rows[] = [
                 'month' => $key,
-                'label' => $date->format('M Y'),
+                'label' => $label,
                 'visits' => (int) ($raw[$key] ?? 0),
             ];
         }
 
-        return $rows;
+        return [
+            'bucket' => $bucket,
+            'rows' => $rows,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     average_check_amount: float|null,
+     *     visits_last_28_days: int,
+     *     total_visits: int,
+     *     estimated_revenue_last_28_days: float|null,
+     *     estimated_revenue_total: float|null
+     * }
+     */
+    public function revenueEstimateForVenue(Venue $venue, ?DashboardPeriod $period = null): array
+    {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+        $stats = $this->statsForVenue($venue, $period);
+        $averageCheck = $venue->average_check_amount !== null
+            ? (float) $venue->average_check_amount
+            : null;
+
+        return [
+            'average_check_amount' => $averageCheck,
+            'visits_last_28_days' => (int) $stats['visits_last_28_days'],
+            'total_visits' => (int) $stats['total_visits'],
+            'estimated_revenue_last_28_days' => $averageCheck !== null
+                ? round($stats['visits_last_28_days'] * $averageCheck, 2)
+                : null,
+            'estimated_revenue_total' => $averageCheck !== null
+                ? round($stats['total_visits'] * $averageCheck, 2)
+                : null,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Venue>  $venues
+     * @return array{
+     *     average_check_amount: null,
+     *     visits_last_28_days: int,
+     *     total_visits: int,
+     *     estimated_revenue_last_28_days: float|null,
+     *     estimated_revenue_total: float|null
+     * }
+     */
+    public function aggregateRevenueEstimate(Collection $venues, ?DashboardPeriod $period = null): array
+    {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+        $visitsLast28Days = 0;
+        $totalVisits = 0;
+        $estimatedRevenueLast28Days = 0.0;
+        $estimatedRevenueTotal = 0.0;
+        $hasConfiguredVenue = false;
+
+        foreach ($venues as $venue) {
+            $estimate = $this->revenueEstimateForVenue($venue, $period);
+            $visitsLast28Days += $estimate['visits_last_28_days'];
+            $totalVisits += $estimate['total_visits'];
+
+            if ($estimate['average_check_amount'] !== null) {
+                $hasConfiguredVenue = true;
+                $estimatedRevenueLast28Days += $estimate['estimated_revenue_last_28_days'] ?? 0;
+                $estimatedRevenueTotal += $estimate['estimated_revenue_total'] ?? 0;
+            }
+        }
+
+        return [
+            'average_check_amount' => null,
+            'visits_last_28_days' => $visitsLast28Days,
+            'total_visits' => $totalVisits,
+            'estimated_revenue_last_28_days' => $hasConfiguredVenue
+                ? round($estimatedRevenueLast28Days, 2)
+                : null,
+            'estimated_revenue_total' => $hasConfiguredVenue
+                ? round($estimatedRevenueTotal, 2)
+                : null,
+        ];
     }
 
     /**
      * @return list<array{text: string, tone: string}>
      */
-    public function insightsForVenue(Venue $venue): array
+    public function insightsForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $insights = [];
-        $stats = $this->statsForVenue($venue);
+        $stats = $this->statsForVenue($venue, $period);
         $totalCustomers = $stats['total_customers'];
 
         if ($totalCustomers === 0) {
@@ -149,9 +235,9 @@ class VenueAnalyticsService
             ];
         }
 
-        if ($stats['returning_customers'] > 0 && $totalCustomers > 0) {
+        if ($stats['returning_customers'] > 0) {
             $insights[] = [
-                'text' => "{$stats['returning_customers']} of {$totalCustomers} customers visited at least twice in the last ".self::ROLLING_WINDOW_DAYS.' days',
+                'text' => "{$stats['returning_customers']} returning guests with 2+ visits in {$period->label()}",
                 'tone' => 'positive',
             ];
         }
@@ -226,8 +312,9 @@ class VenueAnalyticsService
      * @param  Collection<int, Venue>  $venues
      * @return array<string, mixed>
      */
-    public function aggregateStats(Collection $venues): array
+    public function aggregateStats(Collection $venues, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $stats = [
             'total_customers' => 0,
             'active_customers' => 0,
@@ -239,14 +326,31 @@ class VenueAnalyticsService
             'milestones_claimed' => 0,
             'milestones_unlocked' => 0,
             'cycles_completed' => 0,
+            'rewards_unlocked_last_28_days' => 0,
+            'claim_rate_last_28_days' => 0.0,
         ];
 
+        $claimedTotal = 0;
+        $unlockedTotal = 0;
+
         foreach ($venues as $venue) {
-            $venueStats = $this->statsForVenue($venue);
+            $venueStats = $this->statsForVenue($venue, $period);
             foreach ($stats as $key => $value) {
+                if ($key === 'claim_rate_last_28_days') {
+                    continue;
+                }
+
                 $stats[$key] += $venueStats[$key] ?? 0;
             }
+
+            [$claimed, $unlocked] = $this->claimCountsBetween($venue, $period->start, $period->end);
+            $claimedTotal += $claimed;
+            $unlockedTotal += $unlocked;
         }
+
+        $stats['claim_rate_last_28_days'] = $unlockedTotal > 0
+            ? round(($claimedTotal / $unlockedTotal) * 100, 1)
+            : 0.0;
 
         return $stats;
     }
@@ -255,12 +359,13 @@ class VenueAnalyticsService
      * @param  Collection<int, Venue>  $venues
      * @return list<array{month: string, label: string, visits: int}>
      */
-    public function aggregateMonthlyActivity(Collection $venues, int $months = 6): array
+    public function aggregateMonthlyActivity(Collection $venues, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $totals = [];
 
         foreach ($venues as $venue) {
-            foreach ($this->monthlyActivityForVenue($venue, $months) as $row) {
+            foreach ($this->monthlyActivityForVenue($venue, $period) as $row) {
                 $totals[$row['month']] = [
                     'month' => $row['month'],
                     'label' => $row['label'],
@@ -276,10 +381,11 @@ class VenueAnalyticsService
      * @param  Collection<int, Venue>  $venues
      * @return list<array{text: string, tone: string}>
      */
-    public function aggregateInsights(Collection $venues): array
+    public function aggregateInsights(Collection $venues, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $insights = [];
-        $stats = $this->aggregateStats($venues);
+        $stats = $this->aggregateStats($venues, $period);
 
         if ($stats['total_customers'] === 0) {
             return [];
@@ -311,7 +417,7 @@ class VenueAnalyticsService
 
         if ($stats['returning_customers'] > 0) {
             $insights[] = [
-                'text' => "{$stats['returning_customers']} returning guests with 2+ visits in the last ".self::ROLLING_WINDOW_DAYS.' days',
+                'text' => "{$stats['returning_customers']} returning guests with 2+ visits in {$period->label()}",
                 'tone' => 'positive',
             ];
         }
@@ -322,12 +428,14 @@ class VenueAnalyticsService
     /**
      * @return list<array{type: string, title: string, occurred_at: string}>
      */
-    public function recentActivityForVenue(Venue $venue, int $limit = 8): array
+    public function recentActivityForVenue(Venue $venue, int $limit = 8, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $events = collect();
 
         Visit::query()
             ->where('venue_id', $venue->id)
+            ->whereBetween('created_at', [$period->start, $period->end])
             ->with(['customer.user:id,name'])
             ->latest('created_at')
             ->limit(20)
@@ -343,6 +451,7 @@ class VenueAnalyticsService
 
         RewardUnlock::query()
             ->whereHas('customer', fn ($query) => $query->where('venue_id', $venue->id))
+            ->whereBetween('unlocked_at', [$period->start, $period->end])
             ->with(['customer.user:id,name', 'reward:id,title'])
             ->orderByDesc('unlocked_at')
             ->limit(20)
@@ -368,6 +477,7 @@ class VenueAnalyticsService
 
         Customer::query()
             ->where('venue_id', $venue->id)
+            ->whereBetween('created_at', [$period->start, $period->end])
             ->with('user:id,name')
             ->latest('created_at')
             ->limit(10)
@@ -383,6 +493,7 @@ class VenueAnalyticsService
 
         Reward::query()
             ->where('venue_id', $venue->id)
+            ->whereBetween('created_at', [$period->start, $period->end])
             ->latest('created_at')
             ->limit(10)
             ->get(['id', 'title', 'created_at'])
@@ -397,6 +508,7 @@ class VenueAnalyticsService
         Campaign::query()
             ->where('venue_id', $venue->id)
             ->whereNotNull('activated_at')
+            ->whereBetween('activated_at', [$period->start, $period->end])
             ->latest('activated_at')
             ->limit(10)
             ->get(['id', 'name', 'activated_at'])
@@ -420,12 +532,13 @@ class VenueAnalyticsService
      * @param  Collection<int, Venue>  $venues
      * @return list<array{type: string, title: string, occurred_at: string, venue_name?: string}>
      */
-    public function aggregateRecentActivity(Collection $venues, int $limit = 8): array
+    public function aggregateRecentActivity(Collection $venues, int $limit = 8, ?DashboardPeriod $period = null): array
     {
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $events = collect();
 
         foreach ($venues as $venue) {
-            foreach ($this->recentActivityForVenue($venue, $limit * 2) as $event) {
+            foreach ($this->recentActivityForVenue($venue, $limit * 2, $period) as $event) {
                 $events->push([
                     ...$event,
                     'venue_name' => $venue->name,
@@ -458,27 +571,27 @@ class VenueAnalyticsService
     /**
      * @return array<string, array{previous: float|int, change_pct: float|null}>
      */
-    public function kpiTrendsForVenue(Venue $venue): array
+    public function kpiTrendsForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
-        [$currentStart, $currentEnd] = $this->currentRollingWindow();
-        [$previousStart, $previousEnd] = $this->previousRollingWindow();
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+        $previous = $period->previous();
 
         return [
             'visits_last_28_days' => $this->trendEntry(
-                $this->visitsBetween($venue, $previousStart, $previousEnd),
-                $this->visitsBetween($venue, $currentStart, $currentEnd),
+                $this->visitsBetween($venue, $previous->start, $previous->end),
+                $this->visitsBetween($venue, $period->start, $period->end),
             ),
             'returning_guests' => $this->trendEntry(
-                $this->returningGuestsBetween($venue, $previousStart, $previousEnd),
-                $this->returningGuestsBetween($venue, $currentStart, $currentEnd),
+                $this->returningGuestsBetween($venue, $previous->start, $previous->end),
+                $this->returningGuestsBetween($venue, $period->start, $period->end),
             ),
             'rewards_unlocked' => $this->trendEntry(
-                $this->rewardUnlocksCreatedBetween($venue, $previousStart, $previousEnd),
-                $this->rewardUnlocksCreatedBetween($venue, $currentStart, $currentEnd),
+                $this->rewardUnlocksBetween($venue, $previous->start, $previous->end),
+                $this->rewardUnlocksBetween($venue, $period->start, $period->end),
             ),
             'repeat_rate' => $this->trendEntry(
-                $this->claimRateBetween($venue, $previousStart, $previousEnd),
-                $this->claimRateBetween($venue, $currentStart, $currentEnd),
+                $this->claimRateBetween($venue, $previous->start, $previous->end),
+                $this->claimRateBetween($venue, $period->start, $period->end),
             ),
         ];
     }
@@ -487,10 +600,10 @@ class VenueAnalyticsService
      * @param  Collection<int, Venue>  $venues
      * @return array<string, array{previous: float|int, change_pct: float|null}>
      */
-    public function aggregateKpiTrends(Collection $venues): array
+    public function aggregateKpiTrends(Collection $venues, ?DashboardPeriod $period = null): array
     {
-        [$currentStart, $currentEnd] = $this->currentRollingWindow();
-        [$previousStart, $previousEnd] = $this->previousRollingWindow();
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
+        $previous = $period->previous();
 
         $visitsPrevious = 0;
         $visitsCurrent = 0;
@@ -504,15 +617,15 @@ class VenueAnalyticsService
         $unlockedCurrent = 0;
 
         foreach ($venues as $venue) {
-            $visitsPrevious += $this->visitsBetween($venue, $previousStart, $previousEnd);
-            $visitsCurrent += $this->visitsBetween($venue, $currentStart, $currentEnd);
-            $returningPrevious += $this->returningGuestsBetween($venue, $previousStart, $previousEnd);
-            $returningCurrent += $this->returningGuestsBetween($venue, $currentStart, $currentEnd);
-            $unlocksPrevious += $this->rewardUnlocksCreatedBetween($venue, $previousStart, $previousEnd);
-            $unlocksCurrent += $this->rewardUnlocksCreatedBetween($venue, $currentStart, $currentEnd);
+            $visitsPrevious += $this->visitsBetween($venue, $previous->start, $previous->end);
+            $visitsCurrent += $this->visitsBetween($venue, $period->start, $period->end);
+            $returningPrevious += $this->returningGuestsBetween($venue, $previous->start, $previous->end);
+            $returningCurrent += $this->returningGuestsBetween($venue, $period->start, $period->end);
+            $unlocksPrevious += $this->rewardUnlocksBetween($venue, $previous->start, $previous->end);
+            $unlocksCurrent += $this->rewardUnlocksBetween($venue, $period->start, $period->end);
 
-            [$claimedPrev, $unlockedPrev] = $this->claimCountsBetween($venue, $previousStart, $previousEnd);
-            [$claimedCurr, $unlockedCurr] = $this->claimCountsBetween($venue, $currentStart, $currentEnd);
+            [$claimedPrev, $unlockedPrev] = $this->claimCountsBetween($venue, $previous->start, $previous->end);
+            [$claimedCurr, $unlockedCurr] = $this->claimCountsBetween($venue, $period->start, $period->end);
             $claimedPrevious += $claimedPrev;
             $claimedCurrent += $claimedCurr;
             $unlockedPrevious += $unlockedPrev;
@@ -552,41 +665,51 @@ class VenueAnalyticsService
         }
 
         if ($previous == 0) {
-            return null;
+            return $current == 0 ? null : 100.0;
         }
 
         return round((($current - $previous) / $previous) * 100, 1);
     }
 
-    private function rewardUnlocksCreatedBetween(Venue $venue, Carbon $start, Carbon $end): int
+    private function rewardUnlocksBetween(Venue $venue, Carbon $start, Carbon $end): int
     {
         return (int) DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
             ->where('rewards.venue_id', $venue->id)
-            ->whereBetween('reward_unlocks.created_at', [$start, $end])
+            ->whereBetween('reward_unlocks.unlocked_at', [$start, $end])
             ->count();
     }
 
     /**
-     * @return array{0: Carbon, 1: Carbon}
+     * @return list<array{reward_id: int, title: string, required_stamps: int, unlocked_count: int, claimed_count: int, claim_rate: float}>
      */
-    private function currentRollingWindow(): array
+    public function milestoneConversionsForVenue(Venue $venue, ?DashboardPeriod $period = null): array
     {
-        return [
-            now()->subDays(self::ROLLING_WINDOW_DAYS)->startOfDay(),
-            now(),
-        ];
-    }
+        $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
 
-    /**
-     * @return array{0: Carbon, 1: Carbon}
-     */
-    private function previousRollingWindow(): array
-    {
-        return [
-            now()->subDays(self::ROLLING_WINDOW_DAYS * 2)->startOfDay(),
-            now()->subDays(self::ROLLING_WINDOW_DAYS)->endOfDay(),
-        ];
+        return DB::table('reward_unlocks')
+            ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+            ->where('rewards.venue_id', $venue->id)
+            ->whereBetween('reward_unlocks.unlocked_at', [$period->start, $period->end])
+            ->selectRaw('rewards.id as reward_id')
+            ->selectRaw('rewards.title')
+            ->selectRaw('rewards.required_stamps')
+            ->selectRaw('COUNT(*) as unlocked_count')
+            ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
+            ->groupBy('rewards.id', 'rewards.title', 'rewards.required_stamps')
+            ->orderBy('rewards.required_stamps')
+            ->get()
+            ->map(fn ($row) => [
+                'reward_id' => $row->reward_id,
+                'title' => $row->title,
+                'required_stamps' => (int) $row->required_stamps,
+                'unlocked_count' => (int) $row->unlocked_count,
+                'claimed_count' => (int) $row->claimed_count,
+                'claim_rate' => (int) $row->unlocked_count > 0
+                    ? round(((int) $row->claimed_count / (int) $row->unlocked_count) * 100, 1)
+                    : 0.0,
+            ])
+            ->all();
     }
 
     private function visitsBetween(Venue $venue, Carbon $start, Carbon $end): int
@@ -627,7 +750,7 @@ class VenueAnalyticsService
         $row = DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
             ->where('rewards.venue_id', $venue->id)
-            ->whereBetween('reward_unlocks.created_at', [$start, $end])
+            ->whereBetween('reward_unlocks.unlocked_at', [$start, $end])
             ->selectRaw('COUNT(*) as unlocked_count')
             ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
             ->first();
@@ -636,5 +759,88 @@ class VenueAnalyticsService
             (int) ($row->claimed_count ?? 0),
             (int) ($row->unlocked_count ?? 0),
         ];
+    }
+
+    private function rewardsClaimedBetween(Venue $venue, Carbon $start, Carbon $end): int
+    {
+        return (int) DB::table('reward_unlocks')
+            ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
+            ->where('rewards.venue_id', $venue->id)
+            ->whereNotNull('reward_unlocks.claimed_at')
+            ->whereBetween('reward_unlocks.claimed_at', [$start, $end])
+            ->count();
+    }
+
+    private function activityBucketForPeriod(DashboardPeriod $period): string
+    {
+        if ($period->days() <= 35) {
+            return 'day';
+        }
+
+        if ($period->days() <= 120) {
+            return 'week';
+        }
+
+        return 'month';
+    }
+
+    /**
+     * @return list<array{0: string, 1: string}>
+     */
+    private function activityBucketKeys(DashboardPeriod $period, string $bucket): array
+    {
+        $keys = [];
+        $cursor = $period->start->copy()->startOfDay();
+        $end = $period->end->copy()->endOfDay();
+
+        if ($bucket === 'day') {
+            while ($cursor->lessThanOrEqualTo($end)) {
+                $keys[] = [$cursor->format('Y-m-d'), $cursor->format('M j')];
+                $cursor->addDay();
+            }
+
+            return $keys;
+        }
+
+        if ($bucket === 'week') {
+            $cursor = $period->start->copy()->startOfWeek(Carbon::MONDAY);
+            if ($cursor->greaterThan($period->start)) {
+                $cursor->subWeek();
+            }
+
+            while ($cursor->lessThanOrEqualTo($end)) {
+                $weekEnd = $cursor->copy()->endOfWeek(Carbon::SUNDAY);
+                if ($weekEnd->greaterThan($end)) {
+                    $weekEnd = $end->copy();
+                }
+
+                $keys[] = [
+                    $cursor->format('Y-m-d'),
+                    $cursor->format('M j').' – '.$weekEnd->format('M j'),
+                ];
+                $cursor->addWeek();
+            }
+
+            return $keys;
+        }
+
+        $cursor = $period->start->copy()->startOfMonth();
+        $endMonth = $period->end->copy()->startOfMonth();
+
+        while ($cursor->lessThanOrEqualTo($endMonth)) {
+            $keys[] = [$cursor->format('Y-m'), $cursor->format('M Y')];
+            $cursor->addMonth();
+        }
+
+        return $keys;
+    }
+
+    private function activityBucketKey(Carbon $timestamp, string $bucket): string
+    {
+        return match ($bucket) {
+            'day' => $timestamp->format('Y-m-d'),
+            'week' => $timestamp->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'),
+            default => $timestamp->format('Y-m'),
+        };
     }
 }

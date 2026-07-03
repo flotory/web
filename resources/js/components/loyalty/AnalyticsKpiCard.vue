@@ -6,6 +6,7 @@ const props = defineProps<{
   value: string | number
   description: string
   trend?: number | null
+  trendComparisonLabel?: string
 }>()
 
 const trendClass = computed(() => {
@@ -58,6 +59,8 @@ const trendLabel = computed(() => {
     <p class="mt-auto pt-3 text-sm leading-snug text-ink-muted">
       {{ description }}
     </p>
-    <p v-if="trendLabel" class="mt-1 text-xs font-medium text-ink-soft">vs previous 28 days</p>
+    <p v-if="trendLabel && trendComparisonLabel" class="mt-1 text-xs font-medium text-ink-soft">
+      {{ trendComparisonLabel }}
+    </p>
   </div>
 </template>

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 import { api } from '@/lib/api'
 import { useLocaleStore } from '@/stores/locale'
+import { useCurrencyStore } from '@/stores/currency'
 import type { User } from '@/types'
 
 interface AuthResponse {
@@ -75,6 +76,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await api<MeResponse>('/auth/me')
         this.user = normalizeUser(response.user)
         useLocaleStore().applyUserLocale(response.user.locale)
+        useCurrencyStore().applyUserCurrency(response.user.currency)
         this.mayCreateVenue = response.capabilities?.may_create_venue === true
       } catch {
         this.clearSession()
@@ -92,6 +94,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await api<MeResponse>('/auth/me')
         this.user = normalizeUser(response.user)
         useLocaleStore().applyUserLocale(response.user.locale)
+        useCurrencyStore().applyUserCurrency(response.user.currency)
         this.mayCreateVenue = response.capabilities?.may_create_venue === true
       } catch {
         this.mayCreateVenue = false
@@ -119,6 +122,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = token
       this.booted = true
       useLocaleStore().applyUserLocale(user.locale)
+      useCurrencyStore().applyUserCurrency(user.currency)
       localStorage.setItem('auth_token', token)
     },
     clearSession() {

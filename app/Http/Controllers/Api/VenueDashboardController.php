@@ -8,10 +8,12 @@ use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Services\CampaignService;
 use App\Services\VenueAnalyticsService;
+use App\Support\DashboardPeriod;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class VenueDashboardController extends Controller
 {
@@ -25,11 +27,17 @@ class VenueDashboardController extends Controller
         $user = $request->user();
         $venueId = $request->integer('venue_id') ?: null;
 
+        try {
+            $period = DashboardPeriod::fromRequest($request);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
         if ($venueId) {
             $venue = Venue::query()->findOrFail($venueId);
             VenueAccess::requireAccess($user, $venue, ['owner']);
 
-            return response()->json($this->dashboardForVenue($venue));
+            return response()->json($this->dashboardForVenue($venue, $period));
         }
 
         $venueIds = $this->ownerVenueIds($user);
@@ -39,10 +47,13 @@ class VenueDashboardController extends Controller
                 'scope' => 'none',
                 'venue' => null,
                 'venues_count' => 0,
+                'period' => $period->toArray(),
                 'stats' => [
                     'total_customers' => 0,
                     'active_customers' => 0,
                     'visits_last_28_days' => 0,
+                    'rewards_unlocked_last_28_days' => 0,
+                    'claim_rate_last_28_days' => 0,
                     'rewards_claimed' => 0,
                     'returning_customers' => 0,
                     'active_progressors' => 0,
@@ -53,6 +64,7 @@ class VenueDashboardController extends Controller
                 ],
                 'most_loyal_customers' => [],
                 'monthly_activity' => [],
+                'activity_series' => ['bucket' => 'day', 'rows' => []],
                 'milestone_conversions' => [],
                 'venue_summaries' => [],
                 'insights' => [],
@@ -67,20 +79,28 @@ class VenueDashboardController extends Controller
                 ],
                 'active_campaigns' => [],
                 'recent_activity' => [],
+                'revenue_estimate' => [
+                    'average_check_amount' => null,
+                    'visits_last_28_days' => 0,
+                    'total_visits' => 0,
+                    'estimated_revenue_last_28_days' => null,
+                    'estimated_revenue_total' => null,
+                ],
             ]);
         }
 
         $venues = Venue::query()->whereIn('id', $venueIds)->get();
 
-        $stats = $this->analytics->aggregateStats($venues);
-        $monthlyActivity = $this->analytics->aggregateMonthlyActivity($venues);
-        $insights = $this->analytics->aggregateInsights($venues);
+        $stats = $this->analytics->aggregateStats($venues, $period);
+        $monthlyActivity = $this->analytics->aggregateMonthlyActivity($venues, $period);
+        $activitySeries = $this->aggregateActivitySeries($venues, $period);
+        $insights = $this->analytics->aggregateInsights($venues, $period);
         $milestoneConversions = [];
         $summaries = [];
         $activeCampaigns = [];
 
         foreach ($venues as $venue) {
-            $payload = $this->dashboardForVenue($venue);
+            $payload = $this->dashboardForVenue($venue, $period);
             $activeCampaigns = array_merge($activeCampaigns, $payload['active_campaigns'] ?? []);
 
             foreach ($payload['milestone_conversions'] as $row) {
@@ -131,17 +151,20 @@ class VenueDashboardController extends Controller
             'scope' => 'all',
             'venue' => null,
             'venues_count' => count($venueIds),
+            'period' => $period->toArray(),
             'stats' => $stats,
             'most_loyal_customers' => $mostLoyal,
             'monthly_activity' => $monthlyActivity,
+            'activity_series' => $activitySeries,
             'milestone_conversions' => $milestoneConversions,
             'venue_summaries' => $summaries,
             'insights' => $insights,
             'has_loyalty_activity' => $this->analytics->hasAggregateActivity($venues),
-            'kpi_trends' => $this->analytics->aggregateKpiTrends($venues),
+            'kpi_trends' => $this->analytics->aggregateKpiTrends($venues, $period),
             'customer_health' => $this->analytics->aggregateCustomerHealth($venues),
-            'recent_activity' => $this->analytics->aggregateRecentActivity($venues),
+            'recent_activity' => $this->analytics->aggregateRecentActivity($venues, 8, $period),
             'active_campaigns' => $activeCampaigns,
+            'revenue_estimate' => $this->analytics->aggregateRevenueEstimate($venues, $period),
         ]);
     }
 
@@ -149,7 +172,13 @@ class VenueDashboardController extends Controller
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
-        return response()->json($this->dashboardForVenue($venue));
+        try {
+            $period = DashboardPeriod::fromRequest($request);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        return response()->json($this->dashboardForVenue($venue, $period));
     }
 
     /**
@@ -167,48 +196,61 @@ class VenueDashboardController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function dashboardForVenue(Venue $venue): array
+    private function dashboardForVenue(Venue $venue, DashboardPeriod $period): array
     {
+        $activitySeries = $this->analytics->activitySeriesForVenue($venue, $period);
+
         return [
             'scope' => 'venue',
             'venue' => $venue->only(['id', 'name', 'slug']),
             'venues_count' => 1,
-            'stats' => $this->analytics->statsForVenue($venue),
+            'period' => $period->toArray(),
+            'stats' => $this->analytics->statsForVenue($venue, $period),
             'most_loyal_customers' => $venue->customers()
                 ->with('user:id,name,email')
                 ->orderByDesc('stamps')
                 ->limit(5)
                 ->get(['id', 'venue_id', 'user_id', 'stamps']),
-            'monthly_activity' => $this->analytics->monthlyActivityForVenue($venue),
-            'insights' => $this->analytics->insightsForVenue($venue),
+            'monthly_activity' => $activitySeries['rows'],
+            'activity_series' => $activitySeries,
+            'insights' => $this->analytics->insightsForVenue($venue, $period),
             'has_loyalty_activity' => $this->analytics->hasLoyaltyActivity($venue),
-            'kpi_trends' => $this->analytics->kpiTrendsForVenue($venue),
+            'kpi_trends' => $this->analytics->kpiTrendsForVenue($venue, $period),
             'customer_health' => $this->analytics->customerHealthForVenue($venue),
-            'recent_activity' => $this->analytics->recentActivityForVenue($venue),
-            'milestone_conversions' => DB::table('reward_unlocks')
-                ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-                ->where('rewards.venue_id', $venue->id)
-                ->selectRaw('rewards.id as reward_id')
-                ->selectRaw('rewards.title')
-                ->selectRaw('rewards.required_stamps')
-                ->selectRaw('COUNT(*) as unlocked_count')
-                ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
-                ->groupBy('rewards.id', 'rewards.title', 'rewards.required_stamps')
-                ->orderBy('rewards.required_stamps')
-                ->get()
-                ->map(fn ($row) => [
-                    'reward_id' => $row->reward_id,
-                    'title' => $row->title,
-                    'required_stamps' => (int) $row->required_stamps,
-                    'unlocked_count' => (int) $row->unlocked_count,
-                    'claimed_count' => (int) $row->claimed_count,
-                    'claim_rate' => (int) $row->unlocked_count > 0
-                        ? round(((int) $row->claimed_count / (int) $row->unlocked_count) * 100, 1)
-                        : 0.0,
-                ]),
+            'recent_activity' => $this->analytics->recentActivityForVenue($venue, 8, $period),
+            'milestone_conversions' => $this->analytics->milestoneConversionsForVenue($venue, $period),
             'venue_summaries' => [],
             'campaign_recommendations' => $this->campaigns->recommendationsFor($venue),
             'active_campaigns' => $this->campaigns->ownerActiveCampaignsFor($venue),
+            'revenue_estimate' => $this->analytics->revenueEstimateForVenue($venue, $period),
+        ];
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Venue>  $venues
+     * @return array{bucket: string, rows: list<array{month: string, label: string, visits: int}>}
+     */
+    private function aggregateActivitySeries($venues, DashboardPeriod $period): array
+    {
+        $totals = [];
+        $bucket = 'month';
+
+        foreach ($venues as $venue) {
+            $series = $this->analytics->activitySeriesForVenue($venue, $period);
+            $bucket = $series['bucket'];
+
+            foreach ($series['rows'] as $row) {
+                $totals[$row['month']] = [
+                    'month' => $row['month'],
+                    'label' => $row['label'],
+                    'visits' => ($totals[$row['month']]['visits'] ?? 0) + $row['visits'],
+                ];
+            }
+        }
+
+        return [
+            'bucket' => $bucket,
+            'rows' => array_values($totals),
         ];
     }
 
@@ -227,4 +269,3 @@ class VenueDashboardController extends Controller
         ];
     }
 }
-

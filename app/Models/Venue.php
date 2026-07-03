@@ -38,6 +38,7 @@ class Venue extends Model
         'google_place_id',
         'phone',
         'website',
+        'average_check_amount',
         'status',
         'review_note',
         'submitted_at',
@@ -53,6 +54,7 @@ class Venue extends Model
         return [
             'latitude' => 'float',
             'longitude' => 'float',
+            'average_check_amount' => 'decimal:2',
             'submitted_at' => 'datetime',
             'published_at' => 'datetime',
         ];

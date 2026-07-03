@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Award, BarChart3, Lightbulb, TrendingUp, Users } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import AnalyticsKpiCard from '@/components/loyalty/AnalyticsKpiCard.vue'
+import DashboardPeriodPicker from '@/components/loyalty/DashboardPeriodPicker.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -11,6 +12,14 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage } from '@/lib/api'
+import {
+  dashboardApiQueryString,
+  defaultDashboardPeriodSelection,
+  parseDashboardPeriodFromQuery,
+  previousPeriodComparisonLabel,
+  type DashboardPeriodMeta,
+  type DashboardPeriodSelection,
+} from '@/lib/dashboardPeriod'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Customer, CustomerActivitySummary } from '@/types'
 
@@ -33,6 +42,7 @@ interface MilestoneConversion {
 interface DashboardResponse {
   scope: string
   venue?: { id: number; name: string; slug: string } | null
+  period?: DashboardPeriodMeta
   stats: {
     active_customers: number
     visits_last_28_days: number
@@ -56,9 +66,15 @@ interface DashboardResponse {
 }
 
 const workspace = useWorkspaceStore()
+const route = useRoute()
+const router = useRouter()
 const dashboard = ref<DashboardResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
+const periodSelection = ref<DashboardPeriodSelection>(defaultDashboardPeriodSelection())
+
+const periodLabel = computed(() => dashboard.value?.period?.label ?? 'Last 28 days')
+const trendComparisonLabel = computed(() => previousPeriodComparisonLabel(dashboard.value?.period))
 
 const hasActivity = computed(() => dashboard.value?.has_loyalty_activity ?? false)
 
@@ -89,21 +105,21 @@ const kpiCards = computed(() => {
       trend: null,
     },
     {
-      label: 'Visits (last 28 days)',
+      label: 'Visits',
       value: stats.visits_last_28_days,
-      description: 'Stamps recorded in the rolling 28-day window',
+      description: `Stamps recorded in ${periodLabel.value}`,
       trend: trends?.visits_last_28_days?.change_pct ?? null,
     },
     {
       label: 'Rewards claimed',
       value: stats.rewards_claimed,
-      description: 'Successfully redeemed at your venue',
+      description: `Redeemed in ${periodLabel.value}`,
       trend: trends?.repeat_rate?.change_pct ?? null,
     },
     {
-      label: 'Returning guests (last 28 days)',
+      label: 'Returning guests',
       value: stats.returning_customers,
-      description: 'Guests with at least two visits in the last 28 days',
+      description: `Guests with at least two visits in ${periodLabel.value}`,
       trend: trends?.returning_guests?.change_pct ?? null,
     },
   ]
@@ -172,7 +188,7 @@ async function load() {
 
   try {
     await workspace.bootstrap()
-    const query = workspace.filterVenueId ? `?venue_id=${workspace.filterVenueId}` : ''
+    const query = dashboardApiQueryString(periodSelection.value, workspace.filterVenueId)
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
   } catch (exception) {
     error.value = apiErrorMessage(exception, 'Could not load analytics.')
@@ -181,9 +197,31 @@ async function load() {
   }
 }
 
-watch(() => workspace.filterVenueId, load)
+function syncPeriodToRoute() {
+  const query = dashboardApiQueryString(periodSelection.value, workspace.filterVenueId)
+  const nextQuery = new URLSearchParams(query.replace(/^\?/, ''))
 
-onMounted(load)
+  void router.replace({
+    path: route.path,
+    query: Object.fromEntries(nextQuery.entries()),
+  })
+}
+
+function onPeriodChange(next: DashboardPeriodSelection) {
+  periodSelection.value = next
+  syncPeriodToRoute()
+  void load()
+}
+
+watch(() => workspace.filterVenueId, () => {
+  syncPeriodToRoute()
+  void load()
+})
+
+onMounted(() => {
+  periodSelection.value = parseDashboardPeriodFromQuery(route.query as Record<string, unknown>)
+  void load()
+})
 </script>
 
 <template>
@@ -199,6 +237,13 @@ onMounted(load)
         </span>
       </template>
     </PageHeader>
+
+    <DashboardPeriodPicker
+      class="mb-6"
+      :model-value="periodSelection"
+      :period-label="periodLabel"
+      @update:model-value="onPeriodChange"
+    />
 
     <AppCard v-if="loading" wrapper-class="mb-6">
       <EmptyState compact title="Loading analytics…" />
@@ -252,6 +297,7 @@ onMounted(load)
             v-for="card in kpiCards"
             :key="card.label"
             v-bind="card"
+            :trend-comparison-label="trendComparisonLabel"
           />
         </div>
 
@@ -292,8 +338,8 @@ onMounted(load)
                   <TrendingUp class="size-4" :stroke-width="2.2" />
                   <span class="text-xs font-semibold uppercase tracking-wide">Activity trend</span>
                 </div>
-                <h2 class="mt-2 text-xl font-black text-ink">Monthly visits</h2>
-                <p class="mt-1 text-sm text-ink-muted">Is usage growing over time?</p>
+                <h2 class="mt-2 text-xl font-black text-ink">Visit trend</h2>
+                <p class="mt-1 text-sm text-ink-muted">{{ periodLabel }}</p>
               </div>
             </div>
 

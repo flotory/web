@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
 use App\Models\NfcTag;
@@ -11,7 +12,6 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueUser;
 use App\Models\Visit;
-use App\Services\LoyaltyStampService;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,9 +19,32 @@ class DatabaseSeeder extends Seeder
     /** Stable token for Demo Cafe NFC stand (Maestro + local tap URL tests). */
     public const DEMO_CAFE_NFC_TOKEN = 'democafenfcstandlocaltest00001';
 
+    /** @var list<string> */
+    private const LEGACY_VENUE_SLUGS = [
+        'harbor-coffee',
+        'north-star-burgers',
+        'olive-street-kitchen',
+    ];
+
+    /** @var list<string> */
+    private const LEGACY_CUSTOMER_EMAILS = [
+        'maya@example.com',
+        'alex@example.com',
+        'sam@example.com',
+        'nora@example.com',
+        'leo@example.com',
+        'amara@example.com',
+        'theo@example.com',
+        'mila@example.com',
+        'jonas@example.com',
+        'sofia@example.com',
+        'eli@example.com',
+    ];
+
     public function run(): void
     {
         $this->call(AdminUserSeeder::class);
+        $this->purgeLegacyDemoData();
 
         $owner = User::updateOrCreate(
             ['email' => 'owner@example.com'],
@@ -32,196 +55,54 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        $venues = collect([
+        $venue = Venue::updateOrCreate(
+            ['slug' => 'demo-cafe'],
             [
                 'name' => 'Demo Cafe',
-                'slug' => 'demo-cafe',
                 'category' => 'cafe',
                 'address' => '12 Market Street, Toruń',
                 'latitude' => 53.0105300,
                 'longitude' => 18.6108600,
                 'status' => Venue::STATUS_PUBLISHED,
-            ],
-            [
-                'name' => 'Harbor Coffee',
-                'slug' => 'harbor-coffee',
-                'category' => 'cafe',
-                'address' => '8 Harbor Road, Gdańsk',
-                'latitude' => 54.3520250,
-                'longitude' => 18.6466380,
-                'status' => Venue::STATUS_PUBLISHED,
-            ],
-            [
-                'name' => 'North Star Burgers',
-                'slug' => 'north-star-burgers',
-                'category' => 'restaurant',
-                'address' => '44 Main Street, Warsaw',
-                'latitude' => 52.2296760,
-                'longitude' => 21.0122290,
-                'status' => Venue::STATUS_PUBLISHED,
-            ],
-            [
-                'name' => 'Olive Street Kitchen',
-                'slug' => 'olive-street-kitchen',
-                'category' => 'restaurant',
-                'status' => Venue::STATUS_DRAFT,
-            ],
-        ])->map(fn (array $data) => Venue::updateOrCreate(
-            ['slug' => $data['slug']],
-            [
-                'name' => $data['name'],
-                'category' => $data['category'],
-                'address' => $data['address'] ?? null,
-                'latitude' => $data['latitude'] ?? null,
-                'longitude' => $data['longitude'] ?? null,
-                'status' => $data['status'],
-                'published_at' => ($data['status'] ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED ? now() : null,
+                'published_at' => now(),
                 'submitted_at' => null,
                 'review_note' => null,
+                'average_check_amount' => 1600.00,
             ],
-        ));
-
-        $venue = $venues->first();
+        );
 
         $owner->forceFill(['active_venue_id' => $venue->id])->save();
 
-        $venues->each(function (Venue $venue) use ($owner): void {
-            VenueUser::updateOrCreate([
+        VenueUser::updateOrCreate([
+            'venue_id' => $venue->id,
+            'user_id' => $owner->id,
+        ], [
+            'role' => 'owner',
+        ]);
+
+        foreach ([
+            [5, '50% off ice cream', 'Half price on any ice cream after your fifth stamp.', '/images/defaults/rewards/ice-cream-cone.png'],
+            [10, 'Free coffee', 'A complimentary coffee on the house.', '/images/defaults/rewards/free-coffee.png'],
+            [15, 'Free piece of cake', 'A complimentary slice of cake for loyal regulars.', '/images/defaults/rewards/chocolate-cake.png'],
+        ] as [$stamps, $title, $description, $image]) {
+            Reward::updateOrCreate([
                 'venue_id' => $venue->id,
-                'user_id' => $owner->id,
+                'required_stamps' => $stamps,
             ], [
-                'role' => 'owner',
+                'title' => $title,
+                'description' => $description,
+                'image' => $image,
+                'image_thumb' => null,
+                'reward_type' => 'milestone',
+                'sort_order' => $stamps,
+                'active' => true,
             ]);
+        }
 
-            $milestones = match ($venue->category) {
-                'restaurant' => [
-                    [5, '50% off one starter', 'Half price on any starter after your fifth stamp.'],
-                    [10, 'Free starter', 'A complimentary starter on the house.'],
-                    [15, 'Free starter', 'Another free starter for returning guests.'],
-                ],
-                'bar' => [
-                    [5, '50% off one cocktail', 'Half price on any signature cocktail after your fifth stamp.'],
-                    [10, 'Free cocktail', 'A complimentary cocktail on the house.'],
-                    [15, 'Free cocktail', 'Another free cocktail for your best regulars.'],
-                ],
-                'bakery' => [
-                    [5, '50% off one pastry', 'Half price on any pastry after your fifth stamp.'],
-                    [10, 'Free pastry', 'A complimentary pastry from the counter.'],
-                    [15, 'Free pastry', 'Another free pastry for loyal guests.'],
-                ],
-                default => [
-                    [5, '50% off one coffee', 'Half price on any coffee drink after your fifth stamp.'],
-                    [10, 'Free coffee', 'A complimentary coffee on the house.'],
-                    [15, 'Free coffee', 'Another free coffee for your most loyal regulars.'],
-                ],
-            };
-
-            foreach ($milestones as [$stamps, $title, $description]) {
-                Reward::updateOrCreate([
-                    'venue_id' => $venue->id,
-                    'required_stamps' => $stamps,
-                ], [
-                    'title' => $title,
-                    'description' => $description,
-                    'reward_type' => 'milestone',
-                    'sort_order' => $stamps,
-                    'active' => true,
-                ]);
-            }
-        });
-
-        $customerProfiles = [
-            ['name' => 'Demo Customer', 'email' => 'customer@example.com'],
-            ['name' => 'Maya Chen', 'email' => 'maya@example.com'],
-            ['name' => 'Alex Morgan', 'email' => 'alex@example.com'],
-            ['name' => 'Sam Rivera', 'email' => 'sam@example.com'],
-            ['name' => 'Nora Bell', 'email' => 'nora@example.com'],
-            ['name' => 'Leo Martin', 'email' => 'leo@example.com'],
-            ['name' => 'Amara Stone', 'email' => 'amara@example.com'],
-            ['name' => 'Theo Brown', 'email' => 'theo@example.com'],
-            ['name' => 'Mila Green', 'email' => 'mila@example.com'],
-            ['name' => 'Jonas Lee', 'email' => 'jonas@example.com'],
-            ['name' => 'Sofia Patel', 'email' => 'sofia@example.com'],
-            ['name' => 'Eli Carter', 'email' => 'eli@example.com'],
-        ];
-
-        $customerUsers = collect($customerProfiles)->map(fn (array $profile) => User::updateOrCreate(
-            ['email' => $profile['email']],
-            [
-                'name' => $profile['name'],
-                'password' => 'password',
-                'is_admin' => false,
-                'active_venue_id' => null,
-            ],
-        ));
-
-        Visit::query()->whereIn('venue_id', $venues->pluck('id'))->delete();
-        RewardUnlock::query()
-            ->whereHas('reward', fn ($query) => $query->whereIn('venue_id', $venues->pluck('id')))
+        Reward::query()
+            ->where('venue_id', $venue->id)
+            ->whereNotIn('required_stamps', [5, 10, 15])
             ->delete();
-        CustomerRewardCycle::query()
-            ->whereHas('customer', fn ($query) => $query->whereIn('venue_id', $venues->pluck('id')))
-            ->delete();
-
-        $loyalty = app(LoyaltyStampService::class);
-
-        $venues->each(function (Venue $venue, int $venueIndex) use ($customerUsers, $owner, $loyalty): void {
-            $customerUsers->each(function (User $user, int $customerIndex) use ($venue, $venueIndex, $owner, $loyalty): void {
-                if (($customerIndex + $venueIndex) % 4 === 0 && $user->email !== 'customer@example.com') {
-                    return;
-                }
-
-                $stamps = $this->demoStampsFor($venue->slug, $user->email, $customerIndex, $venueIndex);
-
-                $customer = Customer::updateOrCreate(
-                    [
-                        'venue_id' => $venue->id,
-                        'user_id' => $user->id,
-                    ],
-                    [
-                        'stamps' => $stamps,
-                    ],
-                );
-
-                CustomerRewardCycle::updateOrCreate(
-                    [
-                        'customer_id' => $customer->id,
-                        'cycle_number' => 1,
-                    ],
-                    [
-                        'completed_at' => null,
-                    ],
-                );
-
-                $visitCount = min($stamps + 1, 9);
-
-                foreach (range(1, $visitCount) as $visitIndex) {
-                    // Most recent visit stays in the current month (dashboard KPIs), always in the past.
-                    $daysAgo = $visitIndex === $visitCount
-                        ? 0
-                        : (($visitCount - $visitIndex) * 3) + $customerIndex + $venueIndex;
-
-                    $createdAt = now()->subDays($daysAgo);
-
-                    if ($daysAgo === 0) {
-                        $minutesAgo = 30 + (($customerIndex * 41 + $venueIndex * 29 + $visitIndex * 7) % (72 * 60));
-                        $createdAt = $createdAt->subMinutes($minutesAgo);
-                    } else {
-                        $createdAt = $createdAt->setTime(10 + ($visitIndex % 8), 15);
-                    }
-
-                    Visit::create([
-                        'customer_id' => $customer->id,
-                        'venue_id' => $venue->id,
-                        'created_by' => $owner->id,
-                        'created_at' => $createdAt,
-                    ]);
-                }
-
-                $loyalty->syncEligibleUnlocks($customer);
-
-            });
-        });
 
         NfcTag::updateOrCreate(
             [
@@ -235,28 +116,37 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call(DemoCampaignsSeeder::class);
+        $this->call(DemoShowcaseSeeder::class);
 
         if (filter_var(env('SEED_DEMO_SCALE', false), FILTER_VALIDATE_BOOLEAN)) {
             $this->call(DemoScaleSeeder::class);
         }
     }
 
-    /**
-     * Per-venue loyalty cards (one row per user + venue). Demo customer uses realistic
-     * progress — not the old 100-stamp shortcut that flooded the rewards wallet.
-     */
-    private function demoStampsFor(string $venueSlug, string $email, int $customerIndex, int $venueIndex): int
+    private function purgeLegacyDemoData(): void
     {
-        if ($email === 'customer@example.com') {
-            return match ($venueSlug) {
-                'demo-cafe' => 7,
-                'harbor-coffee' => 4,
-                'north-star-burgers' => 6,
-                'olive-street-kitchen' => 3,
-                default => 5,
-            };
+        $legacyVenueIds = Venue::query()
+            ->whereIn('slug', self::LEGACY_VENUE_SLUGS)
+            ->pluck('id');
+
+        if ($legacyVenueIds->isNotEmpty()) {
+            $legacyCustomerIds = Customer::query()
+                ->whereIn('venue_id', $legacyVenueIds)
+                ->pluck('id');
+
+            Visit::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            RewardUnlock::query()->whereIn('customer_id', $legacyCustomerIds)->delete();
+            CustomerRewardCycle::query()->whereIn('customer_id', $legacyCustomerIds)->delete();
+            Customer::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            Reward::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            Campaign::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            NfcTag::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            VenueUser::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            Venue::query()->whereIn('id', $legacyVenueIds)->delete();
         }
 
-        return (($customerIndex * 2) + $venueIndex + 3) % 11;
+        User::query()
+            ->whereIn('email', self::LEGACY_CUSTOMER_EMAILS)
+            ->delete();
     }
 }

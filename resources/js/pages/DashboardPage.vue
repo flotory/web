@@ -4,6 +4,8 @@ import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
+import DashboardRevenueEstimateCard from '@/components/loyalty/DashboardRevenueEstimateCard.vue'
+import DashboardPeriodPicker from '@/components/loyalty/DashboardPeriodPicker.vue'
 import DashboardActiveCampaignsSection from '@/components/campaigns/DashboardActiveCampaignsSection.vue'
 import VenueListingCard from '@/components/loyalty/VenueListingCard.vue'
 import AppShell from '@/layouts/AppShell.vue'
@@ -15,6 +17,14 @@ import PageSection from '@/components/ui/PageSection.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { api, apiErrorMessage } from '@/lib/api'
+import {
+  dashboardApiQueryString,
+  defaultDashboardPeriodSelection,
+  parseDashboardPeriodFromQuery,
+  previousPeriodComparisonLabel,
+  type DashboardPeriodMeta,
+  type DashboardPeriodSelection,
+} from '@/lib/dashboardPeriod'
 import { updateCampaignStatus } from '@/lib/campaignActions'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
@@ -41,6 +51,7 @@ interface DashboardResponse {
   scope: 'all' | 'venue' | 'none'
   venue: Pick<Venue, 'id' | 'name' | 'slug'> | null
   venues_count: number
+  period?: DashboardPeriodMeta
   has_loyalty_activity?: boolean
   stats: {
     total_customers: number
@@ -48,6 +59,8 @@ interface DashboardResponse {
     returning_customers?: number
     total_visits: number
     visits_last_28_days?: number
+    rewards_unlocked_last_28_days?: number
+    claim_rate_last_28_days?: number
     milestones_claimed: number
     milestones_unlocked: number
     rewards_claimed?: number
@@ -61,7 +74,7 @@ interface DashboardResponse {
     repeat_rate?: { change_pct: number | null }
   }
   most_loyal_customers: Customer[]
-  monthly_activity: Array<{ month: string; visits: number }>
+  monthly_activity: Array<{ month: string; label?: string; visits: number }>
   milestone_conversions: Array<{
     reward_id: number
     title: string
@@ -79,6 +92,13 @@ interface DashboardResponse {
   }>
   active_campaigns?: Campaign[]
   recent_activity?: DashboardActivity[]
+  revenue_estimate?: {
+    average_check_amount: number | null
+    visits_last_28_days: number
+    total_visits: number
+    estimated_revenue_last_28_days: number | null
+    estimated_revenue_total: number | null
+  }
 }
 
 const router = useRouter()
@@ -88,6 +108,10 @@ const workspace = useWorkspaceStore()
 const dashboard = ref<DashboardResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
+const periodSelection = ref<DashboardPeriodSelection>(defaultDashboardPeriodSelection())
+
+const periodLabel = computed(() => dashboard.value?.period?.label ?? 'Last 28 days')
+const trendComparisonLabel = computed(() => previousPeriodComparisonLabel(dashboard.value?.period))
 
 /** Temporary: venue QR is printed on physical stands; re-enable when dashboard download is needed again. */
 const showVenueQr = false
@@ -109,6 +133,20 @@ const selectedVenue = computed(() => {
 })
 
 const isAggregateView = computed(() => dashboard.value?.scope === 'all')
+
+const revenueEstimateVenue = computed(() => {
+  if (selectedVenue.value) {
+    return selectedVenue.value
+  }
+
+  if (dashboard.value?.venue) {
+    return dashboard.value.venue
+  }
+
+  return null
+})
+
+const canEditRevenueEstimate = computed(() => !isAggregateView.value && Boolean(revenueEstimateVenue.value))
 
 const title = computed(() => {
   if (isAggregateView.value) {
@@ -145,14 +183,14 @@ const stats = computed(() => {
 
   return [
     {
-      label: 'Visits (last 28 days)',
+      label: `Visits (${periodLabel.value})`,
       value: dashboard.value?.stats.visits_last_28_days ?? 0,
       trend: trends?.visits_last_28_days?.change_pct ?? null,
       icon: ScanLine,
       tone: 'purple' as const,
     },
     {
-      label: 'Returning guests (last 28 days)',
+      label: `Returning guests (${periodLabel.value})`,
       value: dashboard.value?.stats.returning_customers ?? 0,
       trend: trends?.returning_guests?.change_pct ?? null,
       icon: UsersRound,
@@ -160,14 +198,14 @@ const stats = computed(() => {
     },
     {
       label: 'Rewards unlocked',
-      value: dashboard.value?.stats.milestones_unlocked ?? 0,
+      value: dashboard.value?.stats.rewards_unlocked_last_28_days ?? 0,
       trend: trends?.rewards_unlocked?.change_pct ?? null,
       icon: Gift,
       tone: 'green' as const,
     },
     {
       label: 'Repeat rate',
-      value: `${conversionOverview.value.rate}%`,
+      value: `${dashboard.value?.stats.claim_rate_last_28_days ?? 0}%`,
       trend: trends?.repeat_rate?.change_pct ?? null,
       icon: ShieldCheck,
       tone: 'blue' as const,
@@ -180,7 +218,7 @@ const insights = computed(() => dashboard.value?.insights ?? [])
 const activeCampaigns = computed(() => dashboard.value?.active_campaigns ?? [])
 const recentActivity = computed(() => dashboard.value?.recent_activity ?? [])
 const recentActivityRows = computed(() => recentActivity.value.slice(0, 3))
-const monthlyActivityRows = computed(() => (dashboard.value?.monthly_activity ?? []).slice(-6))
+const monthlyActivityRows = computed(() => dashboard.value?.monthly_activity ?? [])
 const maxMonthlyVisits = computed(() => Math.max(1, ...monthlyActivityRows.value.map((row) => row.visits)))
 const topConversionRows = computed(() =>
   [...(dashboard.value?.milestone_conversions ?? [])]
@@ -296,7 +334,7 @@ async function loadDashboard() {
     }
 
     const venueId = workspace.filterVenueId ?? undefined
-    const query = venueId ? `?venue_id=${venueId}` : ''
+    const query = dashboardApiQueryString(periodSelection.value, venueId)
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
   } catch (exception) {
     error.value = apiErrorMessage(exception, 'Could not load dashboard data.')
@@ -305,9 +343,32 @@ async function loadDashboard() {
   }
 }
 
-watch(() => workspace.filterVenueId, loadDashboard)
+function syncPeriodToRoute() {
+  const venueId = workspace.filterVenueId ?? undefined
+  const query = dashboardApiQueryString(periodSelection.value, venueId)
+  const nextQuery = new URLSearchParams(query.replace(/^\?/, ''))
 
-onMounted(loadDashboard)
+  void router.replace({
+    path: route.path,
+    query: Object.fromEntries(nextQuery.entries()),
+  })
+}
+
+function onPeriodChange(next: DashboardPeriodSelection) {
+  periodSelection.value = next
+  syncPeriodToRoute()
+  void loadDashboard()
+}
+
+watch(() => workspace.filterVenueId, () => {
+  syncPeriodToRoute()
+  void loadDashboard()
+})
+
+onMounted(() => {
+  periodSelection.value = parseDashboardPeriodFromQuery(route.query as Record<string, unknown>)
+  void loadDashboard()
+})
 </script>
 
 <template>
@@ -324,6 +385,13 @@ onMounted(loadDashboard)
         </div>
       </template>
     </PageHeader>
+
+    <DashboardPeriodPicker
+      class="mb-4"
+      :model-value="periodSelection"
+      :period-label="periodLabel"
+      @update:model-value="onPeriodChange"
+    />
 
     <AppCard v-if="loading" wrapper-class="mb-4">
       <EmptyState compact title="Loading dashboard…" />
@@ -343,8 +411,17 @@ onMounted(loadDashboard)
     />
 
     <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
+      <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" :trend-comparison-label="trendComparisonLabel" />
     </div>
+
+    <DashboardRevenueEstimateCard
+      class="mt-4"
+      :venue="revenueEstimateVenue"
+      :estimate="dashboard?.revenue_estimate"
+      :editable="canEditRevenueEstimate"
+      :period-label="periodLabel"
+      @saved="loadDashboard"
+    />
 
     <div v-if="showVenueQr" class="mt-6">
       <AppCard wrapper-class="flex h-full max-w-sm flex-col">
@@ -446,7 +523,7 @@ onMounted(loadDashboard)
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Visits</p>
               <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.visits_last_28_days ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">last 28 days</p>
+              <p class="text-xs font-semibold text-ink-muted">{{ periodLabel }}</p>
             </div>
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Claim rate</p>
@@ -456,7 +533,7 @@ onMounted(loadDashboard)
             <div class="rounded-2xl bg-surface-muted p-3 border border-border">
               <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Returning</p>
               <p class="mt-1 text-2xl font-black text-ink">{{ dashboard?.stats.returning_customers ?? 0 }}</p>
-              <p class="text-xs font-semibold text-ink-muted">2+ visits in 28 days</p>
+              <p class="text-xs font-semibold text-ink-muted">2+ visits in range</p>
             </div>
           </div>
           <RouterLink to="/analytics" class="mt-4 inline-flex text-sm font-bold text-primary hover:text-primary-soft">
@@ -465,7 +542,7 @@ onMounted(loadDashboard)
         </div>
         <div class="rounded-2xl bg-surface-muted p-4 border border-border">
           <div class="mb-3 flex items-center justify-between gap-3">
-            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Last 6 months</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">{{ periodLabel }}</p>
             <p class="text-xs font-semibold text-ink-muted">{{ maxMonthlyVisits }} peak visits</p>
           </div>
           <div class="flex h-28 items-end gap-2">
@@ -480,7 +557,7 @@ onMounted(loadDashboard)
                 :title="`${row.month}: ${row.visits} visits`"
               />
               <p class="truncate text-center text-[10px] font-bold uppercase text-ink-soft">
-                {{ row.month.slice(5) }}
+                {{ row.label ?? row.month }}
               </p>
             </div>
           </div>

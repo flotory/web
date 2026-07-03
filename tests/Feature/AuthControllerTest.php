@@ -126,6 +126,54 @@ class AuthControllerTest extends TestCase
             ->assertJsonValidationErrors('locale');
     }
 
+    public function test_authenticated_user_can_update_currency(): void
+    {
+        $user = $this->createUser(['email' => 'currency@example.com', 'currency' => 'AMD']);
+        Sanctum::actingAs($user);
+
+        $this->putJson('/api/auth/currency', [
+            'currency' => 'USD',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.currency', 'USD');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'currency@example.com',
+            'currency' => 'USD',
+        ]);
+    }
+
+    public function test_authenticated_user_can_update_profile(): void
+    {
+        $user = $this->createUser(['email' => 'profile@example.com', 'name' => 'Old Name']);
+        Sanctum::actingAs($user);
+
+        $this->putJson('/api/auth/profile', [
+            'name' => 'New Name',
+            'birthday' => '1992-03-14',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.name', 'New Name')
+            ->assertJsonPath('user.birthday', '1992-03-14');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'profile@example.com',
+            'name' => 'New Name',
+            'birthday' => '1992-03-14',
+        ]);
+    }
+
+    public function test_currency_update_rejects_unsupported_currency(): void
+    {
+        Sanctum::actingAs($this->createUser(['email' => 'unsupported-currency@example.com']));
+
+        $this->putJson('/api/auth/currency', [
+            'currency' => 'EUR',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('currency');
+    }
+
     public function test_web_login_allows_platform_admin(): void
     {
         $this->createUser(['email' => 'admin@flotory.com', 'is_admin' => true]);

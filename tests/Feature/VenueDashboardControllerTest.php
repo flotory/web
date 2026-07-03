@@ -71,7 +71,37 @@ class VenueDashboardControllerTest extends TestCase
                 'monthly_activity' => [
                     ['month', 'label', 'visits'],
                 ],
+                'revenue_estimate' => [
+                    'average_check_amount',
+                    'visits_last_28_days',
+                    'total_visits',
+                    'estimated_revenue_last_28_days',
+                    'estimated_revenue_total',
+                ],
             ]);
+    }
+
+    public function test_dashboard_revenue_estimate_multiplies_visits_by_average_check(): void
+    {
+        $owner = $this->createUser();
+        $customerUser = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue(['average_check_amount' => 5]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $customer = $this->createCustomer($venue, $customerUser);
+        $this->createVisit($customer, $owner);
+        $this->createVisit($customer, $owner);
+        $this->createVisit($customer, $owner);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk()
+            ->assertJsonPath('revenue_estimate.average_check_amount', 5)
+            ->assertJsonPath('revenue_estimate.total_visits', 3)
+            ->assertJsonPath('revenue_estimate.estimated_revenue_total', 15)
+            ->assertJsonPath('revenue_estimate.visits_last_28_days', 3)
+            ->assertJsonPath('revenue_estimate.estimated_revenue_last_28_days', 15);
     }
 
     public function test_dashboard_insights_surface_customers_close_to_reward(): void
@@ -221,6 +251,69 @@ class VenueDashboardControllerTest extends TestCase
             ->assertJsonFragment(['title' => 'Activity Guest joined loyalty']);
     }
 
+    public function test_dashboard_respects_period_query_parameter(): void
+    {
+        $owner = $this->createUser();
+        $recentGuest = $this->createUser(['email' => 'recent@example.com']);
+        $oldGuest = $this->createUser(['email' => 'old@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        $recentCustomer = $this->createCustomer($venue, $recentGuest);
+        $this->createVisit($recentCustomer, $owner, ['created_at' => now()->subDays(3)]);
+        $this->createVisit($recentCustomer, $owner, ['created_at' => now()->subDays(1)]);
+
+        $oldCustomer = $this->createCustomer($venue, $oldGuest);
+        $this->createVisit($oldCustomer, $owner, ['created_at' => now()->subDays(10)]);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}&period=7d")
+            ->assertOk()
+            ->assertJsonPath('period.preset', '7d')
+            ->assertJsonPath('stats.visits_last_28_days', 2)
+            ->assertJsonPath('stats.returning_customers', 1);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}&period=14d")
+            ->assertOk()
+            ->assertJsonPath('stats.visits_last_28_days', 3);
+    }
+
+    public function test_dashboard_rejects_invalid_custom_period(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}&from=2026-07-10&to=2026-07-01")
+            ->assertStatus(422);
+    }
+
+    public function test_dashboard_six_month_period_scopes_visits_and_returns_metadata(): void
+    {
+        $owner = $this->createUser();
+        $guest = $this->createUser(['email' => 'six-month@example.com']);
+        $venue = $this->createVenue();
+        $this->attachMember($venue, $owner, 'owner');
+        $customer = $this->createCustomer($venue, $guest);
+
+        $this->createVisit($customer, $owner, ['created_at' => now()->subMonths(2)]);
+        $this->createVisit($customer, $owner, ['created_at' => now()->subMonths(8)]);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}&period=6m")
+            ->assertOk()
+            ->assertJsonPath('period.preset', '6m')
+            ->assertJsonPath('period.label', 'Last 6 months')
+            ->assertJsonPath('stats.visits_last_28_days', 1)
+            ->assertJsonStructure([
+                'activity_series' => ['bucket', 'rows'],
+            ]);
+    }
+
     public function test_dashboard_rolling_window_excludes_visits_outside_last_28_days(): void
     {
         $owner = $this->createUser();
@@ -243,6 +336,45 @@ class VenueDashboardControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('stats.visits_last_28_days', 2)
             ->assertJsonPath('stats.returning_customers', 1);
+    }
+
+    public function test_dashboard_kpi_trends_compare_reward_unlocks_and_claim_rate_by_unlock_date(): void
+    {
+        $owner = $this->createUser();
+        $guest = $this->createUser(['email' => 'guest@example.com']);
+        $venue = $this->createVenue();
+        $reward = $this->createReward($venue, ['required_stamps' => 5]);
+        $this->attachMember($venue, $owner, 'owner');
+        $customer = $this->createCustomer($venue, $guest);
+
+        $this->createRewardUnlock($customer, $reward, [
+            'cycle_number' => 1,
+            'unlocked_at' => now()->subDays(40),
+            'claimed_at' => now()->subDays(39),
+            'claimed_by' => $guest->id,
+        ]);
+        $this->createRewardUnlock($customer, $reward, [
+            'cycle_number' => 2,
+            'unlocked_at' => now()->subDays(10),
+            'claimed_at' => now()->subDays(9),
+            'claimed_by' => $guest->id,
+        ]);
+        $this->createRewardUnlock($customer, $reward, [
+            'cycle_number' => 3,
+            'unlocked_at' => now()->subDays(5),
+            'claimed_at' => null,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/dashboard?venue_id={$venue->id}")
+            ->assertOk()
+            ->assertJsonPath('stats.rewards_unlocked_last_28_days', 2)
+            ->assertJsonPath('stats.claim_rate_last_28_days', 50)
+            ->assertJsonPath('kpi_trends.rewards_unlocked.previous', 1)
+            ->assertJsonPath('kpi_trends.rewards_unlocked.change_pct', 100)
+            ->assertJsonPath('kpi_trends.repeat_rate.previous', 100)
+            ->assertJsonPath('kpi_trends.repeat_rate.change_pct', -50);
     }
 
     public function test_staff_cannot_access_dashboard(): void

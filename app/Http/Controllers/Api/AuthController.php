@@ -9,6 +9,7 @@ use App\Http\Requests\GoogleAuthRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
 use App\Services\AppleIdTokenVerifier;
 use App\Services\AppleOAuthUserService;
@@ -144,6 +145,37 @@ class AuthController extends Controller
         $user = $request->user();
         $user->forceFill([
             'locale' => $validated['locale'],
+        ])->save();
+
+        return response()->json([
+            'user' => $user->fresh()->load('activeVenue'),
+        ]);
+    }
+
+    public function updateCurrency(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'currency' => ['required', 'string', 'in:USD,AMD'],
+        ]);
+
+        $user = $request->user();
+        $user->forceFill([
+            'currency' => $validated['currency'],
+        ])->save();
+
+        return response()->json([
+            'user' => $user->fresh()->load('activeVenue'),
+        ]);
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $validated = $request->validated();
+
+        $user->forceFill([
+            'name' => $validated['name'],
+            'birthday' => $validated['birthday'] ?? null,
         ])->save();
 
         return response()->json([

@@ -26,6 +26,7 @@ class StoreRestaurantRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:40'],
             'website' => ['nullable', 'url', 'max:2048'],
             'category' => ['nullable', 'string', 'in:cafe,restaurant,bar,bakery'],
+            'average_check_amount' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ];
     }
 }

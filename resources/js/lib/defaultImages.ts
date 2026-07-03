@@ -62,13 +62,20 @@ const VENUE_COVER_DEFAULTS: Record<VenueCategory, string[]> = {
   ],
 }
 
+/** Demo Cafe reward photos (1:1 square crops under public/images/defaults/rewards). */
+export const DEMO_REWARD_IMAGES = {
+  iceCreamCone: '/images/defaults/rewards/ice-cream-cone.png',
+  freeCoffee: '/images/defaults/rewards/free-coffee.png',
+  chocolateCake: '/images/defaults/rewards/chocolate-cake.png',
+} as const
+
 const REWARD_IMAGE_DEFAULTS: Record<RewardCategory, string> = {
-  drink: unsplash('photo-1509042239860-f550ce710b93', 800, 600),
-  dessert: unsplash('photo-1551024506-0bccd828d307', 800, 600),
-  free_item: unsplash('photo-1504674900247-0877df9cc836', 800, 600),
-  discount: unsplash('photo-1555396273-367ea4eb4db5', 800, 600),
+  drink: DEMO_REWARD_IMAGES.freeCoffee,
+  dessert: DEMO_REWARD_IMAGES.chocolateCake,
+  free_item: DEMO_REWARD_IMAGES.freeCoffee,
+  discount: DEMO_REWARD_IMAGES.iceCreamCone,
   vip: unsplash('photo-1414235077428-338989a2e8c0', 800, 600),
-  special_reward: unsplash('photo-1501339847302-ac426a4a7cbb', 800, 600),
+  special_reward: DEMO_REWARD_IMAGES.freeCoffee,
 }
 
 export type RewardPreset = {
@@ -82,25 +89,25 @@ export type RewardPreset = {
 export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> = {
   cafe: [
     {
-      id: 'half-off',
-      title: '50% off one coffee',
+      id: 'half-off-ice-cream',
+      title: '50% off ice cream',
       required_stamps: 5,
-      description: 'Half price on any coffee drink after your fifth stamp.',
-      image: unsplash('photo-1509042239860-f550ce710b93', 800, 600),
+      description: 'Half price on any ice cream after your fifth stamp.',
+      image: DEMO_REWARD_IMAGES.iceCreamCone,
     },
     {
       id: 'free-coffee-10',
       title: 'Free coffee',
       required_stamps: 10,
       description: 'A complimentary coffee on the house.',
-      image: unsplash('photo-1495474472287-4d71bcdd2085', 800, 600),
+      image: DEMO_REWARD_IMAGES.freeCoffee,
     },
     {
-      id: 'free-coffee-15',
-      title: 'Free coffee',
+      id: 'free-cake-15',
+      title: 'Free piece of cake',
       required_stamps: 15,
-      description: 'Another free coffee for your most loyal regulars.',
-      image: unsplash('photo-1501339847302-ac426a4a7cbb', 800, 600),
+      description: 'A complimentary slice of cake for loyal regulars.',
+      image: DEMO_REWARD_IMAGES.chocolateCake,
     },
   ],
   bar: [
