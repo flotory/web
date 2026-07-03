@@ -177,7 +177,7 @@ onMounted(() => {
             <AppButton variant="secondary">Log in</AppButton>
           </RouterLink>
           <RouterLink to="/book-demo">
-            <AppButton>Book a demo</AppButton>
+            <AppButton>Book A Demo</AppButton>
           </RouterLink>
         </div>
       </template>

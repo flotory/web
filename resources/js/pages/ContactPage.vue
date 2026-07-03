@@ -58,7 +58,7 @@ async function submit() {
       <p class="mt-2 text-sm leading-relaxed text-ink-muted">
         Questions about Flotory for your venue? Send us a message — we typically reply within one business day.
         Prefer a walkthrough?
-        <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book a demo</RouterLink>
+        <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book A Demo</RouterLink>
       </p>
 
       <div v-if="submitted" class="mt-6 rounded-2xl border border-accent-border/40 bg-accent-soft/60 p-5 text-sm text-ink-muted" data-testid="contact-success">

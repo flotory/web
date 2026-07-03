@@ -347,7 +347,7 @@ onMounted(async () => {
     >
       <div class="flex flex-wrap justify-center gap-2">
         <RouterLink to="/book-demo">
-          <AppButton>Book a demo</AppButton>
+          <AppButton>Book A Demo</AppButton>
         </RouterLink>
         <RouterLink to="/contact">
           <AppButton variant="secondary">Contact us</AppButton>

@@ -15,7 +15,7 @@ test.describe('Owner invitation register', () => {
     await page.goto('/register?invite=not-a-real-token')
 
     await expect(page.getByText('invalid', { exact: false })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByRole('link', { name: 'Book a demo' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
   })
 
   test('sales-led invite registers and opens venue setup', async ({ page }) => {

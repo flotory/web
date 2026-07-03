@@ -47,13 +47,13 @@ const features = [
       </RouterLink>
       <div class="flex items-center gap-2">
         <RouterLink to="/book-demo" class="hidden sm:inline-flex">
-          <AppButton variant="ghost">Book a demo</AppButton>
+          <AppButton variant="ghost">Book A Demo</AppButton>
         </RouterLink>
         <RouterLink to="/login" class="hidden md:inline-flex">
           <AppButton variant="ghost">Log in</AppButton>
         </RouterLink>
         <RouterLink to="/book-demo">
-          <AppButton size="sm" class="btn-glow">Book a demo</AppButton>
+          <AppButton size="sm" class="btn-glow">Book A Demo</AppButton>
         </RouterLink>
       </div>
     </header>
@@ -79,12 +79,12 @@ const features = [
         <div class="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
           <RouterLink to="/book-demo?utm_source=landing&utm_campaign=hero">
             <AppButton size="lg" class="btn-glow w-full min-w-[11.5rem] sm:w-auto">
-              Book a demo
+              Book A Demo
             </AppButton>
           </RouterLink>
           <RouterLink to="/contact">
             <AppButton size="lg" variant="secondary" class="w-full min-w-[11.5rem] sm:w-auto">
-              Contact us
+              Contact Us
             </AppButton>
           </RouterLink>
         </div>
@@ -172,12 +172,12 @@ const features = [
         <div class="mt-9 flex flex-col items-center justify-center gap-4 sm:mt-10 sm:flex-row lg:mt-12">
           <RouterLink to="/book-demo?utm_source=landing&utm_campaign=footer">
             <AppButton size="lg" variant="secondary" class="btn-glow w-full min-w-[11.5rem] border-accent-border/40 sm:w-auto">
-              Book a demo
+              Book A Demo
             </AppButton>
           </RouterLink>
           <RouterLink to="/contact">
             <AppButton size="lg" variant="ghost" class="w-full min-w-[11.5rem] text-primary-text hover:bg-white/10 hover:text-primary-text sm:w-auto">
-              Contact us
+              Contact Us
             </AppButton>
           </RouterLink>
         </div>

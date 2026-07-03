@@ -184,7 +184,7 @@ onMounted(() => {
 
       <p v-if="authIntent === 'owner'" class="mt-5 text-center text-sm text-ink-muted">
         Not onboarded yet?
-        <RouterLink to="/book-demo" class="font-bold text-ink">Book a demo</RouterLink>
+        <RouterLink to="/book-demo" class="font-bold text-ink">Book A Demo</RouterLink>
         or
         <RouterLink to="/contact" class="font-bold text-ink">contact us</RouterLink>
       </p>

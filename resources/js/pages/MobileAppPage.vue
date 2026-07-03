@@ -38,7 +38,7 @@ const appDeepLink = mobileAppDeepLink()
         <div class="mt-8 space-y-3 text-center">
           <p class="text-sm font-semibold text-ink-muted">Venue owner?</p>
           <RouterLink to="/book-demo" class="block">
-            <AppButton class="w-full" size="lg" variant="secondary">Book a demo</AppButton>
+            <AppButton class="w-full" size="lg" variant="secondary">Book A Demo</AppButton>
           </RouterLink>
           <p class="text-sm text-ink-muted">
             Already onboarded?
