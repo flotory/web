@@ -81,7 +81,7 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByTestId('faq-item-what-is-flotory')).toBeVisible()
     await expect(page.getByTestId('faq-item-how-stamps-work')).toBeVisible()
     await expect(page.getByRole('link', { name: 'FAQ' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Contact Us' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Contact Us' }).first()).toBeVisible()
   })
 
   test('nfc tap bridge loads the seeded Demo Cafe stand', async ({ page }) => {
