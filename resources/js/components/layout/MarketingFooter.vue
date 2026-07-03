@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
+import { FLOTORY_APP_NAME } from '@/lib/brand'
 import { legalConfig } from '@/lib/legalConfig'
 </script>
 
@@ -21,7 +22,7 @@ import { legalConfig } from '@/lib/legalConfig'
       </a>
     </nav>
     <p class="mt-3 text-xs text-ink-muted/90">
-      © {{ new Date().getFullYear() }} {{ legalConfig.entityName }}
+      © {{ new Date().getFullYear() }} {{ FLOTORY_APP_NAME }}
     </p>
   </footer>
 </template>
