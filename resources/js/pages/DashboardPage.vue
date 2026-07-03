@@ -89,6 +89,9 @@ const dashboard = ref<DashboardResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
 
+/** Temporary: venue QR is printed on physical stands; re-enable when dashboard download is needed again. */
+const showVenueQr = false
+
 const selectedVenue = computed(() => {
   if (dashboard.value?.scope === 'all') {
     return null
@@ -320,14 +323,6 @@ onMounted(loadDashboard)
           <img :src="venueLogoThumbUrl(selectedVenue)" :alt="title" class="size-full object-cover">
         </div>
       </template>
-      <template #actions>
-        <RouterLink to="/app">
-          <AppButton>
-            <ScanLine class="size-4" />
-            Mobile app
-          </AppButton>
-        </RouterLink>
-      </template>
     </PageHeader>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
@@ -351,8 +346,8 @@ onMounted(loadDashboard)
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
 
-    <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_2fr] lg:items-stretch">
-      <AppCard wrapper-class="flex h-full flex-col">
+    <div v-if="showVenueQr" class="mt-6">
+      <AppCard wrapper-class="flex h-full max-w-sm flex-col">
         <PageSection title="Venue QR" description="Scan to join and collect stamps" />
 
         <div class="mt-4 flex flex-1 flex-col items-center justify-center">
@@ -371,22 +366,24 @@ onMounted(loadDashboard)
           </AppButton>
         </div>
       </AppCard>
+    </div>
 
+    <div class="mt-6 grid gap-4 lg:grid-cols-2 lg:items-stretch">
       <AppCard wrapper-class="flex h-full flex-col">
         <div>
           <div class="flex items-center justify-between gap-3">
             <h2 class="inline-flex items-center gap-2 text-lg font-bold text-ink md:text-xl">
-              <span>Activity & insights</span>
+              <span>Activity</span>
               <span class="live-dot shrink-0" aria-hidden="true" />
             </h2>
             <RouterLink to="/analytics" class="shrink-0 text-xs font-bold uppercase tracking-wide text-ink-muted hover:text-ink-muted">
               View all
             </RouterLink>
           </div>
-          <p class="mt-1 text-sm text-ink-muted">Real loyalty events plus signals worth acting on.</p>
+          <p class="mt-1 text-sm text-ink-muted">Recent loyalty events from your venue.</p>
         </div>
 
-        <div v-if="recentActivityRows.length" class="mt-4 space-y-2">
+        <div v-if="recentActivityRows.length" class="mt-4 flex-1 space-y-2">
           <div
             v-for="item in recentActivityRows"
             :key="`${item.type}-${item.title}-${item.occurred_at}`"
@@ -404,27 +401,32 @@ onMounted(loadDashboard)
             <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-ink-soft">{{ formatActivityTime(item.occurred_at) }}</span>
           </div>
         </div>
-        <div v-else class="mt-4 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
+        <div v-else class="mt-4 flex-1 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
           <p class="text-sm font-semibold text-ink-muted">No activity yet.</p>
-          <p class="mt-1 text-xs text-ink-muted">Guests join via your venue QR, then tap the NFC stand on return visits.</p>
+          <p class="mt-1 text-xs text-ink-muted">Guests tap the NFC stand on return visits to collect stamps.</p>
+        </div>
+      </AppCard>
+
+      <AppCard wrapper-class="flex h-full flex-col">
+        <div>
+          <h2 class="text-lg font-bold text-ink md:text-xl">Insights</h2>
+          <p class="mt-1 text-sm text-ink-muted">Signals worth acting on from your loyalty program.</p>
         </div>
 
-        <div class="mt-5 border-t border-border pt-4">
-          <p class="text-xs font-black uppercase tracking-[0.14em] text-ink-soft">Insights</p>
-          <ul v-if="insights.length" class="mt-3 space-y-2">
-            <li
-              v-for="(insight, index) in insights.slice(0, 3)"
-              :key="`${insight.text}-${index}`"
-              class="flex gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-medium leading-snug border border-border/80"
-              :class="insightToneClass(insight.tone)"
-            >
-              <span class="text-ink-soft" aria-hidden="true">•</span>
-              <span>{{ insight.text }}</span>
-            </li>
-          </ul>
-          <p v-else class="mt-3 text-sm text-ink-muted">
-            Insights appear once guests start visiting.
-          </p>
+        <ul v-if="insights.length" class="mt-4 flex-1 space-y-2">
+          <li
+            v-for="(insight, index) in insights.slice(0, 3)"
+            :key="`${insight.text}-${index}`"
+            class="flex gap-2 rounded-2xl bg-surface-muted px-3 py-2 text-sm font-medium leading-snug border border-border/80"
+            :class="insightToneClass(insight.tone)"
+          >
+            <span class="text-ink-soft" aria-hidden="true">•</span>
+            <span>{{ insight.text }}</span>
+          </li>
+        </ul>
+        <div v-else class="mt-4 flex-1 rounded-2xl border border-dashed border-border bg-surface-muted px-4 py-6 text-center">
+          <p class="text-sm font-semibold text-ink-muted">No insights yet.</p>
+          <p class="mt-1 text-xs text-ink-muted">Insights appear once guests start visiting.</p>
         </div>
       </AppCard>
     </div>
