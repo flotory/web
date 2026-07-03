@@ -14,6 +14,9 @@ import { legalConfig } from '@/lib/legalConfig'
       <RouterLink to="/terms" class="font-semibold text-ink-soft hover:text-ink">
         Terms
       </RouterLink>
+      <RouterLink to="/faq" class="font-semibold text-ink-soft hover:text-ink">
+        FAQ
+      </RouterLink>
       <RouterLink to="/contact" class="font-semibold text-ink-soft hover:text-ink">
         Contact
       </RouterLink>

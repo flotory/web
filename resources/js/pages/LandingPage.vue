@@ -45,15 +45,12 @@ const features = [
       <RouterLink to="/">
         <FlotoryLogo size="lg" />
       </RouterLink>
-      <div class="flex items-center gap-2">
-        <RouterLink to="/book-demo" class="hidden sm:inline-flex">
-          <AppButton variant="ghost">Book A Demo</AppButton>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <RouterLink to="/faq" class="hidden sm:inline-flex">
+          <AppButton variant="ghost">FAQ</AppButton>
         </RouterLink>
-        <RouterLink to="/login" class="hidden md:inline-flex">
+        <RouterLink to="/login" class="hidden sm:inline-flex">
           <AppButton variant="ghost">Log in</AppButton>
-        </RouterLink>
-        <RouterLink to="/book-demo">
-          <AppButton size="sm" class="btn-glow">Book A Demo</AppButton>
         </RouterLink>
       </div>
     </header>
@@ -182,6 +179,12 @@ const features = [
           </RouterLink>
         </div>
         <p class="mt-6 text-sm font-semibold text-ink-soft/85">
+          Questions before you book?
+          <RouterLink to="/faq" class="font-bold underline decoration-accent/70 underline-offset-2">
+            Read the FAQ
+          </RouterLink>
+        </p>
+        <p class="mt-3 text-sm font-semibold text-ink-soft/85">
           Already have an account?
           <RouterLink to="/login" class="font-bold underline decoration-accent/70 underline-offset-2">
             Log in

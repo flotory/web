@@ -2,19 +2,16 @@
 import { RouterLink } from 'vue-router'
 
 import CalendlyEmbed from '@/components/marketing/CalendlyEmbed.vue'
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { marketingCardClass } from '@/lib/marketingPage'
 </script>
 
 <template>
   <MarketingPageShell width="3xl">
-    <RouterLink :to="MARKETING_HOME_PATH" class="mb-4 inline-flex" aria-label="Flotory home">
-      <FlotoryLogo size="lg" />
-    </RouterLink>
+    <MarketingPageHeader header-class="mb-4" />
 
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-6`">
       <div class="flex flex-wrap items-center gap-3">

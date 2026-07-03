@@ -2,12 +2,11 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { authFieldClass } from '@/lib/authForm'
 import { api, ApiError } from '@/lib/api'
 import { legalConfig } from '@/lib/legalConfig'
@@ -46,9 +45,7 @@ async function submit() {
 
 <template>
   <MarketingPageShell width="lg">
-    <RouterLink :to="MARKETING_HOME_PATH" class="mb-4 inline-flex" aria-label="Flotory home">
-      <FlotoryLogo size="lg" />
-    </RouterLink>
+    <MarketingPageHeader header-class="mb-4" />
 
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-6`">
       <div class="flex flex-wrap items-center gap-3">

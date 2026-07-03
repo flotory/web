@@ -14,6 +14,7 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByTestId('landing-hero-visual')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Book A Demo' }).first()).toBeVisible()
     await expect(page.getByRole('link', { name: 'Contact Us' }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'FAQ' }).first()).toBeVisible()
     await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible()
 
     await expect(page.getByTestId('landing-trust-strip')).toBeVisible()
@@ -69,7 +70,18 @@ test.describe('Public marketing and bridge pages', () => {
   test('contact page renders', async ({ page }) => {
     await page.goto('/contact')
     await expect(page.getByRole('heading', { name: 'Get in touch' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByTestId('marketing-back')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
+  })
+
+  test('faq page renders', async ({ page }) => {
+    await page.goto('/faq')
+    await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByTestId('marketing-back')).toBeVisible()
+    await expect(page.getByTestId('faq-item-what-is-flotory')).toBeVisible()
+    await expect(page.getByTestId('faq-item-how-stamps-work')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'FAQ' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Contact Us' })).toBeVisible()
   })
 
   test('nfc tap bridge loads the seeded Demo Cafe stand', async ({ page }) => {

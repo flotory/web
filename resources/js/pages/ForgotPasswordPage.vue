@@ -2,9 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
-import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -52,9 +51,7 @@ async function submit() {
 
 <template>
   <MarketingPageShell>
-      <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
-        <FlotoryLogo size="lg" />
-      </RouterLink>
+      <MarketingPageHeader back-fallback="/login" back-label="Back to login" />
 
       <AppCard :wrapper-class="marketingCardClass">
         <AppBadge tone="amber">Account recovery</AppBadge>

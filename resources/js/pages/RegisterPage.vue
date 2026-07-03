@@ -2,9 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
+import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
-import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -122,9 +121,7 @@ onMounted(() => {
 
 <template>
   <MarketingPageShell>
-    <RouterLink :to="MARKETING_HOME_PATH" class="mb-6 inline-flex" aria-label="Flotory home">
-      <FlotoryLogo size="lg" />
-    </RouterLink>
+    <MarketingPageHeader />
 
     <AppCard :wrapper-class="marketingCardClass">
       <AppBadge tone="amber">Owner invitation</AppBadge>
