@@ -108,7 +108,7 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.locator('footer').getByRole('link', { name: 'Privacy' })).toBeVisible()
     await expect(page.getByTestId('faq-item-what-is-flotory')).toBeVisible()
     await expect(page.getByTestId('faq-item-how-stamps-work')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'FAQ' })).toBeVisible()
+    await expect(page.locator('footer').getByRole('link', { name: 'FAQ' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Contact Us' }).first()).toBeVisible()
   })
 

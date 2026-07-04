@@ -5,6 +5,6 @@ test.describe('Login page', () => {
     await page.goto('/login')
     await expect(page.locator('#email')).toBeVisible({ timeout: 30_000 })
     await expect(page.locator('#password')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
+    await expect(page.locator('form').getByRole('button', { name: 'Log in' })).toBeVisible()
   })
 })
