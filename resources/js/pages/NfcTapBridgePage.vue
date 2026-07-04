@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -53,8 +52,6 @@ onMounted(async () => {
 
 <template>
   <MarketingPageShell width="lg" padding-y="10">
-    <MarketingPageHeader logo-size="md" />
-
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
       <p v-if="loading" class="text-sm font-semibold text-ink-muted">Loading stand…</p>
 

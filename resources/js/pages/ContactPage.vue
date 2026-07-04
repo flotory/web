@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -45,8 +44,6 @@ async function submit() {
 
 <template>
   <MarketingPageShell width="lg">
-    <MarketingPageHeader header-class="mb-4" />
-
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-6`">
       <div class="flex flex-wrap items-center gap-3">
         <AppBadge tone="amber">Contact</AppBadge>

@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
@@ -50,9 +49,7 @@ async function submit() {
 </script>
 
 <template>
-  <MarketingPageShell>
-      <MarketingPageHeader back-fallback="/login" back-label="Back to login" />
-
+  <MarketingPageShell back-fallback="/login" back-label="Back to login">
       <AppCard :wrapper-class="marketingCardClass">
         <AppBadge tone="amber">Account recovery</AppBadge>
         <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">Forgot password?</h1>

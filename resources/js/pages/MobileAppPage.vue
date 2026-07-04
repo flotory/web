@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
-import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -14,8 +12,6 @@ const appDeepLink = mobileAppDeepLink()
 
 <template>
   <MarketingPageShell width="lg" padding-y="10">
-      <MarketingPageHeader />
-
       <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
         <h1 class="text-3xl font-black tracking-tight text-ink">Use the Flotory app</h1>
         <p class="mt-3 text-sm leading-relaxed text-ink-muted">
@@ -43,9 +39,5 @@ const appDeepLink = mobileAppDeepLink()
           </p>
         </div>
       </AppCard>
-
-      <div class="mt-10">
-        <MarketingFooter />
-      </div>
   </MarketingPageShell>
 </template>

@@ -96,6 +96,7 @@ test.describe('Public marketing and bridge pages', () => {
     await page.goto('/contact')
     await expect(page.getByRole('heading', { name: 'Get in touch' })).toBeVisible({ timeout: 15_000 })
     await expect(page.getByTestId('marketing-back')).toBeVisible()
+    await expect(page.locator('footer').getByRole('link', { name: 'FAQ' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
   })
 
@@ -103,6 +104,8 @@ test.describe('Public marketing and bridge pages', () => {
     await page.goto('/faq')
     await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible({ timeout: 15_000 })
     await expect(page.getByTestId('marketing-back')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible()
+    await expect(page.locator('footer').getByRole('link', { name: 'Privacy' })).toBeVisible()
     await expect(page.getByTestId('faq-item-what-is-flotory')).toBeVisible()
     await expect(page.getByTestId('faq-item-how-stamps-work')).toBeVisible()
     await expect(page.getByRole('link', { name: 'FAQ' })).toBeVisible()

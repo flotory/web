@@ -176,6 +176,13 @@ body {
     radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--flotory-accent-soft) 40%, transparent), transparent 42%);
 }
 
+.marketing-page-header {
+  background: color-mix(in srgb, var(--flotory-workspace-bg) 72%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid color-mix(in srgb, var(--flotory-border) 50%, transparent);
+}
+
 /* Google Places autocomplete dropdown (attached to document.body) */
 .pac-container {
   z-index: 10000 !important;

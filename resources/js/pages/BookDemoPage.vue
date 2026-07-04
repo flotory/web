@@ -2,7 +2,6 @@
 import { RouterLink } from 'vue-router'
 
 import CalendlyEmbed from '@/components/marketing/CalendlyEmbed.vue'
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -10,9 +9,7 @@ import { marketingCardClass } from '@/lib/marketingPage'
 </script>
 
 <template>
-  <MarketingPageShell width="3xl">
-    <MarketingPageHeader header-class="mb-4" />
-
+  <MarketingPageShell width="3xl" padding-y="10">
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-6`">
       <div class="flex flex-wrap items-center gap-3">
         <AppBadge tone="amber">Owner demo</AppBadge>

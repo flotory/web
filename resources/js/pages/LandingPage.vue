@@ -2,10 +2,10 @@
 import { RouterLink } from 'vue-router'
 import { Nfc, Smartphone, Store } from '@lucide/vue'
 
-import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import LandingHeroVisual from '@/components/marketing/LandingHeroVisual.vue'
 import LandingHowItWorks from '@/components/marketing/LandingHowItWorks.vue'
 import LandingProductShowcase from '@/components/marketing/LandingProductShowcase.vue'
+import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -41,21 +41,9 @@ const features = [
   <main class="relative min-h-screen overflow-hidden bg-marketing-page text-ink">
     <div class="pointer-events-none absolute inset-0 marketing-page-glow" />
 
-    <header class="relative mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 pt-8 sm:px-6 sm:pt-10">
-      <RouterLink to="/">
-        <FlotoryLogo size="lg" />
-      </RouterLink>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <RouterLink to="/faq" class="hidden sm:inline-flex">
-          <AppButton variant="ghost">FAQ</AppButton>
-        </RouterLink>
-        <RouterLink to="/login" class="hidden sm:inline-flex">
-          <AppButton variant="ghost">Log in</AppButton>
-        </RouterLink>
-      </div>
-    </header>
+    <MarketingPageHeader />
 
-    <section class="relative mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-14 lg:pb-24 lg:pt-20">
+    <section class="relative mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-14 lg:pb-24 lg:pt-16">
       <div class="space-y-6 text-center lg:text-left">
         <p
           class="mx-auto inline-flex rounded-full border border-accent-border/35 bg-accent-soft/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-active lg:mx-0"

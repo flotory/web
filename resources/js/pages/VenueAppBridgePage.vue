@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import VenueJoinBridgeCard from '@/components/marketing/VenueJoinBridgeCard.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
@@ -84,8 +83,6 @@ onMounted(async () => {
 
 <template>
   <MarketingPageShell width="lg" padding-y="10">
-    <MarketingPageHeader logo-size="md" header-class="mb-5" />
-
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
       <p v-if="loading" class="text-sm font-semibold text-ink-muted">Loading venue…</p>
 

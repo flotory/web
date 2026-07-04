@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -121,8 +120,6 @@ onMounted(() => {
 
 <template>
   <MarketingPageShell>
-    <MarketingPageHeader />
-
     <AppCard :wrapper-class="marketingCardClass">
       <AppBadge tone="amber">Owner invitation</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
-import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { renderLegalMarkdown } from '@/lib/legalMarkdown'
@@ -17,15 +15,9 @@ const html = computed(() => renderLegalMarkdown(props.source))
 
 <template>
   <MarketingPageShell width="3xl" padding-y="10">
-    <MarketingPageHeader />
-
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
       <article class="legal-document" v-html="html" />
     </AppCard>
-
-    <div class="mt-10">
-      <MarketingFooter />
-    </div>
   </MarketingPageShell>
 </template>
 

@@ -2,8 +2,6 @@
 import { ChevronDown } from '@lucide/vue'
 import { RouterLink } from 'vue-router'
 
-import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
-import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -15,8 +13,6 @@ import { marketingCardClass } from '@/lib/marketingPage'
 
 <template>
   <MarketingPageShell width="3xl" padding-y="10">
-    <MarketingPageHeader />
-
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
       <div class="flex flex-wrap items-center gap-3">
         <AppBadge tone="amber">FAQ</AppBadge>
@@ -81,10 +77,6 @@ import { marketingCardClass } from '@/lib/marketingPage'
         </div>
       </div>
     </AppCard>
-
-    <div class="mt-10">
-      <MarketingFooter />
-    </div>
   </MarketingPageShell>
 </template>
 
