@@ -167,6 +167,12 @@ const features = [
           </RouterLink>
         </div>
         <p class="mt-6 text-sm font-semibold text-ink-soft/85">
+          <RouterLink to="/pricing" class="font-bold underline decoration-accent/70 underline-offset-2">
+            1 month free
+          </RouterLink>
+          · then 9,900 AMD first venue · 4,900 AMD each next branch
+        </p>
+        <p class="mt-3 text-sm font-semibold text-ink-soft/85">
           Questions before you book?
           <RouterLink to="/faq" class="font-bold underline decoration-accent/70 underline-offset-2">
             Read the FAQ

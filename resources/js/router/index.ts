@@ -8,6 +8,7 @@ import DashboardPage from '@/pages/DashboardPage.vue'
 import BookDemoPage from '@/pages/BookDemoPage.vue'
 import ContactPage from '@/pages/ContactPage.vue'
 import FaqPage from '@/pages/FaqPage.vue'
+import PricingPage from '@/pages/PricingPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import MobileAppPage from '@/pages/MobileAppPage.vue'
@@ -64,6 +65,7 @@ const router = createRouter({
     { path: '/book-demo', name: 'book-demo', component: BookDemoPage, meta: { guest: true } },
     { path: '/contact', name: 'contact', component: ContactPage, meta: { guest: true } },
     { path: '/faq', name: 'faq', component: FaqPage, meta: { guest: true } },
+    { path: '/pricing', name: 'pricing', component: PricingPage, meta: { guest: true } },
     { path: '/demo', redirect: '/book-demo' },
     { path: '/app', name: 'mobile-app', component: MobileAppPage, meta: { guest: true } },
     { path: '/privacy', name: 'privacy', component: PrivacyPolicyPage, meta: { guest: true } },
@@ -284,6 +286,7 @@ router.beforeEach(async (to) => {
     && to.name !== 'book-demo'
     && to.name !== 'contact'
     && to.name !== 'faq'
+    && to.name !== 'pricing'
     && !to.meta.inviteFlow
   ) {
     if (!await bootstrapWorkspaceOrSignOut(auth, workspace)) {

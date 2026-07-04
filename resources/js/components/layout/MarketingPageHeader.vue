@@ -16,6 +16,9 @@ import { MARKETING_HOME_PATH } from '@/lib/brand'
           <FlotoryLogo size="lg" />
         </RouterLink>
         <nav class="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Marketing">
+          <RouterLink to="/pricing" class="hidden sm:inline-flex">
+            <AppButton variant="ghost">Pricing</AppButton>
+          </RouterLink>
           <RouterLink to="/faq" class="hidden sm:inline-flex">
             <AppButton variant="ghost">FAQ</AppButton>
           </RouterLink>

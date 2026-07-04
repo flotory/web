@@ -85,7 +85,7 @@ export const faqSections: FaqSection[] = [
         id: 'pricing',
         question: 'How much does Flotory cost?',
         answer:
-          'Pricing depends on your venue setup and locations. Book a demo or contact us and we will share options that fit your business.',
+          'Start with 1 month free on your owner account. After that, 9,900 AMD per month for your first location and 4,900 AMD per month for each additional branch — one flat rate that includes the guest app loop, NFC stamp stands, owner dashboard, campaigns, and onboarding support. Guests use the app for free. See the pricing page for details.',
       },
       {
         id: 'help',

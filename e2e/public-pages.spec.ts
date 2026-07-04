@@ -102,6 +102,21 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
   })
 
+  test('pricing page renders', async ({ page }) => {
+    await page.goto('/pricing')
+    await expect(page.getByRole('heading', { name: 'Simple pricing for every venue' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByTestId('pricing-trial-hero')).toBeVisible()
+    await expect(page.getByTestId('pricing-trial-headline')).toHaveText('1 month free')
+    await expect(page.getByTestId('pricing-trial-badge')).toHaveText('1 month free')
+    await expect(page.getByTestId('pricing-plan-card')).toBeVisible()
+    await expect(page.getByTestId('pricing-first-amount')).toContainText('9')
+    await expect(page.getByTestId('pricing-first-amount')).toContainText('900')
+    await expect(page.getByTestId('pricing-additional-amount')).toContainText('4')
+    await expect(page.getByTestId('pricing-additional-amount')).toContainText('900')
+    await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
+    await expect(page.locator('footer').getByRole('link', { name: 'Pricing' })).toBeVisible()
+  })
+
   test('faq page renders', async ({ page }) => {
     await page.goto('/faq')
     await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible({ timeout: 15_000 })
