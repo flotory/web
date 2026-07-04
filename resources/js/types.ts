@@ -1,4 +1,6 @@
-export type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
+import type { VenueCategory } from '@/lib/venueCategories'
+
+export type { VenueCategory }
 
 export type VenueListingStatus = 'draft' | 'pending_review' | 'published' | 'rejected'
 

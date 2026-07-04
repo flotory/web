@@ -187,9 +187,9 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 **O9.** Public self-serve owner registration (`/register?intent=owner`, `POST /api/venues` without invitation) is **blocked**. Prospects use **Book a demo** or **Contact us**.
 
-**O10.** Sales-led onboarding: platform admin sends an **owner invitation** (email only). Owner accepts via `/register?invite=…`, then may create **one** venue while `may_create_venue` is true (accepted invitation, no owner membership yet).
+**O10.** Sales-led onboarding: platform admin sends an **owner invitation** (email only). Owner accepts via `/register?invite=…`, then completes the **onboarding wizard** at `/onboarding` (profile, location, logo & cover, first reward, submit). One venue per accepted invite.
 
-**O11.** Users with an **accepted** invitation but no venue yet may log in on the **web** (email or Google with owner intent) and are routed to venue setup — not the mobile app page.
+**O11.** Users with an **accepted** invitation but no venue yet may log in on the **web** (email or Google with owner intent) and are routed to `/onboarding` — not the mobile app page. Owners with a `draft` or `rejected` venue also return to onboarding until listing is submitted or re-submitted.
 
 ---
 

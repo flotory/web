@@ -16,11 +16,11 @@ import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
-import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { normalizeVenueCategory, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { venueCoverUrl, venueHasCustomCover, venueHasCustomLogo, venueLogoUrl } from '@/lib/venueMedia'
-import type { Venue, VenueCategory } from '@/types'
+import type { Venue } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,12 +41,7 @@ const phone = ref('')
 const website = ref('')
 const category = ref<VenueCategory>('cafe')
 
-const categoryOptions: Array<{ id: VenueCategory; label: string }> = [
-  { id: 'cafe', label: 'Cafe' },
-  { id: 'restaurant', label: 'Restaurant' },
-  { id: 'bar', label: 'Bar' },
-  { id: 'bakery', label: 'Bakery' },
-]
+const categoryOptions = VENUE_CATEGORY_GROUPS
 
 const selectChevronStyle = {
   backgroundImage:
@@ -290,8 +285,13 @@ onMounted(loadPage)
                   class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
                   :style="selectChevronStyle"
                 >
-                  <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
+                  <optgroup v-for="group in categoryOptions" :key="group.label" :label="group.label">
+                    <option v-for="id in group.ids" :key="id" :value="id">{{ categoryLabel(id) }}</option>
+                  </optgroup>
                 </select>
+                <p v-if="category === 'other'" class="mt-2 text-xs leading-relaxed text-ink-muted">
+                  Any business with repeat customers can use Flotory.
+                </p>
               </div>
               <div>
                 <label class="text-sm font-bold text-ink-muted" for="admin-edit-venue-website">Website optional</label>

@@ -14,10 +14,10 @@ import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, isVenueAccessDenied } from '@/lib/api'
 import { VENUE_ACCESS_DENIED_MESSAGE } from '@/lib/venueWorkspace'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
-import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { normalizeVenueCategory, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverUrl, venueLogoUrl } from '@/lib/venueMedia'
-import type { Venue, VenueBranch, VenueCategory } from '@/types'
+import type { Venue, VenueBranch } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,12 +50,7 @@ const branchAddressInput = ref<InstanceType<typeof VenueAddressInput> | null>(nu
 const addBranchAction = useAsyncAction()
 const deletingBranchId = ref<number | null>(null)
 
-const categoryOptions: Array<{ id: VenueCategory; label: string }> = [
-  { id: 'cafe', label: 'Cafe' },
-  { id: 'restaurant', label: 'Restaurant' },
-  { id: 'bar', label: 'Bar' },
-  { id: 'bakery', label: 'Bakery' },
-]
+const categoryOptions = VENUE_CATEGORY_GROUPS
 
 const selectChevronStyle = {
   backgroundImage:
@@ -259,7 +254,7 @@ onMounted(loadVenue)
       </div>
       <div class="flex flex-wrap gap-2">
         <AppButton variant="secondary" @click="router.push(`/my-venues/${venueId}/setup-files`)">
-          Files & docs
+          Logo & cover
         </AppButton>
         <AppButton variant="secondary" @click="router.push(`/my-venues/${venueId}/design`)">
           Design previews
@@ -365,8 +360,13 @@ onMounted(loadVenue)
                 class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
                 :style="selectChevronStyle"
               >
-                <option v-for="option in categoryOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
+                <optgroup v-for="group in categoryOptions" :key="group.label" :label="group.label">
+                  <option v-for="id in group.ids" :key="id" :value="id">{{ categoryLabel(id) }}</option>
+                </optgroup>
               </select>
+              <p v-if="category === 'other'" class="mt-2 text-xs leading-relaxed text-ink-muted">
+                Any business with repeat customers can use Flotory.
+              </p>
             </div>
             <div>
               <label class="text-sm font-bold text-ink-muted" for="edit-venue-website">Website optional</label>

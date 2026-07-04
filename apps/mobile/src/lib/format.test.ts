@@ -15,7 +15,9 @@ describe('format helpers', () => {
 
     expect(formatRelativeTime(yesterday)).toBe('Yesterday')
     expect(formatRelativeTime(null)).toBe('')
-    expect(formatVenueCategoryLabel('cafe')).toBe('Coffee & Bakery')
-    expect(formatVenueCategoryLabel('tea house')).toBe('Tea house')
+    expect(formatVenueCategoryLabel('cafe')).toBe('Cafe / Coffee shop')
+    expect(formatVenueCategoryLabel('salon')).toBe('Hair & beauty salon')
+    expect(formatVenueCategoryLabel('other')).toBe('Other')
+    expect(formatVenueCategoryLabel('tea house')).toBe('Cafe / Coffee shop')
   })
 })

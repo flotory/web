@@ -16,29 +16,14 @@ import { useDiscoverVenues } from '../src/hooks/useDiscoverVenues'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import type { DiscoverVenue } from '../src/lib/customerData'
 import { collectDiscoverVenueLocations, sortDiscoverVenuesByNearestLocation } from '../src/lib/distance'
+import { matchesDiscoverCategoryFilter } from '../src/lib/venueCategories'
 import { useAuth } from '../src/providers/AuthProvider'
 import { useLocalePreference } from '../src/providers/LocaleProvider'
 import { colors, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
 
-const KNOWN_CATEGORIES = new Set(['cafe', 'restaurant', 'bar', 'bakery'])
-
 function matchesCategoryFilter(venue: DiscoverVenue, filter: DiscoverCategoryFilter): boolean {
-  const category = (venue.category ?? '').toLowerCase()
-  switch (filter) {
-    case 'all':
-      return true
-    case 'coffee':
-      return category === 'cafe'
-    case 'food':
-      return category === 'restaurant' || category === 'bar'
-    case 'desserts':
-      return category === 'bakery'
-    case 'more':
-      return !category || !KNOWN_CATEGORIES.has(category)
-    default:
-      return true
-  }
+  return matchesDiscoverCategoryFilter(venue.category, filter)
 }
 
 function resultsLabel(count: number, hasFilters: boolean, t: (key: string, options?: Record<string, unknown>) => string): string {

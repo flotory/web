@@ -153,7 +153,7 @@ OAuth owner login:
 
 1. Prospect books **`/book-demo`** or contacts sales.
 2. Admin opens **Owner onboarding** (`/admin/owner-onboarding`) and sends an invitation (email + optional business name).
-3. Owner registers via the expiring `/register?invite=…` link, creates their venue, uploads files at **My Venues → Files & docs**, and submits for review.
+3. Owner registers via the expiring `/register?invite=…` link and completes the **guided onboarding wizard** at `/onboarding` (profile → location → logo & cover → first reward → submit).
 4. Platform admin approves at **Venue listings** (`/admin/venues`).
 
 **Ops-heavy provisioning (venue exists before the owner signs in):**
@@ -169,7 +169,7 @@ Invitation links expire after **`FLOTORY_OWNER_INVITATION_TTL_DAYS`** (default 7
 FLOTORY_OWNER_INVITATION_TTL_DAYS=7
 ```
 
-**Listing workflow:** owners upload raw files at **My Venues → Files & docs**. Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner files, then approve.
+**Listing workflow:** owners upload a **logo and cover photo** during onboarding (or at **My Venues → Logo & cover**). Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner uploads, then approve.
 
 Full journeys: **[docs/PRODUCT.md](docs/PRODUCT.md)** · admin approval: **[docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)**.
 

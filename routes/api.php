@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PublicDemoBookingController;
 use App\Http\Controllers\Api\PublicPaletteController;
 use App\Http\Controllers\Api\PublicOwnerInvitationController;
 use App\Http\Controllers\Api\AdminOwnerInvitationController;
+use App\Http\Controllers\Api\OwnerOnboardingController;
 use App\Http\Controllers\Api\ContactInquiryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerLoyaltyController;
@@ -45,6 +46,7 @@ Route::post('/public/owner-invitations/{token}/accept', [PublicOwnerInvitationCo
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::get('/owner-onboarding', [OwnerOnboardingController::class, 'show']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/locale', [AuthController::class, 'updateLocale']);
     Route::put('/auth/currency', [AuthController::class, 'updateCurrency']);

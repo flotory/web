@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config'
+import { normalizeVenueCategory, venueCategoryAssetGroup, type VenueCategoryAssetGroup } from './venueCategories'
 
 const assetOrigin = API_BASE_URL.replace(/\/api\/?$/, '')
 
@@ -9,9 +10,7 @@ export function resolveMediaUrl(path: string | null | undefined): string | null 
   return `${assetOrigin}/${path}`
 }
 
-type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
-
-const VENUE_COVER_DEFAULTS: Record<VenueCategory, string[]> = {
+const VENUE_COVER_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   cafe: [
     '/images/defaults/photo-1554118811-1e0d58224f24-1400x700.jpg',
     '/images/defaults/photo-1495474472287-4d71bcdd2085-1400x700.jpg',
@@ -34,7 +33,7 @@ const VENUE_COVER_DEFAULTS: Record<VenueCategory, string[]> = {
   ],
 }
 
-const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string[]> = {
+const VENUE_LOGO_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   cafe: [
     '/images/defaults/photo-1501339847302-ac426a4a7cbb-512x512.jpg',
     '/images/defaults/photo-1495474472287-4d71bcdd2085-512x512.jpg',
@@ -61,13 +60,6 @@ const REWARD_DEFAULTS = {
   special: '/images/defaults/rewards/free-coffee.png',
 } as const
 
-function normalizeCategory(category: string | null | undefined): VenueCategory {
-  if (category === 'restaurant' || category === 'bar' || category === 'bakery' || category === 'cafe') {
-    return category
-  }
-  return 'cafe'
-}
-
 function hashSeed(seed: string): number {
   let hash = 5381
   for (let i = 0; i < seed.length; i += 1) {
@@ -83,15 +75,15 @@ function pickStable(list: string[], seed: string): string {
 export function venueCoverUrl(venue?: { cover_image?: string | null; cover_image_thumb?: string | null; category?: string | null; name?: string | null }) {
   const uploaded = resolveMediaUrl(venue?.cover_image_thumb ?? venue?.cover_image)
   if (uploaded) return uploaded
-  const category = normalizeCategory(venue?.category)
-  return resolveMediaUrl(pickStable(VENUE_COVER_DEFAULTS[category], venue?.name ?? category))
+  const group = venueCategoryAssetGroup(venue?.category)
+  return resolveMediaUrl(pickStable(VENUE_COVER_DEFAULTS[group], venue?.name ?? normalizeVenueCategory(venue?.category)))
 }
 
 export function venueLogoUrl(venue?: { logo?: string | null; logo_thumb?: string | null; category?: string | null; name?: string | null }) {
   const uploaded = resolveMediaUrl(venue?.logo_thumb ?? venue?.logo)
   if (uploaded) return uploaded
-  const category = normalizeCategory(venue?.category)
-  return resolveMediaUrl(pickStable(VENUE_LOGO_DEFAULTS[category], venue?.name ?? category))
+  const group = venueCategoryAssetGroup(venue?.category)
+  return resolveMediaUrl(pickStable(VENUE_LOGO_DEFAULTS[group], venue?.name ?? normalizeVenueCategory(venue?.category)))
 }
 
 export function rewardImageUrl(reward?: { image?: string | null; image_thumb?: string | null; title?: string | null }) {

@@ -56,6 +56,8 @@ describe('venueScanLanding mobile', () => {
   it('maps venue categories to emoji', () => {
     expect(categoryEmoji('cafe')).toBe('☕')
     expect(categoryEmoji('bar')).toBe('🍸')
-    expect(categoryEmoji('unknown')).toBe('🎁')
+    expect(categoryEmoji('salon')).toBe('💇')
+    expect(categoryEmoji('other')).toBe('🎁')
+    expect(categoryEmoji('unknown')).toBe('☕')
   })
 })

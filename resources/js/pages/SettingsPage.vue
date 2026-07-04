@@ -11,7 +11,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
-import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { categoryLabel, normalizeVenueCategory } from '@/lib/venueCategories'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { toast } from '@/lib/toast'
 import { venueLogoThumbUrl } from '@/lib/venueMedia'
@@ -34,9 +34,8 @@ const summary = computed(() => ({
   rewards: ownerVenues.value.reduce((sum, venue) => sum + (venue.rewards_count ?? 0), 0),
 }))
 
-function categoryLabel(venue: Venue): string {
-  const type = normalizeVenueCategory(venue.category)
-  return type.charAt(0).toUpperCase() + type.slice(1)
+function venueCategoryDisplay(venue: Venue): string {
+  return categoryLabel(normalizeVenueCategory(venue.category))
 }
 
 function publicUrl(venue: Venue): string {
@@ -153,7 +152,7 @@ onMounted(load)
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-2">
                     <h3 class="truncate text-lg font-black text-ink">{{ venue.name }}</h3>
-                    <AppBadge tone="slate">{{ categoryLabel(venue) }}</AppBadge>
+                    <AppBadge tone="slate">{{ venueCategoryDisplay(venue) }}</AppBadge>
                   </div>
                   <p class="mt-0.5 text-sm font-medium text-ink-muted">/{{ venue.slug }}</p>
                   <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">

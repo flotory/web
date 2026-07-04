@@ -1,6 +1,14 @@
 import type { RewardCategory } from '@/lib/rewardVisuals'
+import {
+  categoryLabel,
+  normalizeVenueCategory,
+  venueCategoryAssetGroup,
+  type VenueCategory,
+  type VenueCategoryAssetGroup,
+} from '@/lib/venueCategories'
 
-export type VenueCategory = 'cafe' | 'restaurant' | 'bar' | 'bakery'
+export type { VenueCategory }
+export { categoryLabel, normalizeVenueCategory }
 
 /** Local default assets (downloaded from Unsplash and committed) */
 function unsplash(photoId: string, width = 900, height?: number): string {
@@ -8,7 +16,7 @@ function unsplash(photoId: string, width = 900, height?: number): string {
   return `/images/defaults/${photoId}-${size}.jpg`
 }
 
-const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string[]> = {
+const VENUE_LOGO_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   cafe: [
     unsplash('photo-1501339847302-ac426a4a7cbb', 512, 512),
     unsplash('photo-1495474472287-4d71bcdd2085', 512, 512),
@@ -35,7 +43,7 @@ const VENUE_LOGO_DEFAULTS: Record<VenueCategory, string[]> = {
   ],
 }
 
-const VENUE_COVER_DEFAULTS: Record<VenueCategory, string[]> = {
+const VENUE_COVER_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   cafe: [
     unsplash('photo-1554118811-1e0d58224f24', 1400, 700),
     unsplash('photo-1495474472287-4d71bcdd2085', 1400, 700),
@@ -86,7 +94,7 @@ export type RewardPreset = {
   image: string
 }
 
-export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> = {
+const REWARD_PRESETS_BY_GROUP: Record<VenueCategoryAssetGroup, RewardPreset[]> = {
   cafe: [
     {
       id: 'half-off-ice-cream',
@@ -182,14 +190,7 @@ export const REWARD_PRESETS_BY_CATEGORY: Record<VenueCategory, RewardPreset[]> =
 }
 
 export function rewardPresetsForCategory(category: string | null | undefined): RewardPreset[] {
-  return REWARD_PRESETS_BY_CATEGORY[normalizeVenueCategory(category)]
-}
-
-export function normalizeVenueCategory(category: string | null | undefined): VenueCategory {
-  if (category === 'restaurant' || category === 'bar' || category === 'bakery' || category === 'cafe') {
-    return category
-  }
-  return 'cafe'
+  return REWARD_PRESETS_BY_GROUP[venueCategoryAssetGroup(category)]
 }
 
 function hashSeed(seed: string): number {
@@ -210,23 +211,13 @@ function pickStable(list: string[], seed: string): string {
 }
 
 export function defaultVenueLogoImage(category: VenueCategory, seed: string = category): string {
-  return pickStable(VENUE_LOGO_DEFAULTS[category], seed)
+  return pickStable(VENUE_LOGO_DEFAULTS[venueCategoryAssetGroup(category)], seed)
 }
 
 export function defaultVenueCoverImage(category: VenueCategory, seed: string = category): string {
-  return pickStable(VENUE_COVER_DEFAULTS[category], seed)
+  return pickStable(VENUE_COVER_DEFAULTS[venueCategoryAssetGroup(category)], seed)
 }
 
 export function defaultRewardImage(category: RewardCategory): string {
   return REWARD_IMAGE_DEFAULTS[category]
-}
-
-export function categoryLabel(category: VenueCategory): string {
-  const labels: Record<VenueCategory, string> = {
-    cafe: 'Cafe',
-    bar: 'Bar',
-    restaurant: 'Restaurant',
-    bakery: 'Bakery',
-  }
-  return labels[category]
 }

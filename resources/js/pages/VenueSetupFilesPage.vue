@@ -118,12 +118,18 @@ function onDrop(event: DragEvent) {
 async function uploadSelectedFiles(selected: File[]) {
   if (!selected.length) return
 
+  const images = selected.filter((file) => file.type.startsWith('image/'))
+  if (!images.length) {
+    error.value = 'Upload PNG, JPEG, WebP, or GIF images only — your logo and cover photo.'
+    return
+  }
+
   uploading.value = true
   error.value = ''
 
   let uploaded = 0
 
-  for (const file of selected) {
+  for (const file of images) {
     try {
       const body = new FormData()
       body.append('file', file)
@@ -173,9 +179,9 @@ onMounted(loadPage)
 <template>
   <AppShell>
     <PageHeader
-      title="Files & docs"
+      title="Logo & cover"
       badge="Venue setup"
-      :description="venue ? `Upload anything that helps us set up ${venue.name} — logo, photos, menus, PDFs, and more.` : 'Upload files for your venue setup.'"
+      :description="venue ? `Upload a logo and cover photo for ${venue.name}. We'll set these up for your app listing and public page.` : 'Upload your logo and cover photo.'"
     >
       <template #actions>
         <AppButton variant="secondary" @click="router.push(`/my-venues/${venueId}/settings`)">
@@ -206,8 +212,7 @@ onMounted(loadPage)
       <AppCard>
         <AppBadge tone="blue">How it works</AppBadge>
         <p class="mt-3 text-sm font-medium leading-relaxed text-ink-muted">
-          Upload all the files you have — logo, storefront photos, menus, brand guides, PDFs, anything useful.
-          You do not need to prepare exact sizes. After you submit for review, the Flotory team will use these files to set up your account and mobile app branding.
+          Upload your venue logo and a cover photo. You do not need exact sizes — after you submit for review, the Flotory team will crop and apply them to your listing and mobile app.
         </p>
       </AppCard>
 
@@ -223,9 +228,9 @@ onMounted(loadPage)
       <AppCard>
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 class="text-lg font-black text-ink">Your files</h2>
+            <h2 class="text-lg font-black text-ink">Your uploads</h2>
             <p class="mt-1 text-sm text-ink-muted">
-              Images, PDF, Word, or text — up to 10 MB each. Select multiple files at once.
+              PNG, JPEG, WebP, or GIF — up to 10 MB each. Include your logo and a wide cover or storefront photo.
             </p>
           </div>
           <input
@@ -233,12 +238,12 @@ onMounted(loadPage)
             type="file"
             class="hidden"
             multiple
-            accept="image/png,image/jpeg,image/webp,image/gif,.pdf,.doc,.docx,.txt"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             @change="uploadFiles"
           >
           <AppButton variant="secondary" :disabled="!canEdit || uploading" @click="openFilePicker">
             <FileUp class="size-4" />
-            {{ uploading ? 'Uploading…' : 'Upload files' }}
+            {{ uploading ? 'Uploading…' : 'Upload images' }}
           </AppButton>
         </div>
 
@@ -300,7 +305,7 @@ onMounted(loadPage)
             </button>
             <p class="mt-4 text-sm font-medium text-ink-muted">
               <template v-if="canEdit">
-                {{ isDragging ? 'Drop files to upload' : 'No files yet. Upload your logo, menus, or any documents to continue setup.' }}
+                {{ isDragging ? 'Drop images to upload' : 'No uploads yet. Add your logo and cover photo to continue setup.' }}
               </template>
               <template v-else>No setup files on record for this venue.</template>
             </p>

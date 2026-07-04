@@ -96,6 +96,8 @@ test.describe('Public marketing and bridge pages', () => {
     await page.goto('/contact')
     await expect(page.getByRole('heading', { name: 'Get in touch' })).toBeVisible({ timeout: 15_000 })
     await expect(page.getByTestId('marketing-back')).toBeVisible()
+    await expect(page.getByTestId('contact-whatsapp')).toBeVisible()
+    await expect(page.getByTestId('contact-telegram')).toBeVisible()
     await expect(page.locator('footer').getByRole('link', { name: 'FAQ' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Book A Demo' })).toBeVisible()
   })

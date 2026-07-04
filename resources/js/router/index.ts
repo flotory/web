@@ -26,6 +26,7 @@ import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
 import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
+import OwnerOnboardingPage from '@/pages/OwnerOnboardingPage.vue'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage.vue'
 import TermsOfServicePage from '@/pages/TermsOfServicePage.vue'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
@@ -39,6 +40,7 @@ import {
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
 } from '@/lib/venueRoles'
+import { shouldUseOwnerOnboarding, isOnboardingStep } from '@/lib/ownerOnboarding'
 import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -71,9 +73,7 @@ const router = createRouter({
     { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPasswordPage.vue'), meta: { guest: true } },
     { path: '/v/:slug', name: 'venue-landing', component: VenueAppBridgePage, meta: { guest: true } },
     { path: '/t/:token', name: 'nfc-tap', component: () => import('@/pages/NfcTapBridgePage.vue'), meta: { guest: true } },
-    { path: '/onboarding', redirect: '/book-demo' },
-    { path: '/onboarding/create-venue', redirect: '/book-demo' },
-    { path: '/onboarding/:pathMatch(.*)*', redirect: '/book-demo' },
+    { path: '/onboarding/:step?', name: 'owner-onboarding', component: OwnerOnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -144,6 +144,17 @@ router.beforeEach(async (to) => {
     return { path: '/book-demo' }
   }
 
+  if (to.name === 'my-venues' && to.query.create === '1' && auth.mayCreateVenue) {
+    return { path: '/onboarding' }
+  }
+
+  if (to.name === 'owner-onboarding') {
+    const step = typeof to.params.step === 'string' ? to.params.step : undefined
+    if (step && !isOnboardingStep(step)) {
+      return { path: '/onboarding' }
+    }
+  }
+
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
   }
@@ -171,6 +182,15 @@ router.beforeEach(async (to) => {
     const home = needsWorkspaceContext
       ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
       : await workspaceHomePath()
+
+    if (
+      !auth.isAdmin
+      && to.name !== 'owner-onboarding'
+      && shouldUseOwnerOnboarding(auth.mayCreateVenue, workspace.activeVenues)
+      && (to.meta.ownerOnly === true || to.name === 'my-venues')
+    ) {
+      return { path: '/onboarding' }
+    }
 
     const allowWithoutMembership = to.meta.allowWithoutMembership === true
 

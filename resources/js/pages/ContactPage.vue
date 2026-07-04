@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { MessageCircle, Send } from '@lucide/vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import MarketingBackLink from '@/components/layout/MarketingBackLink.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -43,31 +45,69 @@ async function submit() {
 </script>
 
 <template>
-  <MarketingPageShell width="lg">
-    <AppCard :wrapper-class="`${marketingCardClass} sm:p-6`">
-      <div class="flex flex-wrap items-center gap-3">
-        <AppBadge tone="amber">Contact</AppBadge>
-        <h1 class="text-2xl font-black tracking-tight text-ink sm:text-3xl">Get in touch</h1>
+  <MarketingPageShell width="3xl" padding-y="10" :show-back="false">
+    <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
+      <div class="flex items-start gap-4">
+        <MarketingBackLink class="mt-1 shrink-0" />
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-3">
+            <AppBadge tone="amber">Contact</AppBadge>
+            <h1 class="text-2xl font-black tracking-tight text-ink sm:text-3xl">Get in touch</h1>
+          </div>
+          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
+            Questions about Flotory for your venue? Send us a message — we typically reply within one business day.
+            Prefer a walkthrough?
+            <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book A Demo</RouterLink>
+          </p>
+        </div>
       </div>
-      <p class="mt-2 text-sm leading-relaxed text-ink-muted">
-        Questions about Flotory for your venue? Send us a message — we typically reply within one business day.
-        Prefer a walkthrough?
-        <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book A Demo</RouterLink>
-      </p>
 
-      <div v-if="submitted" class="mt-6 rounded-2xl border border-accent-border/40 bg-accent-soft/60 p-5 text-sm text-ink-muted" data-testid="contact-success">
+      <div class="mt-8 rounded-2xl border border-border/80 bg-surface-muted/50 p-4 sm:p-5">
+        <p class="text-sm font-bold text-ink">Prefer chat?</p>
+        <p class="mt-1 text-sm leading-relaxed text-ink-muted">
+          Message us on WhatsApp or Telegram for a quick reply.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <a
+            :href="legalConfig.supportWhatsAppUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="contact-whatsapp"
+          >
+            <AppButton variant="secondary" size="sm" class="gap-2">
+              <MessageCircle class="size-4" aria-hidden="true" />
+              WhatsApp
+            </AppButton>
+          </a>
+          <a
+            :href="legalConfig.supportTelegramUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="contact-telegram"
+          >
+            <AppButton variant="secondary" size="sm" class="gap-2">
+              <Send class="size-4" aria-hidden="true" />
+              Telegram
+            </AppButton>
+          </a>
+        </div>
+      </div>
+
+      <div v-if="submitted" class="mt-8 rounded-2xl border border-accent-border/40 bg-accent-soft/60 p-5 text-sm text-ink-muted" data-testid="contact-success">
         <p class="font-bold text-ink">Message sent</p>
         <p class="mt-2">Thanks — we&apos;ll get back to you at {{ email }} soon.</p>
       </div>
 
-      <form v-else class="mt-6 space-y-4" @submit.prevent="submit">
-        <div>
-          <label class="text-sm font-bold text-ink-muted" for="contact-name">Name</label>
-          <input id="contact-name" v-model="name" required :class="authFieldClass">
-        </div>
-        <div>
-          <label class="text-sm font-bold text-ink-muted" for="contact-email">Email</label>
-          <input id="contact-email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
+      <form v-else class="mt-8 space-y-5" @submit.prevent="submit">
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label class="text-sm font-bold text-ink-muted" for="contact-name">Name</label>
+            <input id="contact-name" v-model="name" required :class="authFieldClass">
+          </div>
+          <div>
+            <label class="text-sm font-bold text-ink-muted" for="contact-email">Email</label>
+            <input id="contact-email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
+          </div>
         </div>
         <div>
           <label class="text-sm font-bold text-ink-muted" for="contact-venue">Venue or business (optional)</label>
@@ -79,18 +119,18 @@ async function submit() {
             id="contact-message"
             v-model="message"
             required
-            rows="5"
+            rows="6"
             class="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
             placeholder="Tell us about your venue and what you&apos;re looking for."
           />
         </div>
         <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
-        <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
+        <AppButton class="w-full sm:w-auto sm:min-w-[12rem]" size="lg" type="submit" :disabled="loading">
           {{ loading ? 'Sending…' : 'Send message' }}
         </AppButton>
       </form>
 
-      <p class="mt-5 text-center text-sm text-ink-muted">
+      <p class="mt-6 text-center text-sm text-ink-muted">
         Or email us directly at
         <a :href="`mailto:${legalConfig.supportEmail}`" class="font-bold text-ink">{{ legalConfig.supportEmail }}</a>
       </p>

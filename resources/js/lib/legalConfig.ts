@@ -9,6 +9,9 @@ export const legalConfig = {
   supportEmail: 'flotoryapp@gmail.com',
   legalEmail: 'flotoryapp@gmail.com',
   dpoEmail: 'flotoryapp@gmail.com',
+  /** Placeholder instant-messaging links for Contact page — replace before launch. */
+  supportWhatsAppUrl: 'https://wa.me/48000000000',
+  supportTelegramUrl: 'https://t.me/flotory_placeholder',
 } as const
 
 export function applyLegalPlaceholders(source: string): string {

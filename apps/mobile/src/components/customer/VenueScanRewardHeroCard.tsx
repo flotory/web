@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
-import type { ComponentProps } from 'react'
 import { Image, Text, View } from 'react-native'
 
 import { rewardImageUrl } from '../../lib/media'
+import { venueCategoryIcon } from '../../lib/venueCategories'
 import {
   formatHeroRewardLine,
   formatHeroSubtitle,
@@ -13,17 +13,6 @@ import {
 } from '../../lib/venueScanLanding'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, shadows, space } from '../../theme'
-
-type IoniconName = ComponentProps<typeof Ionicons>['name']
-
-function categoryIcon(category?: string | null): IoniconName {
-  const key = (category ?? '').toLowerCase()
-  if (key === 'cafe' || key === 'coffee') return 'cafe-outline'
-  if (key === 'bar') return 'wine-outline'
-  if (key === 'bakery') return 'ice-cream-outline'
-  if (key === 'restaurant') return 'restaurant-outline'
-  return 'gift-outline'
-}
 
 interface VenueScanRewardHeroCardProps {
   venueName: string
@@ -66,7 +55,7 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero, mem
           {heroImageUri ? (
             <Image source={{ uri: heroImageUri }} style={{ width: '100%', height: '100%' }} />
           ) : (
-            <Ionicons name={categoryIcon(category)} size={24} color={colors.accent} />
+            <Ionicons name={venueCategoryIcon(category)} size={24} color={colors.accent} />
           )}
         </View>
 

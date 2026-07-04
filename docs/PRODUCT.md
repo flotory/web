@@ -46,8 +46,8 @@ Sales-led onboarding (default after a demo):
 
 1. **Invite** — Flotory admin sends an owner invitation from **Owner onboarding** (`/admin/owner-onboarding`): email + optional business name.
 2. **Register** — Owner opens `/register?invite=…`, sets a password (invite expires after `FLOTORY_OWNER_INVITATION_TTL_DAYS`, default 7).
-3. **Create venue** — **My Venues** (`/my-venues?create=1`): name, address, category. Only users with an accepted invitation may self-create a venue (one per invite).
-4. **Launch** — Upload files on **Files & docs**, complete listing checklist → **Submit for listing** → platform admin approves → **published**.
+3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category), Google address, **logo & cover uploads**, first reward, then **Submit for review**. They can also resume from **My Venues → Logo & cover** while the venue is `draft` or `rejected`.
+4. **Launch** — Complete the listing checklist → **Submit for listing** → platform admin approves → **published**.
 5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics.
 6. **NFC** — Platform admin provisions NFC stands; program tags with tap URL.
 

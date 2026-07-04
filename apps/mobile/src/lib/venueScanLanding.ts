@@ -167,11 +167,4 @@ export function formatSocialCount(count: number, singular: string, plural: strin
   return count === 1 ? `1 ${singular}` : `${count.toLocaleString()} ${plural}`
 }
 
-export function categoryEmoji(category?: string | null): string {
-  const value = (category ?? '').toLowerCase()
-  if (value === 'cafe' || value === 'coffee') return '☕'
-  if (value === 'bar') return '🍸'
-  if (value === 'bakery') return '🥐'
-  if (value === 'restaurant') return '🍽️'
-  return '🎁'
-}
+export { categoryEmoji } from './venueCategories'

@@ -5,7 +5,7 @@ import { Image, Platform, Pressable, Text, View } from 'react-native'
 
 import type { DiscoverVenue } from '../../lib/customerData'
 import { discoverVenuePill } from '../../lib/discoverVenuePill'
-import { formatVenueCategoryLabel } from '../../lib/format'
+import { formatVenueCategoryLabel, venueCategoryIcon } from '../../lib/venueCategories'
 import { venueCoverUrl } from '../../lib/media'
 import { openVenueInMaps } from '../../lib/openMaps'
 import type { WalletCard } from '../../types/loyalty'
@@ -14,15 +14,6 @@ import { colors, media, radius, shadows } from '../../theme'
 import { withAppFont } from '../../lib/typography'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
-
-function categoryIcon(category: string | null | undefined): IoniconName {
-  const key = (category ?? '').toLowerCase()
-  if (key === 'cafe') return 'cafe-outline'
-  if (key === 'restaurant') return 'restaurant-outline'
-  if (key === 'bakery') return 'ice-cream-outline'
-  if (key === 'bar') return 'wine-outline'
-  return 'storefront-outline'
-}
 
 interface DiscoverVenueCardProps {
   venue: DiscoverVenue
@@ -112,7 +103,7 @@ export default function DiscoverVenueCard({
               backgroundColor: colors.accentSoft,
             }}
           >
-            <Ionicons name={categoryIcon(venue.category)} size={40} color={colors.accentActive} />
+            <Ionicons name={venueCategoryIcon(venue.category)} size={40} color={colors.accentActive} />
           </View>
         )}
 

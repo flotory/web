@@ -1,14 +1,15 @@
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
+import { OWNER_ONBOARDING_PATH, shouldUseOwnerOnboarding } from '@/lib/ownerOnboarding'
 import { isOwnerWorkspacePath, isSafeInternalRedirect } from '@/lib/redirect'
 import type { Venue } from '@/types'
 
 export const BOOK_DEMO_PATH = '/book-demo'
 
-/** Invited owners create their first venue here after registration. */
-export const OWNER_VENUE_SETUP_PATH = '/my-venues?create=1'
+/** Invited owners complete venue setup in the guided onboarding wizard. */
+export const OWNER_VENUE_SETUP_PATH = OWNER_ONBOARDING_PATH
 
 export function ownerVenueSetupLocation(): { path: string; query?: Record<string, string> } {
-  return { path: '/my-venues', query: { create: '1' } }
+  return { path: OWNER_ONBOARDING_PATH }
 }
 
 export const ADMIN_HOME_PATH = '/admin/venues'
@@ -83,12 +84,12 @@ export function resolvePostLoginDestination(
 
   const safe = isSafeInternalRedirect(redirect) ? redirect : home
 
-  if (safe.startsWith('/onboarding')) {
-    return mayCreateVenue ? OWNER_VENUE_SETUP_PATH : BOOK_DEMO_PATH
-  }
+  if (safe.startsWith('/onboarding') || safe.includes('create=1')) {
+    if (shouldUseOwnerOnboarding(mayCreateVenue, activeVenues)) {
+      return OWNER_ONBOARDING_PATH
+    }
 
-  if (safe.includes('create=1')) {
-    return mayCreateVenue ? OWNER_VENUE_SETUP_PATH : BOOK_DEMO_PATH
+    return mayCreateVenue ? OWNER_ONBOARDING_PATH : BOOK_DEMO_PATH
   }
 
   if (
@@ -106,8 +107,14 @@ export function resolvePostLoginDestination(
     return safe.startsWith('/admin/') ? safe : ADMIN_HOME_PATH
   }
 
-  if (isOwnerWorkspacePath(safe) && !hasOwner) {
-    return mayCreateVenue ? safe : BOOK_DEMO_PATH
+  if (isOwnerWorkspacePath(safe)) {
+    if (shouldUseOwnerOnboarding(mayCreateVenue, activeVenues)) {
+      return OWNER_ONBOARDING_PATH
+    }
+
+    if (!hasOwner) {
+      return BOOK_DEMO_PATH
+    }
   }
 
   return safe

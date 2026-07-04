@@ -35,9 +35,9 @@ Invitations expire after `FLOTORY_OWNER_INVITATION_TTL_DAYS` (default **7**). Se
 
 Owners who already manage a venue cannot receive a duplicate sales invite — they should log in directly.
 
-### Venue listing setup (owner files → admin crop → approve)
+### Venue listing setup (owner uploads → admin crop → approve)
 
-Owners upload raw branding and documents on **Files & docs** (`/my-venues/:id/setup-files`) before submitting for review. They do not crop to final app sizes.
+Owners upload a **logo and cover photo** during the onboarding wizard (`/onboarding`) or on **Logo & cover** (`/my-venues/:id/setup-files`) before submitting for review. Images only — exact sizes are not required. They do not crop to final app sizes themselves.
 
 When a venue is **pending review**, open **Venue listings** → **Review & set up** (`/admin/manage-venues/:id`). Crop logo (512×512) and optional cover (1400×700) from owner files in the **Owner setup files** section at the bottom of the page. **Approve** only works after a final logo has been applied.
 

@@ -9,7 +9,7 @@ import CardPromotionSticker from './CardPromotionSticker'
 import MilestonePath from './MilestonePath'
 import HomeSectionHeader from '../ui/HomeSectionHeader'
 import ShakeGiftBadge from '../ui/ShakeGiftBadge'
-import { formatVenueCategoryLabel } from '../../lib/format'
+import { formatVenueCategoryLabel, venueCategoryIcon } from '../../lib/venueCategories'
 import { venueCoverUrl, venueLogoUrl } from '../../lib/media'
 import { hasVenueMapTarget, openVenueInMaps } from '../../lib/openMaps'
 import { withAppFont } from '../../lib/typography'
@@ -17,15 +17,6 @@ import { colors, media, radius, shadows, space } from '../../theme'
 import type { MilestoneProgress, RewardRef, VenuePromotion, VenueRef } from '../../types/loyalty'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
-
-function categoryIcon(category: string | null | undefined): IoniconName {
-  const key = (category ?? '').toLowerCase()
-  if (key === 'cafe') return 'cafe-outline'
-  if (key === 'restaurant') return 'restaurant-outline'
-  if (key === 'bakery') return 'ice-cream-outline'
-  if (key === 'bar') return 'wine-outline'
-  return 'storefront-outline'
-}
 
 interface CardDetailHeaderProps {
   venue: VenueRef | null | undefined
@@ -99,7 +90,7 @@ export default function CardDetailHeader({
                 backgroundColor: colors.accentSoft,
               }}
             >
-              <Ionicons name={categoryIcon(venue?.category)} size={48} color={colors.accentActive} />
+              <Ionicons name={venueCategoryIcon(venue?.category)} size={48} color={colors.accentActive} />
             </View>
           )}
 

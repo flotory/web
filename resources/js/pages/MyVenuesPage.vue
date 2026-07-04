@@ -16,7 +16,7 @@ import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
-import { normalizeVenueCategory } from '@/lib/defaultImages'
+import { normalizeVenueCategory, VENUE_CATEGORIES, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { venueCoverThumbUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
@@ -37,7 +37,7 @@ const formOpen = ref(false)
 const menuVenueId = ref<number | null>(null)
 const deleteVenueTarget = ref<Venue | null>(null)
 const search = ref('')
-const typeFilter = ref<'all' | 'cafe' | 'restaurant' | 'bar' | 'bakery'>('all')
+const typeFilter = ref<'all' | VenueCategory>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
 
 const name = ref('')
@@ -83,8 +83,7 @@ const filteredVenues = computed(() => {
 })
 
 function venueTypeLabel(venue: Venue): string {
-  const type = normalizeVenueCategory(venue.category)
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  return categoryLabel(normalizeVenueCategory(venue.category))
 }
 
 function resetForm() {
@@ -243,10 +242,9 @@ onMounted(async () => {
         >
         <select v-model="typeFilter" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
           <option value="all">All types</option>
-          <option value="cafe">Cafe</option>
-          <option value="restaurant">Restaurant</option>
-          <option value="bar">Bar</option>
-          <option value="bakery">Bakery</option>
+          <option v-for="option in VENUE_CATEGORIES" :key="option.id" :value="option.id">
+            {{ option.label }}
+          </option>
         </select>
         <select v-model="sortBy" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
           <option value="activity">Sort by activity</option>
@@ -382,7 +380,7 @@ onMounted(async () => {
           <div class="relative">
             <button type="button" class="rounded-xl bg-surface-muted px-3 py-2 text-sm font-black text-ink-muted hover:bg-border" @click="toggleMenu(venue.id)">⋯</button>
             <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-44 rounded-2xl bg-surface p-2 shadow-xl border border-border">
-              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`); menuVenueId = null">Files & docs</button>
+              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`); menuVenueId = null">Logo & cover</button>
               <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
               <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
             </div>
@@ -413,7 +411,7 @@ onMounted(async () => {
           <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`)">
             <FileUp class="size-4" />
-            Files & docs
+            Logo & cover
           </AppButton>
           <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
         </div>

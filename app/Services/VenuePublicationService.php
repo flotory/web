@@ -32,13 +32,13 @@ class VenuePublicationService
                 'key' => 'category',
                 'label' => 'Venue category',
                 'complete' => filled($venue->category),
-                'hint' => 'Choose cafe, restaurant, bar, or bakery.',
+                'hint' => 'Choose the category that best describes your business.',
             ],
             [
                 'key' => 'setup_files',
-                'label' => 'Setup files',
+                'label' => 'Logo & cover',
                 'complete' => $this->setupFiles->hasAnyFiles($venue),
-                'hint' => 'Upload your logo, photos, menus, or any files that help us set up your venue.',
+                'hint' => 'Upload your logo and a cover photo for the app listing.',
             ],
             [
                 'key' => 'rewards',
