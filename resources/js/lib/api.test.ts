@@ -1,6 +1,22 @@
 import { describe, expect, it } from 'vitest'
 
-import { ApiError, apiErrorMessage, isVenueAccessDenied } from './api'
+import { ApiError, apiErrorMessage, isAbortedRequest, isUnauthenticatedError, isVenueAccessDenied } from './api'
+
+describe('isAbortedRequest', () => {
+  it('detects abort errors', () => {
+    expect(isAbortedRequest(new ApiError('Request aborted', 499))).toBe(true)
+    expect(isAbortedRequest(new DOMException('Aborted', 'AbortError'))).toBe(true)
+    expect(isAbortedRequest(new ApiError('Unauthenticated.', 401))).toBe(false)
+  })
+})
+
+describe('isUnauthenticatedError', () => {
+  it('detects 401 api errors', () => {
+    expect(isUnauthenticatedError(new ApiError('Unauthenticated.', 401))).toBe(true)
+    expect(isUnauthenticatedError(new ApiError('Forbidden', 403))).toBe(false)
+    expect(isUnauthenticatedError(new Error('network'))).toBe(false)
+  })
+})
 
 describe('isVenueAccessDenied', () => {
   it('detects workspace 404 responses', () => {

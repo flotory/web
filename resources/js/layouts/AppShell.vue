@@ -63,9 +63,13 @@ const isNavActive = (item: { to: string; routeName?: string }) =>
   route.path === item.to || (item.routeName ? route.name === item.routeName : false)
 
 async function logout() {
-  await auth.logout()
-  workspace.$reset()
-  await router.push('/login')
+  try {
+    auth.logout()
+    await router.replace({ name: 'login' })
+  } finally {
+    workspace.$reset()
+    auth.finishLogout()
+  }
 }
 </script>
 

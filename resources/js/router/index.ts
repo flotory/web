@@ -41,6 +41,7 @@ import {
   resolvePostLoginDestination,
 } from '@/lib/venueRoles'
 import { shouldUseOwnerOnboarding, isOnboardingStep } from '@/lib/ownerOnboarding'
+import { bootstrapWorkspaceOrSignOut } from '@/lib/sessionGuard'
 import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -111,7 +112,10 @@ const router = createRouter({
 async function workspaceHomePath() {
   const auth = useAuthStore()
   const workspace = useWorkspaceStore()
-  await workspace.bootstrap()
+
+  if (!await bootstrapWorkspaceOrSignOut(auth, workspace)) {
+    return '/login'
+  }
 
   return resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
 }
@@ -127,6 +131,10 @@ function isRemovedCustomerStaffPath(path: string): boolean {
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const workspace = useWorkspaceStore()
+
+  if (auth.loggingOut && to.name === 'login') {
+    return true
+  }
 
   if (to.name === 'register' && to.query.intent === 'owner') {
     return { path: '/book-demo' }
@@ -175,13 +183,19 @@ router.beforeEach(async (to) => {
     const needsWorkspaceContext = to.meta.workspace === true || to.meta.workspace === 'auto'
 
     if (needsWorkspaceContext) {
-      await workspace.bootstrap()
+      if (!await bootstrapWorkspaceOrSignOut(auth, workspace)) {
+        return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
+      }
     }
 
     const ownerMember = hasOwnerMembership(workspace.activeVenues)
     const home = needsWorkspaceContext
       ? resolveAuthenticatedHomePath(auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue)
       : await workspaceHomePath()
+
+    if (!auth.isAuthenticated) {
+      return { name: 'login', query: { redirect: sanitizeRedirect(to.fullPath) } }
+    }
 
     if (
       !auth.isAdmin
@@ -243,7 +257,9 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'landing' && auth.isAuthenticated && to.query.public !== '1') {
-    await workspace.bootstrap()
+    if (!await bootstrapWorkspaceOrSignOut(auth, workspace)) {
+      return { name: 'login' }
+    }
 
     let destination = MOBILE_APP_PATH
 
@@ -270,7 +286,9 @@ router.beforeEach(async (to) => {
     && to.name !== 'faq'
     && !to.meta.inviteFlow
   ) {
-    await workspace.bootstrap()
+    if (!await bootstrapWorkspaceOrSignOut(auth, workspace)) {
+      return { name: 'login' }
+    }
 
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
     if (to.name === 'login' && redirect) {

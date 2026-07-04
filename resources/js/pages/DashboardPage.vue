@@ -16,7 +16,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import PageSection from '@/components/ui/PageSection.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
-import { api, apiErrorMessage } from '@/lib/api'
+import { api, apiErrorMessage, isAbortedRequest, isUnauthenticatedError } from '@/lib/api'
 import {
   dashboardApiQueryString,
   defaultDashboardPeriodSelection,
@@ -286,11 +286,19 @@ async function endCampaign(campaign: Campaign) {
 }
 
 async function loadDashboard() {
+  if (!auth.token || auth.loggingOut) {
+    return
+  }
+
   loading.value = true
   error.value = ''
 
   try {
     await workspace.bootstrap()
+
+    if (!auth.token || auth.loggingOut) {
+      return
+    }
 
     if (!workspace.hasMembership) {
       await router.push({ path: '/my-venues', query: { create: '1' } })
@@ -308,6 +316,16 @@ async function loadDashboard() {
     const query = dashboardApiQueryString(periodSelection.value, venueId)
     dashboard.value = await api<DashboardResponse>(`/dashboard${query}`)
   } catch (exception) {
+    if (isAbortedRequest(exception) || auth.loggingOut) {
+      return
+    }
+
+    if (isUnauthenticatedError(exception)) {
+      auth.clearSession()
+      await router.replace({ name: 'login' })
+      return
+    }
+
     error.value = apiErrorMessage(exception, 'Could not load dashboard data.')
   } finally {
     loading.value = false
@@ -332,6 +350,10 @@ function onPeriodChange(next: DashboardPeriodSelection) {
 }
 
 watch(() => workspace.filterVenueId, () => {
+  if (auth.loggingOut || !auth.token) {
+    return
+  }
+
   syncPeriodToRoute()
   void loadDashboard()
 })

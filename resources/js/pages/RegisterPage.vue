@@ -10,6 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError, api } from '@/lib/api'
 import { authFieldClass } from '@/lib/authForm'
 import { OWNER_VENUE_SETUP_PATH } from '@/lib/venueRoles'
+import { completeSignInNavigation, isLoginCancelledError } from '@/lib/signInNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -87,6 +88,8 @@ async function submit() {
   loading.value = true
   error.value = ''
 
+  const sessionEpoch = auth.sessionEpoch
+
   try {
     const response = await api<{ token: string }>(`/public/owner-invitations/${encodeURIComponent(inviteToken.value)}/accept`, {
       method: 'POST',
@@ -97,16 +100,33 @@ async function submit() {
       },
     })
 
+    if (sessionEpoch !== auth.sessionEpoch) {
+      return
+    }
+
     await auth.loginWithToken(response.token)
-    await workspace.bootstrap(true)
 
     if (isNewVenueOnboarding.value) {
+      if (!auth.isSessionCurrent(sessionEpoch)) {
+        return
+      }
+
       await router.replace(OWNER_VENUE_SETUP_PATH)
       return
     }
 
-    await router.replace('/dashboard')
+    await completeSignInNavigation({
+      auth,
+      workspace,
+      router,
+      sessionEpoch,
+      redirect: '/dashboard',
+    })
   } catch (exception) {
+    if (isLoginCancelledError(exception)) {
+      return
+    }
+
     error.value = exception instanceof ApiError ? exception.message : 'Unable to complete registration.'
   } finally {
     loading.value = false

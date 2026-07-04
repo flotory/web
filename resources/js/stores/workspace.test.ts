@@ -3,11 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Venue } from '@/types'
 
+import { useAuthStore } from './auth'
 import { useWorkspaceStore } from './workspace'
 
 vi.mock('@/lib/api', () => ({
   api: vi.fn(),
+  isUnauthenticatedError: (error: unknown) =>
+    typeof error === 'object'
+    && error !== null
+    && 'status' in error
+    && (error as { status: number }).status === 401,
 }))
+
+import { api } from '@/lib/api'
 
 function venue(id: number, name: string): Venue {
   return {
@@ -21,6 +29,7 @@ function venue(id: number, name: string): Venue {
 }
 
 const sessionStore = new Map<string, string>()
+const localStore = new Map<string, string>()
 
 vi.stubGlobal('sessionStorage', {
   getItem: (key: string) => sessionStore.get(key) ?? null,
@@ -35,10 +44,25 @@ vi.stubGlobal('sessionStorage', {
   },
 })
 
+vi.stubGlobal('localStorage', {
+  getItem: (key: string) => localStore.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    localStore.set(key, value)
+  },
+  removeItem: (key: string) => {
+    localStore.delete(key)
+  },
+  clear: () => {
+    localStore.clear()
+  },
+})
+
 describe('useWorkspaceStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     sessionStore.clear()
+    localStore.clear()
+    vi.mocked(api).mockReset()
   })
 
   it('defaults effectiveVenueId to the first active venue when filter is unset', () => {
@@ -52,6 +76,9 @@ describe('useWorkspaceStore', () => {
   })
 
   it('reapplies a stored venue filter when bootstrap returns early', async () => {
+    const auth = useAuthStore()
+    auth.setSession({ id: 1, name: 'Owner', email: 'owner@example.com', is_admin: false } as never, 'token')
+
     const workspace = useWorkspaceStore()
     workspace.loaded = true
     workspace.venues = [venue(1, 'Demo Cafe'), venue(2, 'Harbor Coffee')]
@@ -86,5 +113,24 @@ describe('useWorkspaceStore', () => {
 
     expect(workspace.filterVenueId).toBe(1)
     expect(sessionStorage.getItem('loyalty_venue_filter')).toBe('1')
+  })
+
+  it('skips venue fetch when there is no auth token', async () => {
+    const workspace = useWorkspaceStore()
+
+    await workspace.bootstrap()
+
+    expect(api).not.toHaveBeenCalled()
+  })
+
+  it('skips venue fetch while logging out', async () => {
+    const auth = useAuthStore()
+    auth.setSession({ id: 1, name: 'Owner', email: 'owner@example.com', is_admin: false } as never, 'token')
+    auth.loggingOut = true
+
+    const workspace = useWorkspaceStore()
+    await workspace.bootstrap()
+
+    expect(api).not.toHaveBeenCalled()
   })
 })

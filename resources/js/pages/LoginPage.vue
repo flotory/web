@@ -10,7 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass } from '@/lib/authForm'
-import { BOOK_DEMO_PATH, hasOwnerMembership, OWNER_VENUE_SETUP_PATH, resolvePostLoginDestination } from '@/lib/venueRoles'
+import { completeSignInNavigation, isLoginCancelledError } from '@/lib/signInNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -35,18 +35,6 @@ const postAuthPath = computed(() => {
   return redirect
 })
 
-function ownerPostAuthDestination() {
-  if (hasOwnerMembership(workspace.activeVenues)) {
-    return '/dashboard'
-  }
-
-  if (auth.mayCreateVenue) {
-    return OWNER_VENUE_SETUP_PATH
-  }
-
-  return BOOK_DEMO_PATH
-}
-
 function continueWithGoogle() {
   window.location.href = buildGoogleAuthUrlWithIntent(null, postAuthPath.value ?? undefined, authIntent.value)
 }
@@ -55,9 +43,15 @@ async function submit() {
   loading.value = true
   error.value = ''
 
+  const sessionEpoch = auth.sessionEpoch
+
   try {
     await auth.login({ email: email.value, password: password.value })
   } catch (exception) {
+    if (isLoginCancelledError(exception)) {
+      return
+    }
+
     error.value = exception instanceof ApiError || exception instanceof Error
       ? exception.message
       : 'Unable to log in. Please try again.'
@@ -66,17 +60,18 @@ async function submit() {
   }
 
   try {
-    await workspace.bootstrap(true)
+    const completed = await completeSignInNavigation({
+      auth,
+      workspace,
+      router,
+      sessionEpoch,
+      intent: authIntent.value,
+      redirect: typeof route.query.redirect === 'string' ? route.query.redirect : null,
+    })
 
-    if (authIntent.value === 'owner') {
-      await router.push(ownerPostAuthDestination())
-      return
+    if (!completed && auth.isAuthenticated) {
+      error.value = 'Signed in, but we could not open your workspace. Please refresh and try again.'
     }
-
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    await router.push(
-      resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue),
-    )
   } catch {
     error.value = 'Signed in, but we could not open your workspace. Please refresh and try again.'
   } finally {
@@ -87,23 +82,26 @@ async function submit() {
 onMounted(() => {
   const oauthToken = typeof route.query.oauth_token === 'string' ? route.query.oauth_token : null
   if (oauthToken) {
+    const sessionEpoch = auth.sessionEpoch
     oauthLoading.value = true
-    auth
+
+    void auth
       .loginWithToken(oauthToken)
       .then(async () => {
-        await workspace.bootstrap(true)
-
-        if (authIntent.value === 'owner') {
-          await router.replace(ownerPostAuthDestination())
+        await completeSignInNavigation({
+          auth,
+          workspace,
+          router,
+          sessionEpoch,
+          intent: authIntent.value,
+          redirect: typeof route.query.redirect === 'string' ? route.query.redirect : null,
+        })
+      })
+      .catch((exception) => {
+        if (isLoginCancelledError(exception)) {
           return
         }
 
-        const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-        await router.replace(
-          resolvePostLoginDestination(redirect, auth.user?.is_admin, workspace.activeVenues, workspace.effectiveVenueId, auth.mayCreateVenue),
-        )
-      })
-      .catch(() => {
         error.value = 'Google sign in failed. Please try again.'
       })
       .finally(() => {

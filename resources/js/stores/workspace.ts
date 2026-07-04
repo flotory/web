@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 
-import { api } from '@/lib/api'
+import { api, isAbortedRequest, isUnauthenticatedError } from '@/lib/api'
 import { isVenueOwner } from '@/lib/venueRoles'
+import { useAuthStore } from '@/stores/auth'
 import type { Venue } from '@/types'
 
 const FILTER_KEY = 'loyalty_venue_filter'
@@ -77,10 +78,23 @@ export const useWorkspaceStore = defineStore('workspace', {
       }
     },
     async bootstrap(force = false) {
+      const auth = useAuthStore()
+      if (!auth.token || auth.loggingOut) {
+        return
+      }
+
       if (!this.loaded || force) {
-        const response = await api<{ venues: Venue[] }>('/venues')
-        this.venues = response.venues
-        this.loaded = true
+        try {
+          const response = await api<{ venues: Venue[] }>('/venues')
+          this.venues = response.venues
+          this.loaded = true
+        } catch (error) {
+          if (auth.loggingOut || isUnauthenticatedError(error) || isAbortedRequest(error)) {
+            return
+          }
+
+          throw error
+        }
       }
 
       this.ensureVenueFilter()

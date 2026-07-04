@@ -4,6 +4,12 @@ import { getActiveLocale } from '@/i18n'
 const REQUEST_ID_HEADER = 'X-Request-Id'
 
 let lastRequestId: string | null = null
+let sessionAbort = new AbortController()
+
+export function abortActiveApiRequests(): void {
+  sessionAbort.abort()
+  sessionAbort = new AbortController()
+}
 
 export function getLastRequestId(): string | null {
   return lastRequestId
@@ -12,6 +18,10 @@ export function getLastRequestId(): string | null {
 export type ApiOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null
   includeAuth?: boolean
+  /** Use when the auth store was cleared but a token is still needed (e.g. logout revoke). */
+  authToken?: string | null
+  /** When false, request is not cancelled by abortActiveApiRequests(). */
+  bindToSession?: boolean
 }
 
 export class ApiError extends Error {
@@ -37,6 +47,18 @@ function normalizeApiMessage(message: string, status: number): string {
   }
 
   return message
+}
+
+export function isUnauthenticatedError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401
+}
+
+export function isAbortedRequest(error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 499) {
+    return true
+  }
+
+  return error instanceof DOMException && error.name === 'AbortError'
 }
 
 export function isVenueAccessDenied(error: unknown): boolean {
@@ -78,8 +100,9 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     body = JSON.stringify(body)
   }
 
-  if (options.includeAuth !== false && auth.token) {
-    headers.set('Authorization', `Bearer ${auth.token}`)
+  const authToken = options.authToken !== undefined ? options.authToken : auth.token
+  if (options.includeAuth !== false && authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`)
   }
 
   if (!headers.has(REQUEST_ID_HEADER)) {
@@ -94,14 +117,23 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
 
   let response: Response
+  const signal = options.bindToSession === false
+    ? options.signal
+    : (options.signal ?? sessionAbort.signal)
+
   try {
     response = await fetch(`/api${path}`, {
       ...options,
       method,
       headers,
       body,
+      signal,
     })
-  } catch {
+  } catch (error) {
+    if (isAbortedRequest(error)) {
+      throw new ApiError('Request aborted', 499)
+    }
+
     throw new ApiError(
       'Could not reach the Flotory server. If you are developing locally, open http://localhost:8000 and run `docker compose up`.',
       0,
