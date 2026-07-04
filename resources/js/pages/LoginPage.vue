@@ -10,7 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
 import { authFieldClass } from '@/lib/authForm'
-import { completeSignInNavigation, isLoginCancelledError } from '@/lib/signInNavigation'
+import { completeSignInNavigation, isLoginCancelledError, loginQueryWithoutOAuthToken } from '@/lib/signInNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -82,6 +82,11 @@ async function submit() {
 onMounted(() => {
   const oauthToken = typeof route.query.oauth_token === 'string' ? route.query.oauth_token : null
   if (oauthToken) {
+    void router.replace({
+      path: route.path,
+      query: loginQueryWithoutOAuthToken(route.query as Record<string, unknown>),
+    })
+
     const sessionEpoch = auth.sessionEpoch
     oauthLoading.value = true
 

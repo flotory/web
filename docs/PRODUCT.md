@@ -2,7 +2,7 @@
 
 ## What is Flotory?
 
-Flotory is digital loyalty for independent cafes, bars, restaurants, and bakeries. Guests join via a venue QR bridge, collect **stamps** with **NFC stands** (or in-app NFC on iPhone), and **slide to redeem** unlocked rewards in the mobile app. **Owners** run everything from the **web dashboard**.
+Flotory is digital loyalty for independent **repeat-visit businesses** — cafes, restaurants, salons, gyms, retail, and more. Guests join via a venue QR bridge, collect **stamps** with **NFC stands** (or in-app NFC on iPhone), and **slide to redeem** unlocked rewards in the mobile app. **Owners** run everything from the **web dashboard**.
 
 Flotory launches in Armenia with **English** as the fallback language and **Armenian** as the first localized language. Venue names, reward titles, and campaign content remain owner-authored content; localization covers the app and dashboard chrome.
 
@@ -78,7 +78,15 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 - Venue listing workflow (`draft` → `pending_review` → `published`)
 - User locale preference (`users.locale`, currently `en` or `hy`) for web/admin and mobile sessions
 
-**Venue categories:** cafe, bar, restaurant, bakery.
+**Venue categories** (12 + Other — validated in `app/Support/VenueCategories.php`, grouped in the onboarding UI):
+
+| Group | Categories |
+|-------|------------|
+| Food & drink | `cafe`, `bakery`, `restaurant`, `bar`, `wine_bar`, `quick_service` |
+| Services & wellness | `salon`, `spa`, `gym` |
+| Retail & other | `retail`, `pet_care`, `other` |
+
+`other` is for any repeat-visit business that does not fit the presets. Default placeholder images (logo/cover) are chosen by category group. The API rejects unknown category slugs with **422**; the web UI normalizes invalid stored values to `cafe` for display only.
 
 ## Future (not MVP)
 

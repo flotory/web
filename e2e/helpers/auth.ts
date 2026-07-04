@@ -9,11 +9,37 @@ async function clearAuthToken(page: Page): Promise<void> {
   })
 }
 
+async function hasAuthToken(page: Page): Promise<boolean> {
+  return page.evaluate(() => Boolean(localStorage.getItem('auth_token')))
+}
+
 export async function logoutFromApp(page: Page): Promise<void> {
-  await page.goto('/login')
-  await clearAuthToken(page)
-  await page.goto('/login')
+  if (!await hasAuthToken(page)) {
+    await page.goto('/login')
+    await expect(page.locator('#email')).toBeVisible({ timeout: 15_000 })
+    return
+  }
+
+  const logoutButton = page.getByRole('button', { name: 'Logout' })
+  if (await logoutButton.count() === 0) {
+    await page.goto('/dashboard')
+  }
+
+  const logoutRequest = page.waitForResponse(
+    (response) => response.url().includes('/api/auth/logout') && response.request().method() === 'POST',
+    { timeout: 15_000 },
+  )
+
+  await page.getByRole('button', { name: 'Logout' }).click()
+
+  await logoutRequest
+  await expect(page).toHaveURL(/\/login/, { timeout: 15_000 })
   await expect(page.locator('#email')).toBeVisible({ timeout: 15_000 })
+  await expect.poll(async () => localStorageToken(page)).toBeNull()
+}
+
+async function localStorageToken(page: Page): Promise<string | null> {
+  return page.evaluate(() => localStorage.getItem('auth_token'))
 }
 
 export async function loginAs(page: Page, email: string, password = DEMO_PASSWORD): Promise<void> {

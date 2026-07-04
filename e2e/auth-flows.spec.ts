@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { DEMO_ADMIN_EMAIL, DEMO_CUSTOMER_EMAIL, DEMO_OWNER_EMAIL } from './helpers/demo'
-import { loginAs } from './helpers/auth'
+import { loginAs, logoutFromApp } from './helpers/auth'
 
 test.describe('Auth flows', () => {
   test('redirects unauthenticated owners to login with a return path', async ({ page }) => {
@@ -58,5 +58,33 @@ test.describe('Auth flows', () => {
     await expect(page.getByRole('heading', { name: 'Forgot password?' })).toBeVisible()
     await expect(page.locator('#email')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Send reset link' })).toBeVisible()
+  })
+
+  test('owner logout revokes session and returns to login', async ({ page }) => {
+    await loginAs(page, DEMO_OWNER_EMAIL)
+    await expect(page).toHaveURL(/\/dashboard/)
+
+    await logoutFromApp(page)
+
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('admin logout revokes session from the workspace shell', async ({ page }) => {
+    await loginAs(page, DEMO_ADMIN_EMAIL)
+    await expect(page).toHaveURL(/\/admin\/venues/)
+
+    await logoutFromApp(page)
+
+    await page.goto('/admin/venues')
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('strips oauth_token from the login url after google callback', async ({ page }) => {
+    await page.goto('/login?oauth_token=invalid-token&redirect=%2Fdashboard')
+
+    await expect(page).toHaveURL(/\/login/)
+    expect(page.url()).not.toContain('oauth_token')
+    expect(page.url()).toContain('redirect=')
   })
 })

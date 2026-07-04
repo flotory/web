@@ -16,6 +16,22 @@ export function isLoginCancelledError(error: unknown): boolean {
   return error instanceof Error && error.message === 'Login cancelled'
 }
 
+export function loginQueryWithoutOAuthToken(query: Record<string, unknown>): Record<string, string> {
+  const next: Record<string, string> = {}
+
+  for (const [key, value] of Object.entries(query)) {
+    if (key === 'oauth_token') {
+      continue
+    }
+
+    if (typeof value === 'string' && value.length > 0) {
+      next[key] = value
+    }
+  }
+
+  return next
+}
+
 export function resolveOwnerPostAuthDestination(auth: AuthStore, workspace: WorkspaceStore): string {
   if (hasOwnerMembership(workspace.activeVenues)) {
     return '/dashboard'

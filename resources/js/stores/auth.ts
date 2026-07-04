@@ -121,6 +121,7 @@ export const useAuthStore = defineStore('auth', {
       await this.fetchUser()
 
       if (epoch !== this.sessionEpoch || this.loggingOut) {
+        this.clearSession()
         throw new Error('Login cancelled')
       }
 
