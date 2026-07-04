@@ -55,8 +55,10 @@ Compose project name is **`flotory`** (`flotory-app-1`, `flotory-mysql-1`, …).
 docker compose exec app php artisan migrate --force                    # pending migrations
 docker compose exec app php artisan app:ensure-local-demo                # restore demo logins
 docker compose exec app php artisan app:ensure-local-demo --with-demo-data  # sample visits/campaigns
-docker compose exec app php artisan migrate:fresh --seed                 # full reset (destructive)
+FLOTORY_ALLOW_DESTRUCTIVE_DB=1 docker compose exec app php artisan migrate:fresh --seed  # full reset (opt-in only)
 ```
+
+**Your local MySQL data is protected:** `migrate:fresh`, `migrate:refresh`, and `db:wipe` are blocked on local Docker MySQL unless you set `FLOTORY_ALLOW_DESTRUCTIVE_DB=1`. PHPUnit and Playwright e2e use isolated sqlite — they never touch `mysql_data`.
 
 Set `FRONTEND_URL=http://localhost:8000` for Google OAuth (Laravel app URL, not the Vite dev server).
 

@@ -14,7 +14,7 @@ usage() {
 Usage: ./scripts/run-mobile-e2e.sh [options] [-- maestro-args...]
 
 Options:
-  --no-prepare   Skip migrate:fresh --seed (DB already has demo data)
+  --no-prepare   Skip demo data refresh (DB already has demo data)
   --prepare-only Run database seed and exit
   -h, --help     Show this help
 
@@ -65,19 +65,19 @@ export TEST_VENUE_NAME="${TEST_VENUE_NAME:-Demo Cafe}"
 export NFC_TAP_TOKEN="${NFC_TAP_TOKEN:-democafenfcstandlocaltest00001}"
 
 seed_demo_database() {
-  echo "==> Mobile E2E: seeding demo database"
+  echo "==> Mobile E2E: refresh demo data (does not wipe your local MySQL)"
   if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
     if docker compose ps app --status running -q 2>/dev/null | grep -q .; then
-      docker compose exec -T app php artisan migrate:fresh --seed --force
+      docker compose exec -T app php artisan app:ensure-local-demo --with-demo-data --no-interaction
       return
     fi
 
-    docker compose run --rm --no-deps app php artisan migrate:fresh --seed --force
+    docker compose run --rm --no-deps app php artisan app:ensure-local-demo --with-demo-data --no-interaction
     return
   fi
 
   if command -v php >/dev/null 2>&1; then
-    php artisan migrate:fresh --seed --force
+    php artisan app:ensure-local-demo --with-demo-data --no-interaction
     return
   fi
 

@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Support\LocalDatabaseGuard;
 use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+            if (! LocalDatabaseGuard::blocksDestructiveCommand($event->command)) {
+                return;
+            }
+
+            throw new RuntimeException(LocalDatabaseGuard::denialMessage());
+        });
+
         if (! $this->app->environment('local')) {
             return;
         }
