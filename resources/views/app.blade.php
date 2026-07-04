@@ -21,6 +21,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
   </head>
   <body class="bg-slate-950 font-sans text-slate-950 antialiased">
+    <script>
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      if (!location.hash) window.scrollTo(0, 0);
+    </script>
     <div id="app"></div>
   </body>
 </html>

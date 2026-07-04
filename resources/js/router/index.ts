@@ -28,11 +28,9 @@ import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage.vue'
 import TermsOfServicePage from '@/pages/TermsOfServicePage.vue'
-import { useAuthStore } from '@/stores/auth'
-import { useWorkspaceStore } from '@/stores/workspace'
-import { sanitizeRedirect } from '@/lib/redirect'
-import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
+import { sanitizeRedirect } from '@/lib/redirect'
+import { resolveScrollBehavior } from '@/lib/scrollReset'
 import {
   ADMIN_HOME_PATH,
   hasOwnerMembership,
@@ -41,6 +39,9 @@ import {
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
 } from '@/lib/venueRoles'
+import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
+import { useAuthStore } from '@/stores/auth'
+import { useWorkspaceStore } from '@/stores/workspace'
 
 const REMOVED_CUSTOMER_STAFF_PATHS = [
   '/home',
@@ -104,6 +105,7 @@ const router = createRouter({
     { path: '/card/:cardId', redirect: MOBILE_APP_PATH },
     { path: '/claim/:unlockId', redirect: MOBILE_APP_PATH },
   ],
+  scrollBehavior: resolveScrollBehavior,
 })
 
 async function workspaceHomePath() {

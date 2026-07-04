@@ -3,7 +3,6 @@ import { ArrowLeft } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 
 import { MARKETING_HOME_PATH } from '@/lib/brand'
-import { resolveMarketingBack } from '@/lib/marketingNavigation'
 
 const props = withDefaults(
   defineProps<{
@@ -19,14 +18,7 @@ const props = withDefaults(
 const router = useRouter()
 
 function goBack() {
-  const target = resolveMarketingBack(router.options.history.state, props.fallbackTo)
-
-  if (target === 'back') {
-    router.back()
-    return
-  }
-
-  void router.push(target)
+  void router.push(props.fallbackTo)
 }
 </script>
 

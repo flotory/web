@@ -38,6 +38,31 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByRole('heading', { name: 'Ready to launch at your venue?' })).toBeVisible()
   })
 
+  test('footer links scroll to the top of the destination page', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.locator('footer').getByRole('link', { name: 'FAQ' }).click()
+    await expect(page).toHaveURL(/\/faq$/)
+    await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible({ timeout: 15_000 })
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(8)
+  })
+
+  test('reload on landing starts at the top', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.reload()
+    await expect(page.getByTestId('landing-hero-tagline')).toBeVisible({ timeout: 15_000 })
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(8)
+  })
+
+  test('marketing back button always returns to the landing page', async ({ page }) => {
+    await page.goto('/contact')
+    await page.goto('/faq')
+    await page.getByTestId('marketing-back').click()
+    await expect(page).toHaveURL(/\?public=1/)
+    await expect(page.getByTestId('landing-hero-tagline')).toBeVisible({ timeout: 15_000 })
+  })
+
   test('legacy customer paths redirect to the mobile app page', async ({ page }) => {
     for (const path of ['/home', '/wallet', '/scanner']) {
       await page.goto(path)
