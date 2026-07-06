@@ -42,14 +42,5 @@ export function listPhoneCountries(): PhoneCountryOption[] {
 }
 
 export function detectDefaultPhoneCountry(): CountryCode {
-  if (typeof navigator === 'undefined') {
-    return 'US'
-  }
-
-  const localeRegion = navigator.language?.split('-')[1]?.toUpperCase()
-  if (localeRegion && getCountries().includes(localeRegion as CountryCode)) {
-    return localeRegion as CountryCode
-  }
-
-  return 'US'
+  return 'AM'
 }

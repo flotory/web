@@ -55,14 +55,6 @@ test.describe('Public marketing and bridge pages', () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(8)
   })
 
-  test('marketing back button always returns to the landing page', async ({ page }) => {
-    await page.goto('/contact')
-    await page.goto('/faq')
-    await page.getByTestId('marketing-back').click()
-    await expect(page).toHaveURL(/\?public=1/)
-    await expect(page.getByTestId('landing-hero-tagline')).toBeVisible({ timeout: 15_000 })
-  })
-
   test('legacy customer paths redirect to the mobile app page', async ({ page }) => {
     for (const path of ['/home', '/wallet', '/scanner']) {
       await page.goto(path)
@@ -95,7 +87,6 @@ test.describe('Public marketing and bridge pages', () => {
   test('contact page renders', async ({ page }) => {
     await page.goto('/contact')
     await expect(page.getByRole('heading', { name: 'Get in touch' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByTestId('marketing-back')).toBeVisible()
     await expect(page.getByTestId('contact-whatsapp')).toBeVisible()
     await expect(page.getByTestId('contact-telegram')).toBeVisible()
     await expect(page.locator('footer').getByRole('link', { name: 'FAQ' })).toBeVisible()
@@ -120,7 +111,6 @@ test.describe('Public marketing and bridge pages', () => {
   test('faq page renders', async ({ page }) => {
     await page.goto('/faq')
     await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByTestId('marketing-back')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible()
     await expect(page.locator('footer').getByRole('link', { name: 'Privacy' })).toBeVisible()
     await expect(page.getByTestId('faq-item-what-is-flotory')).toBeVisible()

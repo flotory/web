@@ -139,7 +139,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <MarketingPageShell>
+  <MarketingPageShell width="md-wide">
     <AppCard :wrapper-class="marketingCardClass">
       <AppBadge tone="amber">Owner invitation</AppBadge>
       <h1 class="mt-4 text-4xl font-black tracking-tight text-ink">

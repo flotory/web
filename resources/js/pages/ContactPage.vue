@@ -3,7 +3,6 @@ import { MessageCircle, Send } from '@lucide/vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import MarketingBackLink from '@/components/layout/MarketingBackLink.vue'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -45,22 +44,17 @@ async function submit() {
 </script>
 
 <template>
-  <MarketingPageShell width="3xl" padding-y="10" :show-back="false">
+  <MarketingPageShell width="3xl" padding-y="10">
     <AppCard :wrapper-class="`${marketingCardClass} sm:p-8`">
-      <div class="flex items-start gap-4">
-        <MarketingBackLink class="mt-1 shrink-0" />
-        <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-3">
-            <AppBadge tone="amber">Contact</AppBadge>
-            <h1 class="text-2xl font-black tracking-tight text-ink sm:text-3xl">Get in touch</h1>
-          </div>
-          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
-            Questions about Flotory for your venue? Send us a message — we typically reply within one business day.
-            Prefer a walkthrough?
-            <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book A Demo</RouterLink>
-          </p>
-        </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <AppBadge tone="amber">Contact</AppBadge>
+        <h1 class="text-2xl font-black tracking-tight text-ink sm:text-3xl">Get in touch</h1>
       </div>
+      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
+        Questions about Flotory for your venue? Send us a message — we typically reply within one business day.
+        Prefer a walkthrough?
+        <RouterLink to="/book-demo" class="font-semibold text-ink hover:underline">Book A Demo</RouterLink>
+      </p>
 
       <div class="mt-8 rounded-2xl border border-border/80 bg-surface-muted/50 p-4 sm:p-5">
         <p class="text-sm font-bold text-ink">Prefer chat?</p>

@@ -58,6 +58,12 @@ const files = ref<SetupFileRecord[]>([])
 const name = ref('')
 const slug = ref('')
 const category = ref<VenueCategory>('cafe')
+
+const selectChevronStyle = {
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+  backgroundPosition: 'right 0.75rem center',
+}
 const address = ref('')
 const latitude = ref<number | null>(null)
 const longitude = ref<number | null>(null)
@@ -527,7 +533,8 @@ watch(
                   <select
                     id="onboarding-category"
                     v-model="category"
-                    class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft"
+                    class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-semibold text-ink outline-none focus:border-ink-soft"
+                    :style="selectChevronStyle"
                   >
                     <optgroup v-for="group in VENUE_CATEGORY_GROUPS" :key="group.label" :label="group.label">
                       <option v-for="id in group.ids" :key="id" :value="id">
@@ -535,9 +542,6 @@ watch(
                       </option>
                     </optgroup>
                   </select>
-                  <p class="mt-2 text-xs leading-relaxed text-ink-muted">
-                    12 business types — food & drink, salons, gyms, retail, and more.
-                  </p>
                   <p v-if="category === 'other'" class="mt-2 text-xs leading-relaxed text-ink-muted">
                     Any business with repeat customers can use Flotory.
                   </p>

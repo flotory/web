@@ -75,7 +75,22 @@ function emitModelValue() {
     return
   }
 
-  model.value = `${countryDialCode(countryCode.value)}${digits}`
+  // Incomplete — keep national digits in the input only; +374 already shows on the country picker.
+}
+
+function nationalDigitsFromStoredValue(value: string, code: CountryCode): string {
+  const parsed = parsePhoneNumberFromString(value)
+  if (parsed) {
+    return parsed.nationalNumber.toString()
+  }
+
+  const digits = value.replace(/\D/g, '')
+  const dialDigits = countryDialCode(code).replace(/\D/g, '')
+  if (dialDigits && digits.startsWith(dialDigits)) {
+    return digits.slice(dialDigits.length)
+  }
+
+  return digits
 }
 
 function applyModelValue(value: string) {
@@ -97,8 +112,7 @@ function applyModelValue(value: string) {
     return
   }
 
-  const digits = value.replace(/\D/g, '')
-  nationalDisplay.value = formatNationalInput(digits)
+  nationalDisplay.value = formatNationalInput(nationalDigitsFromStoredValue(value, countryCode.value))
   syncingFromModel = false
 }
 
@@ -191,7 +205,7 @@ onBeforeUnmount(() => {
           inputmode="tel"
           autocomplete="tel-national"
           class="h-12 min-w-0 flex-1 rounded-r-2xl bg-transparent px-4 text-sm font-medium text-ink outline-none placeholder:text-ink-soft"
-          :placeholder="countryCode === 'PL' ? '123 456 789' : 'Phone number'"
+          :placeholder="countryCode === 'AM' ? '77 123 456' : countryCode === 'PL' ? '123 456 789' : 'Phone number'"
           @input="onNationalInput"
         >
       </div>

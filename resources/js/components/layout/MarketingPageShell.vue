@@ -1,36 +1,29 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import MarketingBackLink from '@/components/layout/MarketingBackLink.vue'
 import MarketingFooter from '@/components/layout/MarketingFooter.vue'
 import MarketingPageHeader from '@/components/layout/MarketingPageHeader.vue'
-import { MARKETING_HOME_PATH } from '@/lib/brand'
 import { cn } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<{
-    width?: 'md' | 'lg' | '3xl' | '6xl'
+    width?: 'md' | 'md-wide' | 'lg' | '3xl' | '6xl'
     paddingY?: '8' | '10'
     showHeader?: boolean
     showFooter?: boolean
-    showBack?: boolean
-    backFallback?: string
-    backLabel?: string
   }>(),
   {
     width: 'md',
     paddingY: '8',
     showHeader: true,
     showFooter: true,
-    showBack: true,
-    backFallback: MARKETING_HOME_PATH,
-    backLabel: 'Back',
   },
 )
 
 const contentWidthClass = computed(() =>
   cn('relative mx-auto w-full', {
     md: 'max-w-md',
+    'md-wide': 'max-w-[33.6rem]',
     lg: 'max-w-lg',
     '3xl': 'max-w-3xl',
     '6xl': 'max-w-6xl',
@@ -58,13 +51,7 @@ const contentSectionClass = computed(() =>
     <MarketingPageHeader v-if="showHeader" />
 
     <div :class="contentSectionClass">
-      <div :class="[contentWidthClass, showBack && 'relative pl-[3.25rem] sm:pl-14']">
-        <MarketingBackLink
-          v-if="showBack"
-          class="absolute left-0 top-0"
-          :fallback-to="backFallback"
-          :label="backLabel"
-        />
+      <div :class="contentWidthClass">
         <slot />
       </div>
     </div>
