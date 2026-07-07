@@ -52,7 +52,7 @@ class ReconcileConsolidatedMigrationsCommand extends Command
             '2026_06_01_000000_create_laravel_infrastructure_tables' => static fn (): bool => Schema::hasTable('personal_access_tokens')
                 || Schema::hasTable('sessions')
                 || Schema::hasTable('password_reset_tokens'),
-            '2026_06_01_000001_create_flotory_schema' => static fn (): bool => Schema::hasTable('users'),
+            '2026_06_01_000001_create_flotory_schema' => static fn (): bool => Schema::hasTable('brands'),
         ];
     }
 }
