@@ -14,35 +14,26 @@ class Venue extends Model
     use HasFactory;
     use SoftDeletes;
 
-    public const STATUS_DRAFT = 'draft';
+    public const LOCATION_STATUS_PENDING_REVIEW = 'pending_review';
 
-    public const STATUS_PENDING_REVIEW = 'pending_review';
+    public const LOCATION_STATUS_PUBLISHED = 'published';
 
-    public const STATUS_PUBLISHED = 'published';
-
-    public const STATUS_REJECTED = 'rejected';
+    public const LOCATION_STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
-        'parent_venue_id',
+        'brand_id',
+        'is_primary',
+        'location_status',
+        'location_submitted_at',
+        'location_published_at',
+        'location_review_note',
         'name',
         'slug',
-        'category',
-        'logo',
-        'logo_thumb',
-        'cover_image',
-        'cover_image_thumb',
         'address',
         'latitude',
         'longitude',
         'timezone',
         'google_place_id',
-        'phone',
-        'website',
-        'average_check_amount',
-        'status',
-        'review_note',
-        'submitted_at',
-        'published_at',
     ];
 
     protected $appends = [
@@ -52,17 +43,74 @@ class Venue extends Model
     protected function casts(): array
     {
         return [
+            'is_primary' => 'boolean',
             'latitude' => 'float',
             'longitude' => 'float',
-            'average_check_amount' => 'decimal:2',
-            'submitted_at' => 'datetime',
-            'published_at' => 'datetime',
+            'location_submitted_at' => 'datetime',
+            'location_published_at' => 'datetime',
         ];
     }
 
-    public function scopePublished($query)
+    public function getArchivedAttribute(): bool
     {
-        return $query->where('status', self::STATUS_PUBLISHED);
+        return $this->trashed();
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(BrandUser::class, 'brand_id', 'brand_id');
+    }
+
+    public function owners(): HasMany
+    {
+        return $this->memberships()->where('role', 'owner');
+    }
+
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'brand_users', 'brand_id', 'user_id', 'brand_id')
+            ->withPivot(['role'])
+            ->withTimestamps();
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class, 'brand_id', 'brand_id');
+    }
+
+    public function rewards(): HasMany
+    {
+        return $this->hasMany(Reward::class, 'brand_id', 'brand_id');
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class, 'brand_id', 'brand_id');
+    }
+
+    public function setupFiles(): HasMany
+    {
+        return $this->hasMany(VenueSetupFile::class, 'brand_id', 'brand_id');
+    }
+
+    public function visits(): HasMany
+    {
+        return $this->hasMany(Visit::class);
+    }
+
+    public function nfcTags(): HasMany
+    {
+        return $this->hasMany(NfcTag::class);
+    }
+
+    public function stampEvents(): HasMany
+    {
+        return $this->hasMany(StampEvent::class);
     }
 
     public function campaignTimezone(): string
@@ -76,96 +124,17 @@ class Venue extends Model
         return (string) config('app.timezone', 'UTC');
     }
 
-    public function getArchivedAttribute(): bool
-    {
-        return $this->trashed();
-    }
-
-    public function parentVenue(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'parent_venue_id');
-    }
-
-    public function branches(): HasMany
-    {
-        return $this->hasMany(self::class, 'parent_venue_id');
-    }
-
     public function isBranch(): bool
     {
-        return $this->parent_venue_id !== null;
+        return ! $this->is_primary;
     }
 
-    public function isBrand(): bool
+    public function isLocationPublished(): bool
     {
-        return $this->parent_venue_id === null;
-    }
-
-    /**
-     * Brand that owns loyalty (rewards, NFC, wallet). Branches resolve to parent.
-     */
-    public function loyaltyVenue(): self
-    {
-        if ($this->relationLoaded('parentVenue') && $this->parentVenue !== null) {
-            return $this->parentVenue;
+        if ($this->is_primary) {
+            return true;
         }
 
-        if ($this->parent_venue_id !== null) {
-            return self::query()->find($this->parent_venue_id) ?? $this;
-        }
-
-        return $this;
-    }
-
-    public function memberships(): HasMany
-    {
-        return $this->hasMany(VenueUser::class);
-    }
-
-    public function owners(): HasMany
-    {
-        return $this->memberships()->where('role', 'owner');
-    }
-
-    public function customers(): HasMany
-    {
-        return $this->hasMany(Customer::class);
-    }
-
-    public function rewards(): HasMany
-    {
-        return $this->hasMany(Reward::class);
-    }
-
-    public function campaigns(): HasMany
-    {
-        return $this->hasMany(Campaign::class);
-    }
-
-    public function visits(): HasMany
-    {
-        return $this->hasMany(Visit::class);
-    }
-
-    public function setupFiles(): HasMany
-    {
-        return $this->hasMany(VenueSetupFile::class);
-    }
-
-    public function nfcTags(): HasMany
-    {
-        return $this->hasMany(NfcTag::class);
-    }
-
-    public function stampEvents(): HasMany
-    {
-        return $this->hasMany(StampEvent::class);
-    }
-
-    public function members(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'venue_users')
-            ->withPivot(['role'])
-            ->withTimestamps();
+        return $this->location_status === self::LOCATION_STATUS_PUBLISHED;
     }
 }

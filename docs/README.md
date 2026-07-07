@@ -42,7 +42,7 @@ Mobile app: [apps/mobile/README.md](../apps/mobile/README.md).
 
 ## What Flotory does
 
-Venues get QR onboarding and **NFC stamp stands**. Customers join via scan (once **published**), tap NFC for **stamps**, and **slide to redeem** unlocked perks. Owners are onboarded **sales-led** (admin invitation → register → create venue in **My Venues**), submit a **listing** for admin approval, configure rewards and stamp **campaigns**, and view analytics.
+Venues get QR onboarding and **NFC stamp stands**. Customers join via scan (once the **brand** is **published**), tap NFC for **stamps**, and **slide to redeem** unlocked perks. Owners are onboarded **sales-led** (admin invitation → register → **`/onboarding`** wizard), submit a **listing** for admin approval, configure rewards and stamp **campaigns**, add **branches** for additional locations (each new branch needs Flotory approval before going live), and view analytics. Existing owners may create **additional brands** from **My Venues**.
 
 ## Terminology
 
@@ -60,10 +60,15 @@ Venues get QR onboarding and **NFC stamp stands**. Customers join via scan (once
 | Layer | Where | Values |
 | --- | --- | --- |
 | Platform | `users.is_admin` | Platform admin (listing review only) |
-| Venue team | `venue_users.role` | `owner` |
-| Loyalty | `customers` | One card per user per venue |
+| Brand team | `brand_users.role` | `owner` |
+| Loyalty | `customers` | One card per user per **brand** (`brand_id`); API `venue_id` = primary location |
 
-A user can be owner at venue A and customer at many venues.
+A user can be owner at brand A and customer at many brands. A **brand** has one primary venue plus optional **branches** (additional `venues` rows).
+
+| Term | Meaning |
+| --- | --- |
+| **Brand** | Loyalty program — rewards, campaigns, listing status, shared wallet |
+| **Venue** | Physical location — address, NFC tags, per-location visit analytics |
 
 ## Engineering principles
 

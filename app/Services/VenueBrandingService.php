@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Brand;
 use App\Models\Venue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -13,7 +14,8 @@ class VenueBrandingService
 
     public function applyLogo(Venue $venue, UploadedFile $file): Venue
     {
-        $this->deleteLocalLogo($venue);
+        $brand = $this->brandFor($venue);
+        $this->deleteLocalLogo($brand);
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'png');
         $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$extension;
@@ -26,29 +28,31 @@ class VenueBrandingService
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
 
-        $venue->forceFill([
+        $brand->forceFill([
             'logo' => $stored['path'],
             'logo_thumb' => $stored['thumb_path'],
         ])->save();
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function clearLogo(Venue $venue): Venue
     {
-        $this->deleteLocalLogo($venue);
+        $brand = $this->brandFor($venue);
+        $this->deleteLocalLogo($brand);
 
-        $venue->forceFill([
+        $brand->forceFill([
             'logo' => null,
             'logo_thumb' => null,
         ])->save();
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function applyCover(Venue $venue, UploadedFile $file): Venue
     {
-        $this->deleteLocalCover($venue);
+        $brand = $this->brandFor($venue);
+        $this->deleteLocalCover($brand);
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
         $filename = Str::slug($venue->slug).'-cover-'.Str::lower(Str::random(12)).'.'.$extension;
@@ -61,29 +65,37 @@ class VenueBrandingService
             ImageThumbnailService::THUMB_MAX_COVER,
         );
 
-        $venue->forceFill([
+        $brand->forceFill([
             'cover_image' => $stored['path'],
             'cover_image_thumb' => $stored['thumb_path'],
         ])->save();
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function clearCover(Venue $venue): Venue
     {
-        $this->deleteLocalCover($venue);
+        $brand = $this->brandFor($venue);
+        $this->deleteLocalCover($brand);
 
-        $venue->forceFill([
+        $brand->forceFill([
             'cover_image' => null,
             'cover_image_thumb' => null,
         ])->save();
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
-    private function deleteLocalLogo(Venue $venue): void
+    private function brandFor(Venue $venue): Brand
     {
-        foreach ([$venue->logo, $venue->logo_thumb] as $path) {
+        $venue->loadMissing('brand');
+
+        return $venue->brand;
+    }
+
+    private function deleteLocalLogo(Brand $brand): void
+    {
+        foreach ([$brand->logo, $brand->logo_thumb] as $path) {
             if (! $path || ! str_starts_with($path, '/uploads/venue-logos/')) {
                 continue;
             }
@@ -91,14 +103,14 @@ class VenueBrandingService
             File::delete(public_path(ltrim($path, '/')));
         }
 
-        if ($venue->logo) {
-            $this->images->deleteThumbnailFor($venue->logo);
+        if ($brand->logo) {
+            $this->images->deleteThumbnailFor($brand->logo);
         }
     }
 
-    private function deleteLocalCover(Venue $venue): void
+    private function deleteLocalCover(Brand $brand): void
     {
-        foreach ([$venue->cover_image, $venue->cover_image_thumb] as $path) {
+        foreach ([$brand->cover_image, $brand->cover_image_thumb] as $path) {
             if (! $path || ! str_starts_with($path, '/uploads/venue-covers/')) {
                 continue;
             }
@@ -106,8 +118,8 @@ class VenueBrandingService
             File::delete(public_path(ltrim($path, '/')));
         }
 
-        if ($venue->cover_image) {
-            $this->images->deleteThumbnailFor($venue->cover_image);
+        if ($brand->cover_image) {
+            $this->images->deleteThumbnailFor($brand->cover_image);
         }
     }
 }

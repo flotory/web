@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Venue;
+use App\Models\Brand;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -19,7 +20,7 @@ class AdminVenueManagementControllerTest extends TestCase
     {
         $admin = $this->createUser(['is_admin' => true]);
         $owner = $this->createUser(['email' => 'manage-owner@example.com']);
-        $venue = $this->createVenue(['name' => 'Harbor Coffee', 'status' => Venue::STATUS_PUBLISHED]);
+        $venue = $this->createVenue(['name' => 'Harbor Coffee', 'status' => Brand::STATUS_PUBLISHED]);
         $this->attachMember($venue, $owner, 'owner');
 
         Sanctum::actingAs($admin);
@@ -37,7 +38,7 @@ class AdminVenueManagementControllerTest extends TestCase
         $owner = $this->createUser(['email' => 'edit-owner@example.com']);
         $venue = $this->createVenue([
             'name' => 'Old Name Cafe',
-            'status' => Venue::STATUS_DRAFT,
+            'status' => Brand::STATUS_DRAFT,
             'address' => '1 Old Street',
             'latitude' => 53.01,
             'longitude' => 18.61,
@@ -63,9 +64,8 @@ class AdminVenueManagementControllerTest extends TestCase
             ->assertJsonPath('venue.name', 'Updated Name Cafe')
             ->assertJsonPath('venue.phone', '+48111222333');
 
-        $this->assertDatabaseHas('venues', [
-            'id' => $venue->id,
-            'name' => 'Updated Name Cafe',
+        $this->assertDatabaseHas('brands', [
+            'id' => $venue->brand_id,
             'phone' => '+48111222333',
         ]);
     }
@@ -115,6 +115,7 @@ class AdminVenueManagementControllerTest extends TestCase
             ->assertJsonPath('venue.name', 'Sales Harbor Cafe');
 
         $venueId = $response->json('venue.id');
+        $brandId = $response->json('venue.brand_id');
 
         $this->assertDatabaseHas('users', [
             'email' => 'sales-owner@example.com',
@@ -123,8 +124,8 @@ class AdminVenueManagementControllerTest extends TestCase
 
         $owner = \App\Models\User::query()->where('email', 'sales-owner@example.com')->firstOrFail();
 
-        $this->assertDatabaseHas('venue_users', [
-            'venue_id' => $venueId,
+        $this->assertDatabaseHas('brand_users', [
+            'brand_id' => $brandId,
             'user_id' => $owner->id,
             'role' => 'owner',
         ]);
@@ -209,7 +210,7 @@ class AdminVenueManagementControllerTest extends TestCase
     {
         $admin = $this->createUser(['is_admin' => true]);
         $venue = $this->createVenue(['slug' => 'admin-replace-logo']);
-        $venue->forceFill(['logo' => '/uploads/venue-logos/old.png'])->save();
+        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/old.png'])->save();
 
         $directory = public_path('uploads/venue-logos');
         File::ensureDirectoryExists($directory);
@@ -228,7 +229,7 @@ class AdminVenueManagementControllerTest extends TestCase
     {
         $admin = $this->createUser(['is_admin' => true]);
         $venue = $this->createVenue(['slug' => 'admin-external-logo']);
-        $venue->forceFill([
+        $venue->brand->forceFill([
             'logo' => 'https://cdn.example.com/logo.png',
             'logo_thumb' => '/uploads/other/logo.png',
         ])->save();

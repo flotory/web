@@ -55,7 +55,7 @@ export const faqSections: FaqSection[] = [
         id: 'multi-location',
         question: 'Can I run multiple locations?',
         answer:
-          'Yes. Each branch is its own venue in Flotory with its own stamp card, rewards, and NFC tags. Owners switch between venues in the dashboard or manage them from a single account.',
+          'Yes. One loyalty program (brand) covers all your locations. Guests keep a single stamp card whether they visit your main site or a branch. Add branches from My Venues; each location can have its own NFC stands and address. Rewards and campaigns are shared across the chain.',
       },
       {
         id: 'campaigns',

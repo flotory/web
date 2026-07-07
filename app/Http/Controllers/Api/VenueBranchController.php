@@ -7,6 +7,7 @@ use App\Http\Requests\StoreVenueBranchRequest;
 use App\Models\Venue;
 use App\Services\VenueBranchService;
 use App\Support\VenueAccess;
+use App\Support\VenuePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,9 @@ class VenueBranchController extends Controller
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
         return response()->json([
-            'branches' => $this->branches->listForBrand($venue),
+            'branches' => $this->branches->listForBrand($venue)
+                ->map(fn (Venue $branch): array => VenuePresenter::attributes($branch))
+                ->values(),
         ]);
     }
 
@@ -30,7 +33,7 @@ class VenueBranchController extends Controller
         $branch = $this->branches->create($venue, $request->validated());
 
         return response()->json([
-            'branch' => $branch,
+            'branch' => VenuePresenter::attributes($branch),
         ], 201);
     }
 
@@ -44,7 +47,7 @@ class VenueBranchController extends Controller
         ]);
 
         return response()->json([
-            'branch' => $updated,
+            'branch' => VenuePresenter::attributes($updated),
         ]);
     }
 

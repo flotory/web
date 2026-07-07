@@ -50,7 +50,7 @@ class CampaignEngine
         $now = $this->venueNow($venue, $now);
 
         return Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->get()
             ->filter(fn (Campaign $campaign): bool => $this->customerMatches(

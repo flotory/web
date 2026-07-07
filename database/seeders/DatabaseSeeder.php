@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
@@ -10,7 +12,6 @@ use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Models\Visit;
 use Illuminate\Database\Seeder;
 
@@ -55,15 +56,12 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        $venue = Venue::updateOrCreate(
+        $brand = Brand::updateOrCreate(
             ['slug' => 'demo-cafe'],
             [
                 'name' => 'Demo Cafe',
                 'category' => 'cafe',
-                'address' => '12 Market Street, Toruń',
-                'latitude' => 53.0105300,
-                'longitude' => 18.6108600,
-                'status' => Venue::STATUS_PUBLISHED,
+                'status' => Brand::STATUS_PUBLISHED,
                 'published_at' => now(),
                 'submitted_at' => null,
                 'review_note' => null,
@@ -71,10 +69,22 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        $venue = Venue::updateOrCreate(
+            ['slug' => 'demo-cafe'],
+            [
+                'brand_id' => $brand->id,
+                'is_primary' => true,
+                'name' => 'Demo Cafe',
+                'address' => '12 Market Street, Toruń',
+                'latitude' => 53.0105300,
+                'longitude' => 18.6108600,
+            ],
+        );
+
         $owner->forceFill(['active_venue_id' => $venue->id])->save();
 
-        VenueUser::updateOrCreate([
-            'venue_id' => $venue->id,
+        BrandUser::updateOrCreate([
+            'brand_id' => $brand->id,
             'user_id' => $owner->id,
         ], [
             'role' => 'owner',
@@ -86,7 +96,7 @@ class DatabaseSeeder extends Seeder
             [15, 'Free piece of cake', 'A complimentary slice of cake for loyal regulars.', '/images/defaults/rewards/chocolate-cake.png'],
         ] as [$stamps, $title, $description, $image]) {
             Reward::updateOrCreate([
-                'venue_id' => $venue->id,
+                'brand_id' => $brand->id,
                 'required_stamps' => $stamps,
             ], [
                 'title' => $title,
@@ -100,7 +110,7 @@ class DatabaseSeeder extends Seeder
         }
 
         Reward::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $brand->id)
             ->whereNotIn('required_stamps', [5, 10, 15])
             ->delete();
 
@@ -129,20 +139,25 @@ class DatabaseSeeder extends Seeder
             ->whereIn('slug', self::LEGACY_VENUE_SLUGS)
             ->pluck('id');
 
-        if ($legacyVenueIds->isNotEmpty()) {
+        $legacyBrandIds = Brand::query()
+            ->whereIn('slug', self::LEGACY_VENUE_SLUGS)
+            ->pluck('id');
+
+        if ($legacyVenueIds->isNotEmpty() || $legacyBrandIds->isNotEmpty()) {
             $legacyCustomerIds = Customer::query()
-                ->whereIn('venue_id', $legacyVenueIds)
+                ->whereIn('brand_id', $legacyBrandIds)
                 ->pluck('id');
 
             Visit::query()->whereIn('venue_id', $legacyVenueIds)->delete();
             RewardUnlock::query()->whereIn('customer_id', $legacyCustomerIds)->delete();
             CustomerRewardCycle::query()->whereIn('customer_id', $legacyCustomerIds)->delete();
-            Customer::query()->whereIn('venue_id', $legacyVenueIds)->delete();
-            Reward::query()->whereIn('venue_id', $legacyVenueIds)->delete();
-            Campaign::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            Customer::query()->whereIn('brand_id', $legacyBrandIds)->delete();
+            Reward::query()->whereIn('brand_id', $legacyBrandIds)->delete();
+            Campaign::query()->whereIn('brand_id', $legacyBrandIds)->delete();
             NfcTag::query()->whereIn('venue_id', $legacyVenueIds)->delete();
-            VenueUser::query()->whereIn('venue_id', $legacyVenueIds)->delete();
+            BrandUser::query()->whereIn('brand_id', $legacyBrandIds)->delete();
             Venue::query()->whereIn('id', $legacyVenueIds)->delete();
+            Brand::query()->whereIn('id', $legacyBrandIds)->delete();
         }
 
         User::query()

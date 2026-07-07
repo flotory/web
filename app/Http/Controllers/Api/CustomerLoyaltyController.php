@@ -21,14 +21,13 @@ class CustomerLoyaltyController extends Controller
             ->where('user_id', $request->user()->id)
             ->with([
                 'venue',
+                'brand.venues' => fn ($query) => $query->where('is_primary', true),
                 'visits' => fn ($query) => $query->latest()->limit(2),
             ])
-            ->orderBy('venue_id')
+            ->orderBy('brand_id')
             ->get();
 
-        $activeCard = $request->integer('venue_id')
-            ? $cards->firstWhere('venue_id', $request->integer('venue_id'))
-            : $cards->first();
+        $activeCard = $this->resolveActiveCard($cards, $request->integer('venue_id') ?: null);
 
         $isList = ! $request->integer('venue_id');
 
@@ -94,7 +93,7 @@ class CustomerLoyaltyController extends Controller
         $cards = Customer::query()
             ->where('user_id', $request->user()->id)
             ->with('venue')
-            ->orderBy('venue_id')
+            ->orderBy('brand_id')
             ->get();
 
         $items = $cards->flatMap(function (Customer $card) use ($loyalty): array {
@@ -122,7 +121,7 @@ class CustomerLoyaltyController extends Controller
         $customer = $enrollment->findOrJoin($request->user(), $venue, $request->user(), 'manual_join');
 
         return response()->json([
-            'customer' => $customer->load('venue'),
+            'customer' => $customer->load('venue', 'brand'),
             'joined' => $customer->wasRecentlyCreated,
         ], $customer->wasRecentlyCreated ? 201 : 200);
     }
@@ -153,8 +152,10 @@ class CustomerLoyaltyController extends Controller
     {
         CustomerAccess::requireCustomer($request->user(), $customer);
 
+        $customer->loadMissing('brand');
+
         return response()->json([
-            'rewards' => $customer->venue->rewards()
+            'rewards' => $customer->brand->rewards()
                 ->where('active', true)
                 ->orderBy('required_stamps')
                 ->get(),
@@ -174,6 +175,28 @@ class CustomerLoyaltyController extends Controller
             $loyalty->redeemApiPayload($unlock->customer, $claimed),
             201,
         );
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Customer>  $cards
+     */
+    private function resolveActiveCard($cards, ?int $venueId): ?Customer
+    {
+        if ($venueId === null) {
+            return $cards->first();
+        }
+
+        $match = $cards->first(fn (Customer $card): bool => (int) $card->venue_id === $venueId);
+        if ($match instanceof Customer) {
+            return $match;
+        }
+
+        $brandId = Venue::query()->whereKey($venueId)->value('brand_id');
+        if ($brandId === null) {
+            return null;
+        }
+
+        return $cards->first(fn (Customer $card): bool => (int) $card->brand_id === (int) $brandId);
     }
 
 }

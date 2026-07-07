@@ -14,8 +14,9 @@ class DatabaseMigrationsTest extends TestCase
     public function test_migrations_create_flotory_schema(): void
     {
         $this->assertTrue(Schema::hasTable('users'));
+        $this->assertTrue(Schema::hasTable('brands'));
         $this->assertTrue(Schema::hasTable('venues'));
-        $this->assertTrue(Schema::hasTable('venue_users'));
+        $this->assertTrue(Schema::hasTable('brand_users'));
         $this->assertTrue(Schema::hasTable('customers'));
         $this->assertTrue(Schema::hasTable('rewards'));
         $this->assertTrue(Schema::hasTable('visits'));

@@ -9,10 +9,11 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Decision | Detail |
 |----------|--------|
 | No global owner/staff/customer on `users` | `users` has only `is_admin` (boolean). Default `false` for all sign-ups. |
-| Venue ownership in pivot | `venue_users.role` = `owner` for venue operators. **Staff role and team invites removed** (2026 pivot). |
-| No `owner_user_id` on `venues` | Owners are derived from `venue_users`, not a column on `venues`. |
-| Loyalty via `customers` | One row per `(user_id, venue_id)` with `stamps`. No per-card QR token. |
-| Multi-hat users | Same user can be owner at venue A and customer at many venues. |
+| Venue ownership in pivot | `brand_users.role` = `owner` for brand operators. **Staff role and team invites removed** (2026 pivot). |
+| No `owner_user_id` on `brands` | Owners are derived from `brand_users`, not a column on `brands`. |
+| Loyalty via `customers` | One row per `(user_id, brand_id)` with `stamps`. API `venue_id` accessor returns primary location id. No per-card QR token. |
+| Brand vs venue | **Brand** = program (status, rewards, campaigns). **Venue** = location (`is_primary` + branches). Onboarding creates both. |
+| Multi-hat users | Same user can be owner at brand A and customer at many brands. |
 | Platform admin | `users.is_admin` bypasses venue membership for admin routes only. |
 
 ## Language and UX copy
@@ -32,7 +33,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Claims on `reward_unlocks` | Unlock and redeem on same row (`unlocked_at`, `claimed_at`, `claimed_by`). |
 | Stamps not spent on redeem | Redeeming sets `claimed_at`; stamp balance unchanged. |
 | Cycle completion | When stamps reach max active milestone, cycle completes, stamps reset to 0. |
-| Milestone uniqueness | One active milestone per `required_stamps` per venue. |
+| Milestone uniqueness | One active milestone per `required_stamps` per **brand**. |
 | Duplicate stamp guard | Same customer cannot be stamped again within cooldown (visits + NFC debounce). |
 | Redeem by unlock | Customer redeems the **specific** `unlock_id` they slide on — not FIFO by reward type. |
 | NFC-only stamps | No staff scanner, no stamp QR, no universal `user_stamp_tokens`. |
@@ -54,10 +55,10 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 |----------|--------|
 | No business logic in Vue | Display API data; loyalty rules stay in Laravel services. |
 | Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
-| Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **My Venues** create form. Public `intent=owner` blocked. |
-| Venue listing status | `draft` → `pending_review` → `published`. Customers join only when **published**. |
+| Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **`/onboarding`** wizard. Public `intent=owner` blocked. Existing owners may add brands from **My Venues**. |
+| Venue listing status | `draft` → `pending_review` → `published` on **brand**. Customers join only when **published**. |
 | Venue slug after publish | **Locked** once `published` — owner and admin APIs reject slug changes; QR links stay valid. |
-| Post-login routing (web) | Owners → dashboard; invited owners without venue → `/my-venues?create=1`; others → `/app`. |
+| Post-login routing (web) | Owners → dashboard; invited owners without a brand → `/onboarding`; others → `/app`. |
 | Customer primary surface | **Mobile app only**: Stamp (NFC), Wallet, slide redeem. |
 | Owner campaigns | `/campaigns` workspace; dashboard links for recommendations. |
 
@@ -66,7 +67,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Decision | Detail |
 |----------|--------|
 | Consolidated migrations | Two migrations: Laravel infra + `create_flotory_schema`. |
-| Soft delete venues | `venues.deleted_at`. |
+| Soft delete venues | `venues.deleted_at` (locations). Brands also soft-deletable. |
 | Local file uploads | Logos, covers, reward images under `public/uploads/`. |
 | Monolith | Single repo, Laravel + Vue + Expo mobile. |
 | Polling refresh | Mobile refreshes loyalty surfaces after stamp/redeem without websocket infrastructure. |

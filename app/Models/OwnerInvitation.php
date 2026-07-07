@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OwnerInvitation extends Model
 {
     protected $fillable = [
-        'venue_id',
+        'brand_id',
         'email',
         'business_name',
         'token',
@@ -27,9 +27,15 @@ class OwnerInvitation extends Model
         ];
     }
 
-    public function venue(): BelongsTo
+    public function brand(): BelongsTo
     {
-        return $this->belongsTo(Venue::class);
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function venue(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Venue::class, 'brand_id', 'brand_id')
+            ->where('is_primary', true);
     }
 
     public function invitedBy(): BelongsTo

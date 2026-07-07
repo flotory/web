@@ -195,7 +195,7 @@ function rewardCardClass(slot: { filled: boolean; milestone: GridMilestone | nul
           v-if="slot.isReward && slot.milestone"
           :title="`${slot.milestone.required_stamps} stamps → ${slot.milestone.title}`"
           :tabindex="canManageMilestone(slot.milestone) ? 0 : undefined"
-          class="group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border transition duration-200"
+          class="group relative mx-auto flex w-4/5 min-w-0 flex-col self-center overflow-hidden rounded-xl border transition duration-200"
           :class="[
             rewardCardClass(slot),
             editable && canManageMilestone(slot.milestone) && 'cursor-pointer',

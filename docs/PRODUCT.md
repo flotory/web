@@ -26,10 +26,10 @@ Staff scanner, team invites, and claim QR were **removed** in the 2026 pivot —
 
 | For owners | For customers |
 |------------|---------------|
-| Live in minutes with QR onboarding + NFC stands | Wallet with per-venue progress |
+| Live in minutes with QR onboarding + NFC stands | Wallet with per-brand progress (one card across branches) |
 | Stamp campaigns (Bring Back, Happy Hour, VIP, …) | Tap phone on counter stand — no app friction after first join |
-| Retention CRM and analytics | Slide to redeem when a reward is ready |
-| Listing approval workflow for quality control | Polling refresh after stamps and redeems |
+| Retention CRM and analytics (per-location visits when branches use separate NFC tags) | Slide to redeem when a reward is ready |
+| Listing approval workflow for quality control | Discover shows primary location + branch list |
 
 ## Customer journey (mobile)
 
@@ -46,10 +46,12 @@ Sales-led onboarding (default after a demo):
 
 1. **Invite** — Flotory admin sends an owner invitation from **Owner onboarding** (`/admin/owner-onboarding`): email + optional business name.
 2. **Register** — Owner opens `/register?invite=…`, sets a password (invite expires after `FLOTORY_OWNER_INVITATION_TTL_DAYS`, default 7).
-3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category), Google address, **logo & cover uploads**, first reward, then **Submit for review**. They can also resume from **My Venues → Logo & cover** while the venue is `draft` or `rejected`.
+3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category), Google address, **file uploads** (logo + cover), first reward, then **Submit for review**. They can also resume from **My Venues → Files** (`/my-venues/{id}/setup-files`) while the brand is `draft` or `rejected`.
 4. **Launch** — Complete the listing checklist → **Submit for listing** → platform admin approves → **published**.
-5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics.
-6. **NFC** — Platform admin provisions NFC stands; program tags with tap URL.
+5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics. **Add branches** from My Venues when you open new locations (shared stamp card and rewards; each new branch awaits Flotory approval before customers can join or tap NFC there).
+6. **NFC** — Platform admin provisions NFC stands per **location**; program each tag with its tap URL. Use a **separate token per branch** for accurate location analytics.
+
+**Additional brands:** owners with at least one live brand can create another from **My Venues** (new brand starts `draft` → review → publish).
 
 **Ops-heavy path:** admin provisions the venue first at **Manage venues → Create venue**; owner resets password or uses Google with the same email.
 
@@ -59,7 +61,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 
 **Web (owners + platform admin)**
 
-- Dashboard, my-venues, rewards, campaigns, analytics, customers CRM, settings
+- Dashboard, my-venues (location cards with **Add branch** via ⋯ menu), **Files** (`/my-venues/{id}/setup-files`), per-venue **settings** (`/my-venues/{id}/settings`), rewards, campaigns, analytics, customers CRM
 - Public venue bridge `/v/:slug`
 - Platform admin: listing review, **owner onboarding** (sales invites), manage venues, NFC tags, palette, activity log
 
@@ -75,7 +77,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 - NFC stamp: `POST /api/nfc/t/{token}/stamp`
 - Self-redeem: `POST /api/customer/rewards/unlocks/{unlock}/redeem`
 - Stamp campaigns (4 templates)
-- Venue listing workflow (`draft` → `pending_review` → `published`)
+- Venue listing workflow on **brand** (`draft` → `pending_review` → `published`)
 - User locale preference (`users.locale`, currently `en` or `hy`) for web/admin and mobile sessions
 
 **Venue categories** (12 + Other — validated in `app/Support/VenueCategories.php`, grouped in the onboarding UI):
@@ -87,6 +89,22 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 | Retail & other | `retail`, `pet_care`, `other` |
 
 `other` is for any repeat-visit business that does not fit the presets. Default placeholder images (logo/cover) are chosen by category group. The API rejects unknown category slugs with **422**; the web UI normalizes invalid stored values to `cafe` for display only.
+
+## Multi-location (branches)
+
+Chains and multi-site operators use one **brand** (one loyalty program) with multiple **venue** rows:
+
+| Concept | Meaning |
+|---------|---------|
+| **Brand** | Shared name, slug, rewards, campaigns, customer wallet, listing status |
+| **Primary venue** | Main location created at onboarding; card API uses its id as `venue_id` |
+| **Branch** | Additional address under the same brand; own slug, NFC tags, per-location visit analytics. New branches start **`pending_review`** until Flotory approves the location. |
+| **Customer** | One stamp card for the whole brand — tap or join at any **published** branch |
+| **Owner** | One account; My Venues lists every location; **Add branch** from the ⋯ menu |
+
+Discover in the mobile app shows the primary location with a `branches` list. Joining via any **published** branch slug enrolls on the brand.
+
+---
 
 ## Future (not MVP)
 

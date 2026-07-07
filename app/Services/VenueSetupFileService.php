@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Brand;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueSetupFile;
+use App\Support\VenuePresenter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -33,6 +35,9 @@ class VenueSetupFileService
 
     public function store(Venue $venue, User $user, UploadedFile $file): VenueSetupFile
     {
+        $venue->loadMissing('brand');
+        $brand = $venue->brand;
+
         $allowed = $this->allowedMimeTypes();
         $mime = $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream';
 
@@ -50,7 +55,7 @@ class VenueSetupFileService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = Str::slug($venue->slug).'-file-'.Str::lower(Str::random(12)).'.'.$extension;
-        $directory = public_path('uploads/venue-setup/'.$venue->id);
+        $directory = public_path('uploads/venue-setup/'.$brand->id);
 
         File::ensureDirectoryExists($directory);
 
@@ -59,11 +64,11 @@ class VenueSetupFileService
         $file->move($directory, $filename);
 
         return VenueSetupFile::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $brand->id,
             'uploaded_by_user_id' => $user->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => $originalName,
-            'path' => '/uploads/venue-setup/'.$venue->id.'/'.$filename,
+            'path' => '/uploads/venue-setup/'.$brand->id.'/'.$filename,
             'mime_type' => $mime,
             'byte_size' => $byteSize,
         ]);
@@ -81,14 +86,125 @@ class VenueSetupFileService
         $setupFile->delete();
     }
 
-    public function hasAnyFiles(Venue $venue): bool
+    public function hasAnyFiles(Brand $brand): bool
     {
-        return $venue->setupFiles()->exists();
+        return $brand->setupFiles()->exists();
     }
 
-    public function fileCount(Venue $venue): int
+    public function fileCount(Brand $brand): int
     {
-        return $venue->setupFiles()->count();
+        return $brand->setupFiles()->count();
+    }
+
+    /**
+     * @param  iterable<int>  $brandIds
+     * @return array<int, string>
+     */
+    public function logoPreviewPathsForBrandIds(iterable $brandIds): array
+    {
+        $ids = collect($brandIds)->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $paths = [];
+
+        foreach (VenueSetupFile::query()
+            ->whereIn('brand_id', $ids)
+            ->where('mime_type', 'like', 'image/%')
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('brand_id') as $brandId => $files) {
+            $path = $this->resolveLogoPreviewFromFiles($files);
+
+            if ($path !== null) {
+                $paths[(int) $brandId] = $path;
+            }
+        }
+
+        return $paths;
+    }
+
+    public function logoPreviewPathForBrand(Brand $brand): ?string
+    {
+        $paths = $this->logoPreviewPathsForBrandIds([$brand->id]);
+
+        return $paths[$brand->id] ?? null;
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, VenueSetupFile>  $files
+     */
+    private function resolveLogoPreviewFromFiles($files): ?string
+    {
+        $bestPath = null;
+        $bestScore = PHP_FLOAT_MAX;
+
+        foreach ($files as $file) {
+            $path = VenuePresenter::resolvePublicUploadPath($file->path);
+
+            if ($path === null) {
+                continue;
+            }
+
+            $score = $this->logoLikenessScore($file, public_path(ltrim($path, '/')));
+
+            if ($score < $bestScore) {
+                $bestScore = $score;
+                $bestPath = $path;
+            }
+        }
+
+        return $bestPath;
+    }
+
+    private function logoLikenessScore(VenueSetupFile $file, string $absolutePath): float
+    {
+        $name = Str::lower($file->original_name);
+
+        if (str_contains($name, 'logo')) {
+            return -100;
+        }
+
+        if (str_contains($name, 'cover') || str_contains($name, 'banner') || str_contains($name, 'storefront')) {
+            return 100;
+        }
+
+        $size = @getimagesize($absolutePath);
+
+        if ($size === false) {
+            return 50;
+        }
+
+        [$width, $height] = $size;
+
+        if ($width <= 0 || $height <= 0) {
+            return 50;
+        }
+
+        $ratio = $width / $height;
+
+        return abs($ratio - 1) + ($ratio > 1.35 ? 5 : 0);
+    }
+
+    /**
+     * @deprecated Use logoPreviewPathsForBrandIds()
+     *
+     * @param  iterable<int>  $brandIds
+     * @return array<int, string>
+     */
+    public function previewImagePathsForBrandIds(iterable $brandIds): array
+    {
+        return $this->logoPreviewPathsForBrandIds($brandIds);
+    }
+
+    /**
+     * @deprecated Use logoPreviewPathForBrand()
+     */
+    public function previewImagePathForBrand(Brand $brand): ?string
+    {
+        return $this->logoPreviewPathForBrand($brand);
     }
 
     /**
@@ -98,7 +214,7 @@ class VenueSetupFileService
     {
         return [
             'id' => $file->id,
-            'venue_id' => $file->venue_id,
+            'brand_id' => $file->brand_id,
             'kind' => $file->kind,
             'original_name' => $file->original_name,
             'path' => $file->path,

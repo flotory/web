@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\OwnerInvitation;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Services\OwnerInvitationService;
 use App\Services\VenuePublicationService;
 use App\Support\VenueAccess;
+use App\Support\VenuePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -42,32 +44,40 @@ class OwnerOnboardingController extends Controller
             return response()->json(['active' => false]);
         }
 
+        $brandStatus = $venue?->brand?->status ?? Brand::STATUS_DRAFT;
         $inProgress = ! $venue instanceof Venue
             ? $mayCreate
-            : in_array($venue->status ?? Venue::STATUS_DRAFT, [Venue::STATUS_DRAFT, Venue::STATUS_REJECTED], true);
+            : in_array($brandStatus, [Brand::STATUS_DRAFT, Brand::STATUS_REJECTED], true);
+
+        if ($venue instanceof Venue) {
+            $listing = $this->publication->snapshot($venue);
+            VenuePresenter::apply($venue);
+        } else {
+            $listing = null;
+        }
 
         return response()->json([
             'active' => $inProgress,
             'business_name' => $invitation?->business_name,
             'venue' => $venue,
-            'listing' => $venue instanceof Venue ? $this->publication->snapshot($venue) : null,
+            'listing' => $listing,
         ]);
     }
 
     private function resolveOwnerVenue(User $user): ?Venue
     {
+        $brandIds = BrandUser::query()
+            ->where('user_id', $user->id)
+            ->pluck('brand_id');
+
+        if ($brandIds->isEmpty()) {
+            return null;
+        }
+
         return Venue::query()
-            ->select('venues.*')
-            ->selectSub(
-                VenueUser::query()
-                    ->select('role')
-                    ->whereColumn('venue_id', 'venues.id')
-                    ->where('user_id', $user->id)
-                    ->limit(1),
-                'membership_role',
-            )
-            ->whereIn('id', VenueUser::query()->where('user_id', $user->id)->select('venue_id'))
-            ->whereNull('parent_venue_id')
+            ->with('brand')
+            ->whereIn('brand_id', $brandIds)
+            ->where('is_primary', true)
             ->whereNull('deleted_at')
             ->latest('id')
             ->first();

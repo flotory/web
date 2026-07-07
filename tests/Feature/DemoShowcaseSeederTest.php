@@ -26,7 +26,7 @@ class DemoShowcaseSeederTest extends TestCase
 
         $this->assertSame(1, Venue::query()->count());
         $this->assertGreaterThanOrEqual(DemoShowcaseSeeder::MIN_MONTHLY_VISITS * DemoShowcaseSeeder::MONTHS_OF_HISTORY, Visit::query()->where('venue_id', $venue->id)->count());
-        $this->assertGreaterThanOrEqual(DemoShowcaseSeeder::GUEST_COUNT, Customer::query()->where('venue_id', $venue->id)->count());
+        $this->assertGreaterThanOrEqual(DemoShowcaseSeeder::GUEST_COUNT, Customer::query()->where('brand_id', $venue->brand_id)->count());
 
         $twelveMonths = DashboardPeriod::fromPreset('12m');
         $monthlyActivity = app(VenueAnalyticsService::class)->monthlyActivityForVenue($venue, $twelveMonths);
@@ -50,6 +50,6 @@ class DemoShowcaseSeederTest extends TestCase
             ->assertJsonPath('has_loyalty_activity', true)
             ->assertJsonPath('period.preset', '12m')
             ->assertJsonCount(count($monthlyActivity), 'monthly_activity')
-            ->assertJsonPath('stats.total_customers', Customer::query()->where('venue_id', $venue->id)->count());
+            ->assertJsonPath('stats.total_customers', Customer::query()->where('brand_id', $venue->brand_id)->count());
     }
 }

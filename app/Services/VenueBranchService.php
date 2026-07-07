@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Brand;
 use App\Models\Venue;
 use App\Support\AuditLog;
 use Illuminate\Support\Str;
@@ -14,18 +15,23 @@ class VenueBranchService
         private VenueTimezoneService $timezones,
     ) {}
 
-    public function assertBrand(Venue $venue): void
+    public function resolveBrand(Venue $venue): Brand
     {
-        if ($venue->parent_venue_id !== null) {
+        return $venue->brand()->firstOrFail();
+    }
+
+    public function assertBranch(Venue $branch): void
+    {
+        if ($branch->is_primary) {
             throw ValidationException::withMessages([
-                'venue' => 'Branches can only be managed on the main venue.',
+                'venue' => 'The main location cannot be managed as a branch.',
             ]);
         }
     }
 
-    public function assertBranchOf(Venue $brand, Venue $branch): void
+    public function assertSameBrand(Venue $anchor, Venue $branch): void
     {
-        if ((int) $branch->parent_venue_id !== (int) $brand->id) {
+        if ((int) $branch->brand_id !== (int) $anchor->brand_id) {
             abort(404);
         }
     }
@@ -33,18 +39,18 @@ class VenueBranchService
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Venue>
      */
-    public function listForBrand(Venue $brand)
+    public function listForBrand(Venue $anchor)
     {
-        $this->assertBrand($brand);
-
-        return $brand->branches()
+        return Venue::query()
+            ->where('brand_id', $anchor->brand_id)
+            ->where('is_primary', false)
             ->orderBy('name')
             ->get();
     }
 
-    public function create(Venue $brand, array $payload): Venue
+    public function create(Venue $anchor, array $payload): Venue
     {
-        $this->assertBrand($brand);
+        $brand = $this->resolveBrand($anchor);
 
         $location = $this->venueAddresses->normalizedLocation([
             'address' => $payload['address'] ?? null,
@@ -60,33 +66,32 @@ class VenueBranchService
         }
 
         $branch = Venue::query()->create([
-            'parent_venue_id' => $brand->id,
+            'brand_id' => $brand->id,
+            'is_primary' => false,
+            'location_status' => Venue::LOCATION_STATUS_PENDING_REVIEW,
+            'location_submitted_at' => now(),
             'name' => trim((string) $payload['name']),
             'slug' => $this->uniqueSlug((string) $payload['name']),
-            'category' => $brand->category,
             'address' => $location['address'],
             'latitude' => $location['latitude'],
             'longitude' => $location['longitude'],
             'google_place_id' => $location['google_place_id'],
-            'status' => $brand->status,
-            'submitted_at' => $brand->submitted_at,
-            'published_at' => $brand->published_at,
         ]);
 
         $this->timezones->applyToVenue($branch, $location['latitude'], $location['longitude']);
 
         AuditLog::record('venue.branch_created', $branch, null, 'success', [
-            'venue_id' => $brand->id,
-            'branch_id' => $branch->id,
+            'brand_id' => $brand->id,
+            'venue_id' => $branch->id,
         ]);
 
         return $branch->fresh();
     }
 
-    public function update(Venue $brand, Venue $branch, array $payload): Venue
+    public function update(Venue $anchor, Venue $branch, array $payload): Venue
     {
-        $this->assertBrand($brand);
-        $this->assertBranchOf($brand, $branch);
+        $this->assertBranch($branch);
+        $this->assertSameBrand($anchor, $branch);
 
         $location = $this->venueAddresses->normalizedLocation([
             'address' => $payload['address'] ?? $branch->address,
@@ -112,30 +117,16 @@ class VenueBranchService
         return $branch;
     }
 
-    public function delete(Venue $brand, Venue $branch): void
+    public function delete(Venue $anchor, Venue $branch): void
     {
-        $this->assertBrand($brand);
-        $this->assertBranchOf($brand, $branch);
+        $this->assertBranch($branch);
+        $this->assertSameBrand($anchor, $branch);
 
         $branch->delete();
 
         AuditLog::record('venue.branch_deleted', $branch, null, 'success', [
-            'venue_id' => $brand->id,
-            'branch_id' => $branch->id,
-        ]);
-    }
-
-    public function syncStatusFromBrand(Venue $brand): void
-    {
-        if ($brand->parent_venue_id !== null) {
-            return;
-        }
-
-        $brand->branches()->update([
-            'status' => $brand->status,
-            'submitted_at' => $brand->submitted_at,
-            'published_at' => $brand->published_at,
-            'review_note' => $brand->review_note,
+            'brand_id' => $anchor->brand_id,
+            'venue_id' => $branch->id,
         ]);
     }
 

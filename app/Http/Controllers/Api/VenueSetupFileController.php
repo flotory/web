@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
+use App\Models\Brand;
 use App\Models\VenueSetupFile;
 use App\Services\VenueSetupFileService;
 use App\Support\VenueAccess;
@@ -17,6 +18,8 @@ class VenueSetupFileController extends Controller
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
+        $venue->loadMissing('brand');
+
         $files = $venue->setupFiles()
             ->with('uploader:id,name,email')
             ->latest()
@@ -26,8 +29,8 @@ class VenueSetupFileController extends Controller
         return response()->json([
             'files' => $files,
             'requirements' => [
-                'files_uploaded' => $this->setupFiles->hasAnyFiles($venue),
-                'file_count' => $this->setupFiles->fileCount($venue),
+                'files_uploaded' => $this->setupFiles->hasAnyFiles($venue->brand),
+                'file_count' => $this->setupFiles->fileCount($venue->brand),
             ],
         ]);
     }
@@ -55,13 +58,19 @@ class VenueSetupFileController extends Controller
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
 
-        if ($setupFile->venue_id !== $venue->id) {
+        if ((int) $setupFile->brand_id !== (int) $venue->brand_id) {
             abort(404);
         }
 
-        if (in_array($venue->status, [Venue::STATUS_PENDING_REVIEW, Venue::STATUS_PUBLISHED], true)) {
+        $venue->loadMissing('brand');
+
+        if (in_array($venue->brand->status, [Brand::STATUS_PENDING_REVIEW, Brand::STATUS_PUBLISHED], true)) {
+            $message = $venue->brand->status === Brand::STATUS_PUBLISHED
+                ? 'Files cannot be removed while your venue is live. Contact Flotory support.'
+                : 'Files cannot be removed while the venue is under review. Contact Flotory support.';
+
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'file' => 'Files cannot be removed while the venue is under review or live. Contact Flotory support.',
+                'file' => $message,
             ]);
         }
 

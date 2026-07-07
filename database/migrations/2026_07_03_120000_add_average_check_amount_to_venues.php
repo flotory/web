@@ -8,15 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('venues', function (Blueprint $table): void {
-            $table->decimal('average_check_amount', 10, 2)->nullable()->after('website');
-        });
+        // average_check_amount is defined on brands in the base schema.
     }
 
     public function down(): void
     {
-        Schema::table('venues', function (Blueprint $table): void {
-            $table->dropColumn('average_check_amount');
-        });
+        // no-op
     }
 };

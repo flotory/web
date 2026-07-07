@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildHomeActivity, findWalletCardForLoyaltyVenue } from './customerData'
+import { buildHomeActivity, findWalletCardForBrand, findWalletCardForLoyaltyVenue } from './customerData'
 import type { RewardWalletItem, WalletCard } from '../types/loyalty'
 
 const venue = { id: 10, name: 'Demo Cafe', slug: 'demo-cafe' }
+const brandId = 1
 
-function card(id: number, stamps: number, created_at?: string): WalletCard {
+function card(id: number, stamps: number, created_at?: string, venue_id = venue.id): WalletCard {
   return {
     id,
-    venue_id: venue.id,
+    brand_id: brandId,
+    venue_id,
     stamps,
     venue,
     created_at,
@@ -53,10 +55,24 @@ describe('buildHomeActivity', () => {
 })
 
 describe('findWalletCardForLoyaltyVenue', () => {
-  it('matches cards by loyalty venue id', () => {
-    const cards = [card(1, 4), { ...card(2, 2), venue_id: 99 }]
+  it('matches cards by primary venue id', () => {
+    const cards = [card(1, 4), { ...card(2, 2), venue_id: 99, brand_id: 2 }]
     expect(findWalletCardForLoyaltyVenue(cards, 10)?.id).toBe(1)
     expect(findWalletCardForLoyaltyVenue(cards, 99)?.id).toBe(2)
     expect(findWalletCardForLoyaltyVenue(cards, 404)).toBeUndefined()
+  })
+
+  it('matches cards by brand id when branch loyalty id is the brand', () => {
+    const cards = [card(1, 4)]
+    expect(findWalletCardForLoyaltyVenue(cards, brandId)?.id).toBe(1)
+  })
+})
+
+describe('findWalletCardForBrand', () => {
+  it('matches cards by brand id only', () => {
+    const cards = [card(1, 4), { ...card(2, 2), brand_id: 2, venue_id: 20 }]
+    expect(findWalletCardForBrand(cards, brandId)?.id).toBe(1)
+    expect(findWalletCardForBrand(cards, 2)?.id).toBe(2)
+    expect(findWalletCardForBrand(cards, 99)).toBeUndefined()
   })
 })

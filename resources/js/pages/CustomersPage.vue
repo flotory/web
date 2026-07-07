@@ -5,6 +5,7 @@ import { RouterLink } from 'vue-router'
 
 import AppCard from '@/components/ui/AppCard.vue'
 import FilterPills from '@/components/ui/FilterPills.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
@@ -112,15 +113,12 @@ onMounted(loadCustomers)
       <FilterPills v-model="activityFilter" :options="filterOptions" />
       <label class="flex items-center gap-2 text-sm font-semibold text-ink-muted">
         Sort
-        <select
-          v-model="sortKey"
-          class="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink shadow-sm"
-        >
+        <FormSelect v-model="sortKey" size="compact" class="min-w-[10.75rem] shadow-sm">
           <option value="last_visit">Last visit</option>
           <option value="visits">Most visits</option>
           <option value="claimed">Most redeemed</option>
           <option value="joined">Recently joined</option>
-        </select>
+        </FormSelect>
       </label>
     </div>
 

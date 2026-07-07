@@ -2,13 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\BuildsLoyaltyData;
@@ -89,6 +89,32 @@ class ModelRelationshipTest extends TestCase
         $this->assertTrue($unlock->customer->is($customer));
         $this->assertTrue($unlock->reward->is($reward));
         $this->assertTrue($unlock->claimedBy->is($user));
+    }
+
+    public function test_brand_relationships(): void
+    {
+        $owner = $this->createUser();
+        $primary = $this->createPublishedVenue(['name' => 'Brand Hub', 'slug' => 'brand-hub']);
+        $branch = $this->createVenueForBrand($primary->brand, [
+            'name' => 'Brand Hub · Branch',
+            'slug' => 'brand-hub-branch',
+            'address' => '3 Branch Lane, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+        ]);
+        $membership = $this->attachMember($primary, $owner, 'owner');
+        $customerUser = $this->createUser(['email' => 'brand-guest@example.com']);
+        $customer = $this->createCustomer($primary, $customerUser);
+        $reward = $this->createReward($primary);
+
+        $brand = Brand::query()->with(['venues', 'memberships', 'customers', 'rewards'])->findOrFail($primary->brand_id);
+
+        $this->assertTrue($brand->venues->contains($primary));
+        $this->assertTrue($brand->venues->contains($branch));
+        $this->assertTrue($brand->memberships->contains($membership));
+        $this->assertTrue($brand->customers->contains($customer));
+        $this->assertTrue($brand->rewards->contains($reward));
+        $this->assertSame($primary->id, $brand->primaryVenue()->first()?->id);
     }
 
     public function test_visit_and_membership_relationships(): void

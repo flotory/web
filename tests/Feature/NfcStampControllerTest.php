@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\NfcTag;
 use App\Models\StampEvent;
 use App\Models\Venue;
+use App\Models\Brand;
 use App\Support\CampaignTemplates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -152,7 +153,7 @@ class NfcStampControllerTest extends TestCase
 
         $this->assertDatabaseHas('customers', [
             'user_id' => $customerUser->id,
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'stamps' => 1,
         ]);
     }
@@ -160,7 +161,7 @@ class NfcStampControllerTest extends TestCase
     public function test_nfc_stamp_rejects_unpublished_venue(): void
     {
         $customerUser = $this->createUser(['email' => 'nfc-draft@example.com']);
-        $venue = $this->createVenue(['status' => Venue::STATUS_DRAFT]);
+        $venue = $this->createVenue(['status' => Brand::STATUS_DRAFT]);
         $tag = $this->createNfcTag($venue);
 
         Sanctum::actingAs($customerUser);

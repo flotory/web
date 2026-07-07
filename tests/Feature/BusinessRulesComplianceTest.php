@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Brand;
 use App\Models\RewardUnlock;
+use App\Models\VenueSetupFile;
 use App\Support\CampaignTemplates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\BuildsLoyaltyData;
@@ -218,5 +221,74 @@ class BusinessRulesComplianceTest extends TestCase
             'reward_id' => $reward->id,
             'claimed_at' => null,
         ]);
+    }
+
+    /** @see BUSINESS_RULES B3 — one loyalty card per (user, brand) across branch slugs */
+    public function test_b3_joining_via_branch_slug_reuses_existing_brand_wallet(): void
+    {
+        $user = $this->createUser(['email' => 'b3@example.com']);
+        $primary = $this->createPublishedVenue(['name' => 'B3 Cafe', 'slug' => 'b3-cafe']);
+        $branch = $this->createVenueForBrand($primary->brand, [
+            'name' => 'B3 Cafe · North',
+            'slug' => 'b3-cafe-north',
+            'address' => '2 North Road, Torun',
+            'latitude' => 53.0201,
+            'longitude' => 18.6201,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/venues/{$primary->slug}/join")
+            ->assertCreated()
+            ->assertJsonPath('customer.brand_id', $primary->brand_id);
+
+        $customerId = $this->postJson("/api/venues/{$branch->slug}/join")
+            ->assertOk()
+            ->assertJsonPath('joined', false)
+            ->assertJsonPath('customer.brand_id', $primary->brand_id)
+            ->json('customer.id');
+
+        $this->assertSame(1, \App\Models\Customer::query()
+            ->where('user_id', $user->id)
+            ->where('brand_id', $primary->brand_id)
+            ->count());
+        $this->assertSame($customerId, \App\Models\Customer::query()
+            ->where('user_id', $user->id)
+            ->where('brand_id', $primary->brand_id)
+            ->value('id'));
+    }
+
+    /** @see BUSINESS_RULES O12 — published brands allow upload-only; pending blocks delete */
+    public function test_o12_setup_files_upload_allowed_on_published_but_delete_blocked(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createPublishedVenue(['name' => 'O12 Cafe', 'slug' => 'o12-cafe']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $existing = VenueSetupFile::query()->create([
+            'brand_id' => $venue->brand_id,
+            'uploaded_by_user_id' => $owner->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'logo.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'mime_type' => 'image/png',
+            'byte_size' => 1024,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson("/api/venues/{$venue->id}/setup-files", [
+            'file' => UploadedFile::fake()->image('menu.jpg'),
+        ])->assertCreated();
+
+        $this->deleteJson("/api/venues/{$venue->id}/setup-files/{$existing->id}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['file']);
+
+        $venue->brand->forceFill(['status' => Brand::STATUS_PENDING_REVIEW])->save();
+
+        $this->deleteJson("/api/venues/{$venue->id}/setup-files/{$existing->id}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['file']);
     }
 }

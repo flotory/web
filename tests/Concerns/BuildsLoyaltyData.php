@@ -2,6 +2,8 @@
 
 namespace Tests\Concerns;
 
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\CustomerRewardCycle;
@@ -12,8 +14,8 @@ use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueSetupFile;
-use App\Models\VenueUser;
 use App\Models\Visit;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 trait BuildsLoyaltyData
@@ -28,30 +30,102 @@ trait BuildsLoyaltyData
         ], $attributes));
     }
 
+    protected function createBrand(array $attributes = []): Brand
+    {
+        $name = $attributes['name'] ?? 'Test Brand';
+
+        return Brand::query()->create(array_merge([
+            'name' => $name,
+            'slug' => $attributes['slug'] ?? ('brand-'.Str::lower(Str::random(8))),
+            'category' => 'cafe',
+            'status' => Brand::STATUS_DRAFT,
+        ], $attributes));
+    }
+
+    protected function createVenueForBrand(Brand $brand, array $attributes = []): Venue
+    {
+        $name = $attributes['name'] ?? $brand->name;
+        $isPrimary = (bool) ($attributes['is_primary'] ?? false);
+
+        $defaults = [
+            'brand_id' => $brand->id,
+            'is_primary' => $isPrimary,
+            'name' => $name,
+            'slug' => 'venue-'.Str::lower(Str::random(8)),
+        ];
+
+        if (! $isPrimary) {
+            $defaults['location_status'] = $attributes['location_status'] ?? Venue::LOCATION_STATUS_PUBLISHED;
+        }
+
+        return Venue::query()->create(array_merge($defaults, $attributes));
+    }
+
     protected function createVenue(array $attributes = []): Venue
     {
-        return Venue::query()->create(array_merge([
-            'name' => 'Test Venue',
-            'slug' => 'venue-'.Str::lower(Str::random(8)),
+        $name = $attributes['name'] ?? 'Test Venue';
+        $slug = $attributes['slug'] ?? ('venue-'.Str::lower(Str::random(8)));
+        $brandAttributes = array_intersect_key($attributes, array_flip([
+            'name', 'slug', 'category', 'status', 'published_at', 'logo', 'logo_thumb',
+            'cover_image', 'phone', 'website', 'average_check_amount', 'review_note', 'submitted_at',
+        ]));
+        $venueAttributes = array_intersect_key($attributes, array_flip([
+            'name', 'slug', 'address', 'latitude', 'longitude', 'is_primary', 'timezone', 'google_place_id',
+            'location_status', 'location_submitted_at', 'location_published_at', 'location_review_note',
+        ]));
+
+        unset($brandAttributes['name'], $brandAttributes['slug']);
+        if (! isset($brandAttributes['status'])) {
+            $brandAttributes['status'] = Brand::STATUS_DRAFT;
+        }
+
+        $brand = $this->createBrand(array_merge([
+            'name' => $name,
+            'slug' => $slug,
             'category' => 'cafe',
-        ], $attributes));
+        ], $brandAttributes));
+
+        return $this->createVenueForBrand($brand, array_merge([
+            'is_primary' => true,
+            'name' => $name,
+            'slug' => $slug,
+            'address' => '12 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+        ], $venueAttributes));
     }
 
     protected function createPublishedVenue(array $attributes = []): Venue
     {
-        return $this->createVenue(array_merge([
-            'status' => Venue::STATUS_PUBLISHED,
+        $name = $attributes['name'] ?? 'Test Venue';
+        $slug = $attributes['slug'] ?? ('venue-'.Str::lower(Str::random(8)));
+        unset($attributes['name'], $attributes['slug']);
+
+        $brand = $this->createBrand(array_merge([
+            'name' => $name,
+            'slug' => $slug,
+            'status' => Brand::STATUS_PUBLISHED,
             'published_at' => now(),
+        ], array_intersect_key($attributes, array_flip([
+            'category', 'status', 'published_at', 'logo', 'logo_thumb', 'cover_image', 'phone', 'website', 'average_check_amount',
+        ]))));
+
+        return $this->createVenueForBrand($brand, array_merge([
+            'is_primary' => true,
+            'name' => $name,
+            'slug' => $slug,
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
         ], $attributes));
     }
 
-    protected function attachMember(Venue $venue, User $user, string $role = 'owner'): VenueUser
+    protected function attachMember(Venue $venue, User $user, string $role = 'owner'): BrandUser
     {
-        return VenueUser::query()->create([
-            'venue_id' => $venue->id,
+        $venue->loadMissing('brand');
+
+        return BrandUser::query()->create([
+            'brand_id' => $venue->brand_id,
             'user_id' => $user->id,
             'role' => $role,
         ]);
@@ -59,8 +133,10 @@ trait BuildsLoyaltyData
 
     protected function createCustomer(Venue $venue, User $user, array $attributes = []): Customer
     {
+        $venue->loadMissing('brand');
+
         return Customer::query()->create(array_merge([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'user_id' => $user->id,
             'stamps' => 0,
         ], $attributes));
@@ -68,8 +144,10 @@ trait BuildsLoyaltyData
 
     protected function createReward(Venue $venue, array $attributes = []): Reward
     {
+        $venue->loadMissing('brand');
+
         return Reward::query()->create(array_merge([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'title' => 'Free Coffee',
             'description' => 'A complimentary drink.',
             'required_stamps' => 5,
@@ -100,42 +178,64 @@ trait BuildsLoyaltyData
         ], $attributes));
     }
 
+    protected function ensurePublicUploadFile(string $path, string $contents = 'test'): void
+    {
+        if (! str_starts_with($path, '/uploads/')) {
+            return;
+        }
+
+        $absolute = public_path(ltrim($path, '/'));
+        File::ensureDirectoryExists(dirname($absolute));
+
+        if (! is_file($absolute)) {
+            File::put($absolute, $contents);
+        }
+    }
+
     protected function createVenueSetupFile(Venue $venue, ?User $uploader = null, array $attributes = []): VenueSetupFile
     {
         $uploader ??= $this->createUser();
+        $venue->loadMissing('brand');
 
-        return VenueSetupFile::query()->create(array_merge([
-            'venue_id' => $venue->id,
+        $file = VenueSetupFile::query()->create(array_merge([
+            'brand_id' => $venue->brand_id,
             'uploaded_by_user_id' => $uploader->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'owner-setup.png',
-            'path' => '/uploads/venue-setup/'.$venue->id.'/owner-setup.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/owner-setup.png',
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ], $attributes));
+
+        $this->ensurePublicUploadFile($file->path);
+
+        return $file;
     }
 
-    /**
-     * Venue that satisfies the owner listing checklist and can be approved by admin (final logo applied).
-     */
     protected function createListingReadyVenue(array $attributes = [], ?User $owner = null): Venue
     {
         $owner ??= $this->createUser();
+        $logoPath = $attributes['logo'] ?? '/uploads/venue-logos/demo.png';
 
-        $venue = $this->createVenue(array_merge([
-            'status' => Venue::STATUS_DRAFT,
+        $venue = $this->createVenueForBrand($this->createBrand(array_merge([
+            'status' => $attributes['status'] ?? Brand::STATUS_DRAFT,
             'category' => 'cafe',
+            'logo' => $logoPath,
+            'review_note' => $attributes['review_note'] ?? null,
+        ], array_intersect_key($attributes, array_flip(['name', 'slug', 'category', 'logo', 'status', 'review_note'])))), array_merge([
+            'is_primary' => true,
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
-            'logo' => '/uploads/venue-logos/demo.png',
-        ], $attributes));
+        ], array_intersect_key($attributes, array_flip(['name', 'slug', 'address', 'latitude', 'longitude']))));
+
+        $this->ensurePublicUploadFile($logoPath);
 
         $this->attachMember($venue, $owner, 'owner');
         $this->createReward($venue);
         $this->createVenueSetupFile($venue, $owner);
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     protected function createVisit(Customer $customer, User $staff, array $attributes = []): Visit
@@ -143,9 +243,14 @@ trait BuildsLoyaltyData
         $createdAt = $attributes['created_at'] ?? null;
         unset($attributes['created_at']);
 
+        $customer->loadMissing('brand');
+        $venueId = $attributes['venue_id']
+            ?? $customer->brand->venues()->where('is_primary', true)->value('id')
+            ?? $customer->brand->venues()->value('id');
+
         $visit = Visit::query()->create(array_merge([
             'customer_id' => $customer->id,
-            'venue_id' => $customer->venue_id,
+            'venue_id' => $venueId,
             'created_by' => $staff->id,
         ], $attributes));
 
@@ -176,11 +281,12 @@ trait BuildsLoyaltyData
         array $config,
         ?string $name = null,
     ): Campaign {
+        $venue->loadMissing('brand');
         $defaults = CampaignTemplates::defaults($templateId);
         $merged = array_merge($defaults['config'], $config);
 
         return Campaign::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'template_id' => $templateId,
             'name' => $name ?? $defaults['name'],
             'status' => Campaign::STATUS_ACTIVE,

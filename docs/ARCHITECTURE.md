@@ -1,6 +1,6 @@
 # Architecture
 
-Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold venue **owner** memberships (`venue_users`), loyalty cards (`customers`), or both. Business rules live in services; the SPA renders API state.
+Laravel/Vue monolith for hospitality loyalty. One login identity (`users`) can hold **brand** owner memberships (`brand_users`), loyalty cards (`customers`), or both. A **brand** is the loyalty program; **venues** are physical locations (primary + branches). Business rules live in services; the SPA renders API state.
 
 See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISIONS.md) for locked decisions.
 
@@ -54,29 +54,43 @@ Request → Route → Controller → (VenueAccess) → Service → Model/DB → 
 ## Domain model
 
 ```text
-User ──┬──< VenueUser >── Venue ──< Reward
-       │                      │
-       └──< Customer ─────────┘
-                │
-                ├──< Visit
-                ├──< CustomerRewardCycle
-                ├──< RewardUnlock >── Reward
-                └──< StampEvent >── NfcTag
+User ──┬──< BrandUser >── Brand ──< Venue (locations: primary + branches)
+       │                  │            └──< NfcTag
+       │                  ├──< Reward
+       │                  ├──< Campaign
+       │                  └──< Customer
+       │                         ├──< Visit (venue_id = tap location)
+       │                         ├──< CustomerRewardCycle
+       │                         ├──< RewardUnlock >── Reward
+       │                         └──< StampEvent >── NfcTag
 ```
 
 | Model | Table | Purpose |
 |-------|-------|---------|
-| `User` | `users` | Login identity. `is_admin` for platform admin. `active_venue_id` for workspace selection. `locale` stores UI language (`en` or `hy`). |
-| `Venue` | `venues` | Workspace. Slug, category, branding, geo, `status` (`draft` \| `pending_review` \| `published`), soft deletes. |
-| `VenueUser` | `venue_users` | Membership pivot: `role` = `owner` (product is owner-only; legacy `staff` rows may exist in old data). |
-| `Customer` | `customers` | Loyalty card: one row per `(user_id, venue_id)` with `stamps`. |
-| `Reward` | `rewards` | Milestone: `required_stamps`, optional image, `active`. |
-| `Visit` | `visits` | Analytics row per stamp award. `created_by` is null for NFC taps. |
+| `User` | `users` | Login identity. `is_admin` for platform admin. `active_venue_id` for workspace selection (a location id). `locale` stores UI language (`en` or `hy`). |
+| `Brand` | `brands` | Loyalty program: name, slug, category, branding, `status` (`draft` \| `pending_review` \| `published`), soft deletes. |
+| `Venue` | `venues` | Physical location under a brand: address, geo, timezone, `is_primary`. Branch rows share the brand’s rewards and customer wallet. |
+| `BrandUser` | `brand_users` | Membership pivot: `role` = `owner` (product is owner-only). |
+| `Customer` | `customers` | Loyalty card: one row per `(user_id, brand_id)` with `stamps`. API exposes `venue_id` as the **primary** location id for backward compatibility. |
+| `Reward` | `rewards` | Milestone on a brand: `required_stamps`, optional image, `active`. |
+| `Visit` | `visits` | Analytics row per stamp award; `venue_id` is the **tap location** (branch or primary). `created_by` is null for NFC taps. |
 | `CustomerRewardCycle` | `customer_reward_cycles` | Cycle counter; `completed_at` when top milestone reached. |
 | `RewardUnlock` | `reward_unlocks` | Unlock + redeem in one row (`unlocked_at`, `claimed_at`, `claimed_by`). |
-| `NfcTag` | `nfc_tags` | Physical stand → venue (`token`, `label`, `active`). |
-| `StampEvent` | `stamp_events` | Audit per NFC tap; powers debounce / burst limits. |
-| `Campaign` | `campaigns` | Stamp multiplier campaigns (Bring Back, Quiet Day, Happy Hour, VIP). |
+| `NfcTag` | `nfc_tags` | Physical stand → **venue** (branch or primary): `token`, `label`, `active`. |
+| `StampEvent` | `stamp_events` | Audit per NFC tap; `venue_id` = tap location; powers debounce / burst limits. |
+| `Campaign` | `campaigns` | Brand-scoped stamp multiplier campaigns (Bring Back, Quiet Day, Happy Hour, VIP). |
+
+`VenuePresenter` merges brand fields (name, slug, status, logo, …) onto venue API payloads so owner and guest UIs can keep using venue-shaped JSON while the schema splits program vs location.
+
+### Branches
+
+- Onboarding creates a **brand** plus one **primary** `venues` row.
+- Additional locations are **branches** (`is_primary = false`, same `brand_id`).
+- Owner API: `GET/POST/PATCH/DELETE /api/venues/{venue}/branches` — `{venue}` may be any location in the brand; the service anchors on the primary venue.
+- **My Venues** lists every location (primary + branches) as its own card; rewards/campaigns are edited at brand scope via the active workspace venue.
+- **Discover** returns primary venues with `branches` and `branches_count`.
+- **Join** via any location slug enrolls on the **brand** (one shared wallet).
+- **NFC** at a branch tag credits the brand wallet; `visits` and `stamp_events` record the branch `venue_id` for per-location analytics.
 
 **Removed tables** (no longer in schema): `redemption_requests`, `venue_staff_invitations`, `user_stamp_tokens`, `demo_leads`. **No** `customers.qr_token`.
 
@@ -84,7 +98,7 @@ User ──┬──< VenueUser >── Venue ──< Reward
 
 **Platform:** `users.is_admin === true` — listing review, manage venues, palette, activity. Cannot use owner workspace tools.
 
-**Venue:** `venue_users.role === 'owner'` — web dashboard, rewards, campaigns, customers CRM, settings.
+**Brand (owner):** `brand_users.role === 'owner'` — web dashboard, rewards, campaigns, customers CRM, settings for all locations under that brand.
 
 **Customer:** `customers` row — mobile app only (stamp, wallet, slide redeem).
 
@@ -164,13 +178,13 @@ Static UI chrome is translated. Venue names, reward titles, campaign names, and 
 **Sales-led (default):**
 
 1. Admin sends invite → owner registers via `/register?invite=…`
-2. Owner creates venue at `/my-venues?create=1` (requires accepted invitation)
+2. First brand: owner completes **`/onboarding`** wizard (profile, location, Files, first reward, submit). **Additional brands:** existing owners use **My Venues → Create venue** → `/onboarding` for the new draft brand.
 3. Listing checklist → submit → admin approve → `published`
 4. Dashboard, rewards, campaigns, customers, analytics, NFC stand setup
 
 **Provisioned venue:** admin creates venue + owner user at **Manage venues**; owner uses forgot-password or Google.
 
-Public `intent=owner` self-signup is blocked.
+Public `intent=owner` self-signup is blocked. Venue **create** API allows users who are already **owners** at any brand or who have an **accepted** owner invitation.
 
 ## Frontend (web)
 
@@ -179,8 +193,11 @@ Public `intent=owner` self-signup is blocked.
 | Route | Page |
 |-------|------|
 | `/dashboard` | KPIs, insights |
-| `/my-venues` | Venue list + create |
-| `/rewards`, `/campaigns`, `/customers`, `/analytics`, `/settings` | Owner tools |
+| `/my-venues` | Location list, create brand, add branch |
+| `/my-venues/:id/settings` | Per-venue settings |
+| `/my-venues/:id/setup-files` | Owner Files (logo/cover uploads) |
+| `/rewards`, `/campaigns`, `/customers`, `/analytics` | Owner tools |
+| `/settings` | Legacy redirect → `/my-venues` |
 | `/admin/*` | Platform admin |
 | `/app` | Mobile download bridge for non-owners |
 
@@ -192,7 +209,7 @@ Customer wallet, NFC stamp, and slide redeem live in **`apps/mobile`** — see [
 
 **Authenticated (highlights):**
 
-- Venues: CRUD (create gated by accepted owner invitation), discover, join, customers CRM, dashboard, setup files
+- Venues: CRUD (create for **existing owners** or users with an **accepted** invitation), **branches**, discover, join, customers CRM, dashboard, setup files
 - Rewards: nested CRUD + archive/reactivate/purge
 - Campaigns: templates, CRUD, preview, activate/pause/end
 - Customer: cards, wallet, card detail, **`POST .../unlocks/{unlock}/redeem`**
@@ -226,7 +243,7 @@ Password: `password`. Demo Cafe has active campaigns and an NFC tag (`Counter st
 
 | Asset | Path |
 |-------|------|
-| Venue logo / cover | `/uploads/venue-logos/`, `/uploads/venue-covers/` |
+| Brand logo / cover (stored on brand) | `/uploads/venue-logos/`, `/uploads/venue-covers/` |
 | Reward image | `/uploads/reward-milestones/` |
 
 Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`.

@@ -18,7 +18,7 @@ class DatabaseSeederDemoRewardsTest extends TestCase
         $venue = Venue::query()->where('slug', 'demo-cafe')->firstOrFail();
 
         $rewards = Reward::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->orderBy('required_stamps')
             ->get(['required_stamps', 'title', 'image', 'reward_type', 'active']);
 

@@ -173,7 +173,7 @@ class ImageThumbnailServiceTest extends TestCase
         ]);
         unset($reward);
 
-        $venue->forceFill([
+        $venue->brand->forceFill([
             'logo' => $logoStored['path'],
             'logo_thumb' => null,
         ])->save();
@@ -183,9 +183,10 @@ class ImageThumbnailServiceTest extends TestCase
             ->assertSuccessful();
 
         $venue->refresh();
+        $venue->load('brand');
 
         $this->assertSame('/uploads/reward-milestones/reward-one-thumb.jpg', Reward::query()->first()?->image_thumb);
-        $this->assertSame('/uploads/venue-logos/logo-one-thumb.jpg', $venue->logo_thumb);
+        $this->assertSame('/uploads/venue-logos/logo-one-thumb.jpg', $venue->brand->logo_thumb);
     }
 
     public function test_delete_thumbnail_for_ignores_null_and_external_paths(): void
@@ -245,7 +246,7 @@ class ImageThumbnailServiceTest extends TestCase
 
         File::delete(public_path(ltrim($coverStored['thumb_path'] ?? '', '/')));
 
-        $venue->forceFill([
+        $venue->brand->forceFill([
             'cover_image' => $coverStored['path'],
             'cover_image_thumb' => null,
         ])->save();
@@ -255,7 +256,8 @@ class ImageThumbnailServiceTest extends TestCase
             ->assertSuccessful();
 
         $venue->refresh();
-        $this->assertSame('/uploads/venue-covers/venue-cover-thumb.jpg', $venue->cover_image_thumb);
+        $venue->load('brand');
+        $this->assertSame('/uploads/venue-covers/venue-cover-thumb.jpg', $venue->brand->cover_image_thumb);
 
         $this->artisan(GenerateMediaThumbnails::class)
             ->expectsOutputToContain('Generated 0 thumbnail(s).')

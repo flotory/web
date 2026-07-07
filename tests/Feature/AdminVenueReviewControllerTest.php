@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Venue;
+use App\Models\Brand;
 use App\Services\VenuePublicationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -18,20 +19,20 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_list_pending_venues_with_pagination_meta(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW, 'name' => 'Pending One']);
+        $this->createListingReadyVenue(['status' => Brand::STATUS_PENDING_REVIEW, 'name' => 'Pending One']);
 
         Sanctum::actingAs($admin);
 
         $this->getJson('/api/admin/venues?status=pending_review')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('venues.0.status', Venue::STATUS_PENDING_REVIEW);
+            ->assertJsonPath('venues.0.status', Brand::STATUS_PENDING_REVIEW);
     }
 
     public function test_admin_review_queue_includes_setup_file_metadata(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $this->createListingReadyVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
 
         Sanctum::actingAs($admin);
 
@@ -52,20 +53,20 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_approve_pending_venue(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createListingReadyVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
 
         Sanctum::actingAs($admin);
 
         $this->postJson("/api/admin/venues/{$venue->id}/approve")
             ->assertOk()
-            ->assertJsonPath('venue.status', Venue::STATUS_PUBLISHED);
+            ->assertJsonPath('venue.status', Brand::STATUS_PUBLISHED);
     }
 
     public function test_admin_cannot_approve_incomplete_pending_venue(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
         $venue = $this->createVenue([
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
             'category' => 'cafe',
         ]);
 
@@ -79,7 +80,7 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_admin_can_unpublish_with_note(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PUBLISHED]);
+        $venue = $this->createListingReadyVenue(['status' => Brand::STATUS_PUBLISHED]);
 
         Sanctum::actingAs($admin);
 
@@ -87,7 +88,7 @@ class AdminVenueReviewControllerTest extends TestCase
             'note' => 'Please refresh your menu photos.',
         ])
             ->assertOk()
-            ->assertJsonPath('venue.status', Venue::STATUS_DRAFT)
+            ->assertJsonPath('venue.status', Brand::STATUS_DRAFT)
             ->assertJsonPath('venue.review_note', 'Please refresh your menu photos.');
     }
 
@@ -96,7 +97,7 @@ class AdminVenueReviewControllerTest extends TestCase
         $admin = $this->createUser(['is_admin' => true]);
         $owner = $this->createUser(['email' => 'owner@example.com']);
         $venue = $this->createListingReadyVenue([
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
             'name' => 'Pending Harbor',
         ], $owner);
 
@@ -106,31 +107,31 @@ class AdminVenueReviewControllerTest extends TestCase
             'note' => 'Please upload a clearer cover photo.',
         ])
             ->assertOk()
-            ->assertJsonPath('venue.status', Venue::STATUS_REJECTED)
+            ->assertJsonPath('venue.status', Brand::STATUS_REJECTED)
             ->assertJsonPath('venue.review_note', 'Please upload a clearer cover photo.')
-            ->assertJsonPath('venue.listing.status', Venue::STATUS_REJECTED)
+            ->assertJsonPath('venue.listing.status', Brand::STATUS_REJECTED)
             ->assertJsonPath('venue.listing.can_submit', true);
 
-        $this->assertSame(Venue::STATUS_REJECTED, $venue->fresh()->status);
+        $this->assertSame(Brand::STATUS_REJECTED, $venue->fresh()->brand->status);
     }
 
     public function test_admin_can_reject_pending_venue_without_note(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createListingReadyVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
 
         Sanctum::actingAs($admin);
 
         $this->postJson("/api/admin/venues/{$venue->id}/reject")
             ->assertOk()
-            ->assertJsonPath('venue.status', Venue::STATUS_REJECTED)
+            ->assertJsonPath('venue.status', Brand::STATUS_REJECTED)
             ->assertJsonPath('venue.review_note', null);
     }
 
     public function test_non_admin_cannot_reject_venue(): void
     {
         $owner = $this->createUser(['email' => 'owner@example.com']);
-        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_PENDING_REVIEW], $owner);
+        $venue = $this->createListingReadyVenue(['status' => Brand::STATUS_PENDING_REVIEW], $owner);
 
         Sanctum::actingAs($owner);
 
@@ -138,13 +139,13 @@ class AdminVenueReviewControllerTest extends TestCase
             'note' => 'Should not work.',
         ])->assertForbidden();
 
-        $this->assertSame(Venue::STATUS_PENDING_REVIEW, $venue->fresh()->status);
+        $this->assertSame(Brand::STATUS_PENDING_REVIEW, $venue->fresh()->brand->status);
     }
 
     public function test_admin_cannot_reject_draft_venue(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createListingReadyVenue(['status' => Venue::STATUS_DRAFT]);
+        $venue = $this->createListingReadyVenue(['status' => Brand::STATUS_DRAFT]);
 
         Sanctum::actingAs($admin);
 
@@ -159,7 +160,7 @@ class AdminVenueReviewControllerTest extends TestCase
     {
         $owner = $this->createUser(['email' => 'rejected-owner@example.com']);
         $venue = $this->createListingReadyVenue([
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
         ], $owner);
         $admin = $this->createUser(['is_admin' => true]);
 
@@ -172,7 +173,7 @@ class AdminVenueReviewControllerTest extends TestCase
         $this->getJson('/api/owner-onboarding')
             ->assertOk()
             ->assertJsonPath('active', true)
-            ->assertJsonPath('venue.status', Venue::STATUS_REJECTED)
+            ->assertJsonPath('venue.status', Brand::STATUS_REJECTED)
             ->assertJsonPath('listing.review_note', 'Cover photo is too dark.')
             ->assertJsonPath('listing.can_submit', true);
     }
@@ -180,7 +181,7 @@ class AdminVenueReviewControllerTest extends TestCase
     public function test_approve_rejects_incomplete_checklist_at_service_level(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
-        $venue = $this->createVenue(['status' => Venue::STATUS_PENDING_REVIEW]);
+        $venue = $this->createVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
         $service = app(VenuePublicationService::class);
 
         $this->expectException(ValidationException::class);

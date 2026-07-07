@@ -50,8 +50,7 @@ test.describe('Owner workspace', () => {
     await expect(page.getByText('Free coffee', { exact: true }).first()).toBeVisible()
   })
 
-  test('loads analytics and workspace overview', async ({ page }) => {
-    const venueId = await demoCafeVenueId(page)
+  test('loads analytics and redirects legacy workspace settings to my venues', async ({ page }) => {
     const analyticsReady = page.waitForResponse(
       (response) => response.url().includes('/api/dashboard') && response.request().method() === 'GET',
       { timeout: 15_000 },
@@ -63,12 +62,37 @@ test.describe('Owner workspace', () => {
     await expect(page.getByText('Active customers')).toBeVisible({ timeout: 15_000 })
 
     await page.goto('/settings')
-    await expect(page.getByRole('heading', { name: 'Workspace', exact: true })).toBeVisible()
+    await expect(page).toHaveURL(/\/my-venues$/)
+    await expect(page.getByRole('heading', { name: 'My Venues', exact: true })).toBeVisible()
     await expect(page.locator('main').getByRole('heading', { name: 'Demo Cafe' })).toBeVisible()
   })
 
   test('keeps Demo Cafe as the active workspace venue', async ({ page }) => {
     await page.goto('/dashboard')
+    await expect(page.getByRole('heading', { name: 'Demo Cafe' })).toBeVisible({ timeout: 15_000 })
+  })
+
+  test('opens Files page for a live venue with upload guidance', async ({ page }) => {
+    const venueId = await demoCafeVenueId(page)
+    const filesReady = page.waitForResponse(
+      (response) => response.url().includes(`/api/venues/${venueId}/setup-files`) && response.request().method() === 'GET',
+      { timeout: 15_000 },
+    )
+
+    await page.goto(`/my-venues/${venueId}/setup-files`)
+    await filesReady
+
+    await expect(page.getByRole('heading', { name: 'Files', exact: true })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Your venue is live. You can add new photos')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Upload images' })).toBeVisible()
+  })
+
+  test('navigates from My Venues card to dashboard', async ({ page }) => {
+    await page.goto('/my-venues')
+    await expect(page.getByRole('heading', { name: 'My Venues', exact: true })).toBeVisible()
+
+    await page.locator('main').getByRole('heading', { name: 'Demo Cafe' }).click()
+    await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
     await expect(page.getByRole('heading', { name: 'Demo Cafe' })).toBeVisible({ timeout: 15_000 })
   })
 })

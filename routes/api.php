@@ -107,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('/manage-venues/{venue}/logo', [AdminVenueManagementController::class, 'destroyLogo']);
         Route::post('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'uploadCover']);
         Route::delete('/manage-venues/{venue}/cover', [AdminVenueManagementController::class, 'destroyCover']);
+        Route::post('/manage-venues/{venue}/approve-branch', [AdminVenueManagementController::class, 'approveBranch']);
+        Route::post('/manage-venues/{venue}/reject-branch', [AdminVenueManagementController::class, 'rejectBranch']);
         Route::get('/manage-venues/{venue}/nfc-tags', [AdminNfcTagController::class, 'index']);
         Route::post('/manage-venues/{venue}/nfc-tags', [AdminNfcTagController::class, 'store']);
         Route::patch('/nfc-tags/{nfcTag}', [AdminNfcTagController::class, 'update']);

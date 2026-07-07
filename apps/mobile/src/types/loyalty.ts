@@ -58,6 +58,7 @@ export interface HomeCampaign {
 
 export interface WalletCard {
   id: number
+  brand_id: number
   venue_id: number
   stamps: number
   qr_token?: string | null

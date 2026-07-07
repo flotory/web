@@ -48,7 +48,9 @@ class NfcStampService
      */
     public function presentTag(NfcTag $tag): array
     {
-        $tag->loadMissing('venue');
+        $tag->loadMissing('venue.brand');
+
+        $brand = $tag->venue?->brand;
 
         return [
             'token' => $tag->token,
@@ -58,8 +60,8 @@ class NfcStampService
                 'id' => $tag->venue->id,
                 'name' => $tag->venue->name,
                 'slug' => $tag->venue->slug,
-                'logo' => $tag->venue->logo,
-                'logo_thumb' => $tag->venue->logo_thumb,
+                'logo' => $brand?->logo,
+                'logo_thumb' => $brand?->logo_thumb,
             ] : null,
         ];
     }
@@ -72,12 +74,12 @@ class NfcStampService
     {
         $customer = $payload['customer'];
         $addedStamps = (int) ($payload['added_stamps'] ?? 1);
-        $venueName = $customer->venue?->name ?? 'this venue';
+        $venueName = $payload['venue']->name ?? $customer->brand?->name ?? 'this venue';
 
         return [
             'scan_type' => 'nfc',
             'customer' => $customer,
-            'venue' => $payload['venue'] ?? $customer->venue,
+            'venue' => $payload['venue'] ?? null,
             'previous_stamps' => $payload['previous_stamps'],
             'added_stamps' => $addedStamps,
             'stamps' => $customer->stamps,
@@ -129,7 +131,7 @@ class NfcStampService
                 $customer,
                 $user,
                 1,
-                StampAwardContext::nfcTap(),
+                StampAwardContext::nfcTap($venue->id),
             );
 
             $stampEvent = StampEvent::query()->create([

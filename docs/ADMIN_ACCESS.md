@@ -37,7 +37,9 @@ Owners who already manage a venue cannot receive a duplicate sales invite — th
 
 ### Venue listing setup (owner uploads → admin crop → approve)
 
-Owners upload a **logo and cover photo** during the onboarding wizard (`/onboarding`) or on **Logo & cover** (`/my-venues/:id/setup-files`) before submitting for review. Images only — exact sizes are not required. They do not crop to final app sizes themselves.
+Owners upload logo and cover photos during the onboarding wizard (`/onboarding`) or on **Files** (`/my-venues/:id/setup-files`). Images only — exact sizes are not required. They do not crop to final app sizes themselves.
+
+While a brand is **published** (live for customers), owners may **upload additional** photos but **cannot delete** existing files — contact Flotory support for replacements. Uploads are fully locked while status is **pending review**.
 
 When a venue is **pending review**, open **Venue listings** → **Review & set up** (`/admin/manage-venues/:id`). Crop logo (512×512) and optional cover (1400×700) from owner files in the **Owner setup files** section at the bottom of the page. **Approve** only works after a final logo has been applied.
 

@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Mail\OwnerInvitationMail;
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\OwnerInvitation;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Support\AuditLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class OwnerInvitationService
     public function findUsableByToken(string $token): ?OwnerInvitation
     {
         $invitation = OwnerInvitation::query()
-            ->with('venue:id,name,slug,status')
+            ->with('brand:id,name,slug,status')
             ->where('token', $token)
             ->first();
 
@@ -43,7 +44,7 @@ class OwnerInvitationService
         }
 
         if ($user->memberships()->where('role', 'owner')->exists()) {
-            return false;
+            return true;
         }
 
         return OwnerInvitation::query()
@@ -88,14 +89,14 @@ class OwnerInvitationService
         }
 
         OwnerInvitation::query()
-            ->whereNull('venue_id')
+            ->whereNull('brand_id')
             ->where('email', $normalizedEmail)
             ->whereNull('accepted_at')
             ->whereNull('revoked_at')
             ->update(['revoked_at' => now()]);
 
         $invitation = OwnerInvitation::query()->create([
-            'venue_id' => null,
+            'brand_id' => null,
             'email' => $normalizedEmail,
             'business_name' => filled($businessName) ? trim($businessName) : null,
             'token' => Str::random(64),
@@ -121,7 +122,7 @@ class OwnerInvitationService
         }
 
         return [
-            'invitation' => $invitation->fresh(['venue:id,name,slug,status']),
+            'invitation' => $invitation->fresh(['brand:id,name,slug,status']),
             'register_url' => $registerUrl,
         ];
     }
@@ -142,7 +143,7 @@ class OwnerInvitationService
             causer: $actor,
             event: 'updated',
             properties: [
-                'venue_id' => $invitation->venue_id,
+                'brand_id' => $invitation->brand_id,
                 'email' => $invitation->email,
             ],
         );
@@ -189,16 +190,21 @@ class OwnerInvitationService
                 ]);
             }
 
-            if ($locked->venue_id !== null) {
-                VenueUser::query()->firstOrCreate(
+            if ($locked->brand_id !== null) {
+                BrandUser::query()->firstOrCreate(
                     [
-                        'venue_id' => $locked->venue_id,
+                        'brand_id' => $locked->brand_id,
                         'user_id' => $user->id,
                     ],
                     ['role' => 'owner'],
                 );
 
-                $user->forceFill(['active_venue_id' => $locked->venue_id])->save();
+                $primaryVenueId = Venue::query()
+                    ->where('brand_id', $locked->brand_id)
+                    ->where('is_primary', true)
+                    ->value('id');
+
+                $user->forceFill(['active_venue_id' => $primaryVenueId])->save();
             }
 
             $locked->forceFill(['accepted_at' => now()])->save();
@@ -210,15 +216,15 @@ class OwnerInvitationService
         });
     }
 
-    public function attachVenueToAcceptedInvitation(User $user, Venue $venue): void
+    public function attachBrandToAcceptedInvitation(User $user, Brand $brand): void
     {
         OwnerInvitation::query()
             ->where('email', Str::lower($user->email))
             ->whereNotNull('accepted_at')
-            ->whereNull('venue_id')
+            ->whereNull('brand_id')
             ->latest('accepted_at')
             ->limit(1)
-            ->update(['venue_id' => $venue->id]);
+            ->update(['brand_id' => $brand->id]);
     }
 
     public function registerUrlFor(OwnerInvitation $invitation): string
@@ -235,7 +241,7 @@ class OwnerInvitationService
     public function listForAdmin(?string $search = null): Collection
     {
         return OwnerInvitation::query()
-            ->with(['venue:id,name,slug,status', 'invitedBy:id,name'])
+            ->with(['brand:id,name,slug,status', 'invitedBy:id,name'])
             ->when(filled($search), function ($query) use ($search): void {
                 $term = '%'.trim((string) $search).'%';
                 $query->where(function ($builder) use ($term): void {
@@ -259,27 +265,27 @@ class OwnerInvitationService
             return $invitation->isExpired() ? 'expired' : 'invited';
         }
 
-        $venue = $this->resolvePipelineVenue($invitation);
+        $brand = $this->resolvePipelineBrand($invitation);
 
-        if (! $venue instanceof Venue) {
+        if (! $brand instanceof Brand) {
             return 'registered';
         }
 
-        return match ($venue->status) {
-            Venue::STATUS_PUBLISHED => 'published',
-            Venue::STATUS_PENDING_REVIEW => 'pending_review',
+        return match ($brand->status) {
+            Brand::STATUS_PUBLISHED => 'published',
+            Brand::STATUS_PENDING_REVIEW => 'pending_review',
             default => 'venue_draft',
         };
     }
 
-    private function resolvePipelineVenue(OwnerInvitation $invitation): ?Venue
+    private function resolvePipelineBrand(OwnerInvitation $invitation): ?Brand
     {
-        if ($invitation->relationLoaded('venue') && $invitation->venue instanceof Venue) {
-            return $invitation->venue;
+        if ($invitation->relationLoaded('brand') && $invitation->brand instanceof Brand) {
+            return $invitation->brand;
         }
 
-        if ($invitation->venue_id !== null) {
-            return Venue::query()->find($invitation->venue_id);
+        if ($invitation->brand_id !== null) {
+            return Brand::query()->find($invitation->brand_id);
         }
 
         $user = User::query()->firstWhere('email', $invitation->email);
@@ -287,7 +293,7 @@ class OwnerInvitationService
             return null;
         }
 
-        return Venue::query()
+        return Brand::query()
             ->whereHas('memberships', fn ($query) => $query
                 ->where('user_id', $user->id)
                 ->where('role', 'owner'))

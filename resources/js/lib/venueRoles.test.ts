@@ -99,6 +99,13 @@ describe('resolvePostLoginDestination', () => {
       .toBe('/onboarding')
   })
 
+  it('does not force onboarding when an owner already has a live brand', () => {
+    const venues = [venue(1, false, 'published'), venue(2, false, 'draft')]
+
+    expect(resolvePostLoginDestination('/dashboard', false, venues, 1, true))
+      .toBe('/dashboard')
+  })
+
   it('sends owners away from customer-only redirects', () => {
     expect(resolvePostLoginDestination('/app', false, [venue(1)], 1)).toBe('/dashboard')
     expect(resolvePostLoginDestination('/wallet', false, [venue(1)], 1)).toBe('/dashboard')

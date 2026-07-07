@@ -199,7 +199,7 @@ class VenueCampaignController extends Controller
 
     private function assertCampaignBelongsToVenue(Campaign $campaign, Venue $venue): void
     {
-        if ($campaign->venue_id !== $venue->id) {
+        if ((int) $campaign->brand_id !== (int) $venue->brand_id) {
             abort(404);
         }
     }

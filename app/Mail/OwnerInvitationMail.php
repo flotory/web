@@ -21,11 +21,11 @@ class OwnerInvitationMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $venueName = $this->invitation->venue?->name
+        $venueName = $this->invitation->brand?->name
             ?? $this->invitation->business_name
             ?? 'your venue';
 
-        $subject = $this->invitation->venue_id === null
+        $subject = $this->invitation->brand_id === null
             ? "You're invited to launch {$venueName} on Flotory"
             : "You're invited to manage {$venueName} on Flotory";
 
@@ -37,10 +37,10 @@ class OwnerInvitationMail extends Mailable
         return new Content(
             markdown: 'mail.owner-invitation',
             with: [
-                'venueName' => $this->invitation->venue?->name ?? $this->invitation->business_name ?? 'your venue',
+                'venueName' => $this->invitation->brand?->name ?? $this->invitation->business_name ?? 'your venue',
                 'registerUrl' => $this->registerUrl,
                 'expiresAt' => $this->invitation->expires_at->timezone(config('app.timezone'))->format('j F Y'),
-                'isNewVenueOnboarding' => $this->invitation->venue_id === null,
+                'isNewVenueOnboarding' => $this->invitation->brand_id === null,
             ],
         );
     }

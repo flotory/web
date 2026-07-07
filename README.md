@@ -138,7 +138,7 @@ If you see “Google address search is not configured”, the key is missing fro
 OAuth owner login:
 
 - **Provisioned owners** (`intent=owner` on login): sign in to the dashboard if they already have a venue membership.
-- **New prospects** are sent to **`/book-demo`** — owner self-registration and venue creation are disabled.
+- **New prospects** are sent to **`/book-demo`** — public owner self-registration is disabled (sales invite or admin provisioning only). **Existing owners** may still create additional brands from **My Venues**.
 - **Customers** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding flows
@@ -171,7 +171,7 @@ Invitation links expire after **`FLOTORY_OWNER_INVITATION_TTL_DAYS`** (default 7
 FLOTORY_OWNER_INVITATION_TTL_DAYS=7
 ```
 
-**Listing workflow:** owners upload a **logo and cover photo** during onboarding (or at **My Venues → Logo & cover**). Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner uploads, then approve.
+**Listing workflow:** owners upload logo and cover photos during onboarding or from **My Venues → Files** (`/my-venues/{id}/setup-files`). While a brand is **live**, owners may **add** new uploads but cannot **remove** existing ones. Admins open **Venue listings → Review & set up** (or **Manage venues**), crop logo/cover from owner uploads, then approve.
 
 Full journeys: **[docs/PRODUCT.md](docs/PRODUCT.md)** · admin approval: **[docs/ADMIN_ACCESS.md](docs/ADMIN_ACCESS.md)**.
 
@@ -247,11 +247,13 @@ Walkthroughs: **[docs/PRODUCT.md](docs/PRODUCT.md)** and **[docs/ARCHITECTURE.md
 - **true** — platform administrator (`admin@flotory.com` seeded locally and on deploy with `SEED_DATABASE=1`). Admins review venue listings and manage platform settings — they **cannot** own venues or use owner/staff workspace tools.
 - **false** — default for all sign-ups (owners and loyalty guests)
 
-### Per venue (`venue_users.role`)
+### Per brand (`brand_users.role`)
 
-- **owner** — full venue control on web (dashboard, rewards, campaigns, CRM, settings)
+- **owner** — full brand control on web (dashboard, rewards, campaigns, CRM, settings) for all locations under that brand
 
-Venue permissions use `venue_users`. Loyalty progress uses `customers`. A user can be an owner at one venue and a customer at many others.
+Brand permissions use `brand_users`. Loyalty progress uses `customers` (keyed by `brand_id`). A user can be an owner at one brand and a customer at many others.
+
+**Terminology:** API payloads still look like “venues” (`VenuePresenter` merges brand fields). `customers.venue_id` in JSON is the **primary location** id; `brand_id` is the loyalty program id. Mobile matches wallet cards by `brand_id` or `venue_id`.
 
 ## MVP scope
 

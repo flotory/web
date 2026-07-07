@@ -9,12 +9,12 @@ use App\Support\AuditLog;
 
 class CustomerEnrollmentService
 {
-    public function findAtVenue(User $user, Venue $venue): ?Customer
+    public function findAtBrand(User $user, Venue $venue): ?Customer
     {
-        $loyaltyVenue = $venue->loyaltyVenue();
+        $venue->loadMissing('brand');
 
         return Customer::query()
-            ->where('venue_id', $loyaltyVenue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('user_id', $user->id)
             ->first();
     }
@@ -24,11 +24,11 @@ class CustomerEnrollmentService
      */
     public function findOrJoin(User $user, Venue $venue, ?User $joinedVia = null, string $source = 'nfc_auto_join'): Customer
     {
-        $loyaltyVenue = $venue->loyaltyVenue();
+        $venue->loadMissing('brand');
 
         $customer = Customer::query()->firstOrCreate(
             [
-                'venue_id' => $loyaltyVenue->id,
+                'brand_id' => $venue->brand_id,
                 'user_id' => $user->id,
             ],
             [
@@ -40,7 +40,7 @@ class CustomerEnrollmentService
             AuditLog::loyalty('customer.joined', $customer, $joinedVia ?? $user, 'success', [
                 'status' => 'success',
                 'source' => $source,
-                'scan_venue_id' => $venue->id !== $loyaltyVenue->id ? $venue->id : null,
+                'scan_venue_id' => $venue->id,
             ]);
         }
 

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Brand;
 use App\Models\Reward;
-use App\Models\Venue;
 use App\Services\ImageThumbnailService;
 use Illuminate\Console\Command;
 
@@ -11,7 +11,7 @@ class GenerateMediaThumbnails extends Command
 {
     protected $signature = 'media:generate-thumbs {--force : Regenerate even when a thumb path already exists}';
 
-    protected $description = 'Generate missing image thumbnails for rewards and venues';
+    protected $description = 'Generate missing image thumbnails for rewards and brands';
 
     public function handle(ImageThumbnailService $images): int
     {
@@ -39,30 +39,30 @@ class GenerateMediaThumbnails extends Command
                 $generated++;
             });
 
-        Venue::query()
+        Brand::query()
             ->withTrashed()
             ->orderBy('id')
-            ->each(function (Venue $venue) use ($images, $force, &$generated): void {
-                if ($venue->logo && ($force || blank($venue->logo_thumb))) {
+            ->each(function (Brand $brand) use ($images, $force, &$generated): void {
+                if ($brand->logo && ($force || blank($brand->logo_thumb))) {
                     $thumb = $images->createThumbnailFromExisting(
-                        (string) $venue->logo,
+                        (string) $brand->logo,
                         ImageThumbnailService::THUMB_MAX_LOGO,
                     );
 
                     if ($thumb) {
-                        $venue->forceFill(['logo_thumb' => $thumb])->save();
+                        $brand->forceFill(['logo_thumb' => $thumb])->save();
                         $generated++;
                     }
                 }
 
-                if ($venue->cover_image && ($force || blank($venue->cover_image_thumb))) {
+                if ($brand->cover_image && ($force || blank($brand->cover_image_thumb))) {
                     $thumb = $images->createThumbnailFromExisting(
-                        (string) $venue->cover_image,
+                        (string) $brand->cover_image,
                         ImageThumbnailService::THUMB_MAX_COVER,
                     );
 
                     if ($thumb) {
-                        $venue->forceFill(['cover_image_thumb' => $thumb])->save();
+                        $brand->forceFill(['cover_image_thumb' => $thumb])->save();
                         $generated++;
                     }
                 }

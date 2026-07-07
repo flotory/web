@@ -47,7 +47,7 @@ class AdminOwnerInvitationController extends Controller
         $this->invitations->revoke($record, $request->user());
 
         return response()->json([
-            'invitation' => $this->present($record->fresh(['venue:id,name,slug,status', 'invitedBy:id,name'])),
+            'invitation' => $this->present($record->fresh(['brand:id,name,slug,status', 'invitedBy:id,name'])),
         ]);
     }
 
@@ -71,11 +71,11 @@ class AdminOwnerInvitationController extends Controller
                     ? 'revoked'
                     : ($invitation->isExpired() ? 'expired' : 'pending')),
             'pipeline_stage' => $stage,
-            'venue' => $invitation->venue ? [
-                'id' => $invitation->venue->id,
-                'name' => $invitation->venue->name,
-                'slug' => $invitation->venue->slug,
-                'status' => $invitation->venue->status,
+            'venue' => $invitation->brand ? [
+                'id' => $invitation->venue?->id,
+                'name' => $invitation->brand->name,
+                'slug' => $invitation->venue?->slug ?? $invitation->brand->slug,
+                'status' => $invitation->brand->status,
             ] : null,
             'invited_by' => $invitation->invitedBy ? [
                 'id' => $invitation->invitedBy->id,

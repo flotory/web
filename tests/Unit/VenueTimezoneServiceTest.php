@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Brand;
 use App\Models\Venue;
 use App\Services\VenueTimezoneService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -106,10 +107,18 @@ class VenueTimezoneServiceTest extends TestCase
             ]),
         ]);
 
-        $venue = Venue::query()->create([
+        $brand = Brand::query()->create([
             'name' => 'No TZ Cafe',
             'slug' => 'no-tz-cafe',
             'category' => 'cafe',
+            'status' => Brand::STATUS_DRAFT,
+        ]);
+
+        $venue = Venue::query()->create([
+            'brand_id' => $brand->id,
+            'is_primary' => true,
+            'name' => 'No TZ Cafe',
+            'slug' => 'no-tz-cafe',
             'latitude' => 34.0522,
             'longitude' => -118.2437,
             'timezone' => 'Europe/Warsaw',

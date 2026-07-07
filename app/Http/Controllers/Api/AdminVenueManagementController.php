@@ -5,14 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminStoreVenueRequest;
 use App\Http\Requests\AdminUpdateVenueRequest;
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Services\VenueAddressUpdateService;
 use App\Services\VenueBrandingService;
 use App\Services\VenuePublicationService;
 use App\Services\VenueTimezoneService;
 use App\Support\AuditLog;
+use App\Support\VenuePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +35,9 @@ class AdminVenueManagementController extends Controller
         $status = $request->string('status')->toString();
 
         $query = Venue::query()
+            ->where('is_primary', true)
             ->when($request->boolean('include_archived'), fn ($builder) => $builder->withTrashed())
+            ->with('brand')
             ->withCount([
                 'rewards as active_rewards_count' => fn ($builder) => $builder->where('active', true),
                 'customers',
@@ -50,12 +54,15 @@ class AdminVenueManagementController extends Controller
                 $builder
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%");
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('brand', fn ($brandQuery) => $brandQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%"));
             });
         }
 
         if ($status !== '') {
-            $query->where('status', $status);
+            $query->whereHas('brand', fn ($brandQuery) => $brandQuery->where('status', $status));
         }
 
         $venues = $query->paginate(20);
@@ -101,26 +108,33 @@ class AdminVenueManagementController extends Controller
 
         $this->venueAddresses->assertCanApply(new Venue, $location, enforceDailyLimit: false);
 
-        $venue = Venue::create([
-            'name' => $request->string('name')->toString(),
-            'slug' => $request->filled('slug')
-                ? $request->string('slug')->toString()
-                : Str::slug($request->string('name')->toString()).'-'.Str::lower(Str::random(5)),
+        $name = $request->string('name')->toString();
+        $slug = $request->filled('slug')
+            ? $request->string('slug')->toString()
+            : Str::slug($name).'-'.Str::lower(Str::random(5));
+
+        $brand = Brand::create([
+            'name' => $name,
+            'slug' => $slug,
             'category' => $request->string('category')->toString() ?: 'cafe',
-            'logo' => null,
-            'logo_thumb' => null,
-            'cover_image' => null,
+            'phone' => $request->string('phone')->toString() ?: null,
+            'website' => $request->string('website')->toString() ?: null,
+            'status' => Brand::STATUS_DRAFT,
+        ]);
+
+        $venue = Venue::create([
+            'brand_id' => $brand->id,
+            'is_primary' => true,
+            'name' => $name,
+            'slug' => $slug,
             'address' => $location['address'],
             'latitude' => $location['latitude'],
             'longitude' => $location['longitude'],
             'google_place_id' => $location['google_place_id'],
-            'phone' => $request->string('phone')->toString() ?: null,
-            'website' => $request->string('website')->toString() ?: null,
-            'status' => Venue::STATUS_DRAFT,
         ]);
 
-        VenueUser::create([
-            'venue_id' => $venue->id,
+        BrandUser::create([
+            'brand_id' => $brand->id,
             'user_id' => $owner->id,
             'role' => 'owner',
         ]);
@@ -133,11 +147,12 @@ class AdminVenueManagementController extends Controller
 
         AuditLog::record(
             description: 'venue.admin_created',
-            subject: $venue->fresh(),
+            subject: $venue->fresh(['brand']),
             causer: $request->user(),
             event: 'created',
             properties: [
                 'venue_id' => $venue->id,
+                'brand_id' => $brand->id,
                 'owner_user_id' => $owner->id,
             ],
         );
@@ -154,6 +169,7 @@ class AdminVenueManagementController extends Controller
         $venue = $this->resolveVenue($venue)
             ->loadCount(['customers', 'visits', 'rewards'])
             ->load([
+                'brand',
                 'memberships' => fn ($builder) => $builder
                     ->where('role', 'owner')
                     ->with('user:id,name,email'),
@@ -167,6 +183,7 @@ class AdminVenueManagementController extends Controller
     public function update(AdminUpdateVenueRequest $request, int $venue): JsonResponse
     {
         $venue = $this->resolveVenue($venue);
+        $brand = $venue->brand()->firstOrFail();
 
         $location = $this->venueAddresses->normalizedLocation([
             'address' => $request->input('address'),
@@ -187,27 +204,32 @@ class AdminVenueManagementController extends Controller
         $venue->update([
             'name' => $request->string('name')->toString(),
             'slug' => $requestedSlug,
-            'category' => $request->filled('category')
-                ? $request->string('category')->toString()
-                : $venue->category,
             'address' => $location['address'],
             'latitude' => $location['latitude'],
             'longitude' => $location['longitude'],
             'google_place_id' => $location['google_place_id'],
+        ]);
+
+        $brand->update([
+            'name' => $request->string('name')->toString(),
+            'category' => $request->filled('category')
+                ? $request->string('category')->toString()
+                : $brand->category,
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
         ]);
 
-        $venue = $venue->fresh();
+        $venue = $venue->fresh(['brand']);
         $this->timezones->applyToVenue($venue, $location['latitude'], $location['longitude']);
 
         AuditLog::record(
             description: 'venue.admin_updated',
-            subject: $venue->fresh(),
+            subject: $venue->fresh(['brand']),
             causer: $request->user(),
             event: 'updated',
             properties: [
                 'venue_id' => $venue->id,
+                'brand_id' => $brand->id,
             ],
         );
 
@@ -268,9 +290,33 @@ class AdminVenueManagementController extends Controller
         ]);
     }
 
+    public function approveBranch(Request $request, int $venue): JsonResponse
+    {
+        $branch = $this->resolveVenue($venue);
+        $approved = $this->publication->approveBranch($branch, $request->user());
+
+        return response()->json([
+            'branch' => VenuePresenter::attributes($approved),
+        ]);
+    }
+
+    public function rejectBranch(Request $request, int $venue): JsonResponse
+    {
+        $branch = $this->resolveVenue($venue);
+        $rejected = $this->publication->rejectBranch(
+            $branch,
+            $request->user(),
+            $request->string('note')->toString() ?: null,
+        );
+
+        return response()->json([
+            'branch' => VenuePresenter::attributes($rejected),
+        ]);
+    }
+
     private function freshDetailVenue(Venue $venue): Venue
     {
-        return $venue->fresh()
+        return $venue->fresh(['brand'])
             ->loadCount(['customers', 'visits', 'rewards'])
             ->load([
                 'memberships' => fn ($builder) => $builder
@@ -281,7 +327,7 @@ class AdminVenueManagementController extends Controller
 
     private function resolveVenue(int $venueId): Venue
     {
-        return Venue::query()->withTrashed()->findOrFail($venueId);
+        return Venue::query()->withTrashed()->with('brand')->findOrFail($venueId);
     }
 
     /**
@@ -289,18 +335,20 @@ class AdminVenueManagementController extends Controller
      */
     private function presentListVenue(Venue $venue): array
     {
+        $presented = VenuePresenter::attributes($venue);
         $ownerMembership = $venue->memberships->first();
 
         return [
             'id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'name' => $venue->name,
             'slug' => $venue->slug,
-            'category' => $venue->category,
+            'category' => $presented['category'] ?? null,
             'address' => $venue->address,
-            'logo' => $venue->logo,
-            'logo_thumb' => $venue->logo_thumb,
-            'cover_image' => $venue->cover_image,
-            'status' => $venue->status,
+            'logo' => $presented['logo'] ?? null,
+            'logo_thumb' => $presented['logo_thumb'] ?? null,
+            'cover_image' => $presented['cover_image'] ?? null,
+            'status' => $presented['status'] ?? Brand::STATUS_DRAFT,
             'archived' => $venue->trashed(),
             'active_rewards_count' => $venue->active_rewards_count ?? 0,
             'customers_count' => $venue->customers_count ?? 0,
@@ -318,21 +366,22 @@ class AdminVenueManagementController extends Controller
      */
     private function presentDetailVenue(Venue $venue): array
     {
+        $presented = VenuePresenter::attributes($venue);
         $ownerMembership = $venue->relationLoaded('memberships')
             ? $venue->memberships->firstWhere('role', 'owner') ?? $venue->memberships->first()
             : $venue->memberships()->where('role', 'owner')->with('user:id,name,email')->first();
 
         return array_merge($this->presentListVenue($venue), [
-            'logo_thumb' => $venue->logo_thumb,
-            'cover_image_thumb' => $venue->cover_image_thumb,
+            'logo_thumb' => $presented['logo_thumb'] ?? null,
+            'cover_image_thumb' => $presented['cover_image_thumb'] ?? null,
             'latitude' => $venue->latitude,
             'longitude' => $venue->longitude,
             'google_place_id' => $venue->google_place_id,
-            'phone' => $venue->phone,
-            'website' => $venue->website,
-            'review_note' => $venue->review_note,
-            'submitted_at' => $venue->submitted_at?->toIso8601String(),
-            'published_at' => $venue->published_at?->toIso8601String(),
+            'phone' => $presented['phone'] ?? null,
+            'website' => $presented['website'] ?? null,
+            'review_note' => $presented['review_note'] ?? null,
+            'submitted_at' => $presented['submitted_at'] ?? null,
+            'published_at' => $presented['published_at'] ?? null,
             'visits_count' => $venue->visits_count ?? 0,
             'rewards_count' => $venue->rewards_count ?? 0,
             'owner' => $ownerMembership?->user ? [
@@ -342,5 +391,4 @@ class AdminVenueManagementController extends Controller
             ] : null,
         ]);
     }
-
 }

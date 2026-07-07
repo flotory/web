@@ -583,7 +583,7 @@ watch(
           </template>
 
           <template v-else-if="currentStep === 'files'">
-            <h1 class="mt-4 text-2xl font-black tracking-tight text-ink sm:text-3xl">Logo & cover</h1>
+            <h1 class="mt-4 text-2xl font-black tracking-tight text-ink sm:text-3xl">{{ ONBOARDING_STEP_LABELS.files }}</h1>
             <p class="mt-2 text-sm leading-relaxed text-ink-muted">
               Upload your venue logo and a cover photo for the app and public page. We&apos;ll crop and set these up for you — exact sizes are not required.
             </p>

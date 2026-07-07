@@ -10,8 +10,9 @@ return new class extends Migration
     {
         Schema::create('owner_invitations', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->nullable()->constrained('brands')->nullOnDelete();
             $table->string('email');
+            $table->string('business_name', 120)->nullable();
             $table->string('token', 64)->unique();
             $table->foreignId('invited_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('expires_at');
@@ -19,7 +20,7 @@ return new class extends Migration
             $table->timestamp('revoked_at')->nullable();
             $table->timestamps();
 
-            $table->index(['venue_id', 'email']);
+            $table->index(['brand_id', 'email']);
             $table->index(['email', 'accepted_at']);
         });
     }

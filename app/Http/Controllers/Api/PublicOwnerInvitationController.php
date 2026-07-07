@@ -16,7 +16,7 @@ class PublicOwnerInvitationController extends Controller
     public function show(string $token): JsonResponse
     {
         $invitation = OwnerInvitation::query()
-            ->with('venue:id,name,slug')
+            ->with(['brand:id,name,slug,status', 'venue:id,brand_id,name,slug'])
             ->where('token', $token)
             ->first();
 
@@ -54,10 +54,10 @@ class PublicOwnerInvitationController extends Controller
             'email' => $invitation->email,
             'business_name' => $invitation->business_name,
             'expires_at' => $invitation->expires_at->toIso8601String(),
-            'venue' => $invitation->venue ? [
-                'id' => $invitation->venue->id,
-                'name' => $invitation->venue->name,
-                'slug' => $invitation->venue->slug,
+            'venue' => $invitation->brand ? [
+                'id' => $invitation->venue?->id,
+                'name' => $invitation->brand->name,
+                'slug' => $invitation->venue?->slug ?? $invitation->brand->slug,
             ] : null,
         ]);
     }

@@ -55,7 +55,6 @@ const nav = computed(() => {
     { label: t('nav.rewards'), to: '/rewards', icon: '★' },
     { label: t('nav.campaigns'), to: '/campaigns', icon: '✦' },
     { label: t('nav.analytics'), to: '/analytics', icon: '◔' },
-    { label: t('nav.workspace'), to: '/settings', icon: '⚙' },
   ]
 })
 

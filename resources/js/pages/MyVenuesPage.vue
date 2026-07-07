@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { FileUp, Plus, Search, Store } from '@lucide/vue'
+import { MoreHorizontal, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -16,10 +15,11 @@ import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
-import { normalizeVenueCategory, VENUE_CATEGORIES, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
+import { toast } from '@/lib/toast'
+import { normalizeVenueCategory, VENUE_CATEGORIES, type VenueCategory } from '@/lib/venueCategories'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
-import { buildVenueLandingUrl } from '@/lib/onboarding'
-import { venueCoverThumbUrl, venueLogoThumbUrl } from '@/lib/venueMedia'
+import { branchAnchorFor as resolveBranchAnchor, venueStatsLine, venueSubtitle } from '@/lib/venueLocationCard'
+import { venueLogoThumbUrl } from '@/lib/venueMedia'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { Venue } from '@/types'
@@ -36,6 +36,15 @@ const error = ref('')
 const formOpen = ref(false)
 const menuVenueId = ref<number | null>(null)
 const deleteVenueTarget = ref<Venue | null>(null)
+const branchAnchorVenue = ref<Venue | null>(null)
+const branchError = ref('')
+const branchName = ref('')
+const branchAddress = ref('')
+const branchLatitude = ref<number | null>(null)
+const branchLongitude = ref<number | null>(null)
+const branchGooglePlaceId = ref<string | null>(null)
+const branchAddressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
+const addBranchAction = useAsyncAction()
 const search = ref('')
 const typeFilter = ref<'all' | VenueCategory>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
@@ -81,10 +90,6 @@ const filteredVenues = computed(() => {
 
   return items
 })
-
-function venueTypeLabel(venue: Venue): string {
-  return categoryLabel(normalizeVenueCategory(venue.category))
-}
 
 function resetForm() {
   name.value = ''
@@ -134,7 +139,7 @@ async function createVenue() {
       error.value = ''
 
       try {
-        await api<{ venue: Venue }>('/venues', {
+        const response = await api<{ venue: Venue }>('/venues', {
           method: 'POST',
           body: {
             name: name.value,
@@ -153,10 +158,9 @@ async function createVenue() {
         await auth.fetchUser()
         await loadVenues()
 
-        const created = workspace.activeVenues[0]
-        if (created) {
-          await router.push(`/my-venues/${created.id}/setup-files`)
-        }
+        const created = response.venue
+        workspace.setFilter(created.id)
+        await router.push('/onboarding')
       } catch (exception) {
         error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
         throw exception
@@ -201,6 +205,70 @@ function openDeleteModal(venue: Venue) {
 function closeDeleteModal() {
   if (saving.value) return
   deleteVenueTarget.value = null
+}
+
+function branchAnchorFor(venue: Venue): Venue {
+  return resolveBranchAnchor(activeVenues.value, venue)
+}
+
+function resetBranchForm() {
+  branchName.value = ''
+  branchAddress.value = ''
+  branchLatitude.value = null
+  branchLongitude.value = null
+  branchGooglePlaceId.value = null
+  branchError.value = ''
+}
+
+function openAddBranchModal(venue: Venue) {
+  branchAnchorVenue.value = branchAnchorFor(venue)
+  resetBranchForm()
+  menuVenueId.value = null
+}
+
+function closeAddBranchModal() {
+  if (addBranchAction.loading) return
+  branchAnchorVenue.value = null
+  resetBranchForm()
+}
+
+async function addBranch() {
+  const anchor = branchAnchorVenue.value
+  if (!anchor) return
+
+  if (!branchAddressInput.value?.validateSelection()) {
+    branchError.value = 'Select a branch address from the Google suggestions list.'
+    return
+  }
+
+  try {
+    await addBranchAction.run(async () => {
+      branchError.value = ''
+
+      try {
+        await api(`/venues/${anchor.id}/branches`, {
+          method: 'POST',
+          body: {
+            name: branchName.value,
+            address: branchAddress.value,
+            latitude: branchLatitude.value ?? undefined,
+            longitude: branchLongitude.value ?? undefined,
+            google_place_id: branchGooglePlaceId.value ?? undefined,
+          },
+        })
+        await loadVenues()
+        toast.success('Branch submitted for approval. Flotory will go live after NFC stands are delivered.')
+      } catch (exception) {
+        branchError.value = exception instanceof ApiError ? exception.message : 'Could not add branch.'
+        throw exception
+      }
+    })
+
+    closeAddBranchModal()
+    await loadVenues()
+  } catch {
+    // Button shows Failed.
+  }
 }
 
 onMounted(async () => {
@@ -353,68 +421,89 @@ onMounted(async () => {
       </div>
     </EmptyState>
 
-    <div v-if="!loading && filteredVenues.length" class="grid gap-5 lg:grid-cols-2">
+    <div v-if="!loading && filteredVenues.length" class="grid gap-3 overflow-visible lg:grid-cols-2">
       <AppCard
         v-for="venue in filteredVenues"
         :key="venue.id"
-        wrapper-class="group relative overflow-hidden border-border/80 p-0 shadow-sm transition hover:shadow-xl"
+        :padded="false"
+        :wrapper-class="[
+          'group overflow-visible border-border/70 transition hover:border-border hover:shadow-md',
+          menuVenueId === venue.id ? 'relative z-50' : '',
+        ].join(' ')"
       >
-        <img :src="venueCoverThumbUrl(venue)" alt="" class="h-24 w-full object-cover">
-        <div class="relative p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-start gap-3">
-            <div class="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface text-xl font-black shadow-sm border-2 border-white -mt-10">
-              <img :src="venueLogoThumbUrl(venue)" :alt="venue.name" class="size-full object-cover">
-            </div>
-            <div>
+        <div class="flex items-center gap-3 p-4 sm:p-5">
+          <button
+            type="button"
+            class="flex min-w-0 flex-1 cursor-pointer items-center gap-4 text-left transition group-hover:opacity-95"
+            @click="openVenue(venue, '/dashboard')"
+          >
+            <img
+              :src="venueLogoThumbUrl(venue)"
+              :alt="venue.name"
+              class="size-14 shrink-0 rounded-2xl border border-border object-cover bg-surface-muted"
+            >
+
+            <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-2xl font-black text-ink">{{ venue.name }}</h2>
+                <h2 class="truncate text-lg font-bold text-ink">{{ venue.name }}</h2>
                 <AppBadge :tone="listingStatusTone(venue.status ?? 'draft')">
                   {{ listingStatusLabel(venue.status ?? 'draft') }}
                 </AppBadge>
-                <AppBadge tone="blue">{{ venueTypeLabel(venue) }}</AppBadge>
+                <AppBadge v-if="venue.is_primary === false" tone="slate">Branch</AppBadge>
               </div>
-              <p class="mt-1 text-sm font-semibold text-ink-muted">/{{ venue.slug }}</p>
-            </div>
-          </div>
-          <div class="relative">
-            <button type="button" class="rounded-xl bg-surface-muted px-3 py-2 text-sm font-black text-ink-muted hover:bg-border" @click="toggleMenu(venue.id)">⋯</button>
-            <div v-if="menuVenueId === venue.id" class="absolute right-0 z-50 mt-2 w-44 rounded-2xl bg-surface p-2 shadow-xl border border-border">
-              <button class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`); menuVenueId = null">Logo & cover</button>
-              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</button>
-              <button class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft" :disabled="saving" @click="openDeleteModal(venue)">Delete venue</button>
-            </div>
-          </div>
-        </div>
 
-        <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div class="rounded-xl bg-surface p-3 border border-border">
-            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◎ Guests</p>
-            <p class="mt-1 text-sm font-black text-ink">{{ venue.customers_count ?? 0 }}</p>
-          </div>
-          <div class="rounded-xl bg-surface p-3 border border-border">
-            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">↻ Visits</p>
-            <p class="mt-1 text-sm font-black text-ink">{{ venue.visits_count ?? 0 }}</p>
-          </div>
-          <div class="rounded-xl bg-surface p-3 border border-border">
-            <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">◈ Rewards</p>
-            <p class="mt-1 text-sm font-black text-ink">{{ venue.rewards_count ?? 0 }}</p>
-          </div>
-          <div class="grid place-items-center rounded-xl bg-surface p-3 border border-border">
-            <div class="inline-flex rounded-lg bg-surface p-1 border border-border">
-              <QrcodeVue :value="buildVenueLandingUrl(venue.slug)" :size="42" level="M" render-as="canvas" :margin="1" />
+              <p class="mt-1 truncate text-sm text-ink-muted">
+                {{ venueSubtitle(venue) }}
+              </p>
+
+              <p class="mt-2 text-xs font-medium text-ink-soft">
+                {{ venueStatsLine(venue) }}
+              </p>
+            </div>
+          </button>
+
+          <div class="relative shrink-0 self-start border-l border-border pl-2">
+            <button
+              type="button"
+              class="grid size-10 place-items-center rounded-xl text-ink-muted transition hover:bg-surface-muted hover:text-ink"
+              :aria-expanded="menuVenueId === venue.id"
+              aria-label="Venue options"
+              @click.stop="toggleMenu(venue.id)"
+            >
+              <MoreHorizontal class="size-5" />
+            </button>
+
+            <div
+              v-if="menuVenueId === venue.id"
+              class="absolute right-0 top-full z-[60] mt-1 w-44 rounded-2xl border border-border bg-surface p-2 shadow-xl"
+            >
+              <button
+                class="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted"
+                @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`); menuVenueId = null"
+              >
+                Files
+              </button>
+              <button
+                class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted"
+                @click="router.push(`/my-venues/${venue.id}/settings`); menuVenueId = null"
+              >
+                Settings
+              </button>
+              <button
+                class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink-muted hover:bg-surface-muted"
+                @click="openAddBranchModal(venue)"
+              >
+                Add branch
+              </button>
+              <button
+                class="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-danger hover:bg-danger-soft"
+                :disabled="saving"
+                @click="openDeleteModal(venue)"
+              >
+                Delete venue
+              </button>
             </div>
           </div>
-        </div>
-
-        <div class="mt-4 grid gap-2 sm:grid-cols-2">
-          <AppButton class="w-full" size="sm" @click="openVenue(venue, '/dashboard')">Open dashboard</AppButton>
-          <AppButton class="w-full" size="sm" variant="secondary" @click="openVenue(venue, `/my-venues/${venue.id}/setup-files`)">
-            <FileUp class="size-4" />
-            Logo & cover
-          </AppButton>
-          <AppButton class="w-full" size="sm" variant="secondary" @click="router.push(`/my-venues/${venue.id}/settings`)">Settings</AppButton>
-        </div>
         </div>
       </AppCard>
     </div>
@@ -422,10 +511,61 @@ onMounted(async () => {
     <button
       v-if="menuVenueId !== null"
       type="button"
-      class="fixed inset-0 z-30 cursor-default bg-transparent"
+      class="fixed inset-0 z-40 cursor-default bg-transparent"
       aria-label="Close venue menu"
       @click="menuVenueId = null"
     />
+
+    <div
+      v-if="branchAnchorVenue"
+      class="fixed inset-0 z-40 grid place-items-center bg-primary/40 px-4 backdrop-blur-sm"
+      @click.self="closeAddBranchModal"
+    >
+      <AppCard wrapper-class="w-full max-w-lg border-border bg-surface p-6">
+        <h2 class="text-2xl font-black text-ink">Add branch</h2>
+        <p class="mt-2 text-sm font-semibold text-ink-muted">
+          New location under <span class="font-bold text-ink">{{ branchAnchorVenue.brand_name ?? branchAnchorVenue.name }}</span>.
+          Rewards and guest cards stay shared. Flotory reviews each branch before it goes live and NFC stands are delivered.
+        </p>
+
+        <form class="mt-5 grid gap-4" @submit.prevent="addBranch">
+          <div>
+            <label class="text-sm font-bold text-ink-muted" for="my-venues-branch-name">Branch name</label>
+            <input
+              id="my-venues-branch-name"
+              v-model="branchName"
+              required
+              class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
+              :placeholder="`${branchAnchorVenue.brand_name ?? branchAnchorVenue.name} · Kentron`"
+            >
+          </div>
+          <VenueAddressInput
+            id="my-venues-branch-address"
+            ref="branchAddressInput"
+            v-model:address="branchAddress"
+            v-model:latitude="branchLatitude"
+            v-model:longitude="branchLongitude"
+            v-model:google-place-id="branchGooglePlaceId"
+            label="Branch address"
+            hint="Pick a Google suggestion so guests see the right map pin."
+          />
+          <p v-if="branchError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ branchError }}</p>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <AppButton type="button" variant="secondary" :disabled="addBranchAction.loading" @click="closeAddBranchModal">Cancel</AppButton>
+            <AsyncActionButton
+              type="submit"
+              idle-label="Add branch"
+              loading-label="Adding…"
+              success-label="Added ✓"
+              :loading="addBranchAction.loading"
+              :success="addBranchAction.success"
+              :error="addBranchAction.error"
+              :disabled="!branchName.trim()"
+            />
+          </div>
+        </form>
+      </AppCard>
+    </div>
 
     <div
       v-if="deleteVenueTarget"

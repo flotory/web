@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Venue;
+use App\Models\Brand;
 use App\Models\VenueSetupFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -18,7 +19,7 @@ class VenueSetupFileControllerTest extends TestCase
     public function test_owner_can_upload_setup_files_without_kind(): void
     {
         $owner = $this->createUser();
-        $venue = $this->createVenue(['status' => Venue::STATUS_DRAFT]);
+        $venue = $this->createVenue(['status' => Brand::STATUS_DRAFT]);
         $this->attachMember($venue, $owner, 'owner');
 
         Sanctum::actingAs($owner);
@@ -43,13 +44,13 @@ class VenueSetupFileControllerTest extends TestCase
     {
         $owner = $this->createUser();
         $venue = $this->createVenue([
-            'status' => Venue::STATUS_DRAFT,
+            'status' => Brand::STATUS_DRAFT,
             'category' => 'cafe',
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
-            'logo' => '/uploads/venue-logos/demo.png',
         ]);
+        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/demo.png'])->save();
         $this->attachMember($venue, $owner, 'owner');
         $this->createReward($venue);
 
@@ -73,7 +74,7 @@ class VenueSetupFileControllerTest extends TestCase
         $admin = $this->createUser(['is_admin' => true]);
         $owner = $this->createUser(['email' => 'setup-owner@example.com']);
         $venue = $this->createVenue([
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
             'category' => 'cafe',
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
@@ -83,11 +84,11 @@ class VenueSetupFileControllerTest extends TestCase
         $this->createReward($venue);
 
         VenueSetupFile::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->id.'/logo.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);
@@ -97,5 +98,109 @@ class VenueSetupFileControllerTest extends TestCase
         $this->postJson("/api/admin/venues/{$venue->id}/approve")
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['listing']);
+    }
+
+    public function test_admin_can_list_setup_files_for_brand(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'admin-files@example.com']);
+        $venue = $this->createVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        VenueSetupFile::query()->create([
+            'brand_id' => $venue->brand_id,
+            'uploaded_by_user_id' => $owner->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'menu.pdf',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/menu.pdf',
+            'mime_type' => 'application/pdf',
+            'byte_size' => 2048,
+        ]);
+
+        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/demo.png'])->save();
+
+        Sanctum::actingAs($admin);
+
+        $this->getJson("/api/admin/manage-venues/{$venue->id}/setup-files")
+            ->assertOk()
+            ->assertJsonPath('requirements.files_uploaded', true)
+            ->assertJsonPath('requirements.file_count', 1)
+            ->assertJsonPath('requirements.final_logo_applied', true)
+            ->assertJsonPath('requirements.final_cover_applied', false);
+    }
+
+    public function test_owner_can_upload_but_not_delete_files_when_brand_is_published(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createPublishedVenue(['name' => 'Live Files Cafe', 'slug' => 'live-files-cafe']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $existing = VenueSetupFile::query()->create([
+            'brand_id' => $venue->brand_id,
+            'uploaded_by_user_id' => $owner->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'logo.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'mime_type' => 'image/png',
+            'byte_size' => 1024,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson("/api/venues/{$venue->id}/setup-files", [
+            'file' => UploadedFile::fake()->image('cover.jpg'),
+        ])
+            ->assertCreated();
+
+        $this->deleteJson("/api/venues/{$venue->id}/setup-files/{$existing->id}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['file']);
+    }
+
+    public function test_owner_can_delete_setup_files_on_draft_brand(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue(['status' => Brand::STATUS_DRAFT]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $file = VenueSetupFile::query()->create([
+            'brand_id' => $venue->brand_id,
+            'uploaded_by_user_id' => $owner->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'logo.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'mime_type' => 'image/png',
+            'byte_size' => 1024,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->deleteJson("/api/venues/{$venue->id}/setup-files/{$file->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('venue_setup_files', ['id' => $file->id]);
+    }
+
+    public function test_owner_cannot_delete_setup_files_when_brand_is_pending_review(): void
+    {
+        $owner = $this->createUser();
+        $venue = $this->createVenue(['status' => Brand::STATUS_PENDING_REVIEW]);
+        $this->attachMember($venue, $owner, 'owner');
+
+        $file = VenueSetupFile::query()->create([
+            'brand_id' => $venue->brand_id,
+            'uploaded_by_user_id' => $owner->id,
+            'kind' => VenueSetupFile::KIND_FILE,
+            'original_name' => 'logo.png',
+            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'mime_type' => 'image/png',
+            'byte_size' => 1024,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $this->deleteJson("/api/venues/{$venue->id}/setup-files/{$file->id}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['file']);
     }
 }

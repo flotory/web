@@ -10,8 +10,8 @@ Related: [ARCHITECTURE.md](./ARCHITECTURE.md#nfc-stamping-nfcstampservice), [app
 
 | Requirement | Why |
 |-------------|-----|
-| Venue **published** | Customers cannot join or stamp at `draft` / `pending_review` venues |
-| At least one **active reward** milestone | Stamps need a program to count toward |
+| Brand **published** | Customers cannot join or stamp at `draft` / `pending_review` brands |
+| At least one **active reward** milestone on the brand | Stamps need a program to count toward |
 | Customer in **Flotory mobile app** (iOS native build for in-app NFC) | Expo Go cannot run Core NFC on the Stamp tab |
 | Physical **NFC tag** (NTAG213/215/216 or similar) | Encoded with the Flotory tap URL |
 
@@ -20,10 +20,12 @@ Related: [ARCHITECTURE.md](./ARCHITECTURE.md#nfc-stamping-nfcstampservice), [app
 ## 1. Create the NFC stand (platform admin)
 
 1. Log in as **platform admin** (`admin@flotory.com` locally).
-2. Open **Manage venues** → select the venue → **NFC stamp stands**.
-3. Click **Add stand** (label e.g. `Counter stand`).
+2. Open **Manage venues** → select the **location** (primary or branch) → **NFC stamp stands**.
+3. Click **Add stand** (label e.g. `Counter stand` or `Vake counter`).
 4. Copy the **tap URL** — format: `https://flotory.com/t/{token}`  
    Local Docker: `http://localhost:8000/t/{token}`
+
+**Multi-location:** create **separate stands per branch** so visit analytics attribute taps to the correct address. Each tag is bound to one `venues` row; stamps still credit the shared brand wallet.
 
 **Demo Cafe (after `db:seed`):** token is fixed for local testing:
 
@@ -53,7 +55,7 @@ Use any NDEF URI writer (e.g. **NFC Tools** on iPhone/Android):
 
 1. Guest scans the venue **QR** at the counter → web page `/v/{slug}` → **Open in Flotory app**.
 2. Register or sign in (`customer@example.com` / `password` in demo).
-3. App auto-joins the venue on first stamp (or join via **Venues** tab when published).
+3. App auto-joins the **brand** on first stamp (or join via **Venues** tab when published). Branch slugs work the same as the primary location.
 
 ---
 
@@ -84,9 +86,9 @@ API: `POST /api/customer/rewards/unlocks/{unlock}/redeem`
 
 ## 6. Owner checklist
 
-- [ ] Venue listing **published** (admin approved)
+- [ ] Brand listing **published** (admin approved)
 - [ ] At least one active reward configured (`/rewards`)
-- [ ] NFC stand created and tag programmed
+- [ ] NFC stand created **per location** and tags programmed
 - [ ] Test with your own phone: join → tap → see stamp → test redeem if a reward is ready
 - [ ] Place QR for **join** and NFC for **stamps** at the counter
 
@@ -98,7 +100,7 @@ Owners configure rewards and campaigns on the web. NFC stand provisioning is **a
 
 | Symptom | Check |
 |---------|--------|
-| “Venue not available” / join fails | Venue must be `published` |
+| “Venue not available” / join fails | Brand must be `published` |
 | “NFC stand is turned off” | Admin → reactivate tag |
 | “Please wait a moment before tapping again” | 2s debounce — wait and retry |
 | Stamp tab says unsupported | Use a **development build** on a real iPhone, not Expo Go |

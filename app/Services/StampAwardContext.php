@@ -8,11 +8,12 @@ final class StampAwardContext
 
     public function __construct(
         public readonly string $source = self::SOURCE_NFC_TAP,
+        public readonly ?int $venueId = null,
     ) {}
 
-    public static function nfcTap(): self
+    public static function nfcTap(?int $venueId = null): self
     {
-        return new self(self::SOURCE_NFC_TAP);
+        return new self(self::SOURCE_NFC_TAP, $venueId);
     }
 
     public function isNfcTap(): bool

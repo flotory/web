@@ -19,7 +19,7 @@ class VenueSetupFile extends Model
     public const KIND_DOCUMENT = 'document';
 
     protected $fillable = [
-        'venue_id',
+        'brand_id',
         'uploaded_by_user_id',
         'kind',
         'original_name',
@@ -35,9 +35,9 @@ class VenueSetupFile extends Model
         ];
     }
 
-    public function venue(): BelongsTo
+    public function brand(): BelongsTo
     {
-        return $this->belongsTo(Venue::class);
+        return $this->belongsTo(Brand::class);
     }
 
     public function uploader(): BelongsTo

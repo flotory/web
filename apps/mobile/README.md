@@ -158,7 +158,7 @@ Venue NFC setup guide: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE_SETUP.md).
 
 - **Tabs:** custom `CustomerTabBar` — Home, Wallet, center Stamp (NFC radio icon), Venues, Profile; Notifications is a hidden stack route
 - **Home:** unified rewards carousel (ready vouchers + in-progress cards), contextual NFC CTA (`HomeContextualCta`), campaigns carousel, activity feed
-- **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache
+- **Data:** `src/lib/customerData.ts` + `src/lib/resourceCache.ts` — shared API fetchers with short-lived in-memory cache. Wallet cards include `brand_id`; discover indexes cards by `brand_id` and primary `venue_id` so branch locations resolve to the shared card.
 - **Hooks:** `src/hooks/` — `useCustomerCards`, `useRewardsWallet`, `useDiscoverVenues`, `useCardDetail`, `useNfcStampScan`, `useScreenResource`
 - **Screens:** prefer hooks over inline `useEffect` fetch blocks; use `CustomerScreen` for loading/error/refresh shell
 - **UI:** customer screens use `ScreenGradientLayout`, theme tokens, `GradientCard`, `StateCard`, `HomeRewardTicketCard`, `HomeScreenHeader` (bell → notifications; unread dot when `unreadCount > 0`)
@@ -168,7 +168,7 @@ Venue NFC setup guide: [docs/NFC_VENUE_SETUP.md](../../docs/NFC_VENUE_SETUP.md).
 1. Customer data goes through hooks in `src/hooks/`, not direct `apiRequest` in screens
 2. Use theme tokens — no inline hex in customer UI
 3. Empty/error states use `StateCard`
-4. Card detail requires `venueId`; `cardId` is validated against the loaded card
+4. Card detail requires `venueId` (branch or primary location id); `cardId` is validated against the loaded card. Card lookup also matches `brand_id` when discover passes a branch id.
 
 ## Design System (Current)
 

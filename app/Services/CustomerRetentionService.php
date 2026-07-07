@@ -61,7 +61,7 @@ class CustomerRetentionService
     public function baseCustomerQuery(Venue $venue): Builder
     {
         return Customer::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->with('user:id,name,email,birthday')
             ->withCount('visits')
             ->withCount([
@@ -86,6 +86,7 @@ class CustomerRetentionService
 
         return [
             'id' => $customer->id,
+            'brand_id' => $customer->brand_id,
             'venue_id' => $customer->venue_id,
             'user_id' => $customer->user_id,
             'stamps' => $customer->stamps,

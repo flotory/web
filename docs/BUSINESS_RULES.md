@@ -23,6 +23,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 | ID     | Topic                      | Section                                  |
 | ------ | -------------------------- | ---------------------------------------- |
+| B1–B6  | Brands & branches          | [Branches](#branch-rules)                |
 | L1–L9  | Loyalty & cycles           | [Loyalty](#loyalty-rules)                |
 | S1–S8  | Stamps & visits            | [Stamps](#stamp-rules)                   |
 | R1–R9  | Rewards & milestones       | [Rewards](#reward-rules)                 |
@@ -30,6 +31,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 | C1–C12 | Stamp campaigns            | [Campaigns](#campaign-rules)             |
 | U1–U7  | Customers                  | [Customers](#customer-rules)             |
 | O1–O8  | Ownership & roles          | [Ownership](#ownership-rules)            |
+| O9–O12 | Onboarding & files         | [Ownership](#ownership-rules)            |
 | Z1–Z8  | Security & authorization   | [Security](#security-rules)              |
 | Y1–Y10 | UX & language              | [UX](#ux-rules)                          |
 | E1–E12 | Accepted / open exceptions | [Exceptions](#documented-exceptions)     |
@@ -56,7 +58,25 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **L8.** When the customer reaches the **highest active milestone** threshold in the current cycle, the cycle **completes**: stamp balance resets to **0**, or **carries overflow** into the next cycle when a single award exceeded the milestone (e.g. 9 + 3 at max 10 → cycle completes, next cycle starts at **2**). Multiple completions in one award are allowed when the award spans more than one full cycle. **Unclaimed unlocks from prior cycles remain redeemable.**
 
-**L9.** Cycle completion uses the **maximum** `required_stamps` among **active** milestones at the venue. Archiving the top milestone changes which threshold completes a cycle.
+**L9.** Cycle completion uses the **maximum** `required_stamps` among **active** milestones at the **brand**. Archiving the top milestone changes which threshold completes a cycle.
+
+---
+
+## Branch rules
+
+**B1.** A **brand** is the loyalty program (name, slug, listing status, rewards, campaigns, customer wallet). A **venue** is a physical location under that brand (address, geo, timezone, NFC tags).
+
+**B2.** Each brand has exactly one **primary** venue (`is_primary = true`) created at onboarding. Additional locations are **branches** (`is_primary = false`) under the same `brand_id`.
+
+**B3.** **One loyalty card per (user, brand)**. Joining via any branch slug or tapping NFC at any branch location enrolls on the shared brand wallet.
+
+**B4.** Rewards and stamp campaigns are **brand-scoped**. All branches share the same milestones and campaign configuration.
+
+**B5.** NFC tags are **venue-scoped** (one or more stands per location). A tap at a branch credits the **brand** wallet but records `visits` and `stamp_events` with the **branch** `venue_id` for per-location analytics.
+
+**B6.** Owners add branches from **My Venues** (`POST /api/venues/{venue}/branches`). New branches start in **`pending_review`** and are **not public** for join, landing, or NFC until Flotory approves the location and delivers physical stands (`POST /api/admin/manage-venues/{branch}/approve-branch`).
+
+**B7.** Branch cards in owner tools show **Awaiting approval** until published. Existing branches created before 2026-07-07 remain live.
 
 ---
 
@@ -72,9 +92,11 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **S5.** Each stamp award creates **exactly one** visit record.
 
-**S6.** The same customer must not receive duplicate stamp awards from accidental double-tap within **3 seconds** (same venue, same customer). NFC stands also enforce a **3-second** per-tag debounce.
+**S6.** The same customer must not receive duplicate stamp awards from accidental double-tap within **3 seconds** on the same loyalty card. NFC stands also enforce a **3-second** per-tag debounce.
 
-**S7.** NFC stamp stands are venue-scoped; a tap must only award at the stand’s venue.
+**S7.** NFC stamp stands are **location-scoped** (bound to a `venues` row). A tap awards stamps on the brand’s shared customer wallet and must only credit the stand’s brand.
+
+**S8.** Recommended ops practice: **different NFC token per branch** so visit analytics attribute taps to the correct location. Shared tokens across branches merge analytics into one location bucket.
 
 ---
 
@@ -82,7 +104,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **R1.** Rewards are **milestones** with a required stamp threshold (`required_stamps`).
 
-**R2.** Each **active** milestone threshold is **unique per venue**. Two active rewards cannot share the same stamp requirement.
+**R2.** Each **active** milestone threshold is **unique per brand**. Two active rewards cannot share the same stamp requirement.
 
 **R3.** Owners may **archive** rewards (`active = false`) to stop new unlocks at that threshold. Archiving is reversible.
 
@@ -118,7 +140,7 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 Stamp **campaigns** are operational **multipliers** on stamp awards only. They are not email/SMS marketing, coupons, or discount engines.
 
-**C1.** A venue may have **multiple** campaigns in `draft`, `active`, `paused`, or `ended` state.
+**C1.** A brand may have **multiple** campaigns in `draft`, `active`, `paused`, or `ended` state.
 
 **C2.** Only **active** campaigns participate in stamp math. Paused and ended campaigns do not apply.
 
@@ -133,7 +155,7 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 - **Bring Back:** customer inactive for at least `inactive_days` since last visit (or since join if no visits).
 - **Quiet Day:** current weekday (ISO 1–7) in `days_of_week`, and campaign within `starts_at` / `ends_at` when set.
 - **Happy Hour:** weekday in `days_of_week`, local time within `start_time`–`end_time`, and within campaign dates when set.
-- **VIP:** lifetime stamps earned at the venue ≥ `min_lifetime_stamps` **or** claimed reward count ≥ `min_rewards_claimed`. The current tap counts toward lifetime stamps when eligibility is evaluated.
+- **VIP:** lifetime stamps earned at the **brand** ≥ `min_lifetime_stamps` **or** claimed reward count ≥ `min_rewards_claimed`. The current tap counts toward lifetime stamps when eligibility is evaluated.
 
 **C7.** Bring Back and Quiet Day campaigns, when activated, get a bounded run (`duration_days` → `starts_at` / `ends_at`). Happy Hour and VIP may run without an end date until the owner ends them.
 
@@ -151,17 +173,17 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 ## Customer rules
 
-**U1.** Customers enroll by joining via `/v/{slug}` landing or their first NFC stamp at a venue. **Public join requires the venue to be `published`.**
+**U1.** Customers enroll by joining via `/v/{slug}` landing (any brand location slug) or their first NFC stamp at a published brand. **Public join requires the brand to be `published`.**
 
-**U2.** **One loyalty card per (user, venue)**. Re-join returns the existing card.
+**U2.** **One loyalty card per (user, brand)**. Re-join at another branch returns the existing card. API `venue_id` on cards is the **primary** location id for display compatibility.
 
-**U3.** Customers may hold cards at **many venues**.
+**U3.** Customers may hold cards at **many brands** (shown as per-venue cards in the app).
 
 **U4.** Customers may only view and redeem **their own** cards and unlocks.
 
-**U5.** Customers interact only with venues where they are enrolled.
+**U5.** Customers interact only with **brands** where they are enrolled (via any location slug or NFC tap).
 
-**U6.** Primary surfaces (**mobile app**): **Stamp** tab (NFC), **Wallet** (progress + slide redeem), **Home**, **Venues** (find/join published venues), **Profile/Settings**. Web `/wallet`, `/my-qr`, etc. redirect to `/app`.
+**U6.** Primary surfaces (**mobile app**): **Stamp** tab (NFC), **Wallet** (progress + slide redeem), **Home**, **Venues** (find/join published brands — discover shows primary location + branches), **Profile/Settings**. Web `/wallet`, `/my-qr`, etc. redirect to `/app`.
 
 **U7.** Unclaimed rewards stay visible in **Wallet** and on cafe cards until the customer slides to redeem.
 
@@ -169,27 +191,29 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 
 ## Ownership rules
 
-**O1.** Venue roles live in **venue membership** (`venue_users`), not on `users`.
+**O1.** Brand roles live in **brand membership** (`brand_users`), not on `users`.
 
 **O2.** `users` has no global owner/staff/customer role column — only `is_admin` for platform operators.
 
-**O3.** One user may be **owner** at venue A and **customer** at many venues.
+**O3.** One user may be **owner** at brand A and **customer** at many brands.
 
-**O4.** Each venue has one or more **owners** via membership.
+**O4.** Each brand has one or more **owners** via membership.
 
-**O5.** **Staff role, team invites, and staff scanner are removed** (2026 pivot). Only `owner` is a supported venue team role.
+**O5.** **Staff role, team invites, and staff scanner are removed** (2026 pivot). Only `owner` is a supported brand team role.
 
-**O6.** An owner **cannot remove themselves** as the sole owner without transferring ownership (future) or deleting the venue.
+**O6.** An owner **cannot remove themselves** as the sole owner without transferring ownership (future) or deleting the brand.
 
-**O7.** **Platform admin** (`is_admin`) bypasses venue membership for admin routes — minimize admin accounts ([E11](#e11-platform-admin-bypass)).
+**O7.** **Platform admin** (`is_admin`) bypasses brand membership for admin routes — minimize admin accounts ([E11](#e11-platform-admin-bypass)).
 
-**O8.** Owner-only routes (dashboard, campaigns, analytics, rewards CRUD, settings) must return **403** for users without `owner` membership at that venue.
+**O8.** Owner-only routes (dashboard, campaigns, analytics, rewards CRUD, settings) must return **403** for users without `owner` membership at that brand.
 
-**O9.** Public self-serve owner registration (`/register?intent=owner`, `POST /api/venues` without invitation) is **blocked**. Prospects use **Book a demo** or **Contact us**.
+**O9.** Public self-serve owner registration (`/register?intent=owner`) without an accepted invitation is **blocked**. Prospects use **Book a demo** or **Contact us**. Existing owners may create additional brands from **My Venues**.
 
-**O10.** Sales-led onboarding: platform admin sends an **owner invitation** (email only). Owner accepts via `/register?invite=…`, then completes the **onboarding wizard** at `/onboarding` (profile, location, logo & cover, first reward, submit). One venue per accepted invite.
+**O10.** Sales-led onboarding: platform admin sends an **owner invitation** (email only). Owner accepts via `/register?invite=…`, then completes the **onboarding wizard** at `/onboarding` (profile, location, **Files** uploads, first reward, submit). Each new brand starts as `draft` and must be submitted for Flotory review before going live. Owners with at least one `published` or `pending_review` brand can keep using the app while onboarding additional brands.
 
-**O11.** Users with an **accepted** invitation but no venue yet may log in on the **web** (email or Google with owner intent) and are routed to `/onboarding` — not the mobile app page. Owners with a `draft` or `rejected` venue also return to onboarding until listing is submitted or re-submitted.
+**O11.** Users with an **accepted** invitation but no brand yet may log in on the **web** (email or Google with owner intent) and are routed to `/onboarding` — not the mobile app page. Owners with a `draft` or `rejected` brand also return to onboarding until listing is submitted or re-submitted.
+
+**O12.** Owner **Files** (`/my-venues/{id}/setup-files`): upload logo/cover images for admin cropping. Owners may **add** files while the brand is **published**; they may **not delete** files while **published** or **pending review**. Full upload/delete freedom on `draft` and `rejected`.
 
 ---
 
@@ -307,6 +331,9 @@ When adding a feature, add or update a rule here **before** merge, then add a te
 | ---------- | --------------------------------------------------------------------------------- |
 | 2026-06-03 | Full rewrite: campaigns, redemption, exceptions table, rule IDs, canonical status |
 | 2026-06-08 | Pivot: NFC-only stamps, slide-to-redeem, staff/scanner/claim QR removed; consolidated schema |
-| 2026-06-08 | L8 overflow carry; E1/E2 resolved; unlocks on stamp only (no API read sync) |
+| 2026-07-07 | Branch locations require Flotory approval before going live (B6–B7) |
+| 2026-07-07 | Existing owners can create additional brands from My Venues (draft → review); O9/O10 updated |
+| 2026-07-07 | Files page rename; live brands allow upload-only; My Venues branch UI; setup file delete rules (O12) |
+| 2026-07-02 | Brand + venue split: `brands` loyalty program, `venues` locations, `brand_users`, one card per brand, branch NFC analytics, rule IDs B1–B6 |
 
 

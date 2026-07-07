@@ -91,7 +91,7 @@ class CampaignServiceTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-06-02 12:00:00'));
 
         Campaign::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'template_id' => CampaignTemplates::QUIET_DAY,
             'name' => 'Expired quiet day',
             'status' => Campaign::STATUS_ACTIVE,

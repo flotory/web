@@ -16,14 +16,12 @@ import MyVenuesPage from '@/pages/MyVenuesPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import RewardsPage from '@/pages/RewardsPage.vue'
 import AccountPage from '@/pages/AccountPage.vue'
-import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminActivityPage from '@/pages/AdminActivityPage.vue'
 import AdminOwnerOnboardingPage from '@/pages/AdminOwnerOnboardingPage.vue'
 import AdminPalettePage from '@/pages/AdminPalettePage.vue'
 import AdminManageVenuesPage from '@/pages/AdminManageVenuesPage.vue'
 import AdminVenueEditPage from '@/pages/AdminVenueEditPage.vue'
 import AdminVenuesPage from '@/pages/AdminVenuesPage.vue'
-import VenueDesignPreviewPage from '@/pages/VenueDesignPreviewPage.vue'
 import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
@@ -80,21 +78,21 @@ const router = createRouter({
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/my-venues/:id/design', name: 'venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id/design', redirect: (to) => `/my-venues/${to.params.id}/settings` },
     { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/campaigns', name: 'campaigns', component: CampaignsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/settings', name: 'settings', component: SettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/settings', redirect: '/my-venues' },
     { path: '/account', name: 'account', component: AccountPage, meta: { requiresAuth: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivityPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/owner-onboarding', name: 'admin-owner-onboarding', component: AdminOwnerOnboardingPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues', name: 'admin-manage-venues', component: AdminManageVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues/:id', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/admin/manage-venues/:id/design', name: 'admin-venue-design', component: VenueDesignPreviewPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/manage-venues/:id/design', redirect: (to) => `/admin/manage-venues/${to.params.id}` },
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/cafes', redirect: MOBILE_APP_PATH },
     { path: '/home', redirect: MOBILE_APP_PATH },
@@ -247,7 +245,6 @@ router.beforeEach(async (to) => {
 
     if (
       to.name === 'venue-settings'
-      || to.name === 'venue-design'
       || to.name === 'venue-setup-files'
     ) {
       const venueId = Number(to.params.id)

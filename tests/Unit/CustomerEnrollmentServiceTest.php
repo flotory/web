@@ -21,13 +21,13 @@ class CustomerEnrollmentServiceTest extends TestCase
         $this->enrollment = app(CustomerEnrollmentService::class);
     }
 
-    public function test_find_at_venue_returns_existing_customer(): void
+    public function test_find_at_brand_returns_existing_customer(): void
     {
         $user = $this->createUser();
         $venue = $this->createVenue();
         $customer = $this->createCustomer($venue, $user);
 
-        $found = $this->enrollment->findAtVenue($user, $venue);
+        $found = $this->enrollment->findAtBrand($user, $venue);
 
         $this->assertNotNull($found);
         $this->assertTrue($found->is($customer));
@@ -44,7 +44,7 @@ class CustomerEnrollmentServiceTest extends TestCase
         $this->assertSame(0, $customer->stamps);
         $this->assertDatabaseHas('customers', [
             'user_id' => $user->id,
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
         ]);
     }
 
@@ -61,6 +61,6 @@ class CustomerEnrollmentServiceTest extends TestCase
         $this->assertFalse($second->wasRecentlyCreated);
         $this->assertTrue($second->is($first));
         $this->assertSame(3, $second->stamps);
-        $this->assertSame(1, Customer::query()->where('user_id', $user->id)->where('venue_id', $venue->id)->count());
+        $this->assertSame(1, Customer::query()->where('user_id', $user->id)->where('brand_id', $venue->brand_id)->count());
     }
 }

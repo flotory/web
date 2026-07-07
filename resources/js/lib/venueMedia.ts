@@ -6,7 +6,7 @@ import {
 } from '@/lib/defaultImages'
 import type { Venue } from '@/types'
 
-export type VenueMediaFields = Pick<Venue, 'logo' | 'logo_thumb' | 'cover_image' | 'cover_image_thumb' | 'category' | 'name'>
+export type VenueMediaFields = Pick<Venue, 'logo' | 'logo_thumb' | 'setup_logo_preview' | 'cover_image' | 'cover_image_thumb' | 'category' | 'name'>
 
 function pickMediaPath(...paths: Array<string | null | undefined>): string | null {
   for (const path of paths) {
@@ -30,7 +30,7 @@ export function venueLogoThumbUrl(
   categoryOverride?: VenueCategory | null,
 ): string {
   const category = resolveVenueCategory(venue, categoryOverride)
-  const uploaded = pickMediaPath(venue?.logo_thumb, venue?.logo)
+  const uploaded = pickMediaPath(venue?.logo_thumb, venue?.logo, venue?.setup_logo_preview)
   const seed = venue?.name ?? category
 
   return uploaded ?? defaultVenueLogoImage(category, seed)
@@ -41,7 +41,7 @@ export function venueLogoUrl(
   categoryOverride?: VenueCategory | null,
 ): string {
   const category = resolveVenueCategory(venue, categoryOverride)
-  const uploaded = pickMediaPath(venue?.logo, venue?.logo_thumb)
+  const uploaded = pickMediaPath(venue?.logo, venue?.logo_thumb, venue?.setup_logo_preview)
   const seed = venue?.name ?? category
 
   return uploaded ?? defaultVenueLogoImage(category, seed)
@@ -70,7 +70,7 @@ export function venueCoverUrl(
 }
 
 export function venueHasCustomLogo(venue: VenueMediaFields | null | undefined): boolean {
-  return Boolean(pickMediaPath(venue?.logo, venue?.logo_thumb))
+  return Boolean(pickMediaPath(venue?.logo, venue?.logo_thumb, venue?.setup_logo_preview))
 }
 
 export function venueHasCustomCover(venue: VenueMediaFields | null | undefined): boolean {

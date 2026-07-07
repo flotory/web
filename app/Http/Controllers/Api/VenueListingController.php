@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Venue;
 use App\Services\VenuePublicationService;
 use App\Support\VenueAccess;
+use App\Support\VenuePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,7 @@ class VenueListingController extends Controller
         $venue = $this->publication->submitForReview($venue, $request->user());
 
         return response()->json([
-            'venue' => $venue,
+            'venue' => VenuePresenter::apply($venue),
             'listing' => $this->publication->snapshot($venue),
         ]);
     }

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use App\Services\CampaignService;
 use App\Services\VenueAnalyticsService;
 use App\Support\DashboardPeriod;
+use App\Support\VenuePresenter;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -123,19 +125,29 @@ class VenueDashboardController extends Controller
             ];
         }
 
+        $brandIds = Venue::query()
+            ->whereIn('id', $venueIds)
+            ->pluck('brand_id')
+            ->unique()
+            ->values();
+
         $mostLoyal = DB::table('customers')
             ->join('users', 'customers.user_id', '=', 'users.id')
-            ->join('venues', 'customers.venue_id', '=', 'venues.id')
-            ->whereIn('customers.venue_id', $venueIds)
+            ->join('venues', function ($join): void {
+                $join->on('customers.brand_id', '=', 'venues.brand_id')
+                    ->where('venues.is_primary', true);
+            })
+            ->whereIn('customers.brand_id', $brandIds)
             ->orderByDesc('customers.stamps')
             ->limit(5)
             ->get([
                 'customers.id',
-                'customers.venue_id',
+                'customers.brand_id',
                 'customers.user_id',
                 'customers.stamps',
                 'users.name as user_name',
                 'users.email as user_email',
+                'venues.id as venue_id',
                 'venues.name as venue_name',
             ])
             ->map(fn ($row) => [
@@ -186,10 +198,14 @@ class VenueDashboardController extends Controller
      */
     private function ownerVenueIds(User $user): array
     {
-        return VenueUser::query()
+        $brandIds = BrandUser::query()
             ->where('user_id', $user->id)
             ->where('role', 'owner')
-            ->pluck('venue_id')
+            ->pluck('brand_id');
+
+        return Venue::query()
+            ->whereIn('brand_id', $brandIds)
+            ->pluck('id')
             ->all();
     }
 
@@ -210,7 +226,10 @@ class VenueDashboardController extends Controller
                 ->with('user:id,name,email')
                 ->orderByDesc('stamps')
                 ->limit(5)
-                ->get(['id', 'venue_id', 'user_id', 'stamps']),
+                ->get(['id', 'brand_id', 'user_id', 'stamps'])
+                ->map(fn ($customer) => array_merge($customer->toArray(), [
+                    'venue_id' => $customer->venue_id,
+                ])),
             'monthly_activity' => $activitySeries['rows'],
             'activity_series' => $activitySeries,
             'insights' => $this->analytics->insightsForVenue($venue, $period),

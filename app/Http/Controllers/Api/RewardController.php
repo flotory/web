@@ -60,7 +60,7 @@ class RewardController extends Controller
     public function update(StoreRewardRequest $request, Venue $venue, Reward $reward): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        VenueAccess::requireVenueModel($venue, $reward);
+        VenueAccess::requireBrandModel($venue, $reward);
 
         $payload = $request->validated();
         unset($payload['image']);
@@ -100,7 +100,7 @@ class RewardController extends Controller
     public function archive(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        VenueAccess::requireVenueModel($venue, $reward);
+        VenueAccess::requireBrandModel($venue, $reward);
 
         $reward->update(['active' => false]);
 
@@ -114,7 +114,7 @@ class RewardController extends Controller
     public function reactivate(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        VenueAccess::requireVenueModel($venue, $reward);
+        VenueAccess::requireBrandModel($venue, $reward);
 
         $reward->update(['active' => true]);
 
@@ -128,7 +128,7 @@ class RewardController extends Controller
     public function purge(Request $request, Venue $venue, Reward $reward): JsonResponse
     {
         VenueAccess::requireAccess($request->user(), $venue, ['owner']);
-        VenueAccess::requireVenueModel($venue, $reward);
+        VenueAccess::requireBrandModel($venue, $reward);
 
         if ($reward->active) {
             throw ValidationException::withMessages([

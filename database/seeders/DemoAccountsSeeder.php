@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use Illuminate\Database\Seeder;
 
 /**
@@ -17,11 +18,22 @@ class DemoAccountsSeeder extends Seeder
     {
         $this->call(AdminUserSeeder::class);
 
-        $venue = Venue::updateOrCreate(
+        $brand = Brand::updateOrCreate(
             ['slug' => 'demo-cafe'],
             [
                 'name' => 'Demo Cafe',
                 'category' => 'cafe',
+                'status' => Brand::STATUS_PUBLISHED,
+                'published_at' => now(),
+            ],
+        );
+
+        $venue = Venue::updateOrCreate(
+            ['slug' => 'demo-cafe'],
+            [
+                'brand_id' => $brand->id,
+                'is_primary' => true,
+                'name' => 'Demo Cafe',
                 'address' => '12 Market Street, Toruń',
             ],
         );
@@ -46,9 +58,9 @@ class DemoAccountsSeeder extends Seeder
             ],
         );
 
-        VenueUser::updateOrCreate(
+        BrandUser::updateOrCreate(
             [
-                'venue_id' => $venue->id,
+                'brand_id' => $brand->id,
                 'user_id' => $owner->id,
             ],
             [

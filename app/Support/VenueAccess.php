@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\BrandUser;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
 use Illuminate\Database\Eloquent\Model;
 
 class VenueAccess
@@ -14,10 +14,12 @@ class VenueAccess
         return $user->is_admin;
     }
 
-    public static function membership(User $user, Venue $venue): ?VenueUser
+    public static function membership(User $user, Venue $venue): ?BrandUser
     {
-        return VenueUser::query()
-            ->where('venue_id', $venue->loyaltyVenue()->id)
+        $venue->loadMissing('brand');
+
+        return BrandUser::query()
+            ->where('brand_id', $venue->brand_id)
             ->where('user_id', $user->id)
             ->first();
     }
@@ -72,5 +74,10 @@ class VenueAccess
     public static function requireVenueModel(Venue $venue, Model $model, string $venueKey = 'venue_id'): void
     {
         abort_unless((int) $model->getAttribute($venueKey) === (int) $venue->id, 404);
+    }
+
+    public static function requireBrandModel(Venue $venue, Model $model, string $brandKey = 'brand_id'): void
+    {
+        abort_unless((int) $model->getAttribute($brandKey) === (int) $venue->brand_id, 404);
     }
 }

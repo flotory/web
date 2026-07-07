@@ -21,12 +21,12 @@ class DemoCampaignsSeederTest extends TestCase
         $venue = Venue::query()->where('slug', 'demo-cafe')->firstOrFail();
 
         $this->assertSame(2, Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->count());
 
         $this->assertDatabaseHas('campaigns', [
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'name' => 'Demo · Bring Back (ended)',
             'status' => Campaign::STATUS_ENDED,
         ]);
@@ -34,7 +34,7 @@ class DemoCampaignsSeederTest extends TestCase
         $this->seed(DemoCampaignsSeeder::class);
 
         $this->assertSame(2, Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->count());
     }

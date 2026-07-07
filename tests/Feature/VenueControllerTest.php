@@ -311,8 +311,8 @@ class VenueControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('venue.average_check_amount', '5.00');
 
-        $this->assertDatabaseHas('venues', [
-            'id' => $venue->id,
+        $this->assertDatabaseHas('brands', [
+            'id' => $venue->brand_id,
             'average_check_amount' => 5,
         ]);
     }

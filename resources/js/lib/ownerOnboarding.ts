@@ -12,7 +12,7 @@ export const ONBOARDING_STEP_LABELS: Record<OnboardingStep, string> = {
   welcome: 'Welcome',
   profile: 'Venue profile',
   location: 'Location',
-  files: 'Logo & cover',
+  files: 'Files',
   reward: 'First reward',
   review: 'Submit',
 }
@@ -39,6 +39,14 @@ export function onboardingStepPath(step: OnboardingStep): string {
 export function venueNeedsOnboarding(venues: Venue[]): boolean {
   const ownerVenues = venues.filter((venue) => !venue.archived && venue.membership_role === 'owner')
   if (ownerVenues.length === 0) {
+    return false
+  }
+
+  const hasLiveBrand = ownerVenues.some(
+    (venue) => venue.status === 'published' || venue.status === 'pending_review',
+  )
+
+  if (hasLiveBrand) {
     return false
   }
 

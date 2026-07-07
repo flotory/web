@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Mail\OwnerInvitationMail;
 use App\Models\OwnerInvitation;
 use App\Models\User;
-use App\Models\VenueUser;
+use App\Models\BrandUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
@@ -36,7 +36,7 @@ class OwnerInvitationTest extends TestCase
             ->assertJsonPath('invitation.pipeline_stage', 'invited');
 
         $this->assertDatabaseHas('owner_invitations', [
-            'venue_id' => null,
+            'brand_id' => null,
             'email' => 'owner@harbor.test',
             'business_name' => 'Harbor Coffee',
         ]);
@@ -88,7 +88,7 @@ class OwnerInvitationTest extends TestCase
 
         $user = User::query()->where('email', 'accepted-owner@example.com')->firstOrFail();
 
-        $this->assertDatabaseMissing('venue_users', [
+        $this->assertDatabaseMissing('brand_users', [
             'user_id' => $user->id,
         ]);
 
@@ -113,7 +113,7 @@ class OwnerInvitationTest extends TestCase
 
         $this->assertDatabaseHas('owner_invitations', [
             'id' => $invitation->id,
-            'venue_id' => $user->fresh()->active_venue_id,
+            'brand_id' => $user->fresh()->activeVenue?->brand_id,
         ]);
     }
 
@@ -121,7 +121,7 @@ class OwnerInvitationTest extends TestCase
     {
         $venue = $this->createVenue(['name' => 'Provisioned Cafe']);
         $invitation = OwnerInvitation::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'email' => 'provisioned-owner@example.com',
             'token' => 'provisioned-token',
             'expires_at' => now()->addDay(),
@@ -135,8 +135,8 @@ class OwnerInvitationTest extends TestCase
 
         $user = User::query()->where('email', 'provisioned-owner@example.com')->firstOrFail();
 
-        $this->assertDatabaseHas('venue_users', [
-            'venue_id' => $venue->id,
+        $this->assertDatabaseHas('brand_users', [
+            'brand_id' => $venue->brand_id,
             'user_id' => $user->id,
             'role' => 'owner',
         ]);
@@ -145,7 +145,7 @@ class OwnerInvitationTest extends TestCase
 
         $this->getJson('/api/auth/me')
             ->assertOk()
-            ->assertJsonPath('capabilities.may_create_venue', false);
+            ->assertJsonPath('capabilities.may_create_venue', true);
     }
 
     public function test_existing_provisioned_owner_can_reset_password_via_invitation(): void
@@ -155,7 +155,7 @@ class OwnerInvitationTest extends TestCase
         $this->attachMember($venue, $owner, 'owner');
 
         $invitation = OwnerInvitation::query()->create([
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'email' => 'provisioned@example.com',
             'token' => 'provisioned-token',
             'expires_at' => now()->addDay(),
@@ -169,7 +169,7 @@ class OwnerInvitationTest extends TestCase
 
         $owner->refresh();
         $this->assertSame('Updated Owner', $owner->name);
-        $this->assertTrue(VenueUser::query()->where('venue_id', $venue->id)->where('user_id', $owner->id)->exists());
+        $this->assertTrue(BrandUser::query()->where('brand_id', $venue->brand_id)->where('user_id', $owner->id)->exists());
         $this->assertNotNull($invitation->fresh()->accepted_at);
     }
 
@@ -308,10 +308,10 @@ class OwnerInvitationTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    public function test_invited_owner_cannot_create_second_venue(): void
+    public function test_owner_can_create_additional_brand(): void
     {
         $user = $this->createUser(['email' => 'one-venue@example.com']);
-        $venue = $this->createVenue(['name' => 'First Cafe']);
+        $venue = $this->createPublishedVenue(['name' => 'First Cafe', 'slug' => 'first-cafe']);
         $this->attachMember($venue, $user, 'owner');
 
         OwnerInvitation::query()->create([
@@ -324,11 +324,21 @@ class OwnerInvitationTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->getJson('/api/auth/me')
-            ->assertJsonPath('capabilities.may_create_venue', false);
+            ->assertJsonPath('capabilities.may_create_venue', true);
 
         $this->postJson('/api/venues', [
             'name' => 'Second Cafe',
             'category' => 'cafe',
-        ])->assertForbidden();
+            'address' => '2 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'google_place_id' => 'second-cafe-place',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('venue.name', 'Second Cafe')
+            ->assertJsonPath('venue.status', 'draft');
+
+        $this->assertDatabaseCount('brands', 2);
+        $this->assertSame(2, BrandUser::query()->where('user_id', $user->id)->where('role', 'owner')->count());
     }
 }

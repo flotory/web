@@ -8,7 +8,7 @@ use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
+use App\Models\BrandUser;
 use App\Models\Visit;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -48,8 +48,8 @@ class DemoShowcaseSeeder extends Seeder
     public function run(): void
     {
         $venue = Venue::query()->where('slug', 'demo-cafe')->firstOrFail();
-        $this->ownerId = (int) VenueUser::query()
-            ->where('venue_id', $venue->id)
+        $this->ownerId = (int) BrandUser::query()
+            ->where('brand_id', $venue->brand_id)
             ->where('role', 'owner')
             ->value('user_id');
 
@@ -59,7 +59,7 @@ class DemoShowcaseSeeder extends Seeder
         $this->historyStart = $this->historyEnd->copy()->subMonths(self::MONTHS_OF_HISTORY)->startOfDay();
 
         $this->rewards = Reward::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('active', true)
             ->where('reward_type', 'milestone')
             ->orderBy('required_stamps')
@@ -94,22 +94,22 @@ class DemoShowcaseSeeder extends Seeder
         $this->command?->table(
             ['Metric', 'Count'],
             [
-                ['Customers', number_format(Customer::query()->where('venue_id', $venue->id)->count())],
+                ['Customers', number_format(Customer::query()->where('brand_id', $venue->brand_id)->count())],
                 ['Visits', number_format($visitCount)],
-                ['Reward unlocks', number_format(RewardUnlock::query()->whereHas('reward', fn ($q) => $q->where('venue_id', $venue->id))->count())],
-                ['Rewards claimed', number_format(RewardUnlock::query()->whereHas('reward', fn ($q) => $q->where('venue_id', $venue->id))->whereNotNull('claimed_at')->count())],
+                ['Reward unlocks', number_format(RewardUnlock::query()->whereHas('reward', fn ($q) => $q->where('brand_id', $venue->brand_id))->count())],
+                ['Rewards claimed', number_format(RewardUnlock::query()->whereHas('reward', fn ($q) => $q->where('brand_id', $venue->brand_id))->whereNotNull('claimed_at')->count())],
             ],
         );
     }
 
     private function purgeVenueLoyalty(Venue $venue): void
     {
-        $customerIds = Customer::query()->where('venue_id', $venue->id)->pluck('id');
+        $customerIds = Customer::query()->where('brand_id', $venue->brand_id)->pluck('id');
 
         Visit::query()->where('venue_id', $venue->id)->delete();
         RewardUnlock::query()->whereIn('customer_id', $customerIds)->delete();
         CustomerRewardCycle::query()->whereIn('customer_id', $customerIds)->delete();
-        Customer::query()->where('venue_id', $venue->id)->delete();
+        Customer::query()->where('brand_id', $venue->brand_id)->delete();
 
         User::query()
             ->where('email', 'like', 'demo-guest-%@demo.flotory.test')
@@ -151,7 +151,7 @@ class DemoShowcaseSeeder extends Seeder
             $joinedAt = $this->historyEnd->copy()->subDays($seedUser['joined_days_ago'])->setTime(12, 0);
 
             $customer = Customer::query()->create([
-                'venue_id' => $venue->id,
+                'brand_id' => $venue->brand_id,
                 'user_id' => $user->id,
                 'stamps' => 0,
                 'created_at' => $joinedAt,

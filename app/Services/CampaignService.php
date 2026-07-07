@@ -53,7 +53,7 @@ class CampaignService
     public function ownerActiveCampaignsFor(Venue $venue): array
     {
         return Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->orderByDesc('activated_at')
             ->get()
@@ -75,7 +75,12 @@ class CampaignService
     public function promotionForCustomer(Customer $customer, ?Carbon $now = null): ?array
     {
         $now ??= Carbon::now();
-        $venue = $customer->venue ?? Venue::query()->find($customer->venue_id);
+        $venue = $customer->venue;
+        if (! $venue) {
+            $customer->loadMissing('brand');
+            $venue = $customer->brand?->venues()->where('is_primary', true)->first()
+                ?? $customer->brand?->venues()->first();
+        }
         if (! $venue) {
             return null;
         }
@@ -106,7 +111,12 @@ class CampaignService
         $seen = [];
 
         foreach ($cards as $card) {
-            $venue = $card->venue ?? Venue::query()->find($card->venue_id);
+            $venue = $card->venue;
+            if (! $venue) {
+                $card->loadMissing('brand');
+                $venue = $card->brand?->venues()->where('is_primary', true)->first()
+                    ?? $card->brand?->venues()->first();
+            }
             if (! $venue) {
                 continue;
             }
@@ -158,7 +168,7 @@ class CampaignService
     private function visibleCampaignsForVenue(Venue $venue, Carbon $now): Collection
     {
         return Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('status', Campaign::STATUS_ACTIVE)
             ->orderByDesc('activated_at')
             ->get()
@@ -345,14 +355,23 @@ class CampaignService
     public function activate(Campaign $campaign): Campaign
     {
         $now = Carbon::now();
+        $venue = $campaign->venue;
+        if (! $venue) {
+            $campaign->loadMissing('brand');
+            $venue = $campaign->brand?->venues()->where('is_primary', true)->first()
+                ?? $campaign->brand?->venues()->first();
+        }
+
         $updates = [
             'status' => Campaign::STATUS_ACTIVE,
             'activated_at' => $campaign->activated_at ?? $now,
-            'audience_count' => $this->audienceCountFor(
-                $campaign->venue,
-                $campaign->template_id,
-                $campaign->config ?? [],
-            ),
+            'audience_count' => $venue
+                ? $this->audienceCountFor(
+                    $venue,
+                    $campaign->template_id,
+                    $campaign->config ?? [],
+                )
+                : 0,
         ];
 
         if (in_array($campaign->template_id, [CampaignTemplates::BRING_BACK, CampaignTemplates::QUIET_DAY], true)) {
@@ -374,13 +393,22 @@ class CampaignService
         $defaults = CampaignTemplates::defaults($campaign->template_id);
         $mergedConfig = array_merge($defaults['config'], $campaign->config ?? [], $config);
 
+        $venue = $campaign->venue;
+        if (! $venue) {
+            $campaign->loadMissing('brand');
+            $venue = $campaign->brand?->venues()->where('is_primary', true)->first()
+                ?? $campaign->brand?->venues()->first();
+        }
+
         $updates = [
             'config' => $mergedConfig,
-            'audience_count' => $this->audienceCountFor(
-                $campaign->venue,
-                $campaign->template_id,
-                $mergedConfig,
-            ),
+            'audience_count' => $venue
+                ? $this->audienceCountFor(
+                    $venue,
+                    $campaign->template_id,
+                    $mergedConfig,
+                )
+                : 0,
         ];
 
         if ($name !== null) {
@@ -399,7 +427,7 @@ class CampaignService
     private function inactiveCustomerCount(Venue $venue, int $inactiveDays): int
     {
         return Customer::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where(function (Builder $query) use ($inactiveDays): void {
                 $query
                     ->whereRaw(
@@ -418,7 +446,7 @@ class CampaignService
     private function loyalCustomerCount(Venue $venue, int $minLifetimeStamps, int $minRewardsClaimed): int
     {
         return Customer::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where(function (Builder $query) use ($minLifetimeStamps, $minRewardsClaimed): void {
                 $query
                     ->where('lifetime_stamps', '>=', $minLifetimeStamps)

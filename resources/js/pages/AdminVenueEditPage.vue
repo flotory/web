@@ -175,9 +175,6 @@ onMounted(loadPage)
         <p class="mt-2 text-ink-muted">Edit venue details on behalf of the owner.</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <AppButton variant="secondary" @click="router.push(`/admin/manage-venues/${venueId}/design`)">
-          Design previews
-        </AppButton>
         <AppButton variant="secondary" @click="router.push('/admin/manage-venues')">
           Back to Manage venues
         </AppButton>

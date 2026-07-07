@@ -33,7 +33,7 @@ class DemoCampaignsSeeder extends Seeder
 
         Campaign::query()->updateOrCreate(
             [
-                'venue_id' => $venue->id,
+                'brand_id' => $venue->brand_id,
                 'name' => 'Demo · Quiet Day Promotion',
             ],
             [
@@ -58,7 +58,7 @@ class DemoCampaignsSeeder extends Seeder
 
         Campaign::query()->updateOrCreate(
             [
-                'venue_id' => $venue->id,
+                'brand_id' => $venue->brand_id,
                 'name' => 'Demo · Happy Hour',
             ],
             [
@@ -82,7 +82,7 @@ class DemoCampaignsSeeder extends Seeder
 
         Campaign::query()->updateOrCreate(
             [
-                'venue_id' => $venue->id,
+                'brand_id' => $venue->brand_id,
                 'name' => 'Demo · Bring Back (ended)',
             ],
             [

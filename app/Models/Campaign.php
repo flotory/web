@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Campaign extends Model
 {
@@ -19,7 +20,7 @@ class Campaign extends Model
     public const STATUS_ENDED = 'ended';
 
     protected $fillable = [
-        'venue_id',
+        'brand_id',
         'template_id',
         'name',
         'status',
@@ -43,9 +44,15 @@ class Campaign extends Model
         ];
     }
 
-    public function venue(): BelongsTo
+    public function brand(): BelongsTo
     {
-        return $this->belongsTo(Venue::class);
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function venue(): HasOne
+    {
+        return $this->hasOne(Venue::class, 'brand_id', 'brand_id')
+            ->where('is_primary', true);
     }
 
     public function creator(): BelongsTo

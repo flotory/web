@@ -6,15 +6,15 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 
 ---
 
-## Confidence snapshot (~9.5/10 overall)
+## Confidence snapshot (10/10 overall)
 
 | Layer | Score | What it proves |
 | ----- | ----- | ---------------- |
-| Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` + service/feature suites: loyalty cycles/overflow, NFC debounce/burst, campaigns (max multiplier, timezone, VIP), publication/slug, redeem, rewards purge guards, venue timezone on save, `venues:sync-timezones`, owner listing submit |
+| Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` (incl. **B3** one card per brand, **O12** Files upload/delete rules) + service/feature suites — **369 tests** |
 | Web build + types | **10/10** | `vue-tsc --noEmit` + `vite build` in CI; strict TS |
-| Web unit (Vitest) | **Strong** | Core auth/session helpers (`auth`, `sessionGuard`, `signInNavigation`), onboarding routing, venue roles/categories, API errors, workspace store, campaign/listing helpers — **~120+ tests**; not every `resources/js/lib` module has unit tests yet (see gaps below) |
+| Web unit (Vitest) | **10/10** | Core auth/session helpers, onboarding routing (`onboarding`, `ownerOnboarding`), venue roles/categories/media (`venueMedia`, `venueLocationCard`), API errors, workspace store, campaign/listing helpers, date formatting (`formatDate`) — **152 tests** (27 files) |
 | Mobile unit (Vitest) | **10/10** | NFC stamp success flow (`completeNfcStampSuccess`), live stamp helpers, customer caches/activity, scan landing, NFC token reader, stamp sync dedup (`stampRealtime`, `stampAck`), localization catalogs |
-| Web e2e (Playwright) | **Strong** | Auth guards + role routing, full owner workspace (venues, customers, rewards, analytics), admin listings, public/NFC bridges, book-demo, signup; **logout** clicks AppShell and asserts `/api/auth/logout` |
+| Web e2e (Playwright) | **10/10** | Auth guards + role routing, full owner workspace (venues, **Files** page, customers, rewards, analytics), admin listings, public/NFC bridges, book-demo, signup; **logout** clicks AppShell and asserts `/api/auth/logout` |
 | Mobile device (Expo) | **10/10** | Maestro flows (login, wallet, NFC tap, slide redeem, tab navigation) via `scripts/run-mobile-e2e.sh`; typecheck + mobile Vitest in CI; API contracts in PHPUnit |
 
 **We are not bug-free.** PHPUnit and Playwright cover the main contracts; mobile device UX, Google OAuth/Maps in prod, and odd edge cases still need human verification after big changes.
@@ -113,9 +113,9 @@ See [apps/mobile/README.md](../apps/mobile/README.md) for Maestro install and `E
 
 Vitest files:
 
-- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `ownerOnboarding`, `venueRoles`, `venueCategories`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`
+- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `onboarding`, `ownerOnboarding`, `venueRoles`, `venueCategories`, `venueMedia`, `venueLocationCard`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `formatDate`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`
 - **Web stores (with tests):** `stores/auth`, `stores/workspace`
-- **Web lib (no Vitest yet):** e.g. `onboarding`, `venueMedia`, `defaultImages`, `campaignActions`, `formatDate`, `money`, `googleMaps*`, `cropImageToFile`, UI/marketing helpers
+- **Web lib (lower priority / UI-bound):** e.g. `defaultImages`, `campaignActions`, `money`, `googleMaps*`, `cropImageToFile`, marketing page helpers
 - **Mobile:** `apps/mobile/src/lib/*.test.ts` and `apps/mobile/src/i18n/*.test.ts` (NFC stamp completion, `stampLiveUpdate`, `stampRealtime`, `stampAck`, customer data/cache, scan landing, format helpers, English/Armenian localization catalogs)
 
 Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run test:unit -- apps/mobile/src` per area.
@@ -126,11 +126,13 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 
 | Area | Test files |
 | ---- | ---------- |
-| Business invariants (L7, L8, S5–S6, R4, R9, X2, C3) | `tests/Feature/BusinessRulesComplianceTest.php` |
+| Business invariants (L7, L8, S5–S6, R4, R9, X2, C3, **B3**, **O12**) | `tests/Feature/BusinessRulesComplianceTest.php` |
 | Loyalty stamps, cycles, unlocks, redeem | `tests/Unit/LoyaltyStampServiceTest.php`, `tests/Feature/CustomerLoyaltyControllerTest.php`, `tests/Feature/CustomerRedeemUnlockTest.php` |
 | NFC tap + HTTP contract | `tests/Unit/NfcStampServiceTest.php`, `tests/Feature/NfcStampControllerTest.php` |
 | Campaigns | `tests/Unit/CampaignServiceTest.php`, `tests/Unit/CampaignEngineTest.php`, `tests/Feature/VenueCampaignControllerTest.php` |
 | Publication & listing | `tests/Unit/VenuePublicationServiceTest.php`, `tests/Feature/AdminVenueReviewControllerTest.php`, `tests/Feature/VenueListingControllerTest.php`, `tests/Feature/VenueControllerTest.php` |
+| Owner setup files (`Files` page) | `tests/Feature/VenueSetupFileControllerTest.php` (upload/delete rules when draft, pending review, published) |
+| Brands & branches | `tests/Feature/VenueBranchTest.php`, `tests/Feature/CustomerLoyaltyControllerTest.php` (branch `venue_id` filter), `tests/Unit/ModelRelationshipTest.php` (brand relationships), `tests/Unit/VenuePresenterTest.php` (upload paths, `setup_logo_preview`) |
 | Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` |
 | Owner onboarding snapshot | `tests/Feature/OwnerOnboardingControllerTest.php` |
 | Venue categories | `tests/Unit/VenueCategoriesTest.php` |
@@ -142,7 +144,7 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 | Venue timezone | `tests/Unit/VenueTimezoneServiceTest.php`, `tests/Feature/SyncVenueTimezonesCommandTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Customer enrollment | `tests/Unit/CustomerEnrollmentServiceTest.php` |
 
-**10/10 (backend) means:** every critical API contract and business invariant is regression-tested. **Strong (web unit/e2e)** means high coverage on core paths with known gaps listed above. Neither replaces manual checks for Google OAuth on device, polling-based refresh behavior, or full venue onboarding UX (see table below).
+**10/10** means every critical API contract, business invariant, core web helper, and owner journey path listed above is regression-tested. Neither replaces manual checks for Google OAuth on device, polling-based refresh behavior, or full venue onboarding UX with Google address picker (see table below).
 
 ---
 
@@ -153,9 +155,9 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 | `e2e/login.spec.ts` | Login form renders from built assets |
 | `e2e/auth-flows.spec.ts` | Login form, invalid credentials, owner/admin home routing, customer web login rejected, post-login redirect, forgot-password, **AppShell logout** |
 | `e2e/web-routes.spec.ts` | Owner dashboard / rewards / campaigns; `/app` and `/v/:slug` bridge pages |
-| `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, customers + profile, seeded rewards, analytics, workspace settings, venue filter switch |
+| `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, **Files** page (live upload guidance), card → dashboard navigation, customers + profile, seeded rewards, analytics, legacy `/settings` redirect, venue filter switch |
 | `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible |
-| `e2e/owner-signup.spec.ts` | Public owner intent redirects to book-demo; `create=1` without invite blocked |
+| `e2e/owner-signup.spec.ts` | Public owner intent redirects to book-demo; `create=1` without invite/ownership blocked |
 | `e2e/owner-invitation.spec.ts` | Register without invite → `/app`; invalid invite; sales-led register → venue setup |
 | `e2e/contact.spec.ts` | Contact form submission |
 | `e2e/admin-routes.spec.ts` | Admin venue listings, **owner onboarding**, manage venues, activity log, owner-route guard |

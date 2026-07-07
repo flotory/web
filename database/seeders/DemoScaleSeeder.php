@@ -8,7 +8,8 @@ use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\VenueUser;
+use App\Models\Brand;
+use App\Models\BrandUser;
 use App\Models\Visit;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -121,25 +122,34 @@ class DemoScaleSeeder extends Seeder
             $city = $this->rng->randomElement($cities);
             $coordinates = $this->coordinatesForCity($city);
 
-            $venue = Venue::query()->create([
+            $brand = Brand::query()->create([
                 'name' => $name,
                 'slug' => $slug,
                 'category' => $category,
-                'address' => $this->rng->buildingNumber().' '.$this->rng->randomElement($streets).', '.$city,
-                'latitude' => $coordinates['latitude'],
-                'longitude' => $coordinates['longitude'],
                 'phone' => $this->rng->numerify('###-###-####'),
                 'website' => "https://{$slug}.example.com",
-                'status' => Venue::STATUS_PUBLISHED,
+                'status' => Brand::STATUS_PUBLISHED,
                 'published_at' => $this->randomPastTimestamp(30, 90),
                 'created_at' => $this->randomPastTimestamp(120, 150),
                 'updated_at' => now(),
             ]);
 
+            $venue = Venue::query()->create([
+                'brand_id' => $brand->id,
+                'is_primary' => true,
+                'name' => $name,
+                'slug' => $slug,
+                'address' => $this->rng->buildingNumber().' '.$this->rng->randomElement($streets).', '.$city,
+                'latitude' => $coordinates['latitude'],
+                'longitude' => $coordinates['longitude'],
+                'created_at' => $brand->created_at,
+                'updated_at' => now(),
+            ]);
+
             $owner->forceFill(['active_venue_id' => $venue->id])->save();
 
-            VenueUser::query()->create([
-                'venue_id' => $venue->id,
+            BrandUser::query()->create([
+                'brand_id' => $brand->id,
                 'user_id' => $owner->id,
                 'role' => 'owner',
             ]);
@@ -151,7 +161,7 @@ class DemoScaleSeeder extends Seeder
 
             foreach ($milestones as [$stamps, $title, $description]) {
                 $reward = Reward::query()->create([
-                    'venue_id' => $venue->id,
+                    'brand_id' => $brand->id,
                     'title' => $title,
                     'description' => $description,
                     'required_stamps' => $stamps,
@@ -217,7 +227,7 @@ class DemoScaleSeeder extends Seeder
     /**
      * @param  list<int>  $venueIds
      * @param  list<int>  $guestUserIds
-     * @return list<array{customer_id: int, venue_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, owner_id: int, joined_at: Carbon}>
+     * @return list<array{customer_id: int, venue_id: int, brand_id: int, user_id: int, rewards: list<array{id: int, required_stamps: int}>, owner_id: int, joined_at: Carbon}>
      */
     private function seedCustomers(array $venueIds, array $guestUserIds): array
     {
@@ -230,9 +240,10 @@ class DemoScaleSeeder extends Seeder
 
             foreach ($pickedVenues as $venueId) {
                 $joinedAt = $this->randomPastTimestamp(14, 175);
+                $brandId = (int) Venue::query()->whereKey($venueId)->value('brand_id');
 
                 $customer = Customer::query()->create([
-                    'venue_id' => $venueId,
+                    'brand_id' => $brandId,
                     'user_id' => $userId,
                     'stamps' => 0,
                     'created_at' => $joinedAt,
@@ -250,6 +261,7 @@ class DemoScaleSeeder extends Seeder
                 $customers[] = [
                     'customer_id' => $customer->id,
                     'venue_id' => $venueId,
+                    'brand_id' => $brandId,
                     'user_id' => $userId,
                     'rewards' => $this->venueRewards[$venueId],
                     'owner_id' => $this->venueOwnerIds[$venueId],

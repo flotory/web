@@ -39,7 +39,7 @@ class VenueCampaignControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('campaigns', [
-            'venue_id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'template_id' => CampaignTemplates::BRING_BACK,
             'status' => Campaign::STATUS_ACTIVE,
         ]);
@@ -63,7 +63,7 @@ class VenueCampaignControllerTest extends TestCase
             'activate' => true,
         ])->assertCreated();
 
-        $this->assertSame(2, Campaign::query()->where('venue_id', $venue->id)->where('status', Campaign::STATUS_ACTIVE)->count());
+        $this->assertSame(2, Campaign::query()->where('brand_id', $venue->brand_id)->where('status', Campaign::STATUS_ACTIVE)->count());
     }
 
     public function test_campaign_index_returns_enriched_campaigns_and_active_list(): void

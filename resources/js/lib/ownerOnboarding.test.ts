@@ -39,12 +39,14 @@ describe('owner onboarding helpers', () => {
     expect(shouldUseOwnerOnboarding(false, [venue()])).toBe(true)
     expect(shouldUseOwnerOnboarding(false, [venue({ status: 'pending_review' })])).toBe(false)
     expect(shouldUseOwnerOnboarding(false, [venue({ status: 'rejected' })])).toBe(true)
+    expect(shouldUseOwnerOnboarding(true, [venue({ status: 'published', id: 1 }), venue({ status: 'draft', id: 2 })])).toBe(false)
   })
 
   it('detects draft and rejected venues that still need onboarding', () => {
     expect(venueNeedsOnboarding([venue({ status: 'draft' })])).toBe(true)
     expect(venueNeedsOnboarding([venue({ status: 'rejected' })])).toBe(true)
     expect(venueNeedsOnboarding([venue({ status: 'published' })])).toBe(false)
+    expect(venueNeedsOnboarding([venue({ status: 'published', id: 1 }), venue({ status: 'draft', id: 2 })])).toBe(false)
     expect(venueNeedsOnboarding([])).toBe(false)
   })
 
@@ -55,7 +57,7 @@ describe('owner onboarding helpers', () => {
   })
 
   it('labels the logo and cover step', () => {
-    expect(ONBOARDING_STEP_LABELS.files).toBe('Logo & cover')
+    expect(ONBOARDING_STEP_LABELS.files).toBe('Files')
   })
 
   it('resolves the next incomplete onboarding step from listing items', () => {
@@ -65,21 +67,21 @@ describe('owner onboarding helpers', () => {
     expect(resolveOnboardingStep(draftVenue, listing([
       { key: 'address', label: 'Google address', complete: false, hint: '' },
       { key: 'category', label: 'Venue category', complete: true, hint: '' },
-      { key: 'setup_files', label: 'Logo & cover', complete: false, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: false, hint: '' },
       { key: 'rewards', label: 'At least one active reward', complete: false, hint: '' },
     ]))).toBe('location')
 
     expect(resolveOnboardingStep(draftVenue, listing([
       { key: 'address', label: 'Google address', complete: true, hint: '' },
       { key: 'category', label: 'Venue category', complete: true, hint: '' },
-      { key: 'setup_files', label: 'Logo & cover', complete: false, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: false, hint: '' },
       { key: 'rewards', label: 'At least one active reward', complete: false, hint: '' },
     ]))).toBe('files')
 
     expect(resolveOnboardingStep(draftVenue, listing([
       { key: 'address', label: 'Google address', complete: true, hint: '' },
       { key: 'category', label: 'Venue category', complete: true, hint: '' },
-      { key: 'setup_files', label: 'Logo & cover', complete: true, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: true, hint: '' },
       { key: 'rewards', label: 'At least one active reward', complete: true, hint: '' },
     ]))).toBe('review')
   })
@@ -89,7 +91,7 @@ describe('owner onboarding helpers', () => {
     const partial = listing([
       { key: 'address', label: 'Google address', complete: true, hint: '' },
       { key: 'category', label: 'Venue category', complete: true, hint: '' },
-      { key: 'setup_files', label: 'Logo & cover', complete: false, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: false, hint: '' },
       { key: 'rewards', label: 'At least one active reward', complete: false, hint: '' },
     ])
 

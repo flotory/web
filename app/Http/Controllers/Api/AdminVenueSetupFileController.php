@@ -14,7 +14,9 @@ class AdminVenueSetupFileController extends Controller
 
     public function index(int $venue): JsonResponse
     {
-        $venue = Venue::query()->withTrashed()->findOrFail($venue);
+        $venue = Venue::query()->withTrashed()->with('brand')->findOrFail($venue);
+        $brand = $venue->brand;
+        abort_if($brand === null, 404);
 
         $files = $venue->setupFiles()
             ->with('uploader:id,name,email')
@@ -25,10 +27,10 @@ class AdminVenueSetupFileController extends Controller
         return response()->json([
             'files' => $files,
             'requirements' => [
-                'files_uploaded' => $this->setupFiles->hasAnyFiles($venue),
-                'file_count' => $this->setupFiles->fileCount($venue),
-                'final_logo_applied' => filled($venue->logo),
-                'final_cover_applied' => filled($venue->cover_image),
+                'files_uploaded' => $this->setupFiles->hasAnyFiles($brand),
+                'file_count' => $this->setupFiles->fileCount($brand),
+                'final_logo_applied' => filled($brand->logo),
+                'final_cover_applied' => filled($brand->cover_image),
             ],
         ]);
     }

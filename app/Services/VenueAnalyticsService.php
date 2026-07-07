@@ -58,7 +58,7 @@ class VenueAnalyticsService
             'milestones_unlocked' => $this->rewardUnlocksBetween($venue, $period->start, $period->end),
             'cycles_completed' => DB::table('customer_reward_cycles')
                 ->join('customers', 'customer_reward_cycles.customer_id', '=', 'customers.id')
-                ->where('customers.venue_id', $venue->id)
+                ->where('customers.brand_id', $venue->brand_id)
                 ->whereBetween('customer_reward_cycles.completed_at', [$period->start, $period->end])
                 ->count(),
         ];
@@ -117,8 +117,9 @@ class VenueAnalyticsService
     {
         $period ??= DashboardPeriod::fromPreset(DashboardPeriod::DEFAULT_PRESET);
         $stats = $this->statsForVenue($venue, $period);
-        $averageCheck = $venue->average_check_amount !== null
-            ? (float) $venue->average_check_amount
+        $venue->loadMissing('brand');
+        $averageCheck = $venue->brand?->average_check_amount !== null
+            ? (float) $venue->brand->average_check_amount
             : null;
 
         return [
@@ -211,7 +212,7 @@ class VenueAnalyticsService
 
         $topReward = DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
+            ->where('rewards.brand_id', $venue->brand_id)
             ->whereNotNull('reward_unlocks.claimed_at')
             ->selectRaw('rewards.title, COUNT(*) as claimed_count')
             ->groupBy('rewards.id', 'rewards.title')
@@ -286,7 +287,7 @@ class VenueAnalyticsService
     private function customersCloseToNextReward(Venue $venue): int
     {
         $milestones = Reward::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->where('active', true)
             ->where('reward_type', 'milestone')
             ->orderBy('required_stamps')
@@ -448,7 +449,7 @@ class VenueAnalyticsService
             });
 
         RewardUnlock::query()
-            ->whereHas('customer', fn ($query) => $query->where('venue_id', $venue->id))
+            ->whereHas('customer', fn ($query) => $query->where('brand_id', $venue->brand_id))
             ->whereBetween('unlocked_at', [$period->start, $period->end])
             ->with(['customer.user:id,name', 'reward:id,title'])
             ->orderByDesc('unlocked_at')
@@ -474,7 +475,7 @@ class VenueAnalyticsService
             });
 
         Customer::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->whereBetween('created_at', [$period->start, $period->end])
             ->with('user:id,name')
             ->latest('created_at')
@@ -490,7 +491,7 @@ class VenueAnalyticsService
             });
 
         Reward::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->whereBetween('created_at', [$period->start, $period->end])
             ->latest('created_at')
             ->limit(10)
@@ -504,7 +505,7 @@ class VenueAnalyticsService
             });
 
         Campaign::query()
-            ->where('venue_id', $venue->id)
+            ->where('brand_id', $venue->brand_id)
             ->whereNotNull('activated_at')
             ->whereBetween('activated_at', [$period->start, $period->end])
             ->latest('activated_at')
@@ -673,7 +674,7 @@ class VenueAnalyticsService
     {
         return (int) DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
+            ->where('rewards.brand_id', $venue->brand_id)
             ->whereBetween('reward_unlocks.unlocked_at', [$start, $end])
             ->count();
     }
@@ -687,7 +688,7 @@ class VenueAnalyticsService
 
         return DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
+            ->where('rewards.brand_id', $venue->brand_id)
             ->whereBetween('reward_unlocks.unlocked_at', [$period->start, $period->end])
             ->selectRaw('rewards.id as reward_id')
             ->selectRaw('rewards.title')
@@ -747,7 +748,7 @@ class VenueAnalyticsService
     {
         $row = DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
+            ->where('rewards.brand_id', $venue->brand_id)
             ->whereBetween('reward_unlocks.unlocked_at', [$start, $end])
             ->selectRaw('COUNT(*) as unlocked_count')
             ->selectRaw('SUM(CASE WHEN reward_unlocks.claimed_at IS NOT NULL THEN 1 ELSE 0 END) as claimed_count')
@@ -763,7 +764,7 @@ class VenueAnalyticsService
     {
         return (int) DB::table('reward_unlocks')
             ->join('rewards', 'reward_unlocks.reward_id', '=', 'rewards.id')
-            ->where('rewards.venue_id', $venue->id)
+            ->where('rewards.brand_id', $venue->brand_id)
             ->whereNotNull('reward_unlocks.claimed_at')
             ->whereBetween('reward_unlocks.claimed_at', [$start, $end])
             ->count();

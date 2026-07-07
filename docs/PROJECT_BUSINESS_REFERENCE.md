@@ -4,7 +4,7 @@
 
 **Canonical rules:** [BUSINESS_RULES.md](./BUSINESS_RULES.md) wins over everything else. Update that file (and this one) when behavior is intentionally changed.
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-07-02
 
 ---
 
@@ -31,7 +31,9 @@ Flotory is digital loyalty for independent cafes, bars, restaurants, and bakerie
 | Term | Audience | Meaning |
 |------|----------|---------|
 | **Stamp** | Customer UI | Progress unit on a loyalty card |
-| **Visit** | Owner analytics | One row in `visits` per stamp award |
+| **Visit** | Owner analytics | One row in `visits` per stamp award; `venue_id` = tap **location** |
+| **Brand** | Internal + APIs | Loyalty program — rewards, campaigns, customer wallet, listing status |
+| **Venue / branch** | Owner + discover | Physical location under a brand; branches share one stamp card |
 | **Reward / milestone** | Both | Threshold (`required_stamps`) that unlocks a perk |
 | **Unlock** | Both | Earned reward row (`reward_unlocks`) — not yet redeemed |
 | **Claim / redeem** | Both | Customer slides to redeem; sets `claimed_at` |
@@ -46,24 +48,29 @@ Customer copy must **never** say “visits.” Owner analytics may say “visits
 
 ```text
 User
- ├── VenueUser (role: owner) ──► Venue
+ ├── BrandUser (role: owner) ──► Brand
  │                                 ├── Reward (milestones)
  │                                 ├── Campaign (multipliers)
- │                                 └── NfcTag (physical stands)
- └── Customer (one card per user+venue)
-      ├── stamps (current cycle balance)
-      ├── Visit (analytics, 1 per stamp)
-      ├── CustomerRewardCycle
-      ├── RewardUnlock ──► Reward
-      └── StampEvent (NFC audit / debounce)
+ │                                 └── Customer (one card per user+brand)
+ │                                      ├── stamps (current cycle balance)
+ │                                      ├── Visit (analytics; venue_id = tap location)
+ │                                      ├── CustomerRewardCycle
+ │                                      ├── RewardUnlock ──► Reward
+ │                                      └── StampEvent (NFC audit / debounce)
+ └── (same user may also be Customer at other brands)
+
+Brand ──► Venue (primary + branches)
+            └── NfcTag (per location)
 ```
 
 **Key invariants**
 
-- One loyalty card per `(user_id, venue_id)`.
+- One loyalty card per `(user_id, brand_id)`.
+- API `customers.venue_id` = **primary** location id (compat); `brand_id` = program id.
 - Unlock + redeem live on the **same** `reward_unlocks` row.
 - Stamps are **not** deducted when redeeming.
-- Cycle completes at the **max** `required_stamps` among **active** milestones; stamps reset to 0; **unclaimed unlocks from prior cycles stay redeemable**.
+- Cycle completes at the **max** `required_stamps` among **active** milestones on the **brand**; stamps reset to 0; **unclaimed unlocks from prior cycles stay redeemable**.
+- NFC at a branch credits the brand wallet; `visits` / `stamp_events` use the branch `venue_id`.
 
 ---
 
@@ -75,16 +82,16 @@ User
 draft → pending_review → published
 ```
 
-- Customers can only **join** or **discover** venues with status **`published`** (and not soft-deleted).
+- Customers can only **join** or **discover** brands with status **`published`** (and not soft-deleted).
 - Owner completes listing checklist → submits → platform admin approves.
 
 ### 4.2 Customer join
 
 | Path | Trigger | Rule |
 |------|---------|------|
-| **QR bridge** | Scan QR → `/v/{slug}` web landing → open app | `POST /api/venues/{slug}/join` — venue must be **published** |
-| **Discover** | Venues tab in app | Lists **published** venues only |
-| **NFC auto-join** | First tap at counter stand | `NfcStampService` calls `findOrJoin` — still requires **published** venue |
+| **QR bridge** | Scan QR → `/v/{slug}` web landing → open app | `POST /api/venues/{slug}/join` — brand must be **published** (any location slug) |
+| **Discover** | Venues tab in app | Lists **published** primary locations with `branches` |
+| **NFC auto-join** | First tap at counter stand | `NfcStampService` calls `findOrJoin` — still requires **published** brand |
 
 Re-joining returns the **existing** card (U2).
 
@@ -143,9 +150,10 @@ Re-joining returns the **existing** card (U2).
 
 | Action | Endpoint |
 |--------|----------|
-| List cards + home campaigns | `GET /api/customer/cards` |
-| Single card + promotion | `GET /api/customer/cards?venue_id={id}` |
+| List cards + home campaigns | `GET /api/customer/cards` (each card includes `brand_id` + primary `venue_id`) |
+| Single card + promotion | `GET /api/customer/cards?venue_id={id}` — `{id}` may be **branch** or primary; resolves to brand card |
 | Join venue | `POST /api/venues/{slug}/join` |
+| Owner branches | `GET/POST/PATCH/DELETE /api/venues/{venue}/branches` |
 | NFC stamp | `POST /api/nfc/t/{token}/stamp` |
 | Wallet unlocks | `GET /api/customer/rewards/wallet` |
 | Slide redeem | `POST /api/customer/rewards/unlocks/{unlock}/redeem` |
@@ -257,13 +265,15 @@ NFC taps hit **both**:
 
 | Scenario | Expected |
 |----------|----------|
-| Join `draft` / `pending_review` venue via API | **Rejected** — not public |
-| NFC tap at unpublished venue | **Rejected** at `assertPublic` |
-| Landing page `/v/{slug}` for draft | **404** / not public |
-| First NFC tap at published venue | Auto-creates card (`nfc_auto_join`), first stamp in same request |
-| User joins via QR, then taps NFC | Existing card — no duplicate |
-| Soft-deleted venue | No new stamps (E8); card may still show in wallet |
-| Owner changes slug after publish | **Blocked** — slug locked when `published` (API + owner/admin UI) |
+| Join `draft` / `pending_review` brand via API | **Rejected** — not public |
+| NFC tap at unpublished brand | **Rejected** at `assertPublic` |
+| Landing page `/v/{slug}` for draft brand | **404** / not public |
+| Join via **branch** slug | Enrolls on **brand** — same card as primary |
+| First NFC tap at published brand (any branch) | Auto-creates card (`nfc_auto_join`), first stamp in same request |
+| User joins via QR at branch A, taps NFC at branch B | Same brand card — stamps accumulate |
+| Soft-deleted brand | No new stamps (E8); card may still show in wallet |
+| Owner adds branch after publish | Branch starts **pending review** — not public until admin approves; shares rewards and wallet once live (B6) |
+| Owner changes slug after publish | **Blocked** — brand slug locked when `published` |
 
 **Inconsistency to watch:** Marketing says “scan QR to join” but stamps require **NFC** — QR is onboarding only, not stamping.
 
@@ -391,4 +401,5 @@ Copy this into QA tickets or pre-release review.
 
 | Date | Change |
 |------|--------|
+| 2026-07-02 | Brand + venue model: branches, shared wallet, per-location NFC analytics, API `brand_id` |
 | 2026-06-08 | Initial consolidated reference — business summary, flows, edge-case audit, doc/code mismatch flags |

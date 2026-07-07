@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -57,12 +58,24 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function memberships(): HasMany
     {
-        return $this->hasMany(VenueUser::class);
+        return $this->hasMany(BrandUser::class);
     }
 
-    public function venues(): BelongsToMany
+    public function venues(): HasManyThrough
     {
-        return $this->belongsToMany(Venue::class, 'venue_users')
+        return $this->hasManyThrough(
+            Venue::class,
+            BrandUser::class,
+            'user_id',
+            'brand_id',
+            'id',
+            'brand_id',
+        );
+    }
+
+    public function brands(): BelongsToMany
+    {
+        return $this->belongsToMany(Brand::class, 'brand_users')
             ->withPivot(['role'])
             ->withTimestamps();
     }

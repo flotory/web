@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Brand;
 use App\Models\User;
 use App\Models\Venue;
 use App\Support\AuditLog;
@@ -11,7 +12,6 @@ class VenuePublicationService
 {
     public function __construct(
         private VenueSetupFileService $setupFiles,
-        private VenueBranchService $branches,
     ) {}
 
     /**
@@ -19,7 +19,8 @@ class VenuePublicationService
      */
     public function checklistItems(Venue $venue): array
     {
-        $activeRewards = $venue->rewards()->where('active', true)->count();
+        $brand = $this->brandFor($venue);
+        $activeRewards = $brand->rewards()->where('active', true)->count();
 
         return [
             [
@@ -31,13 +32,13 @@ class VenuePublicationService
             [
                 'key' => 'category',
                 'label' => 'Venue category',
-                'complete' => filled($venue->category),
+                'complete' => filled($brand->category),
                 'hint' => 'Choose the category that best describes your business.',
             ],
             [
                 'key' => 'setup_files',
-                'label' => 'Logo & cover',
-                'complete' => $this->setupFiles->hasAnyFiles($venue),
+                'label' => 'Files',
+                'complete' => $this->setupFiles->hasAnyFiles($brand),
                 'hint' => 'Upload your logo and a cover photo for the app listing.',
             ],
             [
@@ -63,24 +64,26 @@ class VenuePublicationService
      */
     public function snapshot(Venue $venue): array
     {
+        $brand = $this->brandFor($venue);
         $items = $this->checklistItems($venue);
         $ready = collect($items)->every(fn (array $item): bool => $item['complete']);
-        $status = $venue->status ?? Venue::STATUS_DRAFT;
+        $status = $brand->status ?? Brand::STATUS_DRAFT;
 
         return [
             'status' => $status,
-            'review_note' => $venue->review_note,
-            'submitted_at' => $venue->submitted_at?->toIso8601String(),
-            'published_at' => $venue->published_at?->toIso8601String(),
+            'review_note' => $brand->review_note,
+            'submitted_at' => $brand->submitted_at?->toIso8601String(),
+            'published_at' => $brand->published_at?->toIso8601String(),
             'ready_to_submit' => $ready,
-            'can_submit' => $ready && in_array($status, [Venue::STATUS_DRAFT, Venue::STATUS_REJECTED], true),
-            'is_public' => $status === Venue::STATUS_PUBLISHED,
+            'can_submit' => $ready && in_array($status, [Brand::STATUS_DRAFT, Brand::STATUS_REJECTED], true),
+            'is_public' => $status === Brand::STATUS_PUBLISHED,
             'items' => $items,
         ];
     }
 
     public function submitForReview(Venue $venue, User $actor): Venue
     {
+        $brand = $this->brandFor($venue);
         $snapshot = $this->snapshot($venue);
 
         if (! $snapshot['ready_to_submit']) {
@@ -95,23 +98,26 @@ class VenuePublicationService
             ]);
         }
 
-        $venue->forceFill([
-            'status' => Venue::STATUS_PENDING_REVIEW,
+        $brand->forceFill([
+            'status' => Brand::STATUS_PENDING_REVIEW,
             'review_note' => null,
             'submitted_at' => now(),
         ])->save();
 
-        AuditLog::record('venue.submitted_for_review', $venue, $actor, 'success', [
+        AuditLog::record('venue.submitted_for_review', $brand, $actor, 'success', [
+            'brand_id' => $brand->id,
             'venue_id' => $venue->id,
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
         ]);
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function approve(Venue $venue, User $admin): Venue
     {
-        if ($venue->status !== Venue::STATUS_PENDING_REVIEW) {
+        $brand = $this->brandFor($venue);
+
+        if ($brand->status !== Brand::STATUS_PENDING_REVIEW) {
             throw ValidationException::withMessages([
                 'status' => 'Only venues awaiting review can be approved.',
             ]);
@@ -123,73 +129,76 @@ class VenuePublicationService
             ]);
         }
 
-        if (! filled($venue->logo)) {
+        if (! filled($brand->logo)) {
             throw ValidationException::withMessages([
                 'listing' => 'Apply a cropped logo from the owner setup files before approving.',
             ]);
         }
 
-        $venue->forceFill([
-            'status' => Venue::STATUS_PUBLISHED,
+        $brand->forceFill([
+            'status' => Brand::STATUS_PUBLISHED,
             'review_note' => null,
             'published_at' => now(),
         ])->save();
 
-        AuditLog::record('venue.listing_approved', $venue, $admin, 'success', [
+        AuditLog::record('venue.listing_approved', $brand, $admin, 'success', [
+            'brand_id' => $brand->id,
             'venue_id' => $venue->id,
-            'status' => Venue::STATUS_PUBLISHED,
+            'status' => Brand::STATUS_PUBLISHED,
         ]);
 
-        $this->branches->syncStatusFromBrand($venue);
-
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function reject(Venue $venue, User $admin, ?string $note): Venue
     {
-        if ($venue->status !== Venue::STATUS_PENDING_REVIEW) {
+        $brand = $this->brandFor($venue);
+
+        if ($brand->status !== Brand::STATUS_PENDING_REVIEW) {
             throw ValidationException::withMessages([
                 'status' => 'Only venues awaiting review can be rejected.',
             ]);
         }
 
-        $venue->forceFill([
-            'status' => Venue::STATUS_REJECTED,
+        $brand->forceFill([
+            'status' => Brand::STATUS_REJECTED,
             'review_note' => $this->normalizeReviewNote($note),
         ])->save();
 
-        AuditLog::record('venue.listing_rejected', $venue, $admin, 'success', [
+        AuditLog::record('venue.listing_rejected', $brand, $admin, 'success', [
+            'brand_id' => $brand->id,
             'venue_id' => $venue->id,
-            'status' => Venue::STATUS_REJECTED,
-            'review_note' => $venue->review_note,
+            'status' => Brand::STATUS_REJECTED,
+            'review_note' => $brand->review_note,
         ]);
 
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function unpublish(Venue $venue, User $admin, ?string $note = null): Venue
     {
-        if ($venue->status !== Venue::STATUS_PUBLISHED) {
+        $brand = $this->brandFor($venue);
+
+        if ($brand->status !== Brand::STATUS_PUBLISHED) {
             throw ValidationException::withMessages([
                 'status' => 'Only published venues can be unpublished.',
             ]);
         }
 
-        $venue->forceFill([
-            'status' => Venue::STATUS_DRAFT,
+        $brand->forceFill([
+            'status' => Brand::STATUS_DRAFT,
             'review_note' => $this->normalizeReviewNote($note),
             'submitted_at' => null,
             'published_at' => null,
         ])->save();
 
-        AuditLog::record('venue.listing_unpublished', $venue, $admin, 'success', [
+        AuditLog::record('venue.listing_unpublished', $brand, $admin, 'success', [
+            'brand_id' => $brand->id,
             'venue_id' => $venue->id,
-            'status' => Venue::STATUS_DRAFT,
+            'status' => Brand::STATUS_DRAFT,
         ]);
 
-        $this->branches->syncStatusFromBrand($venue);
-
-        return $venue->fresh();
+        return $venue->fresh(['brand']);
     }
 
     public function isPublic(Venue $venue): bool
@@ -198,17 +207,92 @@ class VenuePublicationService
             return false;
         }
 
-        if ($venue->isBranch()) {
-            $parent = $venue->parentVenue;
+        $brand = $venue->brand;
 
-            if ($parent === null || ! $this->isBrandPublished($parent)) {
-                return false;
-            }
-
-            return $this->hasMappedAddress($venue);
+        if ($brand === null || $brand->deleted_at !== null) {
+            return false;
         }
 
-        return $this->isBrandPublished($venue);
+        if (($brand->status ?? Brand::STATUS_DRAFT) !== Brand::STATUS_PUBLISHED) {
+            return false;
+        }
+
+        if ($venue->isBranch() && ! $venue->isLocationPublished()) {
+            return false;
+        }
+
+        return $this->hasMappedAddress($venue);
+    }
+
+    public function approveBranch(Venue $branch, User $admin): Venue
+    {
+        if ($branch->is_primary) {
+            throw ValidationException::withMessages([
+                'venue' => 'Only branch locations use branch approval.',
+            ]);
+        }
+
+        if ($branch->location_status !== Venue::LOCATION_STATUS_PENDING_REVIEW) {
+            throw ValidationException::withMessages([
+                'status' => 'Only branches awaiting review can be approved.',
+            ]);
+        }
+
+        $brand = $this->brandFor($branch);
+
+        if (($brand->status ?? Brand::STATUS_DRAFT) !== Brand::STATUS_PUBLISHED) {
+            throw ValidationException::withMessages([
+                'brand' => 'Publish the brand before approving branch locations.',
+            ]);
+        }
+
+        if (! $this->hasMappedAddress($branch)) {
+            throw ValidationException::withMessages([
+                'address' => 'Branch needs a mapped address before going live.',
+            ]);
+        }
+
+        $branch->forceFill([
+            'location_status' => Venue::LOCATION_STATUS_PUBLISHED,
+            'location_review_note' => null,
+            'location_published_at' => now(),
+        ])->save();
+
+        AuditLog::record('venue.branch_approved', $branch, $admin, 'success', [
+            'brand_id' => $branch->brand_id,
+            'venue_id' => $branch->id,
+        ]);
+
+        return $branch->fresh();
+    }
+
+    public function rejectBranch(Venue $branch, User $admin, ?string $note): Venue
+    {
+        if ($branch->is_primary) {
+            throw ValidationException::withMessages([
+                'venue' => 'Only branch locations use branch approval.',
+            ]);
+        }
+
+        if ($branch->location_status !== Venue::LOCATION_STATUS_PENDING_REVIEW) {
+            throw ValidationException::withMessages([
+                'status' => 'Only branches awaiting review can be rejected.',
+            ]);
+        }
+
+        $branch->forceFill([
+            'location_status' => Venue::LOCATION_STATUS_REJECTED,
+            'location_review_note' => $this->normalizeReviewNote($note),
+            'location_published_at' => null,
+        ])->save();
+
+        AuditLog::record('venue.branch_rejected', $branch, $admin, 'success', [
+            'brand_id' => $branch->brand_id,
+            'venue_id' => $branch->id,
+            'location_review_note' => $branch->location_review_note,
+        ]);
+
+        return $branch->fresh();
     }
 
     public function assertPublic(Venue $venue): void
@@ -224,7 +308,9 @@ class VenuePublicationService
 
     public function assertSlugCanChange(Venue $venue, string $requestedSlug): void
     {
-        if (($venue->status ?? Venue::STATUS_DRAFT) !== Venue::STATUS_PUBLISHED) {
+        $brand = $this->brandFor($venue);
+
+        if (($brand->status ?? Brand::STATUS_DRAFT) !== Brand::STATUS_PUBLISHED) {
             return;
         }
 
@@ -237,16 +323,18 @@ class VenuePublicationService
         ]);
     }
 
+    private function brandFor(Venue $venue): Brand
+    {
+        $venue->loadMissing('brand');
+
+        return $venue->brand;
+    }
+
     private function hasMappedAddress(Venue $venue): bool
     {
         return filled($venue->address)
             && $venue->latitude !== null
             && $venue->longitude !== null;
-    }
-
-    private function isBrandPublished(Venue $venue): bool
-    {
-        return ($venue->status ?? Venue::STATUS_DRAFT) === Venue::STATUS_PUBLISHED;
     }
 
     private function normalizeReviewNote(?string $note): ?string

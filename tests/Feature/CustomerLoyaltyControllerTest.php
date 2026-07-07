@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Venue;
+use App\Models\Brand;
 use App\Support\CampaignTemplates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,7 @@ class CustomerLoyaltyControllerTest extends TestCase
     public function test_customer_can_join_a_venue_only_once(): void
     {
         $user = $this->createUser();
-        $venue = $this->createVenue(['status' => Venue::STATUS_PUBLISHED]);
+        $venue = $this->createVenue(['status' => Brand::STATUS_PUBLISHED]);
 
         Sanctum::actingAs($user);
 
@@ -128,6 +129,35 @@ class CustomerLoyaltyControllerTest extends TestCase
             ->assertJsonPath('active_card.venue_id', $venueB->id);
     }
 
+    public function test_customer_cards_include_brand_id_and_resolve_branch_venue_filter(): void
+    {
+        $user = $this->createUser();
+        $primary = $this->createPublishedVenue(['name' => 'Mio', 'slug' => 'mio-cards']);
+        $branch = $this->createVenueForBrand($primary->brand, [
+            'name' => 'Mio · Kentron',
+            'slug' => 'mio-kentron-cards',
+            'address' => '1 Kentron Ave, Yerevan',
+            'latitude' => 40.1776,
+            'longitude' => 44.5126,
+        ]);
+        $customer = $this->createCustomer($primary, $user, ['stamps' => 4]);
+        $this->createReward($primary, ['required_stamps' => 5]);
+        $this->createRewardCycle($customer);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/customer/cards')
+            ->assertOk()
+            ->assertJsonPath('cards.0.brand_id', $primary->brand_id)
+            ->assertJsonPath('cards.0.venue_id', $primary->id);
+
+        $this->getJson("/api/customer/cards?venue_id={$branch->id}")
+            ->assertOk()
+            ->assertJsonPath('active_card.id', $customer->id)
+            ->assertJsonPath('active_card.brand_id', $primary->brand_id)
+            ->assertJsonPath('active_card.stamps', 4);
+    }
+
     public function test_customer_can_view_rewards_journey(): void
     {
         $user = $this->createUser();
@@ -210,7 +240,7 @@ class CustomerLoyaltyControllerTest extends TestCase
     public function test_customer_cannot_join_unpublished_venue(): void
     {
         $user = $this->createUser();
-        $venue = $this->createVenue(['status' => Venue::STATUS_DRAFT]);
+        $venue = $this->createVenue(['status' => Brand::STATUS_DRAFT]);
 
         Sanctum::actingAs($user);
 

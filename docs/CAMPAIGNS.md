@@ -25,7 +25,7 @@ Flotory campaigns are **operational stamp multipliers** for cafes, restaurants, 
 
 ## Engine rules
 
-- **Multiple active campaigns** per venue.
+- **Multiple active campaigns** per brand (API routes use workspace `venue_id`, which resolves to the brand).
 - Campaigns **never stack** — `multiplier = max(all_matching_campaigns)` (never multiply together).
 - Example: VIP 2× + Happy Hour 2× + Win Back 3× eligible → customer gets **3×**.
 - Lifecycle: **draft → active → paused → ended** (no delete; history kept).

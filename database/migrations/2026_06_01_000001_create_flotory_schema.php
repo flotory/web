@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('venues', function (Blueprint $table): void {
+        Schema::create('brands', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
@@ -31,19 +31,32 @@ return new class extends Migration
             $table->string('logo_thumb')->nullable();
             $table->string('cover_image')->nullable();
             $table->string('cover_image_thumb')->nullable();
-            $table->string('address')->nullable();
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-            $table->string('google_place_id')->nullable();
             $table->string('phone', 40)->nullable();
             $table->string('website')->nullable();
+            $table->decimal('average_check_amount', 10, 2)->nullable();
             $table->string('status', 20)->default('draft')->index();
             $table->text('review_note')->nullable();
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
+        });
 
+        Schema::create('venues', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
+            $table->boolean('is_primary')->default(false);
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('address')->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->string('timezone')->nullable();
+            $table->string('google_place_id')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+
+            $table->index(['brand_id', 'is_primary']);
             $table->index(['latitude', 'longitude']);
         });
 
@@ -51,31 +64,32 @@ return new class extends Migration
             $table->foreignId('active_venue_id')->nullable()->after('is_admin')->constrained('venues')->nullOnDelete();
         });
 
-        Schema::create('venue_users', function (Blueprint $table): void {
+        Schema::create('brand_users', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('role')->index();
             $table->timestamps();
 
-            $table->unique(['venue_id', 'user_id']);
+            $table->unique(['brand_id', 'user_id']);
             $table->index(['user_id', 'role']);
         });
 
         Schema::create('customers', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->unsignedInteger('stamps')->default(0);
+            $table->unsignedInteger('lifetime_stamps')->default(0);
             $table->timestamps();
 
-            $table->unique(['venue_id', 'user_id']);
-            $table->index(['venue_id', 'stamps']);
+            $table->unique(['brand_id', 'user_id']);
+            $table->index(['brand_id', 'stamps']);
         });
 
         Schema::create('rewards', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('image')->nullable();
@@ -86,7 +100,7 @@ return new class extends Migration
             $table->boolean('active')->default(true);
             $table->timestamps();
 
-            $table->index(['venue_id', 'active', 'required_stamps']);
+            $table->index(['brand_id', 'active', 'required_stamps']);
         });
 
         Schema::create('visits', function (Blueprint $table): void {
@@ -149,7 +163,7 @@ return new class extends Migration
 
         Schema::create('campaigns', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
             $table->string('template_id', 40);
             $table->string('name');
             $table->string('status', 20)->default('draft');
@@ -162,7 +176,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['venue_id', 'status']);
+            $table->index(['brand_id', 'status']);
         });
 
         Schema::create('platform_settings', function (Blueprint $table): void {
@@ -183,7 +197,7 @@ return new class extends Migration
 
         Schema::create('venue_setup_files', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('venue_id')->constrained('venues')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
             $table->foreignId('uploaded_by_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('kind', 32);
             $table->string('original_name');
@@ -192,7 +206,7 @@ return new class extends Migration
             $table->unsignedBigInteger('byte_size');
             $table->timestamps();
 
-            $table->index(['venue_id', 'kind']);
+            $table->index(['brand_id', 'kind']);
         });
 
         Schema::create('nfc_tags', function (Blueprint $table): void {
@@ -234,11 +248,12 @@ return new class extends Migration
         Schema::dropIfExists('visits');
         Schema::dropIfExists('rewards');
         Schema::dropIfExists('customers');
-        Schema::dropIfExists('venue_users');
+        Schema::dropIfExists('brand_users');
         Schema::table('users', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('active_venue_id');
         });
         Schema::dropIfExists('venues');
+        Schema::dropIfExists('brands');
         Schema::dropIfExists('users');
     }
 };

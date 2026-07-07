@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Brand;
 use App\Models\OwnerInvitation;
 use App\Models\User;
-use App\Models\Venue;
-use App\Models\VenueUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
@@ -67,18 +66,12 @@ class OwnerOnboardingControllerTest extends TestCase
             'accepted_at' => now(),
         ]);
 
-        $venue = Venue::query()->create([
+        $venue = $this->createVenue([
             'name' => 'Draft Cafe',
             'slug' => 'draft-cafe',
-            'category' => 'cafe',
-            'status' => Venue::STATUS_DRAFT,
+            'status' => Brand::STATUS_DRAFT,
         ]);
-
-        VenueUser::query()->create([
-            'venue_id' => $venue->id,
-            'user_id' => $user->id,
-            'role' => 'owner',
-        ]);
+        $this->attachMember($venue, $user, 'owner');
 
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/owner-onboarding')
@@ -87,26 +80,20 @@ class OwnerOnboardingControllerTest extends TestCase
             ->assertJsonPath('venue.name', 'Draft Cafe')
             ->assertJsonPath('listing.status', 'draft')
             ->assertJsonCount(4, 'listing.items')
-            ->assertJsonPath('listing.items.2.label', 'Logo & cover');
+            ->assertJsonPath('listing.items.2.label', 'Files');
     }
 
     public function test_returns_active_for_rejected_venue(): void
     {
         $user = $this->createUser(['email' => 'rejected@example.com']);
 
-        $venue = Venue::query()->create([
+        $venue = $this->createVenue([
             'name' => 'Rejected Cafe',
             'slug' => 'rejected-cafe',
-            'category' => 'cafe',
-            'status' => Venue::STATUS_REJECTED,
+            'status' => Brand::STATUS_REJECTED,
             'review_note' => 'Please upload a clearer cover photo.',
         ]);
-
-        VenueUser::query()->create([
-            'venue_id' => $venue->id,
-            'user_id' => $user->id,
-            'role' => 'owner',
-        ]);
+        $this->attachMember($venue, $user, 'owner');
 
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/owner-onboarding')
@@ -120,18 +107,12 @@ class OwnerOnboardingControllerTest extends TestCase
     {
         $user = $this->createUser(['email' => 'pending@example.com']);
 
-        $venue = Venue::query()->create([
+        $venue = $this->createVenue([
             'name' => 'Pending Cafe',
             'slug' => 'pending-cafe',
-            'category' => 'cafe',
-            'status' => Venue::STATUS_PENDING_REVIEW,
+            'status' => Brand::STATUS_PENDING_REVIEW,
         ]);
-
-        VenueUser::query()->create([
-            'venue_id' => $venue->id,
-            'user_id' => $user->id,
-            'role' => 'owner',
-        ]);
+        $this->attachMember($venue, $user, 'owner');
 
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/owner-onboarding')

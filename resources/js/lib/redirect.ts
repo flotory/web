@@ -26,7 +26,6 @@ const OWNER_WORKSPACE_PREFIXES = [
   '/rewards',
   '/analytics',
   '/team',
-  '/settings',
   '/customers',
 ]
 

@@ -6,16 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Customer extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'venue_id',
+        'brand_id',
         'user_id',
         'stamps',
         'lifetime_stamps',
+    ];
+
+    protected $appends = [
+        'venue_id',
     ];
 
     protected function casts(): array
@@ -26,9 +31,27 @@ class Customer extends Model
         ];
     }
 
-    public function venue(): BelongsTo
+    public function brand(): BelongsTo
     {
-        return $this->belongsTo(Venue::class);
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function venue(): HasOne
+    {
+        return $this->hasOne(Venue::class, 'brand_id', 'brand_id')
+            ->where('is_primary', true);
+    }
+
+    public function getVenueIdAttribute(): ?int
+    {
+        if ($this->relationLoaded('venue') && $this->venue) {
+            return $this->venue->id;
+        }
+
+        return Venue::query()
+            ->where('brand_id', $this->brand_id)
+            ->orderByDesc('is_primary')
+            ->value('id');
     }
 
     public function user(): BelongsTo

@@ -26,7 +26,7 @@ class CampaignNotificationJob implements ShouldQueue
     {
         Log::info('Campaign push notification queued (not yet implemented).', [
             'campaign_id' => $this->campaign->id,
-            'venue_id' => $this->campaign->venue_id,
+            'brand_id' => $this->campaign->brand_id,
             'template_id' => $this->campaign->template_id,
         ]);
     }

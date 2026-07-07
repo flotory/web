@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Venue;
 use App\Services\VenuePublicationService;
+use App\Support\VenuePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,8 +19,9 @@ class AdminVenueReviewController extends Controller
         $status = $request->string('status')->toString();
 
         $query = Venue::query()
-            ->whereNull('parent_venue_id')
+            ->where('is_primary', true)
             ->when($request->boolean('include_archived'), fn ($builder) => $builder->withTrashed())
+            ->with('brand')
             ->withCount([
                 'rewards as active_rewards_count' => fn ($builder) => $builder->where('active', true),
                 'customers',
@@ -32,7 +35,7 @@ class AdminVenueReviewController extends Controller
             ->latest('updated_at');
 
         if ($status !== '') {
-            $query->where('status', $status);
+            $query->whereHas('brand', fn ($brandQuery) => $brandQuery->where('status', $status));
         }
 
         $venues = $query->paginate(20);
@@ -94,7 +97,7 @@ class AdminVenueReviewController extends Controller
 
     private function resolveVenue(int $venueId): Venue
     {
-        return Venue::query()->withTrashed()->findOrFail($venueId);
+        return Venue::query()->withTrashed()->with('brand')->findOrFail($venueId);
     }
 
     /**
@@ -102,26 +105,28 @@ class AdminVenueReviewController extends Controller
      */
     private function presentVenue(Venue $venue): array
     {
+        $presented = VenuePresenter::attributes($venue);
         $ownerMembership = $venue->memberships->first();
 
         return [
             'id' => $venue->id,
+            'brand_id' => $venue->brand_id,
             'name' => $venue->name,
             'slug' => $venue->slug,
-            'category' => $venue->category,
+            'category' => $presented['category'] ?? null,
             'address' => $venue->address,
-            'logo' => $venue->logo,
-            'cover_image' => $venue->cover_image,
-            'status' => $venue->status,
-            'review_note' => $venue->review_note,
-            'submitted_at' => $venue->submitted_at?->toIso8601String(),
-            'published_at' => $venue->published_at?->toIso8601String(),
+            'logo' => $presented['logo'] ?? null,
+            'cover_image' => $presented['cover_image'] ?? null,
+            'status' => $presented['status'] ?? Brand::STATUS_DRAFT,
+            'review_note' => $presented['review_note'] ?? null,
+            'submitted_at' => $presented['submitted_at'] ?? null,
+            'published_at' => $presented['published_at'] ?? null,
             'archived' => $venue->trashed(),
             'active_rewards_count' => $venue->active_rewards_count ?? 0,
             'customers_count' => $venue->customers_count ?? 0,
             'setup_files_count' => $venue->setup_files_count ?? 0,
-            'final_logo_applied' => filled($venue->logo),
-            'final_cover_applied' => filled($venue->cover_image),
+            'final_logo_applied' => filled($presented['logo'] ?? null),
+            'final_cover_applied' => filled($presented['cover_image'] ?? null),
             'owner' => $ownerMembership?->user ? [
                 'id' => $ownerMembership->user->id,
                 'name' => $ownerMembership->user->name,

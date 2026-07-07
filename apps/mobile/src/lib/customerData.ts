@@ -132,7 +132,13 @@ export async function fetchCustomerCards(token: string, fresh = false): Promise<
 }
 
 export function findWalletCardForLoyaltyVenue(cards: WalletCard[], loyaltyVenueId: number): WalletCard | undefined {
-  return cards.find((card) => card.venue_id === loyaltyVenueId)
+  return cards.find(
+    (card) => card.brand_id === loyaltyVenueId || card.venue_id === loyaltyVenueId,
+  )
+}
+
+export function findWalletCardForBrand(cards: WalletCard[], brandId: number): WalletCard | undefined {
+  return cards.find((card) => card.brand_id === brandId)
 }
 
 export async function fetchCustomerHomeCampaigns(token: string, fresh = false): Promise<import('../types/loyalty').HomeCampaign[]> {
@@ -185,6 +191,7 @@ export async function fetchDiscoverVenues(token: string | null, fresh = false): 
   const cardsByVenue: Record<number, WalletCard> = {}
   for (const card of cards) {
     cardsByVenue[card.venue_id] = card
+    cardsByVenue[card.brand_id] = card
   }
   return { venues, cardsByVenue }
 }

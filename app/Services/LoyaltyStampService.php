@@ -26,18 +26,19 @@ class LoyaltyStampService
         ?StampAwardContext $context = null,
     ): array {
         $context ??= StampAwardContext::nfcTap();
-        $customer->loadMissing('venue');
+        $customer->loadMissing('brand');
         $requestedStamps = max($stamps, 1);
         $campaignWarning = null;
         $multiplier = 1;
+        $stampVenue = $this->resolveStampVenue($customer, $context);
 
         if ($context->appliesCampaignMultiplier()) {
             try {
-                $multiplier = $this->campaigns->multiplierFor($customer, $customer->venue, null, $requestedStamps);
+                $multiplier = $this->campaigns->multiplierFor($customer, $stampVenue, null, $requestedStamps);
             } catch (Throwable $exception) {
                 Log::warning('Campaign multiplier failed during stamp; awarding base stamp.', [
                     'customer_id' => $customer->id,
-                    'venue_id' => $customer->venue_id,
+                    'brand_id' => $customer->brand_id,
                     'exception' => $exception->getMessage(),
                 ]);
                 $campaignWarning = 'Your stamp was added. Bonus stamps from the promotion could not be applied right now — any extra stamps will be added once we finish calculating the promotion.';
@@ -47,11 +48,11 @@ class LoyaltyStampService
 
         $stampsToAward = $requestedStamps * $multiplier;
 
-        $result = DB::transaction(function () use ($customer, $actor, $stampsToAward, $requestedStamps, $multiplier, $context, $campaignWarning): array {
+        $result = DB::transaction(function () use ($customer, $actor, $stampsToAward, $requestedStamps, $multiplier, $context, $campaignWarning, $stampVenue): array {
             $customer = Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
-            $customer->load('user', 'venue');
+            $customer->load('user', 'brand');
             $this->guardAgainstDuplicateScan($customer);
-            $rewards = $this->milestonesForVenue($customer);
+            $rewards = $this->milestonesForBrand($customer);
             $cycle = $this->activeCycle($customer);
             $previousStamps = $customer->stamps;
             $balance = $customer->stamps + $stampsToAward;
@@ -80,10 +81,10 @@ class LoyaltyStampService
                 $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $balance);
             }
 
-            $customer->refresh()->load('user', 'venue');
+            $customer->refresh()->load('user', 'brand');
 
             $visit = $customer->visits()->create([
-                'venue_id' => $customer->venue_id,
+                'venue_id' => $stampVenue->id,
                 'created_by' => $context->recordsStaffOnVisit() ? $actor->id : null,
             ]);
 
@@ -131,7 +132,7 @@ class LoyaltyStampService
         $customer = $unlock->customer;
         $reward = $unlock->reward;
 
-        if ($reward->venue_id !== $customer->venue_id) {
+        if ($reward->brand_id !== $customer->brand_id) {
             throw ValidationException::withMessages([
                 'reward' => 'This reward is not available.',
             ]);
@@ -185,7 +186,7 @@ class LoyaltyStampService
      */
     public function redeemApiPayload(Customer $customer, RewardUnlock $unlock): array
     {
-        $customer = $customer->fresh()->load('venue', 'user');
+        $customer = $customer->fresh()->load('brand', 'user');
 
         return [
             'unlock' => $unlock,
@@ -199,8 +200,7 @@ class LoyaltyStampService
 
     public function nextRewardFor(Customer $customer): ?Reward
     {
-        return $this->milestonesForVenue($customer)
-            ->where('venue_id', $customer->venue_id)
+        return $this->milestonesForBrand($customer)
             ->where('required_stamps', '>', $customer->stamps)
             ->first();
     }
@@ -281,7 +281,7 @@ class LoyaltyStampService
     {
         $customer = $customer->fresh() ?? $customer;
         $cycle = $this->activeCycle($customer);
-        $rewards = $this->milestonesForVenue($customer);
+        $rewards = $this->milestonesForBrand($customer);
         $this->unlockForCycle($customer, $rewards, $cycle->cycle_number, $customer->stamps);
     }
 
@@ -289,7 +289,7 @@ class LoyaltyStampService
     {
         $customer = $customer->fresh();
         $cycle = $this->activeCycle($customer);
-        $milestones = $this->milestonesForVenue($customer);
+        $milestones = $this->milestonesForBrand($customer);
         $unlocks = RewardUnlock::query()
             ->where('customer_id', $customer->id)
             ->where('cycle_number', $cycle->cycle_number)
@@ -328,13 +328,25 @@ class LoyaltyStampService
             ->exists();
     }
 
-    private function milestonesForVenue(Customer $customer): Collection
+    private function milestonesForBrand(Customer $customer): Collection
     {
         return Reward::query()
-            ->where('venue_id', $customer->venue_id)
+            ->where('brand_id', $customer->brand_id)
             ->where('active', true)
             ->orderBy('required_stamps')
             ->get();
+    }
+
+    private function resolveStampVenue(Customer $customer, StampAwardContext $context): \App\Models\Venue
+    {
+        if ($context->venueId !== null) {
+            return \App\Models\Venue::query()->findOrFail($context->venueId);
+        }
+
+        $customer->loadMissing('brand');
+
+        return $customer->brand->venues()->where('is_primary', true)->first()
+            ?? $customer->brand->venues()->firstOrFail();
     }
 
     private function activeCycle(Customer $customer): CustomerRewardCycle
@@ -400,7 +412,7 @@ class LoyaltyStampService
         } catch (Throwable $exception) {
             Log::warning('Campaign promotion payload failed after stamp.', [
                 'customer_id' => $customer->id,
-                'venue_id' => $customer->venue_id,
+                'brand_id' => $customer->brand_id,
                 'exception' => $exception->getMessage(),
             ]);
 

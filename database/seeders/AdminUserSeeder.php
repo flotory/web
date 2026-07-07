@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\VenueUser;
 use Illuminate\Database\Seeder;
 
 class AdminUserSeeder extends Seeder
@@ -21,7 +20,6 @@ class AdminUserSeeder extends Seeder
             ],
         );
 
-        VenueUser::query()->where('user_id', $admin->id)->delete();
         $admin->forceFill(['active_venue_id' => null])->save();
     }
 }

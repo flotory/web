@@ -6,12 +6,16 @@ export type VenueListingStatus = 'draft' | 'pending_review' | 'published' | 'rej
 
 export interface Venue {
   id: number
+  brand_id?: number
+  is_primary?: boolean
+  brand_name?: string | null
   name: string
   slug: string
   category?: VenueCategory | null
   membership_role?: 'owner' | null
   logo?: string | null
   logo_thumb?: string | null
+  setup_logo_preview?: string | null
   cover_image?: string | null
   cover_image_thumb?: string | null
   address?: string | null
@@ -42,7 +46,8 @@ export interface Venue {
 
 export interface VenueBranch {
   id: number
-  parent_venue_id?: number | null
+  brand_id: number
+  is_primary?: boolean
   name: string
   slug: string
   address?: string | null
