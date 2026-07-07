@@ -84,7 +84,7 @@ watch(() => props.venueId, loadListing)
         </h2>
         <p class="mt-2 max-w-2xl text-sm font-medium text-ink-muted">
           <template v-if="listing?.status === 'pending_review'">
-            Your venue is hidden from customers until Flotory approves it. You can still use your NFC stand and dashboard.
+            Your venue is hidden from customers until Flotory approves your listing. NFC stamp stands are delivered after approval — you can keep preparing rewards and campaigns in the meantime.
           </template>
           <template v-else-if="listing?.status === 'rejected'">
             {{ listing.review_note || 'Please update your venue details and submit again.' }}
@@ -113,7 +113,7 @@ watch(() => props.venueId, loadListing)
 
     <div v-if="listing?.status === 'pending_review'" class="mt-5 flex items-center gap-3 rounded-2xl bg-lavender px-4 py-3 text-sm font-semibold text-primary-soft">
       <Clock3 class="size-4 shrink-0" />
-      Waiting for admin approval. NFC stamps and rewards still work while you wait.
+      Waiting for admin approval!
     </div>
 
     <p v-if="error" class="mt-4 rounded-2xl bg-danger-soft px-3 py-2 text-sm font-semibold text-danger">{{ error }}</p>

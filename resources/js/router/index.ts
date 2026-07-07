@@ -26,6 +26,7 @@ import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import OwnerOnboardingPage from '@/pages/OwnerOnboardingPage.vue'
+import NotFoundPage from '@/pages/NotFoundPage.vue'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage.vue'
 import TermsOfServicePage from '@/pages/TermsOfServicePage.vue'
 import { MOBILE_APP_PATH } from '@/lib/mobileApp'
@@ -105,6 +106,7 @@ const router = createRouter({
     { path: '/customer/settings', redirect: MOBILE_APP_PATH },
     { path: '/card/:cardId', redirect: MOBILE_APP_PATH },
     { path: '/claim/:unlockId', redirect: MOBILE_APP_PATH },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundPage },
   ],
   scrollBehavior: resolveScrollBehavior,
 })

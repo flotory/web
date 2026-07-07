@@ -78,16 +78,26 @@ import {
         </div>
       </div>
 
-      <ul class="mt-8 grid gap-3 sm:grid-cols-2">
-        <li
-          v-for="feature in pricingIncludedFeatures"
-          :key="feature"
-          class="flex items-start gap-3 rounded-2xl border border-border/70 bg-surface-muted/50 px-4 py-3 text-sm leading-relaxed text-ink sm:text-base"
-        >
-          <Check class="mt-0.5 size-5 shrink-0 text-accent-active" :stroke-width="2.4" aria-hidden="true" />
-          <span>{{ feature }}</span>
-        </li>
-      </ul>
+      <section
+        class="mt-10 rounded-3xl border border-border/80 bg-surface-muted/35 p-6 sm:p-8"
+        data-testid="pricing-included-features"
+      >
+        <h2 class="text-lg font-black text-ink sm:text-xl">Everything included</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
+          Every location gets the full product — first venue or additional branch. You only pay more when you add another site, not for extra features.
+        </p>
+
+        <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <li
+            v-for="feature in pricingIncludedFeatures"
+            :key="feature"
+            class="flex items-start gap-3 rounded-2xl border border-border/70 bg-surface px-4 py-3 text-sm leading-relaxed text-ink sm:text-base"
+          >
+            <Check class="mt-0.5 size-5 shrink-0 text-accent-active" :stroke-width="2.4" aria-hidden="true" />
+            <span>{{ feature }}</span>
+          </li>
+        </ul>
+      </section>
 
       <div class="mt-8 flex flex-wrap gap-3">
         <RouterLink to="/book-demo?utm_source=pricing&utm_campaign=plan">

@@ -4,7 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import VenueAdminSetupFiles from '@/components/loyalty/VenueAdminSetupFiles.vue'
+import AdminVenueListingActions from '@/components/admin/AdminVenueListingActions.vue'
 import AdminVenueNfcTags from '@/components/admin/AdminVenueNfcTags.vue'
+import AdminVenueRewards from '@/components/admin/AdminVenueRewards.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -16,6 +18,7 @@ import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
+import { parseMoneyAmount } from '@/lib/money'
 import { normalizeVenueCategory, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
@@ -40,6 +43,7 @@ const addressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
 const phone = ref('')
 const website = ref('')
 const category = ref<VenueCategory>('cafe')
+const averageCheckAmount = ref('')
 
 const categoryOptions = VENUE_CATEGORY_GROUPS
 
@@ -64,6 +68,21 @@ function onBrandingUpdated(updated: Venue) {
   hydrateForm({ ...venue.value, ...updated })
 }
 
+function onVenueUpdated(updated: AdminManageVenue) {
+  hydrateForm(updated)
+}
+
+async function onRewardsChanged() {
+  if (!venue.value) return
+
+  try {
+    const response = await loadVenue(venueId.value)
+    hydrateForm(response.venue)
+  } catch {
+    // Rewards section already shows errors.
+  }
+}
+
 function hydrateForm(item: AdminManageVenue) {
   venue.value = item
   name.value = item.name
@@ -75,6 +94,9 @@ function hydrateForm(item: AdminManageVenue) {
   phone.value = item.phone ?? ''
   website.value = item.website ?? ''
   category.value = normalizeVenueCategory(item.category)
+  averageCheckAmount.value = item.average_check_amount === null || item.average_check_amount === undefined
+    ? ''
+    : String(item.average_check_amount)
 }
 
 async function loadPage() {
@@ -116,6 +138,7 @@ async function saveVenue() {
             phone: phone.value || undefined,
             website: website.value || undefined,
             category: category.value,
+            average_check_amount: parseMoneyAmount(averageCheckAmount.value),
           },
         })
 
@@ -210,7 +233,7 @@ onMounted(loadPage)
           <div class="p-5">
             <h2 class="text-xl font-black text-ink">Live branding</h2>
             <p class="mt-2 text-sm font-medium text-ink-muted">
-              Shown in the mobile app and web after you crop owner files below. Logo is required before approval.
+              Shown in the mobile app and web. Upload files below, then crop logo and cover from there.
             </p>
             <div class="mt-4 flex items-center gap-3">
               <div class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-surface-muted">
@@ -295,6 +318,17 @@ onMounted(loadPage)
                 <input id="admin-edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
               </div>
               <PhoneInput id="admin-edit-venue-phone" v-model="phone" label="Phone" />
+              <div>
+                <label class="text-sm font-bold text-ink-muted" for="admin-edit-venue-average-check">Average check (optional)</label>
+                <input
+                  id="admin-edit-venue-average-check"
+                  v-model="averageCheckAmount"
+                  inputmode="decimal"
+                  class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
+                  placeholder="e.g. 25"
+                >
+                <p class="mt-2 text-xs font-medium text-ink-muted">Used for revenue estimates on the owner dashboard.</p>
+              </div>
               <div class="md:col-span-2">
                 <VenueAddressInput
                   id="admin-edit-venue-address"
@@ -322,9 +356,20 @@ onMounted(loadPage)
         </AppCard>
       </div>
 
+      <AdminVenueListingActions
+        v-if="venue"
+        :venue="venue"
+        @updated="onVenueUpdated"
+      />
+
       <VenueAdminSetupFiles
         :venue-id="venueId"
         @branding-updated="onBrandingUpdated"
+      />
+
+      <AdminVenueRewards
+        :venue-id="venueId"
+        @changed="onRewardsChanged"
       />
 
       <AdminVenueNfcTags :venue-id="venueId" />

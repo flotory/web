@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText } from '@lucide/vue'
+import { FileText, FileUp, Trash2 } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 
 import ImageCropUpload from '@/components/ui/ImageCropUpload.vue'
@@ -39,6 +39,8 @@ const requirements = ref({
   final_cover_applied: false,
 })
 const applying = ref(false)
+const uploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const logoCrop = ref<InstanceType<typeof ImageCropUpload> | null>(null)
 const coverCrop = ref<InstanceType<typeof ImageCropUpload> | null>(null)
@@ -120,15 +122,84 @@ async function applyCover(file: File) {
   }
 }
 
+function openFilePicker() {
+  if (uploading.value) return
+  fileInput.value?.click()
+}
+
+async function uploadSelectedFiles(selected: File[]) {
+  if (!selected.length) return
+
+  uploading.value = true
+
+  try {
+    for (const file of selected) {
+      const body = new FormData()
+      body.append('file', file)
+      await api(`/admin/manage-venues/${props.venueId}/setup-files`, {
+        method: 'POST',
+        body,
+      })
+    }
+
+    toast.success(selected.length === 1 ? 'File uploaded.' : `${selected.length} files uploaded.`)
+    await loadFiles()
+  } catch (exception) {
+    toast.error(apiErrorMessage(exception, 'Could not upload file.'))
+  } finally {
+    uploading.value = false
+  }
+}
+
+async function onFileInputChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const selected = input.files ? Array.from(input.files) : []
+  input.value = ''
+  await uploadSelectedFiles(selected)
+}
+
+async function deleteFile(fileId: number) {
+  try {
+    await api(`/admin/manage-venues/${props.venueId}/setup-files/${fileId}`, {
+      method: 'DELETE',
+    })
+    toast.success('File removed.')
+    await loadFiles()
+  } catch (exception) {
+    toast.error(apiErrorMessage(exception, 'Could not remove file.'))
+  }
+}
+
 onMounted(loadFiles)
 </script>
 
 <template>
   <AppCard>
-    <h2 class="text-xl font-black text-ink">Owner setup files</h2>
+    <h2 class="text-xl font-black text-ink">Setup files &amp; branding</h2>
     <p class="mt-2 text-sm font-medium text-ink-muted">
-      Raw files uploaded by the owner. Crop and apply the correct sizes for the mobile app.
+      Upload logo/cover source files, crop them for the app, or apply directly from owner uploads.
     </p>
+
+    <div class="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/70 p-5">
+      <input
+        ref="fileInput"
+        type="file"
+        multiple
+        class="hidden"
+        accept="image/*,.pdf,.doc,.docx,.txt"
+        @change="onFileInputChange"
+      >
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-bold text-ink">Upload files</p>
+          <p class="mt-1 text-xs font-medium text-ink-muted">Images, PDF, Word, or text — max 10 MB each.</p>
+        </div>
+        <AppButton variant="secondary" :disabled="uploading" @click="openFilePicker">
+          <FileUp class="size-4" />
+          {{ uploading ? 'Uploading…' : 'Add files' }}
+        </AppButton>
+      </div>
+    </div>
 
     <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
       <span class="rounded-full px-3 py-1" :class="requirements.files_uploaded ? 'bg-success-bg text-success-text' : 'bg-danger-soft text-danger'">
@@ -192,6 +263,14 @@ onMounted(loadFiles)
             @click="beginCoverCrop(file)"
           >
             Crop 2:1 cover
+          </AppButton>
+          <AppButton
+            variant="ghost"
+            size="sm"
+            :disabled="uploading"
+            @click="deleteFile(file.id)"
+          >
+            <Trash2 class="size-4" />
           </AppButton>
         </div>
       </li>

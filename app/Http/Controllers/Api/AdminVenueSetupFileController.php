@@ -7,6 +7,7 @@ use App\Models\Venue;
 use App\Models\VenueSetupFile;
 use App\Services\VenueSetupFileService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminVenueSetupFileController extends Controller
 {
@@ -33,5 +34,39 @@ class AdminVenueSetupFileController extends Controller
                 'final_cover_applied' => filled($brand->cover_image),
             ],
         ]);
+    }
+
+    public function store(Request $request, int $venue): JsonResponse
+    {
+        $venue = Venue::query()->withTrashed()->with('brand')->findOrFail($venue);
+        abort_if($venue->brand === null, 404);
+
+        $request->validate([
+            'file' => ['required', 'file'],
+        ]);
+
+        $file = $this->setupFiles->store(
+            $venue,
+            $request->user(),
+            $request->file('file'),
+        )->load('uploader:id,name,email');
+
+        return response()->json([
+            'file' => $this->setupFiles->present($file),
+        ], 201);
+    }
+
+    public function destroy(Request $request, int $venue, VenueSetupFile $setupFile): JsonResponse
+    {
+        $venue = Venue::query()->withTrashed()->with('brand')->findOrFail($venue);
+        abort_if($venue->brand === null, 404);
+
+        if ((int) $setupFile->brand_id !== (int) $venue->brand_id) {
+            abort(404);
+        }
+
+        $this->setupFiles->delete($setupFile);
+
+        return response()->json(status: 204);
     }
 }

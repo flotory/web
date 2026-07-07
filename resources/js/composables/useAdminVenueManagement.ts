@@ -6,6 +6,9 @@ import type { Venue } from '@/types'
 
 export type AdminManageVenue = Venue & {
   active_rewards_count: number
+  rewards_count?: number
+  is_branch?: boolean
+  location_status?: string | null
   owner?: { id: number; name: string; email: string } | null
   listing: VenueListingSnapshot
 }

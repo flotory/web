@@ -27,6 +27,7 @@ class AdminUpdateVenueRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:40'],
             'website' => ['nullable', 'url', 'max:2048'],
             'category' => ['nullable', 'string', Rule::in(VenueCategories::all())],
+            'average_check_amount' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ];
     }
 }

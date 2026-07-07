@@ -28,4 +28,11 @@ test.describe('Web route smoke', () => {
     await expect(page.getByText('Your digital stamp card')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Get my stamp card' })).toBeVisible()
   })
+
+  test('unknown route shows 404 page', async ({ page }) => {
+    await page.goto('/this-page-does-not-exist')
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
+    await expect(page.getByText('404')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Back to home' })).toBeVisible()
+  })
 })

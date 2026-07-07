@@ -217,6 +217,9 @@ class AdminVenueManagementController extends Controller
                 : $brand->category,
             'phone' => $request->string('phone')->toString() ?: null,
             'website' => $request->string('website')->toString() ?: null,
+            'average_check_amount' => $request->filled('average_check_amount')
+                ? $request->input('average_check_amount')
+                : ($request->has('average_check_amount') ? null : $brand->average_check_amount),
         ]);
 
         $venue = $venue->fresh(['brand']);
@@ -379,11 +382,14 @@ class AdminVenueManagementController extends Controller
             'google_place_id' => $venue->google_place_id,
             'phone' => $presented['phone'] ?? null,
             'website' => $presented['website'] ?? null,
+            'average_check_amount' => $presented['average_check_amount'] ?? null,
             'review_note' => $presented['review_note'] ?? null,
             'submitted_at' => $presented['submitted_at'] ?? null,
             'published_at' => $presented['published_at'] ?? null,
             'visits_count' => $venue->visits_count ?? 0,
             'rewards_count' => $venue->rewards_count ?? 0,
+            'is_branch' => ! $venue->is_primary,
+            'location_status' => $venue->is_primary ? null : ($venue->location_status ?? null),
             'owner' => $ownerMembership?->user ? [
                 'id' => $ownerMembership->user->id,
                 'name' => $ownerMembership->user->name,

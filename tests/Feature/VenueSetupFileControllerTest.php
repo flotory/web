@@ -129,6 +129,31 @@ class VenueSetupFileControllerTest extends TestCase
             ->assertJsonPath('requirements.final_cover_applied', false);
     }
 
+    public function test_admin_can_upload_and_delete_setup_files(): void
+    {
+        $admin = $this->createUser(['is_admin' => true]);
+        $venue = $this->createPublishedVenue(['slug' => 'admin-upload-files']);
+
+        Sanctum::actingAs($admin);
+
+        $create = $this->postJson("/api/admin/manage-venues/{$venue->id}/setup-files", [
+            'file' => UploadedFile::fake()->image('logo.png'),
+        ])->assertCreated();
+
+        $fileId = $create->json('file.id');
+
+        $this->getJson("/api/admin/manage-venues/{$venue->id}/setup-files")
+            ->assertOk()
+            ->assertJsonPath('requirements.file_count', 1);
+
+        $this->deleteJson("/api/admin/manage-venues/{$venue->id}/setup-files/{$fileId}")
+            ->assertNoContent();
+
+        $this->getJson("/api/admin/manage-venues/{$venue->id}/setup-files")
+            ->assertOk()
+            ->assertJsonPath('requirements.file_count', 0);
+    }
+
     public function test_owner_can_upload_but_not_delete_files_when_brand_is_published(): void
     {
         $owner = $this->createUser();

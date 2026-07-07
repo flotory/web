@@ -59,10 +59,12 @@ class AdminVenueManagementControllerTest extends TestCase
             'latitude' => 53.02,
             'longitude' => 18.62,
             'phone' => '+48111222333',
+            'average_check_amount' => 42.5,
         ])
             ->assertOk()
             ->assertJsonPath('venue.name', 'Updated Name Cafe')
-            ->assertJsonPath('venue.phone', '+48111222333');
+            ->assertJsonPath('venue.phone', '+48111222333')
+            ->assertJsonPath('venue.average_check_amount', '42.50');
 
         $this->assertDatabaseHas('brands', [
             'id' => $venue->brand_id,
