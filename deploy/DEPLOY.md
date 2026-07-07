@@ -104,6 +104,20 @@ Open the **latest** run on `main`, not an old failed one:
 
 If migrations were added locally, they run automatically via `deploy.sh` on the server.
 
+**No real customer data yet?** Wipe and reseed production in one step:
+
+```bash
+REFRESH_DATABASE=1 ./deploy/push-prod.sh
+```
+
+Or on the server only:
+
+```bash
+cd /var/www/web && REFRESH_DATABASE=1 ./deploy/deploy.sh
+```
+
+This runs `migrate:fresh --seed` (demo venues, accounts, campaigns). Uploads under `public/uploads/` are kept on disk but DB media paths are reset to seeded values.
+
 After enabling **Time Zone API** and setting `GOOGLE_MAPS_SERVER_API_KEY` on the server:
 
 ```bash

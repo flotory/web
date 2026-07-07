@@ -40,14 +40,19 @@ docker compose -f docker-compose.prod.yml up -d --no-build --remove-orphans
 echo "==> Generating missing media thumbnails..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate-thumbs || true
 
-echo "==> Reconciling consolidated migrations (existing production DBs)..."
-docker compose -f docker-compose.prod.yml exec -T app php artisan migrate:reconcile-consolidated
+if [[ "${REFRESH_DATABASE:-}" == "1" ]]; then
+  echo "==> Refreshing database (migrate:fresh --seed)..."
+  docker compose -f docker-compose.prod.yml exec -T app php artisan migrate:fresh --seed --force
+else
+  echo "==> Reconciling consolidated migrations (existing production DBs)..."
+  docker compose -f docker-compose.prod.yml exec -T app php artisan migrate:reconcile-consolidated
 
-echo "==> Running migrations..."
-docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+  echo "==> Running migrations..."
+  docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
-echo "==> Ensuring super admin account..."
-docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --class=AdminUserSeeder --force
+  echo "==> Ensuring super admin account..."
+  docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --class=AdminUserSeeder --force
+fi
 
 echo "==> Refreshing Laravel caches..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan config:clear

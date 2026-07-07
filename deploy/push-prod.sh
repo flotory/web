@@ -63,6 +63,6 @@ if [[ "${SKIP_CI_GATE:-}" != "1" ]]; then
 fi
 
 echo "==> Deploying on ${SSH_TARGET}..."
-ssh "${SSH_TARGET}" "cd ${APP_DIR} && chmod +x deploy/pull-and-deploy.sh deploy/deploy.sh && ./deploy/pull-and-deploy.sh"
+ssh "${SSH_TARGET}" "cd ${APP_DIR} && export REFRESH_DATABASE=${REFRESH_DATABASE:-0} && chmod +x deploy/pull-and-deploy.sh deploy/deploy.sh && ./deploy/pull-and-deploy.sh"
 
 echo "==> Done. App: https://flotory.com"
