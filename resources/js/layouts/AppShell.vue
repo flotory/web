@@ -5,6 +5,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import VenueFilter from '@/components/loyalty/VenueFilter.vue'
+import LocaleSwitcher from '@/components/ui/LocaleSwitcher.vue'
 import { ADMIN_HOME_PATH } from '@/lib/venueRoles'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -115,6 +116,7 @@ async function logout() {
       </nav>
 
       <div class="mt-4 space-y-2">
+        <LocaleSwitcher id="sidebar-locale" wrapper-class="px-1" />
         <RouterLink
           to="/account"
           :class="[
@@ -135,12 +137,13 @@ async function logout() {
     </aside>
 
     <div class="bg-workspace-gradient min-h-screen">
-      <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/10 backdrop-blur-xl md:hidden">
+      <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/90 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <RouterLink :to="logoPath" :aria-label="t('common.dashboard')">
             <FlotoryLogo />
           </RouterLink>
           <div class="flex items-center gap-2">
+            <LocaleSwitcher id="workspace-locale" />
             <RouterLink
               to="/account"
               class="rounded-full bg-surface px-3 py-1.5 text-sm font-bold text-ink-muted shadow-sm border border-border"

@@ -8,9 +8,9 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const LOCALE_STORAGE_KEY = 'flotory_locale'
 
-export const localeOptions: Array<{ value: AppLocale; label: string; nativeLabel: string }> = [
-  { value: 'en', label: 'English', nativeLabel: 'English' },
-  { value: 'hy', label: 'Armenian', nativeLabel: 'Հայերեն' },
+export const localeOptions: Array<{ value: AppLocale; label: string; nativeLabel: string; flag: string }> = [
+  { value: 'en', label: 'English', nativeLabel: 'English', flag: '🇬🇧' },
+  { value: 'hy', label: 'Armenian', nativeLabel: 'Հայերեն', flag: '🇦🇲' },
 ]
 
 function isSupportedLocale(value: unknown): value is AppLocale {

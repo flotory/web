@@ -8,10 +8,14 @@ const props = withDefaults(
     modelValue?: string
     disabled?: boolean
     size?: 'default' | 'compact'
+    centered?: boolean
+    hideChevron?: boolean
   }>(),
   {
     disabled: false,
     size: 'default',
+    centered: false,
+    hideChevron: false,
   },
 )
 
@@ -30,6 +34,16 @@ const chevronClass = computed(() => (
   props.size === 'compact' ? 'w-9' : 'w-10'
 ))
 
+const selectClass = computed(() => {
+  const base = 'min-w-0 flex-1 cursor-pointer appearance-none border-0 bg-transparent py-0 text-sm font-semibold text-ink outline-none disabled:cursor-not-allowed'
+
+  if (props.centered) {
+    return `${base} ${props.hideChevron ? 'w-full px-3' : 'px-2'} text-center text-lg leading-none`
+  }
+
+  return `${base} pl-3 pr-2`
+})
+
 function onChange(event: Event) {
   emit('change', event)
   emit('update:modelValue', (event.target as HTMLSelectElement).value)
@@ -45,12 +59,13 @@ function onChange(event: Event) {
       :id="id"
       :value="modelValue"
       :disabled="disabled"
-      class="min-w-0 flex-1 cursor-pointer appearance-none border-0 bg-transparent py-0 pl-3 pr-2 text-sm font-semibold text-ink outline-none disabled:cursor-not-allowed"
+      :class="selectClass"
       @change="onChange"
     >
       <slot />
     </select>
     <div
+      v-if="!hideChevron"
       class="pointer-events-none flex shrink-0 items-center justify-center border-l border-border/70 bg-surface-muted text-ink-muted transition group-focus-within:border-ink-soft/50"
       :class="chevronClass"
       aria-hidden="true"

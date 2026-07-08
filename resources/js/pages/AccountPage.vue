@@ -10,8 +10,9 @@ import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
+import { useLocaleSwitcher } from '@/composables/useLocaleSwitcher'
 import { currencyOptions } from '@/lib/currency'
-import { localeOptions } from '@/i18n'
+import { localeOptions, type AppLocale } from '@/i18n'
 import FormSelect from '@/components/ui/FormSelect.vue'
 import { authFieldClass, formFieldClass } from '@/lib/authForm'
 import { api, ApiError } from '@/lib/api'
@@ -34,8 +35,8 @@ const confirmPassword = ref('')
 
 const profileAction = useAsyncAction()
 const passwordAction = useAsyncAction()
-const languageAction = useAsyncAction()
 const currencyAction = useAsyncAction()
+const { loading: languageLoading, setAppLocale } = useLocaleSwitcher()
 
 const error = ref('')
 const profileMessage = ref('')
@@ -139,25 +140,14 @@ function goBack() {
 }
 
 async function updateLanguage(event: Event) {
-  const select = event.target as HTMLSelectElement
-  const nextLocale = select.value
-  const previousLocale = localeStore.locale
-
-  localeStore.setLocale(nextLocale)
+  const nextLocale = (event.target as HTMLSelectElement).value as AppLocale
   languageMessage.value = ''
 
-  try {
-    await languageAction.run(async () => {
-      const response = await api<{ user: User }>('/auth/locale', {
-        method: 'PUT',
-        body: { locale: localeStore.locale },
-      })
+  const result = await setAppLocale(nextLocale)
 
-      auth.user = response.user
-      languageMessage.value = t('account.languageSaved')
-    })
-  } catch {
-    localeStore.setLocale(previousLocale)
+  if (result === 'ok' && auth.isAuthenticated) {
+    languageMessage.value = t('account.languageSaved')
+  } else if (result === 'error') {
     languageMessage.value = t('account.languageError')
   }
 }
@@ -292,7 +282,7 @@ async function updateCurrency(event: Event) {
               id="account-locale"
               class="mt-2"
               :model-value="localeStore.locale"
-              :disabled="languageAction.loading.value"
+              :disabled="languageLoading"
               @change="updateLanguage"
             >
               <option

@@ -177,7 +177,7 @@ body {
 }
 
 .marketing-page-header {
-  background: color-mix(in srgb, var(--flotory-workspace-bg) 10%, transparent);
+  background: color-mix(in srgb, var(--flotory-workspace-bg) 90%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid color-mix(in srgb, var(--flotory-border) 50%, transparent);

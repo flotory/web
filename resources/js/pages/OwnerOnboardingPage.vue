@@ -9,6 +9,7 @@ import OwnerOnboardingProgress from '@/components/onboarding/OwnerOnboardingProg
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import LocaleSwitcher from '@/components/ui/LocaleSwitcher.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
@@ -480,7 +481,10 @@ watch(
         <RouterLink to="/?public=1" aria-label="Flotory home">
           <FlotoryLogo size="lg" />
         </RouterLink>
-        <AppBadge tone="amber">Owner setup</AppBadge>
+        <div class="flex items-center gap-2">
+          <LocaleSwitcher id="onboarding-locale" />
+          <AppBadge tone="amber">Owner setup</AppBadge>
+        </div>
       </header>
 
       <OwnerOnboardingProgress v-if="currentStep !== 'welcome'" class="mb-6" :current="currentStep" />

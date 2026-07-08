@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router'
 
 import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import LocaleSwitcher from '@/components/ui/LocaleSwitcher.vue'
 import { MARKETING_HOME_PATH } from '@/lib/brand'
 </script>
 
@@ -16,6 +17,7 @@ import { MARKETING_HOME_PATH } from '@/lib/brand'
           <FlotoryLogo size="lg" />
         </RouterLink>
         <nav class="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Marketing">
+          <LocaleSwitcher id="marketing-locale" />
           <RouterLink to="/pricing" class="hidden sm:inline-flex">
             <AppButton variant="ghost">Pricing</AppButton>
           </RouterLink>
