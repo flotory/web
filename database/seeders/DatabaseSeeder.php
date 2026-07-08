@@ -91,9 +91,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         foreach ([
-            [5, '50% off ice cream', 'Half price on any ice cream after your fifth stamp.', '/images/defaults/rewards/ice-cream-cone.png'],
-            [10, 'Free coffee', 'A complimentary coffee on the house.', '/images/defaults/rewards/free-coffee.png'],
-            [15, 'Free piece of cake', 'A complimentary slice of cake for loyal regulars.', '/images/defaults/rewards/chocolate-cake.png'],
+            [5, '50% off ice cream', 'Half price on any ice cream after your fifth stamp.', '/images/defaults/rewards/default-reward.png'],
+            [10, 'Free coffee', 'A complimentary coffee on the house.', '/images/defaults/rewards/default-reward.png'],
+            [15, 'Free piece of cake', 'A complimentary slice of cake for loyal regulars.', '/images/defaults/rewards/default-reward.png'],
         ] as [$stamps, $title, $description, $image]) {
             Reward::updateOrCreate([
                 'brand_id' => $brand->id,

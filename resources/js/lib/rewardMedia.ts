@@ -1,13 +1,13 @@
-import { defaultRewardImage } from '@/lib/defaultImages'
-import { rewardCategoryFromTitle } from '@/lib/rewardVisuals'
+import { defaultRewardImage, normalizeRewardImagePath } from '@/lib/defaultImages'
 import type { MilestoneProgress, Reward } from '@/types'
 
 export type RewardMediaFields = Pick<Reward, 'image' | 'image_thumb' | 'title'>
 
 function pickMediaPath(...paths: Array<string | null | undefined>): string | null {
   for (const path of paths) {
-    if (typeof path === 'string' && path.trim() !== '') {
-      return path
+    const normalized = normalizeRewardImagePath(path)
+    if (normalized) {
+      return normalized
     }
   }
 
@@ -16,22 +16,22 @@ function pickMediaPath(...paths: Array<string | null | undefined>): string | nul
 
 export function rewardThumbUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
   if (!reward) {
-    return defaultRewardImage('free_item')
+    return defaultRewardImage()
   }
 
   const uploaded = pickMediaPath(reward.image_thumb, reward.image)
 
-  return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
+  return uploaded ?? defaultRewardImage()
 }
 
 export function rewardImageUrl(reward: RewardMediaFields | MilestoneProgress | null | undefined): string {
   if (!reward) {
-    return defaultRewardImage('free_item')
+    return defaultRewardImage()
   }
 
   const uploaded = pickMediaPath(reward.image, reward.image_thumb)
 
-  return uploaded ?? defaultRewardImage(rewardCategoryFromTitle(reward.title))
+  return uploaded ?? defaultRewardImage()
 }
 
 export function rewardUploadedImageUrl(reward: RewardMediaFields | null | undefined): string | null {

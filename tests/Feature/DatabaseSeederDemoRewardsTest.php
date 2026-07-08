@@ -26,13 +26,13 @@ class DatabaseSeederDemoRewardsTest extends TestCase
         $this->assertSame([5, 10, 15], $rewards->pluck('required_stamps')->all());
 
         $this->assertSame('50% off ice cream', $rewards[0]->title);
-        $this->assertSame('/images/defaults/rewards/ice-cream-cone.png', $rewards[0]->image);
+        $this->assertSame('/images/defaults/rewards/default-reward.png', $rewards[0]->image);
 
         $this->assertSame('Free coffee', $rewards[1]->title);
-        $this->assertSame('/images/defaults/rewards/free-coffee.png', $rewards[1]->image);
+        $this->assertSame('/images/defaults/rewards/default-reward.png', $rewards[1]->image);
 
         $this->assertSame('Free piece of cake', $rewards[2]->title);
-        $this->assertSame('/images/defaults/rewards/chocolate-cake.png', $rewards[2]->image);
+        $this->assertSame('/images/defaults/rewards/default-reward.png', $rewards[2]->image);
 
         foreach ($rewards as $reward) {
             $this->assertSame('milestone', $reward->reward_type);

@@ -13,11 +13,11 @@ const props = withDefaults(
   defineProps<{
     id?: string
     label?: string
-    optional?: boolean
+    required?: boolean
     defaultCountry?: CountryCode
   }>(),
   {
-    optional: true,
+    required: false,
   },
 )
 
@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
 <template>
   <div ref="rootRef">
     <label v-if="label" class="text-sm font-bold text-ink-muted" :for="id">
-      {{ label }}<span v-if="optional" class="font-semibold text-ink-soft"> optional</span>
+      {{ label }}<span v-if="required" class="text-danger" aria-hidden="true"> *</span>
     </label>
 
     <div class="relative mt-2">

@@ -27,7 +27,6 @@ const loading = ref(true)
 const saveVenueAction = useAsyncAction()
 const error = ref('')
 const name = ref('')
-const slug = ref('')
 const address = ref('')
 const latitude = ref<number | null>(null)
 const longitude = ref<number | null>(null)
@@ -47,16 +46,13 @@ const selectChevronStyle = {
 }
 
 const venueId = computed(() => Number(route.params.id))
-const slugLocked = computed(() => venue.value?.status === 'published')
 const linkCopied = ref(false)
 
-const publicSlug = computed(() => slug.value.trim() || venue.value?.slug || '')
-const landingUrl = computed(() => (publicSlug.value ? buildVenueLandingUrl(publicSlug.value) : ''))
+const landingUrl = computed(() => (venue.value?.slug ? buildVenueLandingUrl(venue.value.slug) : ''))
 
 function hydrateForm(item: Venue) {
   venue.value = item
   name.value = item.name
-  slug.value = item.slug
   address.value = item.address ?? ''
   latitude.value = item.latitude ?? null
   longitude.value = item.longitude ?? null
@@ -101,7 +97,6 @@ async function saveVenue() {
           method: 'PUT',
           body: {
             name: name.value,
-            slug: slug.value || undefined,
             address: address.value || undefined,
             latitude: latitude.value ?? undefined,
             longitude: longitude.value ?? undefined,
@@ -145,7 +140,7 @@ function openPublicPage() {
 function downloadQrPng() {
   if (!landingUrl.value || !venue.value) return
 
-  const slug = publicSlug.value || venue.value.slug
+  const slug = venue.value.slug
   if (!downloadVenueQrPng('#venue-settings-qr', slug)) {
     error.value = 'QR is not ready yet. Wait a moment and try again.'
     return
@@ -218,10 +213,10 @@ onMounted(loadVenue)
         <AppCard wrapper-class="relative">
           <h2 class="text-xl font-black text-ink">Public venue</h2>
           <p class="mt-2 text-sm font-semibold text-ink-muted">
-            Customers use this link to join your loyalty program. It updates when you change the slug (save to apply).
+            Customers use this link to join your loyalty program. It is generated automatically when your venue is created.
           </p>
           <p class="mt-4 break-all rounded-2xl bg-surface-muted px-4 py-3 text-sm font-semibold text-ink border border-border">
-            {{ landingUrl || 'Save a slug to generate your public link' }}
+            {{ landingUrl || 'Your public link appears after the venue is created.' }}
           </p>
           <div class="mt-4 flex flex-wrap gap-2">
             <AppButton variant="secondary" size="sm" :disabled="!landingUrl" @click="copyLandingUrl">
@@ -246,26 +241,13 @@ onMounted(loadVenue)
           </div>
 
           <form class="mt-8 grid gap-4 border-t border-border pt-8" @submit.prevent="saveVenue">
-          <div class="grid gap-4 md:grid-cols-[1fr_180px]">
+          <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <label class="text-sm font-bold text-ink-muted" for="edit-venue-name">Venue name</label>
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-name">Venue name<span class="text-danger" aria-hidden="true"> *</span></label>
               <input id="edit-venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft">
             </div>
             <div>
-              <label class="text-sm font-bold text-ink-muted" for="edit-venue-slug">Slug</label>
-              <input
-                id="edit-venue-slug"
-                v-model="slug"
-                :disabled="slugLocked"
-                :readonly="slugLocked"
-                class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft disabled:cursor-not-allowed disabled:opacity-70"
-              >
-              <p v-if="slugLocked" class="mt-2 text-xs font-medium text-ink-muted">
-                Locked after publish so printed QR codes keep working.
-              </p>
-            </div>
-            <div>
-              <label class="text-sm font-bold text-ink-muted" for="edit-venue-category">Category</label>
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-category">Category<span class="text-danger" aria-hidden="true"> *</span></label>
               <select
                 id="edit-venue-category"
                 v-model="category"
@@ -281,7 +263,7 @@ onMounted(loadVenue)
               </p>
             </div>
             <div>
-              <label class="text-sm font-bold text-ink-muted" for="edit-venue-website">Website optional</label>
+              <label class="text-sm font-bold text-ink-muted" for="edit-venue-website">Website</label>
               <input id="edit-venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
             </div>
             <PhoneInput id="edit-venue-phone" v-model="phone" label="Phone" />

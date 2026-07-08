@@ -52,13 +52,19 @@ const VENUE_LOGO_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   ],
 }
 
-const REWARD_DEFAULTS = {
-  drink: '/images/defaults/rewards/free-coffee.png',
-  dessert: '/images/defaults/rewards/chocolate-cake.png',
-  free_item: '/images/defaults/rewards/free-coffee.png',
-  discount: '/images/defaults/rewards/ice-cream-cone.png',
-  special: '/images/defaults/rewards/free-coffee.png',
-} as const
+const DEFAULT_REWARD_IMAGE = '/images/defaults/rewards/default-reward.png'
+
+const LEGACY_DEFAULT_REWARD_IMAGES = new Set([
+  '/images/defaults/rewards/ice-cream-cone.png',
+  '/images/defaults/rewards/free-coffee.png',
+  '/images/defaults/rewards/chocolate-cake.png',
+])
+
+function normalizeRewardImagePath(path: string | null | undefined): string | null {
+  if (!path || !path.trim()) return null
+  if (LEGACY_DEFAULT_REWARD_IMAGES.has(path)) return DEFAULT_REWARD_IMAGE
+  return path
+}
 
 function hashSeed(seed: string): number {
   let hash = 5381
@@ -87,13 +93,7 @@ export function venueLogoUrl(venue?: { logo?: string | null; logo_thumb?: string
 }
 
 export function rewardImageUrl(reward?: { image?: string | null; image_thumb?: string | null; title?: string | null }) {
-  const uploaded = resolveMediaUrl(reward?.image_thumb ?? reward?.image)
-  if (uploaded) return uploaded
-  const title = (reward?.title ?? '').toLowerCase()
-  if (title.includes('cake') || title.includes('dessert') || title.includes('pastry')) return resolveMediaUrl(REWARD_DEFAULTS.dessert)
-  if (title.includes('ice cream') || title.includes('icecream')) return resolveMediaUrl(REWARD_DEFAULTS.free_item)
-  if (title.includes('coffee') || title.includes('drink')) return resolveMediaUrl(REWARD_DEFAULTS.drink)
-  if (title.includes('%') || title.includes('discount') || title.includes('off')) return resolveMediaUrl(REWARD_DEFAULTS.discount)
-  if (title.includes('free')) return resolveMediaUrl(REWARD_DEFAULTS.free_item)
-  return resolveMediaUrl(REWARD_DEFAULTS.special)
+  const uploaded = normalizeRewardImagePath(reward?.image_thumb ?? reward?.image ?? null)
+  if (uploaded) return resolveMediaUrl(uploaded)
+  return resolveMediaUrl(DEFAULT_REWARD_IMAGE)
 }

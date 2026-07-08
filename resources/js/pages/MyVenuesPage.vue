@@ -50,7 +50,6 @@ const typeFilter = ref<'all' | VenueCategory>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
 
 const name = ref('')
-const slug = ref('')
 const address = ref('')
 const latitude = ref<number | null>(null)
 const longitude = ref<number | null>(null)
@@ -93,7 +92,6 @@ const filteredVenues = computed(() => {
 
 function resetForm() {
   name.value = ''
-  slug.value = ''
   address.value = ''
   latitude.value = null
   longitude.value = null
@@ -143,7 +141,6 @@ async function createVenue() {
           method: 'POST',
           body: {
             name: name.value,
-            slug: slug.value || undefined,
             address: address.value || undefined,
             latitude: latitude.value ?? undefined,
             longitude: longitude.value ?? undefined,
@@ -334,29 +331,32 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-[1fr_180px]">
+        <div class="grid gap-4">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name</label>
+            <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name<span class="text-danger" aria-hidden="true"> *</span></label>
             <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="Harbor Coffee">
           </div>
+
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="venue-slug">Slug</label>
-            <input id="venue-slug" v-model="slug" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="harbor-coffee">
+            <VenueAddressInput
+              id="venue-address"
+              ref="addressInput"
+              v-model:address="address"
+              v-model:latitude="latitude"
+              v-model:longitude="longitude"
+              v-model:google-place-id="googlePlaceId"
+              label="Address"
+              hint="Pick a Google suggestion so we can save map coordinates."
+            />
           </div>
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="venue-website">Website optional</label>
-            <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="text-sm font-bold text-ink-muted" for="venue-website">Website</label>
+              <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
+            </div>
+            <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
           </div>
-          <VenueAddressInput
-            id="venue-address"
-            ref="addressInput"
-            v-model:address="address"
-            v-model:latitude="latitude"
-            v-model:longitude="longitude"
-            v-model:google-place-id="googlePlaceId"
-            hint="Optional. Pick a Google suggestion so we can save map coordinates."
-          />
-          <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
         </div>
 
         <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
@@ -530,7 +530,7 @@ onMounted(async () => {
 
         <form class="mt-5 grid gap-4" @submit.prevent="addBranch">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="my-venues-branch-name">Branch name</label>
+            <label class="text-sm font-bold text-ink-muted" for="my-venues-branch-name">Branch name<span class="text-danger" aria-hidden="true"> *</span></label>
             <input
               id="my-venues-branch-name"
               v-model="branchName"
@@ -547,6 +547,7 @@ onMounted(async () => {
             v-model:longitude="branchLongitude"
             v-model:google-place-id="branchGooglePlaceId"
             label="Branch address"
+            required
             hint="Pick a Google suggestion so guests see the right map pin."
           />
           <p v-if="branchError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ branchError }}</p>

@@ -206,7 +206,7 @@ onMounted(loadRewards)
       >
         <div class="flex min-w-0 items-center gap-3">
           <div class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-surface">
-            <img :src="rewardImageUrl(reward)" :alt="reward.title" class="size-full object-cover">
+            <img :src="rewardImageUrl(reward)" :alt="reward.title" class="size-full object-contain p-1">
           </div>
           <div class="min-w-0">
             <p class="text-sm font-bold text-ink">{{ reward.title }}</p>

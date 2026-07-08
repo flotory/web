@@ -135,7 +135,7 @@ async function logout() {
     </aside>
 
     <div class="bg-workspace-gradient min-h-screen">
-      <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/80 backdrop-blur-xl md:hidden">
+      <header class="sticky top-0 z-20 border-b border-border/60 bg-workspace-bg/10 backdrop-blur-xl md:hidden">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <RouterLink :to="logoPath" :aria-label="t('common.dashboard')">
             <FlotoryLogo />

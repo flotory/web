@@ -38,8 +38,11 @@ const dialogOpen = ref(false)
 const sourceName = ref('')
 const objectUrl = ref<string | null>(null)
 const saving = ref(false)
+const backdropPressStarted = ref(false)
+const cropInteractionActive = ref(false)
 
 let cropper: Cropper | null = null
+let suppressBackdropCloseUntil = 0
 
 function revokeSourceUrl() {
   if (objectUrl.value) {
@@ -51,6 +54,94 @@ function revokeSourceUrl() {
 function destroyCropper() {
   cropper?.destroy()
   cropper = null
+  cropInteractionActive.value = false
+}
+
+function canCloseFromBackdrop(): boolean {
+  if (cropInteractionActive.value) {
+    return false
+  }
+
+  return Date.now() >= suppressBackdropCloseUntil
+}
+
+function markCropInteractionStart() {
+  cropInteractionActive.value = true
+}
+
+function markCropInteractionEnd() {
+  cropInteractionActive.value = false
+  suppressBackdropCloseUntil = Date.now() + 300
+}
+
+function clampCropBoxToCanvas() {
+  if (!cropper) {
+    return
+  }
+
+  const canvas = cropper.getCanvasData()
+  const cropBox = cropper.getCropBoxData()
+  const aspect = presetConfig.value.aspectRatio
+
+  let maxWidth = canvas.width
+  let maxHeight = maxWidth / aspect
+  if (maxHeight > canvas.height) {
+    maxHeight = canvas.height
+    maxWidth = maxHeight * aspect
+  }
+
+  let width = Math.min(cropBox.width, maxWidth)
+  let height = Math.min(cropBox.height, maxHeight)
+
+  if (width / height > aspect) {
+    width = height * aspect
+  } else {
+    height = width / aspect
+  }
+
+  if (width > maxWidth) {
+    width = maxWidth
+    height = width / aspect
+  }
+
+  if (height > maxHeight) {
+    height = maxHeight
+    width = height * aspect
+  }
+
+  const minLeft = canvas.left
+  const minTop = canvas.top
+  const maxLeft = canvas.left + canvas.width - width
+  const maxTop = canvas.top + canvas.height - height
+  const left = Math.min(Math.max(cropBox.left, minLeft), maxLeft)
+  const top = Math.min(Math.max(cropBox.top, minTop), maxTop)
+
+  if (
+    width !== cropBox.width
+    || height !== cropBox.height
+    || left !== cropBox.left
+    || top !== cropBox.top
+  ) {
+    cropper.setCropBoxData({ left, top, width, height })
+  }
+}
+
+function onBackdropPointerDown(event: PointerEvent) {
+  backdropPressStarted.value = event.target === event.currentTarget
+}
+
+function onBackdropPointerUp(event: PointerEvent) {
+  if (!backdropPressStarted.value) {
+    return
+  }
+
+  backdropPressStarted.value = false
+
+  if (event.target !== event.currentTarget || !canCloseFromBackdrop()) {
+    return
+  }
+
+  closeDialog()
 }
 
 function closeDialog() {
@@ -59,6 +150,8 @@ function closeDialog() {
   dialogOpen.value = false
   sourceName.value = ''
   saving.value = false
+  backdropPressStarted.value = false
+  suppressBackdropCloseUntil = 0
 }
 
 function openPicker() {
@@ -90,6 +183,13 @@ async function initCropper() {
     cropBoxMovable: true,
     cropBoxResizable: true,
     toggleDragModeOnDblclick: false,
+    cropstart() {
+      markCropInteractionStart()
+    },
+    cropend() {
+      clampCropBoxToCanvas()
+      markCropInteractionEnd()
+    },
   })
 }
 
@@ -201,7 +301,8 @@ defineExpose({ openPicker, openWithUrl })
     <div
       v-if="dialogOpen"
       class="fixed inset-0 z-50 flex items-end justify-center bg-primary/60 p-4 backdrop-blur-sm sm:items-center"
-      @click.self="closeDialog"
+      @pointerdown.self="onBackdropPointerDown"
+      @pointerup.self="onBackdropPointerUp"
     >
       <AppCard wrapper-class="flex w-full max-w-lg flex-col overflow-hidden border-border bg-surface p-0">
         <div class="border-b border-border px-5 py-4 sm:px-6">

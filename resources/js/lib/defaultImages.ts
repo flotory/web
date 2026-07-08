@@ -1,4 +1,3 @@
-import type { RewardCategory } from '@/lib/rewardVisuals'
 import {
   categoryLabel,
   normalizeVenueCategory,
@@ -70,20 +69,26 @@ const VENUE_COVER_DEFAULTS: Record<VenueCategoryAssetGroup, string[]> = {
   ],
 }
 
-/** Demo Cafe reward photos (1:1 square crops under public/images/defaults/rewards). */
-export const DEMO_REWARD_IMAGES = {
-  iceCreamCone: '/images/defaults/rewards/ice-cream-cone.png',
-  freeCoffee: '/images/defaults/rewards/free-coffee.png',
-  chocolateCake: '/images/defaults/rewards/chocolate-cake.png',
-} as const
+/** Default milestone image when a reward has no custom upload (512×512). */
+export const DEFAULT_REWARD_IMAGE = '/images/defaults/rewards/default-reward.png'
 
-const REWARD_IMAGE_DEFAULTS: Record<RewardCategory, string> = {
-  drink: DEMO_REWARD_IMAGES.freeCoffee,
-  dessert: DEMO_REWARD_IMAGES.chocolateCake,
-  free_item: DEMO_REWARD_IMAGES.freeCoffee,
-  discount: DEMO_REWARD_IMAGES.iceCreamCone,
-  vip: unsplash('photo-1414235077428-338989a2e8c0', 800, 600),
-  special_reward: DEMO_REWARD_IMAGES.freeCoffee,
+/** Removed stock reward art — remap to {@link DEFAULT_REWARD_IMAGE}. */
+export const LEGACY_DEFAULT_REWARD_IMAGES = [
+  '/images/defaults/rewards/ice-cream-cone.png',
+  '/images/defaults/rewards/free-coffee.png',
+  '/images/defaults/rewards/chocolate-cake.png',
+] as const
+
+export function normalizeRewardImagePath(path: string | null | undefined): string | null {
+  if (typeof path !== 'string' || path.trim() === '') {
+    return null
+  }
+
+  if ((LEGACY_DEFAULT_REWARD_IMAGES as readonly string[]).includes(path)) {
+    return DEFAULT_REWARD_IMAGE
+  }
+
+  return path
 }
 
 export type RewardPreset = {
@@ -101,21 +106,21 @@ const REWARD_PRESETS_BY_GROUP: Record<VenueCategoryAssetGroup, RewardPreset[]> =
       title: '50% off ice cream',
       required_stamps: 5,
       description: 'Half price on any ice cream after your fifth stamp.',
-      image: DEMO_REWARD_IMAGES.iceCreamCone,
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-coffee-10',
       title: 'Free coffee',
       required_stamps: 10,
       description: 'A complimentary coffee on the house.',
-      image: DEMO_REWARD_IMAGES.freeCoffee,
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-cake-15',
       title: 'Free piece of cake',
       required_stamps: 15,
       description: 'A complimentary slice of cake for loyal regulars.',
-      image: DEMO_REWARD_IMAGES.chocolateCake,
+      image: DEFAULT_REWARD_IMAGE,
     },
   ],
   bar: [
@@ -124,21 +129,21 @@ const REWARD_PRESETS_BY_GROUP: Record<VenueCategoryAssetGroup, RewardPreset[]> =
       title: '50% off one cocktail',
       required_stamps: 5,
       description: 'Half price on any signature cocktail after your fifth stamp.',
-      image: unsplash('photo-1776763019214-9658490d8b65', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-cocktail-10',
       title: 'Free cocktail',
       required_stamps: 10,
       description: 'A complimentary cocktail on the house.',
-      image: unsplash('photo-1470337458703-46ad1756a187', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-cocktail-15',
       title: 'Free cocktail',
       required_stamps: 15,
       description: 'Another free cocktail for your best regulars.',
-      image: unsplash('photo-1514933651103-005eec06c04b', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
   ],
   restaurant: [
@@ -147,21 +152,21 @@ const REWARD_PRESETS_BY_GROUP: Record<VenueCategoryAssetGroup, RewardPreset[]> =
       title: '50% off one starter',
       required_stamps: 5,
       description: 'Half price on any starter after your fifth stamp.',
-      image: unsplash('photo-1414235077428-338989a2e8c0', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-starter-10',
       title: 'Free starter',
       required_stamps: 10,
       description: 'A complimentary starter on the house.',
-      image: unsplash('photo-1546069901-ba9599a7e63c', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-starter-15',
       title: 'Free starter',
       required_stamps: 15,
       description: 'Another free starter for returning guests.',
-      image: unsplash('photo-1504674900247-0877df9cc836', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
   ],
   bakery: [
@@ -170,21 +175,21 @@ const REWARD_PRESETS_BY_GROUP: Record<VenueCategoryAssetGroup, RewardPreset[]> =
       title: '50% off one pastry',
       required_stamps: 5,
       description: 'Half price on any pastry after your fifth stamp.',
-      image: unsplash('photo-1555396273-367ea4eb4db5', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-pastry-10',
       title: 'Free pastry',
       required_stamps: 10,
       description: 'A complimentary pastry from the counter.',
-      image: unsplash('photo-1509440159596-0249088772ff', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
     {
       id: 'free-pastry-15',
       title: 'Free pastry',
       required_stamps: 15,
       description: 'Another free pastry for loyal guests.',
-      image: unsplash('photo-1555507036-ab1f4038808a', 800, 600),
+      image: DEFAULT_REWARD_IMAGE,
     },
   ],
 }
@@ -218,6 +223,6 @@ export function defaultVenueCoverImage(category: VenueCategory, seed: string = c
   return pickStable(VENUE_COVER_DEFAULTS[venueCategoryAssetGroup(category)], seed)
 }
 
-export function defaultRewardImage(category: RewardCategory): string {
-  return REWARD_IMAGE_DEFAULTS[category]
+export function defaultRewardImage(): string {
+  return DEFAULT_REWARD_IMAGE
 }

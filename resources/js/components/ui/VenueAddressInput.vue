@@ -10,12 +10,14 @@ const props = withDefaults(defineProps<{
   hint?: string
   quotaRemaining?: number | null
   disabled?: boolean
+  required?: boolean
 }>(), {
   label: 'Address',
   placeholder: 'Search for your venue address',
   hint: 'Pick a Google suggestion so customers can find you on the map.',
   quotaRemaining: null,
   disabled: false,
+  required: false,
 })
 
 const address = defineModel<string>('address', { default: '' })
@@ -227,7 +229,9 @@ watch(address, (value) => {
 
 <template>
   <div class="venue-address-input">
-    <label class="text-sm font-bold text-ink-muted" :for="id">{{ label }}</label>
+    <label class="text-sm font-bold text-ink-muted" :for="id">
+      {{ label }}<span v-if="required" class="text-danger" aria-hidden="true"> *</span>
+    </label>
     <input
       :id="id"
       ref="inputRef"

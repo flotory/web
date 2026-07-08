@@ -24,6 +24,7 @@ import {
   type OnboardingStep,
   type OwnerOnboardingContext,
 } from '@/lib/ownerOnboarding'
+import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel } from '@/lib/venueListing'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
@@ -56,7 +57,6 @@ const venue = ref<Venue | null>(null)
 const files = ref<SetupFileRecord[]>([])
 
 const name = ref('')
-const slug = ref('')
 const category = ref<VenueCategory>('cafe')
 
 const selectChevronStyle = {
@@ -138,7 +138,6 @@ function syncFormFromVenue() {
   }
 
   name.value = venue.value.name
-  slug.value = venue.value.slug
   category.value = normalizeVenueCategory(venue.value.category)
   address.value = venue.value.address ?? ''
   latitude.value = venue.value.latitude ?? null
@@ -185,7 +184,6 @@ async function saveProfile(): Promise<boolean> {
         method: 'PUT',
         body: {
           name: name.value.trim(),
-          slug: slug.value.trim() || undefined,
           category: category.value,
           address: address.value || undefined,
           latitude: latitude.value ?? undefined,
@@ -201,7 +199,6 @@ async function saveProfile(): Promise<boolean> {
         method: 'POST',
         body: {
           name: name.value.trim(),
-          slug: slug.value.trim() || undefined,
           category: category.value,
         },
       })
@@ -237,7 +234,6 @@ async function saveLocation(): Promise<boolean> {
       method: 'PUT',
       body: {
         name: name.value.trim(),
-        slug: slug.value.trim() || venue.value.slug,
         category: category.value,
         address: address.value,
         latitude: latitude.value ?? undefined,
@@ -524,12 +520,12 @@ watch(
             </p>
             <div class="mt-6 grid gap-4">
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-name">Venue name</label>
+                <label class="text-sm font-bold text-ink-muted" for="onboarding-name">Venue name<span class="text-danger" aria-hidden="true"> *</span></label>
                 <input id="onboarding-name" v-model="name" required :class="authFieldClass" placeholder="Harbor Coffee">
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label class="text-sm font-bold text-ink-muted" for="onboarding-category">Category</label>
+                  <label class="text-sm font-bold text-ink-muted" for="onboarding-category">Category<span class="text-danger" aria-hidden="true"> *</span></label>
                   <select
                     id="onboarding-category"
                     v-model="category"
@@ -546,14 +542,14 @@ watch(
                     Any business with repeat customers can use Flotory.
                   </p>
                 </div>
-                <div>
-                  <label class="text-sm font-bold text-ink-muted" for="onboarding-slug">Public URL slug</label>
-                  <input
-                    id="onboarding-slug"
-                    v-model="slug"
-                    :class="authFieldClass"
-                    placeholder="harbor-coffee"
-                  >
+                <div v-if="venue">
+                  <p class="text-sm font-bold text-ink-muted">Public join link</p>
+                  <p class="mt-2 break-all rounded-2xl border border-border bg-surface-muted px-3 py-2.5 text-xs font-semibold text-ink">
+                    {{ buildVenueLandingUrl(venue.slug) }}
+                  </p>
+                  <p class="mt-2 text-xs leading-relaxed text-ink-muted">
+                    Generated automatically from your venue name.
+                  </p>
                 </div>
               </div>
             </div>
@@ -572,11 +568,12 @@ watch(
                 v-model:latitude="latitude"
                 v-model:longitude="longitude"
                 v-model:google-place-id="googlePlaceId"
-                hint="Required — select a suggestion from the list."
+                required
+                hint="Select a suggestion from the list."
               />
-              <PhoneInput id="onboarding-phone" v-model="phone" label="Phone (optional)" />
+              <PhoneInput id="onboarding-phone" v-model="phone" label="Phone" />
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-website">Website (optional)</label>
+                <label class="text-sm font-bold text-ink-muted" for="onboarding-website">Website</label>
                 <input id="onboarding-website" v-model="website" :class="authFieldClass" placeholder="https://example.com">
               </div>
             </div>
