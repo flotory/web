@@ -43,5 +43,7 @@ export function rewardUploadedImageUrl(reward: RewardMediaFields | null | undefi
 }
 
 export function rewardHasCustomImage(reward: RewardMediaFields | null | undefined): boolean {
-  return Boolean(rewardUploadedImageUrl(reward))
+  const path = rewardUploadedImageUrl(reward)
+
+  return Boolean(path?.startsWith('/uploads/'))
 }

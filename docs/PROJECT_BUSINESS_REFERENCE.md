@@ -273,6 +273,7 @@ NFC taps hit **both**:
 | User joins via QR at branch A, taps NFC at branch B | Same brand card — stamps accumulate |
 | Soft-deleted brand | No new stamps (E8); card may still show in wallet |
 | Owner adds branch after publish | Branch starts **pending review** — not public until admin approves; shares rewards and wallet once live (B6) |
+| Owner sets venue slug | **Auto-generated** on create — not editable in owner UI |
 | Owner changes slug after publish | **Blocked** — brand slug locked when `published` |
 
 **Inconsistency to watch:** Marketing says “scan QR to join” but stamps require **NFC** — QR is onboarding only, not stamping.

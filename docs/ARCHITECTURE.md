@@ -244,7 +244,8 @@ Password: `password`. Demo Cafe has active campaigns and an NFC tag (`Counter st
 | Asset | Path |
 |-------|------|
 | Brand logo / cover (stored on brand) | `/uploads/venue-logos/`, `/uploads/venue-covers/` |
-| Reward image | `/uploads/reward-milestones/` |
+| Reward image (owner upload) | `/uploads/reward-milestones/` |
+| Default reward (no upload) | `/images/defaults/rewards/default-reward.png` |
 
 Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`.
 

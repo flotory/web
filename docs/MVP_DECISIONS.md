@@ -57,6 +57,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 | Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
 | Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **`/onboarding`** wizard. Public `intent=owner` blocked. Existing owners may add brands from **My Venues**. |
 | Venue listing status | `draft` → `pending_review` → `published` on **brand**. Customers join only when **published**. |
+| Owner venue slug | **Auto-generated** on create (`{name-slug}-{random}`). Owners do not pick slugs in the UI; onboarding and settings show the public join link read-only. Admins may set an optional slug when provisioning at **Manage venues**. |
 | Venue slug after publish | **Locked** once `published` — owner and admin APIs reject slug changes; QR links stay valid. |
 | Post-login routing (web) | Owners → dashboard; invited owners without a brand → `/onboarding`; others → `/app`. |
 | Customer primary surface | **Mobile app only**: Stamp (NFC), Wallet, slide redeem. |

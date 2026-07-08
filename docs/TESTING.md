@@ -113,9 +113,9 @@ See [apps/mobile/README.md](../apps/mobile/README.md) for Maestro install and `E
 
 Vitest files:
 
-- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `onboarding`, `ownerOnboarding`, `venueRoles`, `venueCategories`, `venueMedia`, `venueLocationCard`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `formatDate`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`
+- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `onboarding`, `ownerOnboarding`, `venueRoles`, `venueCategories`, `venueMedia`, `venueLocationCard`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `formatDate`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`, `defaultImages.reward`, `rewardMedia`
 - **Web stores (with tests):** `stores/auth`, `stores/workspace`
-- **Web lib (lower priority / UI-bound):** e.g. `defaultImages`, `campaignActions`, `money`, `googleMaps*`, `cropImageToFile`, marketing page helpers
+- **Web lib (lower priority / UI-bound):** e.g. `campaignActions`, `money`, `googleMaps*`, `cropImageToFile`, marketing page helpers
 - **Mobile:** `apps/mobile/src/lib/*.test.ts` and `apps/mobile/src/i18n/*.test.ts` (NFC stamp completion, `stampLiveUpdate`, `stampRealtime`, `stampAck`, customer data/cache, scan landing, format helpers, English/Armenian localization catalogs)
 
 Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run test:unit -- apps/mobile/src` per area.

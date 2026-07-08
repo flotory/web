@@ -46,7 +46,7 @@ Sales-led onboarding (default after a demo):
 
 1. **Invite** — Flotory admin sends an owner invitation from **Owner onboarding** (`/admin/owner-onboarding`): email + optional business name.
 2. **Register** — Owner opens `/register?invite=…`, sets a password (invite expires after `FLOTORY_OWNER_INVITATION_TTL_DAYS`, default 7).
-3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category), Google address, **file uploads** (logo + cover), first reward, then **Submit for review**. They can also resume from **My Venues → Files** (`/my-venues/{id}/setup-files`) while the brand is `draft` or `rejected`.
+3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category; public join link is generated automatically), Google address, **file uploads** (logo + cover), first reward, then **Submit for review**. They can also resume from **My Venues → Files** (`/my-venues/{id}/setup-files`) while the brand is `draft` or `rejected`.
 4. **Launch** — Complete the listing checklist → **Submit for listing** → platform admin approves → **published**.
 5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics. **Add branches** from My Venues when you open new locations (shared stamp card and rewards; each new branch awaits Flotory approval before customers can join or tap NFC there).
 6. **NFC** — Platform admin provisions NFC stands per **location**; program each tag with its tap URL. Use a **separate token per branch** for accurate location analytics.
@@ -88,7 +88,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 | Services & wellness | `salon`, `spa`, `gym` |
 | Retail & other | `retail`, `pet_care`, `other` |
 
-`other` is for any repeat-visit business that does not fit the presets. Default placeholder images (logo/cover) are chosen by category group. The API rejects unknown category slugs with **422**; the web UI normalizes invalid stored values to `cafe` for display only.
+`other` is for any repeat-visit business that does not fit the presets. Default placeholder images (logo/cover) are chosen by category group. Milestone rewards without a custom upload use the bundled default at `/images/defaults/rewards/default-reward.png`. The API rejects unknown category slugs with **422**; the web UI normalizes invalid stored values to `cafe` for display only.
 
 ## Multi-location (branches)
 

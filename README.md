@@ -218,7 +218,7 @@ All seeded accounts use password **`password`** (re-ensured on each Docker app s
 
 Demo Cafe is the single showcase venue: ~280 guests, ~50–150 visits per month across the last 12 months, milestone unlocks, and claimed rewards for sales demos. Log in as `owner@example.com` to explore dashboard and analytics.
 
-**Demo Cafe milestones** (5 / 10 / 15 stamps): **50% off ice cream**, **Free coffee**, **Free piece of cake** — each with a square reward photo under `public/images/defaults/rewards/`.
+**Demo Cafe milestones** (5 / 10 / 15 stamps): **50% off ice cream**, **Free coffee**, **Free piece of cake** — titles differ; milestones without a custom upload share the default gift image at `public/images/defaults/rewards/default-reward.png`.
 
 **Dashboard date range** — owner dashboard and analytics accept `?period=` presets (`7d`, `14d`, `28d` default, `2m`, `3m`, `6m`, `12m`) or custom `from` / `to` dates. KPI trends compare against the **previous period of equal length** (e.g. last 6 months vs the 6 months before).
 
