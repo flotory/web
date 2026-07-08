@@ -26,6 +26,16 @@ test.describe('Admin routes', () => {
     await expect(page.getByRole('heading', { name: 'Venue listings', exact: true })).toBeVisible()
   })
 
+  test('invalid manage-venues id shows 404 page', async ({ page }) => {
+    await page.goto('/admin/manage-venues/abc')
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
+  })
+
+  test('missing manage-venues id shows 404 page', async ({ page }) => {
+    await page.goto('/admin/manage-venues/999999')
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible({ timeout: 15_000 })
+  })
+
   test('manage venues, owner onboarding, and activity log screens load', async ({ page }) => {
     await page.goto('/admin/manage-venues')
     await expect(page.getByRole('heading', { name: 'Manage venues', exact: true })).toBeVisible({

@@ -43,6 +43,7 @@ import {
 import { shouldUseOwnerOnboarding, isOnboardingStep } from '@/lib/ownerOnboarding'
 import { bootstrapWorkspaceOrSignOut } from '@/lib/sessionGuard'
 import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
+import { parsePositiveIntParam } from '@/lib/notFoundRouting'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
 
@@ -78,11 +79,11 @@ const router = createRouter({
     { path: '/onboarding/:step?', name: 'owner-onboarding', component: OwnerOnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
-    { path: '/my-venues/:id/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/my-venues/:id/design', redirect: (to) => `/my-venues/${to.params.id}/settings` },
-    { path: '/my-venues/:id/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id(\\d+)/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/my-venues/:id(\\d+)/design', redirect: (to) => `/my-venues/${to.params.id}/settings` },
+    { path: '/my-venues/:id(\\d+)/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/customers', name: 'customers', component: CustomersPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
-    { path: '/customers/:customerId', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
+    { path: '/customers/:customerId(\\d+)', name: 'customer-profile', component: CustomerProfilePage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/rewards', name: 'rewards', component: RewardsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/campaigns', name: 'campaigns', component: CampaignsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/analytics', name: 'analytics', component: AnalyticsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -92,8 +93,8 @@ const router = createRouter({
     { path: '/admin/venues', name: 'admin-venues', component: AdminVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/owner-onboarding', name: 'admin-owner-onboarding', component: AdminOwnerOnboardingPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/admin/manage-venues', name: 'admin-manage-venues', component: AdminManageVenuesPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/admin/manage-venues/:id', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
-    { path: '/admin/manage-venues/:id/design', redirect: (to) => `/admin/manage-venues/${to.params.id}` },
+    { path: '/admin/manage-venues/:id(\\d+)', name: 'admin-venue-edit', component: AdminVenueEditPage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
+    { path: '/admin/manage-venues/:id(\\d+)/design', redirect: (to) => `/admin/manage-venues/${to.params.id}` },
     { path: '/admin/palette', name: 'admin-palette', component: AdminPalettePage, meta: { requiresAuth: true, adminOnly: true, workspace: true, allowWithoutMembership: true } },
     { path: '/cafes', redirect: MOBILE_APP_PATH },
     { path: '/home', redirect: MOBILE_APP_PATH },
@@ -249,9 +250,9 @@ router.beforeEach(async (to) => {
       to.name === 'venue-settings'
       || to.name === 'venue-setup-files'
     ) {
-      const venueId = Number(to.params.id)
+      const venueId = parsePositiveIntParam(to.params.id)
 
-      if (!isOwnerVenueInWorkspace(venueId, workspace.activeVenues)) {
+      if (venueId === null || !isOwnerVenueInWorkspace(venueId, workspace.activeVenues)) {
         return { path: '/my-venues' }
       }
     }

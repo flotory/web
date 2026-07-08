@@ -19,4 +19,12 @@ test.describe('Owner signup and venue access', () => {
     await expect(page.getByRole('heading', { name: 'My Venues', exact: true })).toBeVisible()
     await expect(page.getByText('This venue is not in your workspace.')).toHaveCount(0)
   })
+
+  test('invalid venue id in settings URL shows 404 page', async ({ page }) => {
+    await loginAs(page, 'owner@example.com')
+
+    await page.goto('/my-venues/abc/settings')
+
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
+  })
 })

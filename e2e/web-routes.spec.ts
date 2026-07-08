@@ -35,4 +35,9 @@ test.describe('Web route smoke', () => {
     await expect(page.getByText('404')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Back to home' })).toBeVisible()
   })
+
+  test('unknown venue slug shows 404 page', async ({ page }) => {
+    await page.goto('/v/not-a-real-venue-slug')
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible({ timeout: 15_000 })
+  })
 })

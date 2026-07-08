@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import VenueJoinBridgeCard from '@/components/marketing/VenueJoinBridgeCard.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AppCard from '@/components/ui/AppCard.vue'
 import { api } from '@/lib/api'
+import { redirectToNotFoundIfMissing } from '@/lib/notFoundRouting'
 import { mobileVenueDeepLink } from '@/lib/mobileApp'
 import type { VenueCategory } from '@/types'
 
@@ -39,6 +40,7 @@ interface VenueLandingPayload {
 }
 
 const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
 const error = ref('')
 const landing = ref<VenueLandingPayload | null>(null)
@@ -73,7 +75,11 @@ onMounted(async () => {
     landing.value = await api<VenueLandingPayload>(`/public/venues/${encodeURIComponent(slug.value)}/landing`, {
       includeAuth: false,
     })
-  } catch {
+  } catch (exception) {
+    if (redirectToNotFoundIfMissing(exception, router)) {
+      return
+    }
+
     error.value = 'This venue link is unavailable.'
   } finally {
     loading.value = false

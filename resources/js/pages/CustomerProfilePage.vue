@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -10,12 +10,14 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage } from '@/lib/api'
+import { redirectToNotFoundIfMissing } from '@/lib/notFoundRouting'
 import { activityLabel, activityTone, formatRelativeDays, formatShortDate } from '@/lib/formatDate'
 import { toast } from '@/lib/toast'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { CustomerProfileResponse } from '@/types'
 
 const route = useRoute()
+const router = useRouter()
 const workspace = useWorkspaceStore()
 
 const profile = ref<CustomerProfileResponse | null>(null)
@@ -60,6 +62,10 @@ async function loadProfile() {
     )
     birthday.value = profile.value.customer.user?.birthday ?? ''
   } catch (exception) {
+    if (redirectToNotFoundIfMissing(exception, router)) {
+      return
+    }
+
     error.value = apiErrorMessage(exception, 'Could not load customer profile.')
   } finally {
     loading.value = false

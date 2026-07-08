@@ -19,6 +19,7 @@ import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError } from '@/lib/api'
 import { downloadVenueQrPng } from '@/lib/downloadVenueQrPng'
 import { parseMoneyAmount } from '@/lib/money'
+import { redirectToNotFoundIfMissing } from '@/lib/notFoundRouting'
 import { normalizeVenueCategory, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
@@ -107,6 +108,10 @@ async function loadPage() {
     const response = await loadVenue(venueId.value)
     hydrateForm(response.venue)
   } catch (exception) {
+    if (redirectToNotFoundIfMissing(exception, router)) {
+      return
+    }
+
     error.value = exception instanceof ApiError ? exception.message : 'Could not load venue.'
   } finally {
     loading.value = false
