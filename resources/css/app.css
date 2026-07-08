@@ -203,3 +203,77 @@ body {
 .pac-item-selected {
   background: var(--flotory-surface-muted);
 }
+
+.flotory-day-toggle {
+  border: 1px solid var(--flotory-border);
+  background-color: var(--flotory-surface-muted);
+  color: var(--flotory-ink-muted);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.flotory-day-toggle:hover {
+  border-color: color-mix(in srgb, var(--flotory-accent-border) 70%, transparent);
+  background-color: color-mix(in srgb, var(--flotory-accent-soft) 70%, transparent);
+  color: var(--flotory-ink);
+}
+
+.flotory-day-toggle--selected {
+  border-color: var(--flotory-primary);
+  background-color: var(--flotory-primary);
+  color: var(--flotory-primary-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--flotory-primary) 12%, transparent);
+}
+
+.flotory-option-toggle {
+  border: 1px solid var(--flotory-border);
+  background-color: var(--flotory-surface-muted);
+  color: var(--flotory-ink-muted);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.flotory-option-toggle:hover {
+  border-color: color-mix(in srgb, var(--flotory-accent-border) 70%, transparent);
+  background-color: color-mix(in srgb, var(--flotory-accent-soft) 70%, transparent);
+  color: var(--flotory-ink);
+}
+
+.flotory-option-toggle--selected {
+  border-color: var(--flotory-primary);
+  background-color: var(--flotory-primary);
+  color: var(--flotory-primary-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--flotory-primary) 12%, transparent);
+}
+
+.flotory-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: 0.25rem;
+  border: 1.5px solid var(--flotory-accent-border);
+  background-color: var(--flotory-surface);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.flotory-checkbox:checked {
+  border-color: var(--flotory-primary);
+  background-color: var(--flotory-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M12.207 4.793a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414 0l-2.5-2.5a1 1 0 0 1 1.414-1.414L6.5 9.086l4.293-4.293a1 1 0 0 1 1.414 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0.75rem 0.75rem;
+}

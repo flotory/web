@@ -215,12 +215,8 @@ function setMultiplier(value: number) {
                     v-for="day in WEEKDAYS"
                     :key="day.iso"
                     type="button"
-                    class="rounded-full px-3 py-2 text-sm font-bold transition"
-                    :class="
-                      (config.days_of_week ?? []).includes(day.iso)
-                        ? 'bg-primary-soft text-white'
-                        : 'bg-surface-muted text-ink-muted border border-border'
-                    "
+                    class="flotory-day-toggle rounded-full px-3 py-2 text-sm font-bold"
+                    :class="{ 'flotory-day-toggle--selected': (config.days_of_week ?? []).includes(day.iso) }"
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
                     {{ day.short }}
@@ -247,12 +243,8 @@ function setMultiplier(value: number) {
                     v-for="day in WEEKDAYS"
                     :key="day.iso"
                     type="button"
-                    class="rounded-full px-3 py-2 text-sm font-bold transition"
-                    :class="
-                      (config.days_of_week ?? []).includes(day.iso)
-                        ? 'bg-sky-600 text-white'
-                        : 'bg-surface-muted text-ink-muted border border-border'
-                    "
+                    class="flotory-day-toggle rounded-full px-3 py-2 text-sm font-bold"
+                    :class="{ 'flotory-day-toggle--selected': (config.days_of_week ?? []).includes(day.iso) }"
                     @click="config.days_of_week = toggleDay(config.days_of_week ?? [], day.iso)"
                   >
                     {{ day.short }}
@@ -308,12 +300,8 @@ function setMultiplier(value: number) {
                   v-for="value in [2, 3]"
                   :key="value"
                   type="button"
-                  class="flex-1 rounded-2xl py-3 text-sm font-black transition"
-                  :class="
-                    (config.stamp_multiplier ?? 2) === value
-                      ? 'bg-primary text-white'
-                      : 'bg-surface-muted text-ink-muted border border-border'
-                  "
+                  class="flotory-option-toggle flex-1 rounded-2xl py-3 text-sm font-black"
+                  :class="{ 'flotory-option-toggle--selected': (config.stamp_multiplier ?? 2) === value }"
                   @click="setMultiplier(value)"
                 >
                   {{ value }}× stamps
@@ -321,9 +309,9 @@ function setMultiplier(value: number) {
               </div>
             </div>
 
-            <label class="flex items-center gap-3 rounded-2xl bg-surface-muted px-4 py-3 border border-border">
-              <input v-model="pushEnabled" type="checkbox" class="size-4 rounded border-border" />
-              <span class="text-sm font-semibold text-ink-muted">Notify customers via mobile push when available</span>
+            <label class="flex items-center gap-3 rounded-2xl border border-border bg-accent-soft/35 px-4 py-3">
+              <input v-model="pushEnabled" type="checkbox" class="flotory-checkbox" />
+              <span class="text-sm font-semibold text-ink">Notify customers via mobile push when available</span>
             </label>
           </div>
         </template>
