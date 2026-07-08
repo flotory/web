@@ -25,7 +25,7 @@ import { MARKETING_HOME_PATH } from '@/lib/brand'
             <AppButton variant="ghost">FAQ</AppButton>
           </RouterLink>
           <RouterLink to="/login" class="hidden sm:inline-flex">
-            <AppButton variant="ghost">Log in</AppButton>
+            <AppButton variant="primary" size="sm">Log in</AppButton>
           </RouterLink>
         </nav>
       </div>
