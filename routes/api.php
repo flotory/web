@@ -48,6 +48,13 @@ Route::post('/public/owner-invitations/{token}/accept', [PublicOwnerInvitationCo
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/owner-onboarding', [OwnerOnboardingController::class, 'show']);
+    Route::get('/owner-onboarding/additional-venue', [OwnerOnboardingController::class, 'showAdditionalVenue']);
+    Route::put('/owner-onboarding/draft', [OwnerOnboardingController::class, 'updateDraft']);
+    Route::delete('/owner-onboarding/draft', [OwnerOnboardingController::class, 'destroyDraft']);
+    Route::get('/owner-onboarding/draft/files', [OwnerOnboardingController::class, 'draftFiles']);
+    Route::post('/owner-onboarding/draft/files', [OwnerOnboardingController::class, 'storeDraftFile']);
+    Route::delete('/owner-onboarding/draft/files/{draftFile}', [OwnerOnboardingController::class, 'destroyDraftFile']);
+    Route::post('/owner-onboarding/submit', [OwnerOnboardingController::class, 'submit']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/locale', [AuthController::class, 'updateLocale']);
     Route::put('/auth/currency', [AuthController::class, 'updateCurrency']);

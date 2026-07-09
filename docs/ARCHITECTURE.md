@@ -178,7 +178,7 @@ Static UI chrome is translated. Venue names, reward titles, campaign names, and 
 **Sales-led (default):**
 
 1. Admin sends invite → owner registers via `/register?invite=…`
-2. First brand: owner completes **`/onboarding`** wizard (profile, location, Files, first reward, submit). **Additional brands:** existing owners use **My Venues → Create venue** → `/onboarding` for the new draft brand.
+2. First brand: owner completes **`/onboarding`** wizard (profile, location, Files, first reward, submit). **Additional brands:** existing owners use **My Venues → Create venue** → **`/my-venues/create/*`** wizard (details → files → reward → review). No brand/venue row is created until **Submit for review**; progress is stored in **`owner_onboarding_drafts`**.
 3. Listing checklist → submit → admin approve → `published`
 4. Dashboard, rewards, campaigns, customers, analytics, NFC stand setup
 
@@ -193,7 +193,9 @@ Public `intent=owner` self-signup is blocked. Venue **create** API allows users 
 | Route | Page |
 |-------|------|
 | `/dashboard` | KPIs, insights |
-| `/my-venues` | Location list, create brand, add branch |
+| `/my-venues` | Location list, **Create venue** → `/my-venues/create/*`, add branch |
+| `/my-venues/create/:step` | Additional brand wizard (`details` → `files` → `reward` → `review`) |
+| `/onboarding/:step?` | First-venue onboarding wizard (draft until submit) |
 | `/my-venues/:id/settings` | Per-venue settings |
 | `/my-venues/:id/setup-files` | Owner Files (logo/cover uploads) |
 | `/rewards`, `/campaigns`, `/customers`, `/analytics` | Owner tools |
@@ -209,7 +211,8 @@ Customer wallet, NFC stamp, and slide redeem live in **`apps/mobile`** — see [
 
 **Authenticated (highlights):**
 
-- Venues: CRUD (create for **existing owners** or users with an **accepted** invitation), **branches**, discover, join, customers CRM, dashboard, setup files
+- Venues: CRUD (legacy `POST /api/venues` still exists; owner UI uses draft flow instead), **branches**, discover, join, customers CRM, dashboard, setup files
+- **Owner onboarding drafts:** `GET /api/owner-onboarding`, `GET /api/owner-onboarding/additional-venue`, `PUT/DELETE /api/owner-onboarding/draft`, draft file CRUD, `POST /api/owner-onboarding/submit` — persists brand+venue only on submit
 - Rewards: nested CRUD + archive/reactivate/purge
 - Campaigns: templates, CRUD, preview, activate/pause/end
 - Customer: cards, wallet, card detail, **`POST .../unlocks/{unlock}/redeem`**

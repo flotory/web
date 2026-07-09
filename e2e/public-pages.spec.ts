@@ -21,6 +21,11 @@ test.describe('Public marketing and bridge pages', () => {
     await expect(page.getByText('NFC stamps at the counter')).toBeVisible()
     await expect(page.getByText('Built for independent cafes, wine bars, and bakeries.')).toBeVisible()
 
+    await expect(page.getByTestId('landing-benefits-carousel')).toBeVisible()
+    await expect(page.getByTestId('landing-benefit-guest-cards')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Guest stamp cards' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Show next benefits' })).toBeEnabled()
+
     await expect(page.getByRole('heading', { name: 'Guest app, NFC stand, and owner dashboard — in one loop.' })).toBeVisible()
     await expect(page.getByTestId('landing-product-showcase')).toBeVisible()
     await expect(page.getByTestId('landing-product-panel-guest')).toBeVisible()

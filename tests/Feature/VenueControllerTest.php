@@ -47,6 +47,11 @@ class VenueControllerTest extends TestCase
         $this->postJson('/api/venues', [
             'name' => 'Custom Slug Cafe',
             'slug' => 'custom-slug-cafe',
+            'category' => 'cafe',
+            'address' => '2 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'google_place_id' => 'custom-slug-place',
         ])->assertForbidden();
     }
 

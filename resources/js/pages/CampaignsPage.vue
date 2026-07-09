@@ -7,6 +7,7 @@ import CampaignIcon from '@/components/campaigns/CampaignIcon.vue'
 import CampaignWizard from '@/components/campaigns/CampaignWizard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageSection from '@/components/ui/PageSection.vue'
 import { useCampaignsPage } from '@/composables/useCampaignsPage'
@@ -146,13 +147,10 @@ const {
               </div>
               <label class="flex items-center gap-2">
                 <span class="sr-only">Sort campaigns</span>
-                <select
-                  v-model="historySort"
-                  class="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink outline-none focus:border-accent focus:outline-none"
-                >
+                <FormSelect v-model="historySort" size="compact">
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>
-                </select>
+                </FormSelect>
               </label>
             </div>
 

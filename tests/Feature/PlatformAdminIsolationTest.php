@@ -35,6 +35,10 @@ class PlatformAdminIsolationTest extends TestCase
             'name' => 'Admin Cafe',
             'slug' => 'admin-cafe',
             'category' => 'cafe',
+            'address' => '1 Market Street, Torun',
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+            'google_place_id' => 'admin-cafe-place',
         ])->assertForbidden();
     }
 

@@ -116,7 +116,6 @@ async function logout() {
       </nav>
 
       <div class="mt-4 space-y-2">
-        <LocaleSwitcher id="sidebar-locale" wrapper-class="px-1" />
         <RouterLink
           to="/account"
           :class="[

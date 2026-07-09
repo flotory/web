@@ -51,7 +51,10 @@ class OwnerOnboardingControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('active', true)
             ->assertJsonPath('business_name', 'Harbor Coffee')
-            ->assertJsonPath('venue', null);
+            ->assertJsonPath('venue', null)
+            ->assertJsonPath('uses_draft', true)
+            ->assertJsonPath('draft.name', 'Harbor Coffee')
+            ->assertJsonCount(4, 'listing.items');
     }
 
     public function test_returns_listing_snapshot_for_draft_owner_venue(): void
@@ -118,5 +121,50 @@ class OwnerOnboardingControllerTest extends TestCase
             ->getJson('/api/owner-onboarding')
             ->assertOk()
             ->assertJsonPath('active', false);
+    }
+
+    public function test_show_additional_venue_returns_draft_snapshot(): void
+    {
+        $user = $this->createUser(['email' => 'additional-show@example.com']);
+        $venue = $this->createPublishedVenue(['name' => 'Live Cafe', 'slug' => 'live-cafe']);
+        $this->attachMember($venue, $user, 'owner');
+
+        OwnerInvitation::query()->create([
+            'email' => 'additional-show@example.com',
+            'accepted_at' => now(),
+            'token' => 'additional-show',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/owner-onboarding/draft', [
+                'purpose' => 'additional_venue',
+                'restart' => true,
+                'name' => 'Another Cafe',
+                'category' => 'cafe',
+                'address' => '3 Market Street, Torun',
+                'latitude' => 53.0101,
+                'longitude' => 18.6101,
+                'google_place_id' => 'another-cafe-place',
+            ])
+            ->assertOk();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/owner-onboarding/additional-venue')
+            ->assertOk()
+            ->assertJsonPath('purpose', 'additional_venue')
+            ->assertJsonPath('draft.name', 'Another Cafe')
+            ->assertJsonCount(4, 'listing.items');
+    }
+
+    public function test_show_additional_venue_returns_not_found_without_draft(): void
+    {
+        $user = $this->createUser(['email' => 'no-draft@example.com']);
+        $venue = $this->createPublishedVenue(['name' => 'Live Cafe', 'slug' => 'live-cafe-2']);
+        $this->attachMember($venue, $user, 'owner');
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/owner-onboarding/additional-venue')
+            ->assertNotFound();
     }
 }

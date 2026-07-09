@@ -36,8 +36,9 @@ test.describe('Owner invitation register', () => {
     await page.locator('#password-confirm').fill('password123')
     await page.locator('button[type="submit"]').click()
 
-    await expect(page).toHaveURL(/\/onboarding(\/profile)?$/, { timeout: 20_000 })
-    await expect(page.getByRole('heading', { name: 'Welcome to Flotory' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('E2E Harbor')).toBeVisible()
+    await expect(page).toHaveURL(/\/onboarding/, { timeout: 20_000 })
+    await page.goto('/onboarding/profile')
+    await expect(page.getByRole('heading', { name: 'Your venue profile' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('#onboarding-name')).toHaveValue('E2E Harbor')
   })
 })

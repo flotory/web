@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { Nfc, Smartphone, Store } from '@lucide/vue'
 
+import LandingBenefitsCarousel from '@/components/marketing/LandingBenefitsCarousel.vue'
 import LandingHeroVisual from '@/components/marketing/LandingHeroVisual.vue'
 import LandingHowItWorks from '@/components/marketing/LandingHowItWorks.vue'
 import LandingProductShowcase from '@/components/marketing/LandingProductShowcase.vue'
@@ -17,28 +17,10 @@ const trustPoints = [
   'Onboarded in 1–3 business days',
 ]
 
-const features = [
-  {
-    icon: Smartphone,
-    title: 'Guest stamp cards',
-    copy: 'Digital loyalty in the Flotory app — join from QR or discover.',
-  },
-  {
-    icon: Nfc,
-    title: 'NFC at the counter',
-    copy: 'One tap adds one stamp. No POS integration and no staff scanner.',
-  },
-  {
-    icon: Store,
-    title: 'Owner dashboard',
-    copy: 'Visits, rewards, and branches in one place — with hands-on launch support from our team.',
-  },
-]
-
 </script>
 
 <template>
-  <main class="relative min-h-screen overflow-hidden bg-marketing-page text-ink">
+  <main class="relative min-h-screen overflow-x-clip bg-marketing-page text-ink">
     <div class="pointer-events-none absolute inset-0 marketing-page-glow" />
 
     <MarketingPageHeader />
@@ -96,20 +78,8 @@ const features = [
       </p>
     </section>
 
-    <section class="relative mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24">
-      <div class="feature-grid">
-        <article
-          v-for="feature in features"
-          :key="feature.title"
-          class="feature-card"
-        >
-          <div class="feature-icon">
-            <component :is="feature.icon" :size="24" :stroke-width="2.2" />
-          </div>
-          <h2 class="mt-5 text-lg font-bold text-ink sm:text-xl">{{ feature.title }}</h2>
-          <p class="mt-2 text-sm leading-7 text-ink-muted sm:text-base sm:leading-7">{{ feature.copy }}</p>
-        </article>
-      </div>
+    <section class="relative mx-auto max-w-6xl overflow-visible px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24">
+      <LandingBenefitsCarousel />
     </section>
 
     <section class="relative mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-20 lg:pb-24">
@@ -234,43 +204,6 @@ const features = [
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--flotory-ink-soft);
-}
-
-.feature-grid {
-  display: grid;
-  gap: 1.25rem;
-}
-
-@media (min-width: 768px) {
-  .feature-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.75rem;
-  }
-}
-
-.feature-card {
-  border-radius: 1.5rem;
-  border: 1px solid color-mix(in srgb, var(--flotory-border) 75%, transparent);
-  background: color-mix(in srgb, var(--flotory-surface) 92%, transparent);
-  padding: 1.75rem 1.5rem;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--flotory-primary) 5%, transparent);
-}
-
-@media (min-width: 768px) {
-  .feature-card {
-    padding: 2rem 1.75rem;
-  }
-}
-
-.feature-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 1rem;
-  background: var(--flotory-accent-soft);
-  color: var(--flotory-accent-active);
 }
 
 .btn-glow {

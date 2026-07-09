@@ -138,7 +138,7 @@ If you see “Google address search is not configured”, the key is missing fro
 OAuth owner login:
 
 - **Provisioned owners** (`intent=owner` on login): sign in to the dashboard if they already have a venue membership.
-- **New prospects** are sent to **`/book-demo`** — public owner self-registration is disabled (sales invite or admin provisioning only). **Existing owners** may still create additional brands from **My Venues**.
+- **New prospects** are sent to **`/book-demo`** — public owner self-registration is disabled (sales invite or admin provisioning only). **Existing owners** may create additional brands from **My Venues → Create venue** (`/my-venues/create/details`).
 - **Customers** use the **Flotory mobile app** — web `/app` explains how to install/open it.
 
 ## Onboarding flows
@@ -155,7 +155,7 @@ OAuth owner login:
 
 1. Prospect books **`/book-demo`** or contacts sales.
 2. Admin opens **Owner onboarding** (`/admin/owner-onboarding`) and sends an invitation (email + optional business name).
-3. Owner registers via the expiring `/register?invite=…` link and completes the **guided onboarding wizard** at `/onboarding` (profile → location → logo & cover → first reward → submit).
+3. Owner registers via the expiring `/register?invite=…` link and completes the **guided onboarding wizard** at `/onboarding` (profile → location → logo & cover → first reward → submit). Nothing is written to `brands` / `venues` until **Submit for review** (draft stored in `owner_onboarding_drafts`).
 4. Platform admin approves at **Venue listings** (`/admin/venues`).
 
 **Ops-heavy provisioning (venue exists before the owner signs in):**

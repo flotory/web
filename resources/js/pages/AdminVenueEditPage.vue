@@ -11,6 +11,7 @@ import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAdminVenueManagement, type AdminManageVenue } from '@/composables/useAdminVenueManagement'
@@ -47,12 +48,6 @@ const category = ref<VenueCategory>('cafe')
 const averageCheckAmount = ref('')
 
 const categoryOptions = VENUE_CATEGORY_GROUPS
-
-const selectChevronStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
-  backgroundPosition: 'right 0.75rem center',
-}
 
 const venueId = computed(() => Number(route.params.id))
 const slugLocked = computed(() => venue.value?.status === 'published')
@@ -304,16 +299,11 @@ onMounted(loadPage)
               </div>
               <div>
                 <label class="text-sm font-bold text-ink-muted" for="admin-edit-venue-category">Category</label>
-                <select
-                  id="admin-edit-venue-category"
-                  v-model="category"
-                  class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-medium outline-none focus:border-ink-soft focus:bg-surface"
-                  :style="selectChevronStyle"
-                >
+                <FormSelect id="admin-edit-venue-category" v-model="category" class="mt-2 w-full">
                   <optgroup v-for="group in categoryOptions" :key="group.label" :label="group.label">
                     <option v-for="id in group.ids" :key="id" :value="id">{{ categoryLabel(id) }}</option>
                   </optgroup>
-                </select>
+                </FormSelect>
                 <p v-if="category === 'other'" class="mt-2 text-xs leading-relaxed text-ink-muted">
                   Any business with repeat customers can use Flotory.
                 </p>

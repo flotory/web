@@ -63,6 +63,25 @@ describe('owner onboarding helpers', () => {
   it('resolves the next incomplete onboarding step from listing items', () => {
     expect(resolveOnboardingStep(null, null)).toBe('welcome')
 
+    const draft = {
+      name: 'Harbor Coffee',
+      category: 'cafe',
+      address: '',
+      latitude: null,
+      longitude: null,
+      google_place_id: null,
+      phone: '',
+      website: '',
+      reward: { title: '', description: '', required_stamps: 10 },
+    }
+
+    expect(resolveOnboardingStep(null, listing([
+      { key: 'address', label: 'Google address', complete: false, hint: '' },
+      { key: 'category', label: 'Venue category', complete: true, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: false, hint: '' },
+      { key: 'rewards', label: 'At least one active reward', complete: false, hint: '' },
+    ]), draft)).toBe('location')
+
     const draftVenue = venue()
     expect(resolveOnboardingStep(draftVenue, listing([
       { key: 'address', label: 'Google address', complete: false, hint: '' },
@@ -98,7 +117,22 @@ describe('owner onboarding helpers', () => {
     expect(clampOnboardingStep('review', draftVenue, partial)).toBe('files')
     expect(clampOnboardingStep('location', draftVenue, partial)).toBe('location')
     expect(clampOnboardingStep('profile', null, null)).toBe('profile')
-    expect(clampOnboardingStep('files', null, null)).toBe('profile')
+    expect(clampOnboardingStep('files', null, listing([
+      { key: 'address', label: 'Google address', complete: true, hint: '' },
+      { key: 'category', label: 'Venue category', complete: true, hint: '' },
+      { key: 'setup_files', label: 'Files', complete: false, hint: '' },
+      { key: 'rewards', label: 'At least one active reward', complete: false, hint: '' },
+    ]), {
+      name: 'Harbor Coffee',
+      category: 'cafe',
+      address: 'Main St',
+      latitude: 1,
+      longitude: 2,
+      google_place_id: null,
+      phone: '',
+      website: '',
+      reward: { title: '', description: '', required_stamps: 10 },
+    })).toBe('files')
     expect(clampOnboardingStep('welcome', draftVenue, partial)).toBe('welcome')
   })
 })

@@ -43,6 +43,12 @@ class VenueController extends Controller
             ->where('user_id', $user->id)
             ->pluck('brand_id');
 
+        $this->purgeNeverSubmittedDraftBrands($brandIds);
+
+        $brandIds = BrandUser::query()
+            ->where('user_id', $user->id)
+            ->pluck('brand_id');
+
         $setupPreviews = $this->setupFiles->logoPreviewPathsForBrandIds($brandIds);
 
         $venues = Venue::query()
@@ -432,5 +438,43 @@ class VenueController extends Controller
             : null;
 
         return VenuePresenter::apply($venue, $preview);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, int>  $brandIds
+     */
+    private function purgeNeverSubmittedDraftBrands($brandIds): void
+    {
+        if ($brandIds->isEmpty()) {
+            return;
+        }
+
+        $hasLiveBrand = Brand::query()
+            ->whereIn('id', $brandIds)
+            ->whereNull('deleted_at')
+            ->whereIn('status', [Brand::STATUS_PUBLISHED, Brand::STATUS_PENDING_REVIEW])
+            ->exists();
+
+        if (! $hasLiveBrand) {
+            return;
+        }
+
+        $abandonedBrandIds = Brand::query()
+            ->whereIn('id', $brandIds)
+            ->where('status', Brand::STATUS_DRAFT)
+            ->whereNull('submitted_at')
+            ->pluck('id');
+
+        foreach ($abandonedBrandIds as $brandId) {
+            $brand = Brand::query()->find($brandId);
+
+            if (! $brand instanceof Brand) {
+                continue;
+            }
+
+            $brand->venues()->each(fn (Venue $venue): mixed => $venue->delete());
+            BrandUser::query()->where('brand_id', $brand->id)->delete();
+            $brand->delete();
+        }
     }
 }

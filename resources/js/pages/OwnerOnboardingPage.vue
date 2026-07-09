@@ -9,6 +9,7 @@ import OwnerOnboardingProgress from '@/components/onboarding/OwnerOnboardingProg
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import LocaleSwitcher from '@/components/ui/LocaleSwitcher.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
@@ -24,6 +25,7 @@ import {
   resolveOnboardingStep,
   type OnboardingStep,
   type OwnerOnboardingContext,
+  type OwnerOnboardingDraft,
 } from '@/lib/ownerOnboarding'
 import { buildVenueLandingUrl } from '@/lib/onboarding'
 import { listingStatusLabel } from '@/lib/venueListing'
@@ -60,11 +62,6 @@ const files = ref<SetupFileRecord[]>([])
 const name = ref('')
 const category = ref<VenueCategory>('cafe')
 
-const selectChevronStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
-  backgroundPosition: 'right 0.75rem center',
-}
 const address = ref('')
 const latitude = ref<number | null>(null)
 const longitude = ref<number | null>(null)
@@ -93,8 +90,13 @@ const currentStep = computed<OnboardingStep>(() => {
 })
 
 const listing = computed(() => context.value?.listing ?? null)
+const usesDraft = computed(() => context.value?.uses_draft === true)
 
 const stepTitle = computed(() => ONBOARDING_STEP_LABELS[currentStep.value])
+
+function draftFromContext(): OwnerOnboardingDraft | null {
+  return context.value?.draft ?? null
+}
 
 async function loadContext() {
   loading.value = true
@@ -110,14 +112,13 @@ async function loadContext() {
     }
 
     venue.value = context.value.venue
-    syncFormFromVenue()
+    syncFormFromContext()
 
-    if (venue.value) {
-      await loadFiles()
-    }
+    await loadFiles()
 
-    const resolved = resolveOnboardingStep(venue.value, listing.value)
-    const allowed = clampOnboardingStep(currentStep.value, venue.value, listing.value)
+    const draft = draftFromContext()
+    const resolved = resolveOnboardingStep(venue.value, listing.value, draft)
+    const allowed = clampOnboardingStep(currentStep.value, venue.value, listing.value, draft)
     if (currentStep.value === 'welcome' && resolved !== 'welcome') {
       await router.replace(onboardingStepPath(resolved))
     } else if (allowed !== currentStep.value) {
@@ -130,33 +131,82 @@ async function loadContext() {
   }
 }
 
-function syncFormFromVenue() {
-  if (!venue.value) {
-    if (businessName.value) {
-      name.value = businessName.value
-    }
+function syncFormFromContext() {
+  const draft = draftFromContext()
+
+  if (venue.value) {
+    name.value = venue.value.name
+    category.value = normalizeVenueCategory(venue.value.category)
+    address.value = venue.value.address ?? ''
+    latitude.value = venue.value.latitude ?? null
+    longitude.value = venue.value.longitude ?? null
+    googlePlaceId.value = venue.value.google_place_id ?? null
+    phone.value = venue.value.phone ?? ''
+    website.value = venue.value.website ?? ''
     return
   }
 
-  name.value = venue.value.name
-  category.value = normalizeVenueCategory(venue.value.category)
-  address.value = venue.value.address ?? ''
-  latitude.value = venue.value.latitude ?? null
-  longitude.value = venue.value.longitude ?? null
-  googlePlaceId.value = venue.value.google_place_id ?? null
-  phone.value = venue.value.phone ?? ''
-  website.value = venue.value.website ?? ''
+  if (draft) {
+    name.value = draft.name || businessName.value
+    category.value = normalizeVenueCategory(draft.category)
+    address.value = draft.address ?? ''
+    latitude.value = draft.latitude ?? null
+    longitude.value = draft.longitude ?? null
+    googlePlaceId.value = draft.google_place_id ?? null
+    phone.value = draft.phone ?? ''
+    website.value = draft.website ?? ''
+    rewardTitle.value = draft.reward?.title || rewardTitle.value
+    rewardDescription.value = draft.reward?.description || rewardDescription.value
+    rewardStamps.value = draft.reward?.required_stamps || rewardStamps.value
+    return
+  }
+
+  if (businessName.value) {
+    name.value = businessName.value
+  }
 }
 
 async function refreshContext() {
   context.value = await api<OwnerOnboardingContext>('/owner-onboarding')
   venue.value = context.value.venue
-  syncFormFromVenue()
+  syncFormFromContext()
   await auth.refreshCapabilities()
   await workspace.bootstrap(true)
 }
 
+async function saveDraft(body: Record<string, unknown>): Promise<boolean> {
+  saving.value = true
+  error.value = ''
+
+  try {
+    const response = await api<{ draft: OwnerOnboardingDraft; listing: OwnerOnboardingContext['listing'] }>(
+      '/owner-onboarding/draft',
+      { method: 'PUT', body },
+    )
+    if (context.value) {
+      context.value = {
+        ...context.value,
+        draft: response.draft,
+        listing: response.listing,
+      }
+    }
+    syncFormFromContext()
+    return true
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : 'Could not save your progress.'
+    return false
+  } finally {
+    saving.value = false
+  }
+}
+
 async function loadFiles() {
+  if (usesDraft.value) {
+    const response = await api<{ files: SetupFileRecord[] }>('/owner-onboarding/draft/files')
+    files.value = response.files
+    return
+  }
+
   if (!venue.value) {
     files.value = []
     return
@@ -176,36 +226,36 @@ async function saveProfile(): Promise<boolean> {
     return false
   }
 
+  if (usesDraft.value) {
+    return saveDraft({
+      name: name.value.trim(),
+      category: category.value,
+    })
+  }
+
   saving.value = true
   error.value = ''
 
   try {
-    if (venue.value) {
-      const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}`, {
-        method: 'PUT',
-        body: {
-          name: name.value.trim(),
-          category: category.value,
-          address: address.value || undefined,
-          latitude: latitude.value ?? undefined,
-          longitude: longitude.value ?? undefined,
-          google_place_id: googlePlaceId.value ?? undefined,
-          phone: phone.value || undefined,
-          website: website.value || undefined,
-        },
-      })
-      venue.value = response.venue
-    } else {
-      const response = await api<{ venue: Venue }>('/venues', {
-        method: 'POST',
-        body: {
-          name: name.value.trim(),
-          category: category.value,
-        },
-      })
-      venue.value = response.venue
+    if (!venue.value) {
+      error.value = 'Create your venue profile first.'
+      return false
     }
 
+    const response = await api<{ venue: Venue }>(`/venues/${venue.value.id}`, {
+      method: 'PUT',
+      body: {
+        name: name.value.trim(),
+        category: category.value,
+        address: address.value || undefined,
+        latitude: latitude.value ?? undefined,
+        longitude: longitude.value ?? undefined,
+        google_place_id: googlePlaceId.value ?? undefined,
+        phone: phone.value || undefined,
+        website: website.value || undefined,
+      },
+    })
+    venue.value = response.venue
     await refreshContext()
     return true
   } catch (exception) {
@@ -217,13 +267,26 @@ async function saveProfile(): Promise<boolean> {
 }
 
 async function saveLocation(): Promise<boolean> {
-  if (!venue.value) {
-    error.value = 'Create your venue profile first.'
+  if (!addressInput.value?.validateSelection()) {
+    error.value = 'Select an address from the Google suggestions list.'
     return false
   }
 
-  if (!addressInput.value?.validateSelection()) {
-    error.value = 'Select an address from the Google suggestions list.'
+  if (usesDraft.value) {
+    return saveDraft({
+      name: name.value.trim(),
+      category: category.value,
+      address: address.value,
+      latitude: latitude.value ?? undefined,
+      longitude: longitude.value ?? undefined,
+      google_place_id: googlePlaceId.value ?? undefined,
+      phone: phone.value || undefined,
+      website: website.value || undefined,
+    })
+  }
+
+  if (!venue.value) {
+    error.value = 'Create your venue profile first.'
     return false
   }
 
@@ -256,7 +319,11 @@ async function saveLocation(): Promise<boolean> {
 }
 
 async function uploadSelectedFiles(selected: File[]) {
-  if (!venue.value || !selected.length) {
+  if (!selected.length) {
+    return
+  }
+
+  if (!usesDraft.value && !venue.value) {
     return
   }
 
@@ -276,12 +343,23 @@ async function uploadSelectedFiles(selected: File[]) {
       const body = new FormData()
       body.append('file', file)
 
-      const response = await api<{ file: SetupFileRecord }>(`/venues/${venue.value.id}/setup-files`, {
-        method: 'POST',
-        body,
-      })
+      if (usesDraft.value) {
+        const response = await api<{ file: SetupFileRecord; listing: OwnerOnboardingContext['listing'] }>(
+          '/owner-onboarding/draft/files',
+          { method: 'POST', body },
+        )
+        files.value = [response.file, ...files.value.filter((item) => item.id !== response.file.id)]
+        if (context.value) {
+          context.value = { ...context.value, listing: response.listing }
+        }
+      } else {
+        const response = await api<{ file: SetupFileRecord }>(`/venues/${venue.value!.id}/setup-files`, {
+          method: 'POST',
+          body,
+        })
+        files.value = [response.file, ...files.value.filter((item) => item.id !== response.file.id)]
+      }
 
-      files.value = [response.file, ...files.value.filter((item) => item.id !== response.file.id)]
       uploaded += 1
     } catch (exception) {
       error.value = apiErrorMessage(exception, `Could not upload ${file.name}.`)
@@ -291,18 +369,32 @@ async function uploadSelectedFiles(selected: File[]) {
 
   if (uploaded > 0) {
     toast.success(uploaded === 1 ? 'File uploaded.' : `${uploaded} files uploaded.`)
-    await refreshContext()
+    if (!usesDraft.value) {
+      await refreshContext()
+    }
   }
 
   uploading.value = false
 }
 
 async function removeFile(file: SetupFileRecord) {
-  if (!venue.value) {
-    return
-  }
-
   try {
+    if (usesDraft.value) {
+      const response = await api<{ listing: OwnerOnboardingContext['listing'] }>(
+        `/owner-onboarding/draft/files/${file.id}`,
+        { method: 'DELETE' },
+      )
+      files.value = files.value.filter((item) => item.id !== file.id)
+      if (context.value) {
+        context.value = { ...context.value, listing: response.listing }
+      }
+      return
+    }
+
+    if (!venue.value) {
+      return
+    }
+
     await api(`/venues/${venue.value.id}/setup-files/${file.id}`, { method: 'DELETE' })
     files.value = files.value.filter((item) => item.id !== file.id)
     await refreshContext()
@@ -312,13 +404,23 @@ async function removeFile(file: SetupFileRecord) {
 }
 
 async function saveReward(): Promise<boolean> {
-  if (!venue.value) {
-    error.value = 'Create your venue profile first.'
+  if (!rewardTitle.value.trim()) {
+    error.value = 'Reward title is required.'
     return false
   }
 
-  if (!rewardTitle.value.trim()) {
-    error.value = 'Reward title is required.'
+  if (usesDraft.value) {
+    return saveDraft({
+      reward: {
+        title: rewardTitle.value.trim(),
+        description: rewardDescription.value.trim(),
+        required_stamps: rewardStamps.value,
+      },
+    })
+  }
+
+  if (!venue.value) {
+    error.value = 'Create your venue profile first.'
     return false
   }
 
@@ -344,7 +446,7 @@ async function saveReward(): Promise<boolean> {
 }
 
 async function submitListing() {
-  if (!venue.value || !listing.value?.can_submit) {
+  if (!listing.value?.can_submit) {
     return
   }
 
@@ -352,7 +454,14 @@ async function submitListing() {
   error.value = ''
 
   try {
-    await api(`/venues/${venue.value.id}/listing/submit`, { method: 'POST' })
+    if (usesDraft.value) {
+      await api('/owner-onboarding/submit', { method: 'POST' })
+    } else if (venue.value) {
+      await api(`/venues/${venue.value.id}/listing/submit`, { method: 'POST' })
+    } else {
+      return
+    }
+
     toast.success('Submitted for review. We will notify you once it is approved.')
     await refreshContext()
     await router.replace('/dashboard')
@@ -367,7 +476,8 @@ async function continueFromStep() {
   error.value = ''
 
   if (currentStep.value === 'welcome') {
-    goToStep(venue.value ? resolveOnboardingStep(venue.value, listing.value) : 'profile')
+    const resolved = resolveOnboardingStep(venue.value, listing.value, draftFromContext())
+    goToStep(resolved === 'welcome' ? 'profile' : resolved)
     return
   }
 
@@ -382,11 +492,6 @@ async function continueFromStep() {
     if (await saveLocation()) {
       goToStep('files')
     }
-    return
-  }
-
-  if (currentStep.value === 'files' && !venue.value) {
-    goToStep('profile')
     return
   }
 
@@ -530,18 +635,13 @@ watch(
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label class="text-sm font-bold text-ink-muted" for="onboarding-category">Category<span class="text-danger" aria-hidden="true"> *</span></label>
-                  <select
-                    id="onboarding-category"
-                    v-model="category"
-                    class="mt-2 h-12 w-full appearance-none rounded-2xl border border-border bg-surface bg-[length:14px_14px] bg-no-repeat py-0 pl-4 pr-10 text-sm font-semibold text-ink outline-none focus:border-ink-soft"
-                    :style="selectChevronStyle"
-                  >
+                  <FormSelect id="onboarding-category" v-model="category" class="mt-2 w-full">
                     <optgroup v-for="group in VENUE_CATEGORY_GROUPS" :key="group.label" :label="group.label">
                       <option v-for="id in group.ids" :key="id" :value="id">
                         {{ categoryLabel(id) }}
                       </option>
                     </optgroup>
-                  </select>
+                  </FormSelect>
                   <p v-if="category === 'other'" class="mt-2 text-xs leading-relaxed text-ink-muted">
                     Any business with repeat customers can use Flotory.
                   </p>
@@ -689,16 +789,16 @@ watch(
             <p class="mt-2 text-sm leading-relaxed text-ink-muted">
               Check everything below, then submit for Flotory review. Customers will see your venue after approval — usually within 1–3 business days.
             </p>
-            <div v-if="venue && listing" class="mt-6 space-y-4">
+            <div v-if="listing" class="mt-6 space-y-4">
               <div class="rounded-2xl border border-border/80 bg-surface-muted/60 p-4">
                 <p class="text-xs font-bold uppercase tracking-wide text-ink-soft">Venue</p>
-                <p class="mt-1 text-lg font-black text-ink">{{ venue.name }}</p>
-                <p class="mt-1 text-sm text-ink-muted">{{ venue.address || 'No address saved' }}</p>
+                <p class="mt-1 text-lg font-black text-ink">{{ venue?.name ?? name }}</p>
+                <p class="mt-1 text-sm text-ink-muted">{{ (venue?.address ?? address) || 'No address saved' }}</p>
                 <p class="mt-2 text-xs font-semibold text-ink-soft">
-                  Status: {{ listingStatusLabel(listing.status) }}
+                  Status: {{ usesDraft ? 'Setup in progress' : listingStatusLabel(listing.status) }}
                 </p>
               </div>
-              <ListingChecklist :items="listing.items" :venue-id="venue.id" variant="owner" />
+              <ListingChecklist :items="listing.items" :venue-id="venue?.id" variant="owner" />
             </div>
           </template>
 

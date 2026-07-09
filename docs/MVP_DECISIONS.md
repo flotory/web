@@ -55,7 +55,7 @@ Related: [README.md](./README.md) (terminology), [ARCHITECTURE.md](./ARCHITECTUR
 |----------|--------|
 | No business logic in Vue | Display API data; loyalty rules stay in Laravel services. |
 | Save button pattern | `AsyncActionButton`: Save → Saving… → Saved ✓. |
-| Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **`/onboarding`** wizard. Public `intent=owner` blocked. Existing owners may add brands from **My Venues**. |
+| Owner signup | **Sales-led:** admin invite → `/register?invite=…` → **`/onboarding`** wizard (draft API until submit). Public `intent=owner` blocked. Existing owners add brands from **My Venues → Create venue** → **`/my-venues/create/*`**. |
 | Venue listing status | `draft` → `pending_review` → `published` on **brand**. Customers join only when **published**. |
 | Owner venue slug | **Auto-generated** on create (`{name-slug}-{random}`). Owners do not pick slugs in the UI; onboarding and settings show the public join link read-only. Admins may set an optional slug when provisioning at **Manage venues**. |
 | Venue slug after publish | **Locked** once `published` — owner and admin APIs reject slug changes; QR links stay valid. |

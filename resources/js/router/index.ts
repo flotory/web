@@ -26,6 +26,7 @@ import VenueSetupFilesPage from '@/pages/VenueSetupFilesPage.vue'
 import VenueSettingsPage from '@/pages/VenueSettingsPage.vue'
 import VenueAppBridgePage from '@/pages/VenueAppBridgePage.vue'
 import OwnerOnboardingPage from '@/pages/OwnerOnboardingPage.vue'
+import AdditionalVenueCreatePage from '@/pages/AdditionalVenueCreatePage.vue'
 import NotFoundPage from '@/pages/NotFoundPage.vue'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage.vue'
 import TermsOfServicePage from '@/pages/TermsOfServicePage.vue'
@@ -40,6 +41,7 @@ import {
   resolveAuthenticatedHomePath,
   resolvePostLoginDestination,
 } from '@/lib/venueRoles'
+import { isAdditionalVenueCreateStep, additionalVenueCreateStepPath } from '@/lib/additionalVenueCreate'
 import { shouldUseOwnerOnboarding, isOnboardingStep } from '@/lib/ownerOnboarding'
 import { bootstrapWorkspaceOrSignOut } from '@/lib/sessionGuard'
 import { isOwnerVenueInWorkspace } from '@/lib/venueWorkspace'
@@ -79,6 +81,8 @@ const router = createRouter({
     { path: '/onboarding/:step?', name: 'owner-onboarding', component: OwnerOnboardingPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
     { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues', name: 'my-venues', component: MyVenuesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true, allowWithoutMembership: true } },
+    { path: '/my-venues/create', redirect: '/my-venues/create/details' },
+    { path: '/my-venues/create/:step', name: 'additional-venue-create', component: AdditionalVenueCreatePage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id(\\d+)/settings', name: 'venue-settings', component: VenueSettingsPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
     { path: '/my-venues/:id(\\d+)/design', redirect: (to) => `/my-venues/${to.params.id}/settings` },
     { path: '/my-venues/:id(\\d+)/setup-files', name: 'venue-setup-files', component: VenueSetupFilesPage, meta: { requiresAuth: true, workspace: true, ownerOnly: true } },
@@ -156,13 +160,20 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'my-venues' && to.query.create === '1' && auth.mayCreateVenue) {
-    return { path: '/onboarding' }
+    return { path: '/my-venues/create/details', query: { fresh: '1' } }
   }
 
   if (to.name === 'owner-onboarding') {
     const step = typeof to.params.step === 'string' ? to.params.step : undefined
     if (step && !isOnboardingStep(step)) {
       return { path: '/onboarding' }
+    }
+  }
+
+  if (to.name === 'additional-venue-create') {
+    const step = typeof to.params.step === 'string' ? to.params.step : ''
+    if (!isAdditionalVenueCreateStep(step)) {
+      return { path: additionalVenueCreateStepPath('details') }
     }
   }
 

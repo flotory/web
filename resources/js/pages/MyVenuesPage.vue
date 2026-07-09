@@ -3,18 +3,18 @@ import { MoreHorizontal, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
-import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
-import PhoneInput from '@/components/ui/PhoneInput.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
+import { additionalVenueCreateFreshPath } from '@/lib/additionalVenueCreate'
 import { toast } from '@/lib/toast'
 import { normalizeVenueCategory, VENUE_CATEGORIES, type VenueCategory } from '@/lib/venueCategories'
 import { listingStatusLabel, listingStatusTone } from '@/lib/venueListing'
@@ -30,10 +30,8 @@ const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 
 const loading = ref(true)
-const createVenueAction = useAsyncAction()
 const saving = ref(false)
 const error = ref('')
-const formOpen = ref(false)
 const menuVenueId = ref<number | null>(null)
 const deleteVenueTarget = ref<Venue | null>(null)
 const branchAnchorVenue = ref<Venue | null>(null)
@@ -48,15 +46,6 @@ const addBranchAction = useAsyncAction()
 const search = ref('')
 const typeFilter = ref<'all' | VenueCategory>('all')
 const sortBy = ref<'activity' | 'name' | 'customers'>('activity')
-
-const name = ref('')
-const address = ref('')
-const latitude = ref<number | null>(null)
-const longitude = ref<number | null>(null)
-const googlePlaceId = ref<string | null>(null)
-const addressInput = ref<InstanceType<typeof VenueAddressInput> | null>(null)
-const phone = ref('')
-const website = ref('')
 
 const activeVenues = computed(() => workspace.activeVenues)
 const mayCreateVenue = computed(() => auth.mayCreateVenue)
@@ -90,23 +79,12 @@ const filteredVenues = computed(() => {
   return items
 })
 
-function resetForm() {
-  name.value = ''
-  address.value = ''
-  latitude.value = null
-  longitude.value = null
-  googlePlaceId.value = null
-  phone.value = ''
-  website.value = ''
-}
-
 function openCreateForm() {
   if (!mayCreateVenue.value) {
     return
   }
 
-  resetForm()
-  formOpen.value = true
+  void router.push(additionalVenueCreateFreshPath())
 }
 
 function toggleMenu(venueId: number) {
@@ -123,48 +101,6 @@ async function loadVenues() {
     error.value = apiErrorMessage(exception, 'Could not load your venues.')
   } finally {
     loading.value = false
-  }
-}
-
-async function createVenue() {
-  if (!addressInput.value?.validateSelection()) {
-    error.value = 'Select an address from the Google suggestions list.'
-    return
-  }
-
-  try {
-    await createVenueAction.run(async () => {
-      error.value = ''
-
-      try {
-        const response = await api<{ venue: Venue }>('/venues', {
-          method: 'POST',
-          body: {
-            name: name.value,
-            address: address.value || undefined,
-            latitude: latitude.value ?? undefined,
-            longitude: longitude.value ?? undefined,
-            google_place_id: googlePlaceId.value ?? undefined,
-            phone: phone.value || undefined,
-            website: website.value || undefined,
-          },
-        })
-
-        resetForm()
-        formOpen.value = false
-        await auth.fetchUser()
-        await loadVenues()
-
-        const created = response.venue
-        workspace.setFilter(created.id)
-        await router.push('/onboarding')
-      } catch (exception) {
-        error.value = exception instanceof ApiError ? exception.message : 'Could not create venue.'
-        throw exception
-      }
-    })
-  } catch {
-    // Button shows Failed.
   }
 }
 
@@ -271,10 +207,6 @@ async function addBranch() {
 onMounted(async () => {
   await auth.refreshCapabilities()
   await loadVenues()
-
-  if (mayCreateVenue.value && (route.query.create === '1' || activeVenues.value.length === 0)) {
-    openCreateForm()
-  }
 })
 </script>
 
@@ -305,75 +237,18 @@ onMounted(async () => {
           class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft"
           placeholder="Search venue"
         >
-        <select v-model="typeFilter" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
+        <FormSelect v-model="typeFilter" size="compact" class="w-full">
           <option value="all">All types</option>
           <option v-for="option in VENUE_CATEGORIES" :key="option.id" :value="option.id">
             {{ option.label }}
           </option>
-        </select>
-        <select v-model="sortBy" class="h-11 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-ink outline-none focus:border-ink-soft">
+        </FormSelect>
+        <FormSelect v-model="sortBy" size="compact" class="w-full">
           <option value="activity">Sort by activity</option>
           <option value="name">Sort by name</option>
           <option value="customers">Sort by customers</option>
-        </select>
+        </FormSelect>
       </div>
-    </AppCard>
-
-    <AppCard v-if="formOpen && mayCreateVenue" wrapper-class="mb-5">
-      <form class="grid gap-4" @submit.prevent="createVenue">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-2xl font-black text-ink">Create venue</h2>
-            <p class="mt-1 text-sm font-semibold text-ink-muted">Profile details customers and staff will recognize.</p>
-          </div>
-          <div class="grid size-16 place-items-center overflow-hidden rounded-3xl bg-surface-muted text-xl font-black text-ink-soft border border-border">
-            {{ name.slice(0, 1) || 'V' }}
-          </div>
-        </div>
-
-        <div class="grid gap-4">
-          <div>
-            <label class="text-sm font-bold text-ink-muted" for="venue-name">Venue name<span class="text-danger" aria-hidden="true"> *</span></label>
-            <input id="venue-name" v-model="name" required class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="Harbor Coffee">
-          </div>
-
-          <div>
-            <VenueAddressInput
-              id="venue-address"
-              ref="addressInput"
-              v-model:address="address"
-              v-model:latitude="latitude"
-              v-model:longitude="longitude"
-              v-model:google-place-id="googlePlaceId"
-              label="Address"
-              hint="Pick a Google suggestion so we can save map coordinates."
-            />
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label class="text-sm font-bold text-ink-muted" for="venue-website">Website</label>
-              <input id="venue-website" v-model="website" class="mt-2 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-ink outline-none focus:border-ink-soft" placeholder="https://example.com">
-            </div>
-            <PhoneInput id="venue-phone" v-model="phone" label="Phone" />
-          </div>
-        </div>
-
-        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
-
-        <div class="flex flex-wrap gap-2">
-          <AsyncActionButton
-            type="submit"
-            idle-label="Create venue"
-            loading-label="Creating…"
-            success-label="Created ✓"
-            :loading="createVenueAction.loading"
-            :success="createVenueAction.success"
-            :error="createVenueAction.error"
-          />
-          <AppButton type="button" variant="secondary" @click="formOpen = false">Cancel</AppButton>
-        </div>
-      </form>
     </AppCard>
 
     <AppCard v-if="loading" wrapper-class="mb-4">
@@ -395,7 +270,7 @@ onMounted(async () => {
     />
 
     <EmptyState
-      v-else-if="!loading && !activeVenues.length && !error && mayCreateVenue && !formOpen"
+      v-else-if="!loading && !activeVenues.length && !error && mayCreateVenue"
       class="mb-5"
       :icon="Store"
       title="Create your first venue"

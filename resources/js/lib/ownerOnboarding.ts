@@ -17,10 +17,28 @@ export const ONBOARDING_STEP_LABELS: Record<OnboardingStep, string> = {
   review: 'Submit',
 }
 
+export interface OwnerOnboardingDraft {
+  name: string
+  category: string
+  address: string
+  latitude: number | null
+  longitude: number | null
+  google_place_id: string | null
+  phone: string
+  website: string
+  reward: {
+    title: string
+    description: string
+    required_stamps: number
+  }
+}
+
 export interface OwnerOnboardingContext {
   active: boolean
+  uses_draft?: boolean
   business_name: string | null
   venue: Venue | null
+  draft: OwnerOnboardingDraft | null
   listing: VenueListingSnapshot | null
 }
 
@@ -62,20 +80,28 @@ export function shouldUseOwnerOnboarding(mayCreateVenue: boolean, venues: Venue[
   return venueNeedsOnboarding(venues)
 }
 
+function profileComplete(venue: Venue | null, draft: OwnerOnboardingDraft | null): boolean {
+  const name = venue?.name?.trim() || draft?.name?.trim() || ''
+  const category = venue?.category?.trim() || draft?.category?.trim() || ''
+
+  return name.length > 0 && category.length > 0
+}
+
 export function resolveOnboardingStep(
   venue: Venue | null,
   listing: VenueListingSnapshot | null,
+  draft: OwnerOnboardingDraft | null = null,
 ): OnboardingStep {
-  if (!venue) {
+  if (!venue && !listing) {
     return 'welcome'
+  }
+
+  if (!profileComplete(venue, draft)) {
+    return 'profile'
   }
 
   const items = listing?.items ?? []
   const complete = (key: string) => items.find((item) => item.key === key)?.complete === true
-
-  if (!venue.name?.trim() || !venue.category?.trim()) {
-    return 'profile'
-  }
 
   if (!complete('address')) {
     return 'location'
@@ -97,16 +123,13 @@ export function clampOnboardingStep(
   requested: OnboardingStep,
   venue: Venue | null,
   listing: VenueListingSnapshot | null,
+  draft: OwnerOnboardingDraft | null = null,
 ): OnboardingStep {
   if (requested === 'welcome') {
     return 'welcome'
   }
 
-  if (!venue) {
-    return requested === 'profile' ? 'profile' : 'profile'
-  }
-
-  const furthest = resolveOnboardingStep(venue, listing)
+  const furthest = resolveOnboardingStep(venue, listing, draft)
   const furthestStep = furthest === 'welcome' ? 'profile' : furthest
   const requestedIndex = onboardingStepIndex(requested)
   const furthestIndex = onboardingStepIndex(furthestStep)

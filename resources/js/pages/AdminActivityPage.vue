@@ -9,6 +9,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import FormSelect from '@/components/ui/FormSelect.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { formatShortDate } from '@/lib/formatDate'
@@ -124,12 +125,12 @@ watch(page, loadActivity)
           </label>
           <label class="block text-sm font-semibold text-ink-muted">
             Event
-            <select v-model="eventFilter" class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm">
+            <FormSelect v-model="eventFilter" size="compact" class="mt-1 w-full">
               <option value="">All</option>
               <option value="success">success</option>
               <option value="failed">failed</option>
               <option value="info">info</option>
-            </select>
+            </FormSelect>
           </label>
           <label class="block text-sm font-semibold text-ink-muted">
             Request ID

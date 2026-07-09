@@ -46,12 +46,12 @@ Sales-led onboarding (default after a demo):
 
 1. **Invite** — Flotory admin sends an owner invitation from **Owner onboarding** (`/admin/owner-onboarding`): email + optional business name.
 2. **Register** — Owner opens `/register?invite=…`, sets a password (invite expires after `FLOTORY_OWNER_INVITATION_TTL_DAYS`, default 7).
-3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category; public join link is generated automatically), Google address, **file uploads** (logo + cover), first reward, then **Submit for review**. They can also resume from **My Venues → Files** (`/my-venues/{id}/setup-files`) while the brand is `draft` or `rejected`.
+3. **Onboarding wizard** — After register, owners land on `/onboarding`: venue profile (name, category; public join link is generated automatically), Google address, **file uploads** (logo + cover), first reward, then **Submit for review**. Progress is held in an **`owner_onboarding_draft`** until submit — no venue row exists in the database before that. They can also resume from **My Venues → Files** (`/my-venues/{id}/setup-files`) while the brand is `draft` or `rejected`.
 4. **Launch** — Complete the listing checklist → **Submit for listing** → platform admin approves → **published**.
 5. **Operate** — Dashboard, rewards, campaigns, customers CRM, analytics. **Add branches** from My Venues when you open new locations (shared stamp card and rewards; each new branch awaits Flotory approval before customers can join or tap NFC there).
 6. **NFC** — Platform admin provisions NFC stands per **location**; program each tag with its tap URL. Use a **separate token per branch** for accurate location analytics.
 
-**Additional brands:** owners with at least one live brand can create another from **My Venues** (new brand starts `draft` → review → publish).
+**Additional brands:** owners with at least one live brand (`published` or `pending_review`) can create another from **My Venues → Create venue** → **`/my-venues/create/*`** (details → files → reward → review). Like first-time onboarding, the brand is created only on **Submit for review** via the draft API (`purpose: additional_venue`). Abandoned partial drafts are purged when the owner already has a live brand.
 
 **Ops-heavy path:** admin provisions the venue first at **Manage venues → Create venue**; owner resets password or uses Google with the same email.
 
@@ -61,7 +61,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 
 **Web (owners + platform admin)**
 
-- Dashboard, my-venues (location cards with **Add branch** via ⋯ menu), **Files** (`/my-venues/{id}/setup-files`), per-venue **settings** (`/my-venues/{id}/settings`), rewards, campaigns, analytics, customers CRM
+- Dashboard, my-venues (location cards with **Add branch** via ⋯ menu; **Create venue** opens `/my-venues/create/details`), **Files** (`/my-venues/{id}/setup-files`), per-venue **settings** (`/my-venues/{id}/settings`), rewards, campaigns, analytics, customers CRM
 - Public venue bridge `/v/:slug`
 - Platform admin: listing review, **owner onboarding** (sales invites), manage venues, NFC tags, palette, activity log
 

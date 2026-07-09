@@ -12,7 +12,7 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 | ----- | ----- | ---------------- |
 | Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` (incl. **B3** one card per brand, **O12** Files upload/delete rules) + service/feature suites — **369 tests** |
 | Web build + types | **10/10** | `vue-tsc --noEmit` + `vite build` in CI; strict TS |
-| Web unit (Vitest) | **10/10** | Core auth/session helpers, onboarding routing (`onboarding`, `ownerOnboarding`), venue roles/categories/media (`venueMedia`, `venueLocationCard`), API errors, workspace store, campaign/listing helpers, date formatting (`formatDate`) — **152 tests** (27 files) |
+| Web unit (Vitest) | **10/10** | Core auth/session helpers, onboarding routing (`onboarding`, `ownerOnboarding`, `additionalVenueCreate`), venue roles/categories/media (`venueMedia`, `venueLocationCard`), API errors, workspace store, campaign/listing helpers, date formatting (`formatDate`) — see `npm run test:unit` for current count |
 | Mobile unit (Vitest) | **10/10** | NFC stamp success flow (`completeNfcStampSuccess`), live stamp helpers, customer caches/activity, scan landing, NFC token reader, stamp sync dedup (`stampRealtime`, `stampAck`), localization catalogs |
 | Web e2e (Playwright) | **10/10** | Auth guards + role routing, full owner workspace (venues, **Files** page, customers, rewards, analytics), admin listings, public/NFC bridges, book-demo, signup; **logout** clicks AppShell and asserts `/api/auth/logout` |
 | Mobile device (Expo) | **10/10** | Maestro flows (login, wallet, NFC tap, slide redeem, tab navigation) via `scripts/run-mobile-e2e.sh`; typecheck + mobile Vitest in CI; API contracts in PHPUnit |
@@ -113,7 +113,7 @@ See [apps/mobile/README.md](../apps/mobile/README.md) for Maestro install and `E
 
 Vitest files:
 
-- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `onboarding`, `ownerOnboarding`, `venueRoles`, `venueCategories`, `venueMedia`, `venueLocationCard`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `formatDate`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`, `defaultImages.reward`, `rewardMedia`
+- **Web lib (with tests):** `api`, `sessionGuard`, `signInNavigation`, `onboarding`, `ownerOnboarding`, `additionalVenueCreate`, `venueRoles`, `venueCategories`, `venueMedia`, `venueLocationCard`, `venueWorkspace`, `venueListing`, `venueJoinBridge`, `campaignHistory`, `campaignTemplates`, `dashboardPeriod`, `formatDate`, `redirect`, `demoBooking`, `mobileApp`, `currency`, `legalMarkdown`, `faqContent`, `scrollReset`, `utils`, `defaultImages.reward`, `rewardMedia`
 - **Web stores (with tests):** `stores/auth`, `stores/workspace`
 - **Web lib (lower priority / UI-bound):** e.g. `campaignActions`, `money`, `googleMaps*`, `cropImageToFile`, marketing page helpers
 - **Mobile:** `apps/mobile/src/lib/*.test.ts` and `apps/mobile/src/i18n/*.test.ts` (NFC stamp completion, `stampLiveUpdate`, `stampRealtime`, `stampAck`, customer data/cache, scan landing, format helpers, English/Armenian localization catalogs)
@@ -133,8 +133,9 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 | Publication & listing | `tests/Unit/VenuePublicationServiceTest.php`, `tests/Feature/AdminVenueReviewControllerTest.php`, `tests/Feature/VenueListingControllerTest.php`, `tests/Feature/VenueControllerTest.php` |
 | Owner setup files (`Files` page) | `tests/Feature/VenueSetupFileControllerTest.php` (upload/delete rules when draft, pending review, published) |
 | Brands & branches | `tests/Feature/VenueBranchTest.php`, `tests/Feature/CustomerLoyaltyControllerTest.php` (branch `venue_id` filter), `tests/Unit/ModelRelationshipTest.php` (brand relationships), `tests/Unit/VenuePresenterTest.php` (upload paths, `setup_logo_preview`) |
-| Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` |
+| Owner sales invitations | `tests/Feature/OwnerInvitationTest.php` (draft + submit for first and additional venues) |
 | Owner onboarding snapshot | `tests/Feature/OwnerOnboardingControllerTest.php` |
+| Owner onboarding drafts | `tests/Feature/OwnerOnboardingDraftTest.php` (first/additional draft, submit, purge, address validation) |
 | Venue categories | `tests/Unit/VenueCategoriesTest.php` |
 | Google OAuth (web + mobile) | `tests/Feature/GoogleAuthControllerTest.php` |
 | Auth/session locale & profile | `tests/Feature/AuthControllerTest.php` |
@@ -180,7 +181,7 @@ Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` + `DemoShowcaseSee
 | Mobile Google sign-in | PHPUnit mocks token verify; real device needs correct Google redirect URIs (`flotory://`, see [apps/mobile/README.md](../apps/mobile/README.md)) |
 | Web Google sign-in / Maps | Web OAuth callback and API keys differ per environment; **immediate logout after Google login** — covered by Vitest (`auth`, `signInNavigation`); verify manually on device |
 | Admin listing review UI | Partial API coverage; visual checklist flow |
-| Venue onboarding | Google address picker + file uploads; API invite/create path in `OwnerInvitationTest` |
+| Venue onboarding | Google address picker + file uploads; draft/submit API paths in `OwnerOnboardingDraftTest` and `OwnerInvitationTest` |
 
 Post-deploy checklist: [deploy/DEPLOY.md § Post-deploy checks](../deploy/DEPLOY.md#post-deploy-checks).
 

@@ -100,16 +100,28 @@ class OwnerInvitationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('capabilities.may_create_venue', true);
 
-        $this->postJson('/api/venues', [
+        $this->putJson('/api/owner-onboarding/draft', [
             'name' => 'Accepted Cafe',
             'category' => 'cafe',
             'address' => '1 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
             'google_place_id' => 'test-place-accepted',
-        ])
-            ->assertCreated()
-            ->assertJsonPath('venue.name', 'Accepted Cafe');
+            'reward' => [
+                'title' => 'Free coffee',
+                'description' => 'Welcome reward',
+                'required_stamps' => 10,
+            ],
+        ])->assertOk();
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('logo.png');
+        $this->postJson('/api/owner-onboarding/draft/files', ['file' => $file])
+            ->assertCreated();
+
+        $this->postJson('/api/owner-onboarding/submit')
+            ->assertOk()
+            ->assertJsonPath('venue.name', 'Accepted Cafe')
+            ->assertJsonPath('listing.status', 'pending_review');
 
         $this->assertDatabaseHas('owner_invitations', [
             'id' => $invitation->id,
@@ -326,17 +338,30 @@ class OwnerInvitationTest extends TestCase
         $this->getJson('/api/auth/me')
             ->assertJsonPath('capabilities.may_create_venue', true);
 
-        $this->postJson('/api/venues', [
+        $this->putJson('/api/owner-onboarding/draft', [
+            'purpose' => 'additional_venue',
+            'restart' => true,
             'name' => 'Second Cafe',
             'category' => 'cafe',
             'address' => '2 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
             'google_place_id' => 'second-cafe-place',
-        ])
-            ->assertCreated()
+            'reward' => [
+                'title' => 'Second reward',
+                'description' => 'Bonus coffee',
+                'required_stamps' => 8,
+            ],
+        ])->assertOk();
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('cover.png');
+        $this->postJson('/api/owner-onboarding/draft/files', ['file' => $file])
+            ->assertCreated();
+
+        $this->postJson('/api/owner-onboarding/submit')
+            ->assertOk()
             ->assertJsonPath('venue.name', 'Second Cafe')
-            ->assertJsonPath('venue.status', 'draft');
+            ->assertJsonPath('listing.status', 'pending_review');
 
         $this->assertDatabaseCount('brands', 2);
         $this->assertSame(2, BrandUser::query()->where('user_id', $user->id)->where('role', 'owner')->count());
