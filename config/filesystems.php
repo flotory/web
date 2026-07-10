@@ -44,8 +44,11 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'visibility' => 'public',
             'throw' => false,
+            // Bucket uses "ACLs disabled" + public bucket policy on uploads/* — do not set object ACLs.
+            'options' => [
+                'ACL' => null,
+            ],
         ],
     ],
     'links' => [
