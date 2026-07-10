@@ -21,6 +21,8 @@ interface CustomerScreenProps {
   skeleton?: ReactNode
   errorState?: CustomerScreenErrorProps
   header?: ReactNode
+  /** Set when the header already applies the top safe-area inset (e.g. StickyBackHeader). */
+  headerIncludesSafeArea?: boolean
   children: ReactNode
   scrollable?: boolean
   flexContent?: boolean
@@ -62,6 +64,7 @@ export default function CustomerScreen({
   skeleton,
   errorState,
   header,
+  headerIncludesSafeArea = false,
   children,
   scrollable = false,
   flexContent = false,
@@ -82,7 +85,7 @@ export default function CustomerScreen({
     <ScreenGradientLayout
       scrollable={scrollable}
       fixedHeader={scrollable && header ? header : undefined}
-      paddingTop={header ? 0 : undefined}
+      paddingTop={headerIncludesSafeArea ? 0 : undefined}
       flexContent={flexContent}
       tabBarInset={tabBarInset}
       refreshControl={refreshControl}

@@ -24,7 +24,7 @@ export default function NotificationsScreen() {
   )
 
   return (
-    <CustomerScreen loading={false} scrollable tabBarInset header={header}>
+    <CustomerScreen loading={false} scrollable tabBarInset header={header} headerIncludesSafeArea>
       <View style={{ marginTop: space.headerBottom, paddingHorizontal: space.screenX }}>
         <StateCard
           emoji="🔔"

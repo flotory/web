@@ -3,7 +3,7 @@
     "name": "Flotory",
     "slug": "flotory-mobile",
     "newArchEnabled": false,
-    "version": "1.0.18",
+    "version": "1.0.19",
     "orientation": "portrait",
     "icon": "./assets/flotory-app-icon-padded.png",
     "splash": {
@@ -14,7 +14,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "buildNumber": "23",
+      "buildNumber": "24",
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
