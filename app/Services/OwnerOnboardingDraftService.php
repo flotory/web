@@ -381,7 +381,7 @@ class OwnerOnboardingDraftService
         return [
             'id' => $file->id,
             'original_name' => $file->original_name,
-            'path' => $file->path,
+            'path' => VenuePresenter::resolvePublicUploadPath($file->path) ?? $file->path,
             'mime_type' => $file->mime_type,
             'byte_size' => $file->byte_size,
             'is_image' => $file->isImage(),

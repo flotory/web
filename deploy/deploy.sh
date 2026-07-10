@@ -9,9 +9,14 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-echo "==> Upload directories..."
-mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones
-chmod -R 775 public/uploads 2>/dev/null || true
+if grep -q '^MEDIA_DISK=s3' .env 2>/dev/null; then
+  echo "==> S3 media — removing stale local uploads..."
+  rm -rf public/uploads 2>/dev/null || true
+else
+  echo "==> Upload directories..."
+  mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones
+  chmod -R 775 public/uploads 2>/dev/null || true
+fi
 
 echo "==> Building PHP containers..."
 docker compose -f docker-compose.prod.yml build app queue
