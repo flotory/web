@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Reward;
+use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -11,20 +12,24 @@ use Illuminate\Validation\ValidationException;
 
 class RewardImageService
 {
-    private const STORAGE_DIRECTORY = 'uploads/reward-milestones';
-
     public function __construct(
         private ImageThumbnailService $images,
         private MediaStorageService $media,
+        private OwnerMediaPathService $paths,
     ) {}
 
     /**
      * @return array{image: string, image_thumb: string|null}
      */
-    public function store(UploadedFile $file, Venue $venue, ?Reward $reward = null): array
+    public function store(UploadedFile $file, Venue $venue, ?Reward $reward = null, ?User $actor = null): array
     {
+        $venue->loadMissing('brand');
+        $brand = $venue->brand;
+        $ownerId = $this->paths->ownerIdForBrand($brand, $actor);
+        $storageDirectory = $this->paths->rewardsDirectory($ownerId, $brand->id);
+
         if (! $this->media->usesRemoteDisk()) {
-            $directory = public_path(self::STORAGE_DIRECTORY);
+            $directory = public_path($storageDirectory);
 
             if (! File::isDirectory($directory) && ! File::makeDirectory($directory, 0755, true) && ! File::isDirectory($directory)) {
                 throw ValidationException::withMessages([
@@ -54,7 +59,7 @@ class RewardImageService
         try {
             $stored = $this->images->storeWithThumbnail(
                 $file,
-                self::STORAGE_DIRECTORY,
+                $storageDirectory,
                 $filename,
                 ImageThumbnailService::THUMB_MAX_REWARD,
             );

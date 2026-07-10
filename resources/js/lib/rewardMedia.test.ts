@@ -18,12 +18,12 @@ describe('rewardMedia', () => {
   it('prefers full image for rewardImageUrl and thumb for rewardThumbUrl', () => {
     const reward = {
       title: 'Free coffee',
-      image: '/uploads/reward-milestones/reward.jpg',
-      image_thumb: '/uploads/reward-milestones/reward-thumb.jpg',
+      image: '/uploads/owners/2/brands/4/rewards/reward.jpg',
+      image_thumb: '/uploads/owners/2/brands/4/rewards/reward-thumb.jpg',
     }
 
-    expect(rewardImageUrl(reward)).toBe('/uploads/reward-milestones/reward.jpg')
-    expect(rewardThumbUrl(reward)).toBe('/uploads/reward-milestones/reward-thumb.jpg')
+    expect(rewardImageUrl(reward)).toBe('/uploads/owners/2/brands/4/rewards/reward.jpg')
+    expect(rewardThumbUrl(reward)).toBe('/uploads/owners/2/brands/4/rewards/reward-thumb.jpg')
   })
 
   it('remaps removed stock reward images to the new default', () => {
@@ -40,7 +40,7 @@ describe('rewardMedia', () => {
   it('detects owner uploads but not bundled default art', () => {
     expect(rewardHasCustomImage({
       title: 'Free coffee',
-      image: '/uploads/reward-milestones/custom.jpg',
+      image: '/uploads/owners/2/brands/4/rewards/custom.jpg',
       image_thumb: null,
     })).toBe(true)
 

@@ -441,7 +441,10 @@ class LoyaltyStampServiceTest extends TestCase
         $this->assertSame(5, $summary['max_stamps']);
         $this->assertSame(1, $summary['pending_rewards_count']);
         $this->assertSame('Free Latte', $summary['next_reward_title']);
+        $this->assertSame(5, $summary['next_reward_stamps']);
         $this->assertSame(2, $summary['stamps_to_next']);
+        $this->assertArrayHasKey('next_reward_image', $summary);
+        $this->assertArrayHasKey('next_reward_image_thumb', $summary);
     }
 
     public function test_add_stamp_starts_next_cycle_after_completion(): void

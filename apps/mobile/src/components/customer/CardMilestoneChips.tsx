@@ -18,13 +18,13 @@ export default function CardMilestoneChips({ milestones, stamps }: CardMilestone
   if (!milestones.length) return null
 
   return (
-    <View style={{ marginTop: 22 }}>
+    <View style={{ marginTop: 18 }}>
       <HomeSectionHeader title={t('card.allMilestones')} label={t('card.rewardPath')} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         nestedScrollEnabled
-        contentContainerStyle={{ gap: 10, paddingTop: 14, paddingRight: 4 }}
+        contentContainerStyle={{ gap: 8, paddingTop: 12, paddingRight: 4 }}
       >
         {milestones.map((milestone) => {
           const reached = stamps >= milestone.required_stamps

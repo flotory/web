@@ -21,9 +21,9 @@ class ImageThumbnailServiceTest extends TestCase
     protected function tearDown(): void
     {
         foreach ([
-            public_path('uploads/reward-milestones'),
-            public_path('uploads/venue-logos'),
-            public_path('uploads/venue-covers'),
+            public_path('uploads/owners/1/brands/1/rewards'),
+            public_path('uploads/owners/1/brands/1/logos'),
+            public_path('uploads/owners/1/brands/1/covers'),
         ] as $directory) {
             if (File::isDirectory($directory)) {
                 File::cleanDirectory($directory);
@@ -42,15 +42,15 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 800, 600),
-            'uploads/reward-milestones',
+            'uploads/owners/1/brands/1/rewards',
             'test-reward.jpg',
             ImageThumbnailService::THUMB_MAX_REWARD,
         );
 
-        $this->assertSame('/uploads/reward-milestones/test-reward.jpg', $stored['path']);
-        $this->assertSame('/uploads/reward-milestones/test-reward-thumb.jpg', $stored['thumb_path']);
-        $this->assertFileExists(public_path('uploads/reward-milestones/test-reward.jpg'));
-        $this->assertFileExists(public_path('uploads/reward-milestones/test-reward-thumb.jpg'));
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/test-reward.jpg', $stored['path']);
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/test-reward-thumb.jpg', $stored['thumb_path']);
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/rewards/test-reward.jpg'));
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/rewards/test-reward-thumb.jpg'));
     }
 
     public function test_create_thumbnail_from_existing_updates_missing_thumb(): void
@@ -62,7 +62,7 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('logo.png', 400, 400),
-            'uploads/venue-logos',
+            'uploads/owners/1/brands/1/logos',
             'existing-logo.png',
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
@@ -74,8 +74,8 @@ class ImageThumbnailServiceTest extends TestCase
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
 
-        $this->assertSame('/uploads/venue-logos/existing-logo-thumb.jpg', $thumb);
-        $this->assertFileExists(public_path('uploads/venue-logos/existing-logo-thumb.jpg'));
+        $this->assertSame('/uploads/owners/1/brands/1/logos/existing-logo-thumb.jpg', $thumb);
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/logos/existing-logo-thumb.jpg'));
     }
 
     public function test_thumb_path_for_uploaded_asset(): void
@@ -83,8 +83,8 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
 
         $this->assertSame(
-            '/uploads/reward-milestones/free-coffee-thumb.jpg',
-            $service->thumbPathFor('/uploads/reward-milestones/free-coffee.webp'),
+            '/uploads/owners/1/brands/1/rewards/free-coffee-thumb.jpg',
+            $service->thumbPathFor('/uploads/owners/1/brands/1/rewards/free-coffee.webp'),
         );
     }
 
@@ -103,7 +103,7 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
 
         $this->assertNull($service->createThumbnailFromExisting(
-            '/uploads/venue-logos/missing.png',
+            '/uploads/owners/1/brands/1/logos/missing.png',
             ImageThumbnailService::THUMB_MAX_LOGO,
         ));
     }
@@ -117,7 +117,7 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('cover.jpg', 1200, 600),
-            'uploads/venue-covers',
+            'uploads/owners/1/brands/1/covers',
             'hero-cover.jpg',
             ImageThumbnailService::THUMB_MAX_COVER,
         );
@@ -126,8 +126,8 @@ class ImageThumbnailServiceTest extends TestCase
 
         $service->deleteThumbnailFor($stored['path']);
 
-        $this->assertFileDoesNotExist(public_path('uploads/venue-covers/hero-cover-thumb.jpg'));
-        $this->assertFileExists(public_path('uploads/venue-covers/hero-cover.jpg'));
+        $this->assertFileDoesNotExist(public_path('uploads/owners/1/brands/1/covers/hero-cover-thumb.jpg'));
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/covers/hero-cover.jpg'));
     }
 
     public function test_generate_media_thumbnails_command_backfills_missing_reward_and_venue_thumbs(): void
@@ -144,12 +144,12 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $rewardStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 640, 480),
-            'uploads/reward-milestones',
+            'uploads/owners/1/brands/1/rewards',
             'reward-one.jpg',
         );
         $logoStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('logo.png', 300, 300),
-            'uploads/venue-logos',
+            'uploads/owners/1/brands/1/logos',
             'logo-one.png',
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
@@ -172,8 +172,8 @@ class ImageThumbnailServiceTest extends TestCase
         $venue->refresh();
         $venue->load('brand');
 
-        $this->assertSame('/uploads/reward-milestones/reward-one-thumb.jpg', Reward::query()->first()?->image_thumb);
-        $this->assertSame('/uploads/venue-logos/logo-one-thumb.jpg', $venue->brand->logo_thumb);
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/reward-one-thumb.jpg', Reward::query()->first()?->image_thumb);
+        $this->assertSame('/uploads/owners/1/brands/1/logos/logo-one-thumb.jpg', $venue->brand->logo_thumb);
     }
 
     public function test_delete_thumbnail_for_ignores_null_and_external_paths(): void
@@ -196,7 +196,7 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $rewardStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 640, 480),
-            'uploads/reward-milestones',
+            'uploads/owners/1/brands/1/rewards',
             'reward-skip.jpg',
         );
 
@@ -220,7 +220,7 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $coverStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('cover.jpg', 1400, 700),
-            'uploads/venue-covers',
+            'uploads/owners/1/brands/1/covers',
             'venue-cover.jpg',
             ImageThumbnailService::THUMB_MAX_COVER,
         );
@@ -238,7 +238,7 @@ class ImageThumbnailServiceTest extends TestCase
 
         $venue->refresh();
         $venue->load('brand');
-        $this->assertSame('/uploads/venue-covers/venue-cover-thumb.jpg', $venue->brand->cover_image_thumb);
+        $this->assertSame('/uploads/owners/1/brands/1/covers/venue-cover-thumb.jpg', $venue->brand->cover_image_thumb);
 
         $this->artisan(GenerateMediaThumbnails::class)
             ->expectsOutputToContain('Generated 0 thumbnail(s).')
@@ -258,12 +258,12 @@ class ImageThumbnailServiceTest extends TestCase
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.gif', 200, 200),
-            'uploads/reward-milestones',
+            'uploads/owners/1/brands/1/rewards',
             'animated-reward.gif',
         );
 
-        $this->assertSame('/uploads/reward-milestones/animated-reward-thumb.jpg', $stored['thumb_path']);
-        $this->assertFileExists(public_path('uploads/reward-milestones/animated-reward-thumb.jpg'));
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/animated-reward-thumb.jpg', $stored['thumb_path']);
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/rewards/animated-reward-thumb.jpg'));
     }
 
     public function test_create_thumbnail_returns_null_when_gd_is_unavailable(): void
@@ -276,7 +276,7 @@ class ImageThumbnailServiceTest extends TestCase
             }
         };
 
-        $this->assertNull($this->invokeCreateThumbnail($service, '/uploads/reward-milestones/noop.jpg', ImageThumbnailService::THUMB_MAX_REWARD));
+        $this->assertNull($this->invokeCreateThumbnail($service, '/uploads/owners/1/brands/1/rewards/noop.jpg', ImageThumbnailService::THUMB_MAX_REWARD));
     }
 
     public function test_create_thumbnail_returns_null_for_corrupt_source_file(): void
@@ -285,11 +285,11 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/reward-milestones');
+        $directory = public_path('uploads/owners/1/brands/1/rewards');
         File::ensureDirectoryExists($directory);
         File::put("{$directory}/corrupt.jpg", 'not-an-image');
 
-        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/reward-milestones/corrupt.jpg', 320));
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/owners/1/brands/1/rewards/corrupt.jpg', 320));
     }
 
     public function test_create_thumbnail_returns_null_for_unsupported_image_type(): void
@@ -298,11 +298,11 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/reward-milestones');
+        $directory = public_path('uploads/owners/1/brands/1/rewards');
         File::ensureDirectoryExists($directory);
         File::put("{$directory}/bitmap.bmp", base64_decode('Qk06AAAAAAAAAD4AAAAoAAAAAQAAAAEAAAABAAEAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAP/A'));
 
-        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/reward-milestones/bitmap.bmp', 320));
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/owners/1/brands/1/rewards/bitmap.bmp', 320));
     }
 
     public function test_create_thumbnail_returns_null_when_storage_write_fails(): void
@@ -324,20 +324,20 @@ class ImageThumbnailServiceTest extends TestCase
         $service = new ImageThumbnailService($media);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('source.jpg', 40, 40),
-            'uploads/reward-milestones',
+            'uploads/owners/1/brands/1/rewards',
             'storage-fail.jpg',
         );
 
-        $this->assertSame('/uploads/reward-milestones/storage-fail.jpg', $stored['path']);
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/storage-fail.jpg', $stored['path']);
         $this->assertNull($stored['thumb_path']);
     }
 
     public function test_generate_media_thumbnails_command_skips_reward_when_thumb_generation_fails(): void
     {
         $venue = $this->createVenue(['slug' => 'bad-image-cafe']);
-        $rewardDirectory = public_path('uploads/reward-milestones');
+        $rewardDirectory = public_path('uploads/owners/1/brands/1/rewards');
         File::ensureDirectoryExists($rewardDirectory);
-        $imagePath = '/uploads/reward-milestones/broken-reward.jpg';
+        $imagePath = '/uploads/owners/1/brands/1/rewards/broken-reward.jpg';
         File::put(public_path(ltrim($imagePath, '/')), 'broken');
 
         $this->createReward($venue, [

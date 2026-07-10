@@ -14,7 +14,7 @@ if grep -q '^MEDIA_DISK=s3' .env 2>/dev/null; then
   rm -rf public/uploads 2>/dev/null || true
 else
   echo "==> Upload directories..."
-  mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/reward-milestones
+  mkdir -p public/uploads/owners
   chmod -R 775 public/uploads 2>/dev/null || true
 fi
 
@@ -46,6 +46,8 @@ echo "==> Generating missing media thumbnails..."
 docker compose -f docker-compose.prod.yml exec -T app php artisan media:generate-thumbs || true
 
 if [[ "${REFRESH_DATABASE:-}" == "1" ]]; then
+  echo "==> Purging uploaded media (S3 or local uploads/)..."
+  docker compose -f docker-compose.prod.yml exec -T app php artisan media:purge --clear-db --force
   echo "==> Refreshing database (migrate:fresh --seed)..."
   docker compose -f docker-compose.prod.yml exec -T app php artisan migrate:fresh --seed --force
 else

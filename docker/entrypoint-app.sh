@@ -12,7 +12,7 @@ if [ -f scripts/ensure-docker-env.sh ]; then
   sh scripts/ensure-docker-env.sh || exit 1
 fi
 
-mkdir -p public/uploads/venue-logos public/uploads/venue-covers public/uploads/venue-setup public/uploads/reward-milestones storage/framework/cache storage/logs
+mkdir -p public/uploads/owners storage/framework/cache storage/logs
 chmod -R 775 public/uploads storage 2>/dev/null || true
 
 composer install --no-interaction --prefer-dist

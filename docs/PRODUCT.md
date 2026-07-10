@@ -61,7 +61,7 @@ Public self-serve owner signup (`/register?intent=owner`) is disabled — prospe
 
 **Web (owners + platform admin)**
 
-- Dashboard, my-venues (location cards with **Add branch** via ⋯ menu; **Create venue** opens `/my-venues/create/details`), **Files** (`/my-venues/{id}/setup-files`), per-venue **settings** (`/my-venues/{id}/settings`), rewards, campaigns, analytics, customers CRM
+- Dashboard, my-venues (location cards with **Add branch** via ⋯ menu; **Create venue** opens `/my-venues/create/details`), **Files** (`/my-venues/{id}/setup-files`), per-venue **settings** (`/my-venues/{id}/settings`), rewards (loyalty card preview with ⋯ **Edit** / **Archive** per milestone), campaigns, analytics, customers CRM
 - Public venue bridge `/v/:slug`
 - Platform admin: listing review, **owner onboarding** (sales invites), manage venues, NFC tags, palette, activity log
 

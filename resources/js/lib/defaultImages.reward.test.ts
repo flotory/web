@@ -14,8 +14,8 @@ describe('defaultImages reward helpers', () => {
 
   it('normalizes legacy stock reward paths', () => {
     expect(normalizeRewardImagePath('/images/defaults/rewards/free-coffee.png')).toBe(DEFAULT_REWARD_IMAGE)
-    expect(normalizeRewardImagePath('/uploads/reward-milestones/custom.jpg')).toBe(
-      '/uploads/reward-milestones/custom.jpg',
+    expect(normalizeRewardImagePath('/uploads/owners/2/brands/4/rewards/custom.jpg')).toBe(
+      '/uploads/owners/2/brands/4/rewards/custom.jpg',
     )
     expect(normalizeRewardImagePath('')).toBeNull()
     expect(normalizeRewardImagePath(null)).toBeNull()

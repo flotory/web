@@ -26,16 +26,16 @@ class MediaStorageServiceTest extends TestCase
         $media = app(MediaStorageService::class);
         $stored = $media->putUploadedFile(
             UploadedFile::fake()->image('logo.png'),
-            'uploads/venue-logos',
+            'uploads/owners/1/brands/1/logos',
             'demo-logo.png',
         );
 
-        $this->assertSame('/uploads/venue-logos/demo-logo.png', $stored);
-        $this->assertFileExists(public_path('uploads/venue-logos/demo-logo.png'));
-        $this->assertSame('/uploads/venue-logos/demo-logo.png', $media->url($stored));
+        $this->assertSame('/uploads/owners/1/brands/1/logos/demo-logo.png', $stored);
+        $this->assertFileExists(public_path('uploads/owners/1/brands/1/logos/demo-logo.png'));
+        $this->assertSame('/uploads/owners/1/brands/1/logos/demo-logo.png', $media->url($stored));
 
         $media->delete($stored);
-        $this->assertFileDoesNotExist(public_path('uploads/venue-logos/demo-logo.png'));
+        $this->assertFileDoesNotExist(public_path('uploads/owners/1/brands/1/logos/demo-logo.png'));
     }
 
     public function test_s3_disk_returns_public_urls(): void
@@ -47,11 +47,11 @@ class MediaStorageServiceTest extends TestCase
         ]);
 
         $media = app(MediaStorageService::class);
-        $stored = $media->putContents('uploads/reward-milestones', 'reward.jpg', 'image-bytes');
+        $stored = $media->putContents('uploads/owners/1/brands/1/rewards', 'reward.jpg', 'image-bytes');
 
-        $this->assertSame('/uploads/reward-milestones/reward.jpg', $stored);
+        $this->assertSame('/uploads/owners/1/brands/1/rewards/reward.jpg', $stored);
         $this->assertNotNull($media->url($stored));
-        Storage::disk('s3')->assertExists('uploads/reward-milestones/reward.jpg');
+        Storage::disk('s3')->assertExists('uploads/owners/1/brands/1/rewards/reward.jpg');
     }
 
     public function test_external_urls_are_preserved(): void

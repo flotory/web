@@ -16,7 +16,10 @@ class VenueSetupFileService
 {
     private const MAX_BYTES = 10 * 1024 * 1024;
 
-    public function __construct(private MediaStorageService $media) {}
+    public function __construct(
+        private MediaStorageService $media,
+        private OwnerMediaPathService $paths,
+    ) {}
 
     /**
      * @return list<string>
@@ -57,7 +60,8 @@ class VenueSetupFileService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = Str::slug($venue->slug).'-file-'.Str::lower(Str::random(12)).'.'.$extension;
-        $storageDirectory = 'uploads/venue-setup/'.$brand->id;
+        $ownerId = $this->paths->ownerIdForBrand($brand, $user);
+        $storageDirectory = $this->paths->setupDirectory($ownerId, $brand->id);
 
         $originalName = $file->getClientOriginalName();
         $byteSize = $file->getSize() ?: 0;

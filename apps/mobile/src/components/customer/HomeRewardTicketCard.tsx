@@ -5,7 +5,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, typ
 import { useTranslation } from 'react-i18next'
 import Svg, { Line } from 'react-native-svg'
 
-import { rewardImageUrl, venueLogoUrl } from '../../lib/media'
+import { rewardImageUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
 import { colors, radius, rewardReady, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
@@ -187,14 +187,17 @@ function TicketPerforation({ inset = 0 }: { inset?: number }) {
 function RewardIllustration({
   variant,
   imageUri,
-  venue,
 }: {
   variant: HomeRewardTicketVariant
   imageUri?: string | null
-  venue?: VenueRef | null
 }) {
-  const logo = venueLogoUrl(venue ?? undefined)
-  const showPhoto = Boolean(imageUri || logo)
+  const resolvedImage =
+    imageUri ??
+    rewardImageUrl({
+      title: null,
+      image: null,
+      image_thumb: null,
+    })
 
   return (
     <View
@@ -210,10 +213,8 @@ function RewardIllustration({
         overflow: 'hidden',
       }}
     >
-      {showPhoto && imageUri ? (
-        <Image source={{ uri: imageUri }} style={{ width: 88, height: 88 }} resizeMode="cover" />
-      ) : showPhoto && logo ? (
-        <Image source={{ uri: logo }} style={{ width: 88, height: 88 }} resizeMode="cover" />
+      {resolvedImage ? (
+        <Image source={{ uri: resolvedImage }} style={{ width: 88, height: 88 }} resizeMode="cover" />
       ) : (
         <Ionicons name={variant === 'ready' ? 'gift-outline' : 'cafe-outline'} size={42} color={colors.accent} />
       )}
@@ -434,7 +435,7 @@ export default function HomeRewardTicketCard({
           ) : null}
         </View>
 
-        <RewardIllustration variant={variant} imageUri={resolvedImage} venue={venue} />
+        <RewardIllustration variant={variant} imageUri={resolvedImage} />
       </View>
     </View>
   )

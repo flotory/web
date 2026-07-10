@@ -12,18 +12,18 @@ import {
 const venue = {
   name: 'Demo Cafe',
   category: 'cafe' as const,
-  logo: '/uploads/venue-logos/custom.png',
-  logo_thumb: '/uploads/venue-logos/custom-thumb.png',
-  cover_image: '/uploads/venue-covers/cover.jpg',
-  cover_image_thumb: '/uploads/venue-covers/cover-thumb.jpg',
+  logo: '/uploads/owners/1/brands/12/logos/custom.png',
+  logo_thumb: '/uploads/owners/1/brands/12/logos/custom-thumb.png',
+  cover_image: '/uploads/owners/1/brands/12/covers/cover.jpg',
+  cover_image_thumb: '/uploads/owners/1/brands/12/covers/cover-thumb.jpg',
 }
 
 describe('venueMedia', () => {
   it('prefers thumb paths for thumb helpers and full paths for full helpers', () => {
-    expect(venueLogoThumbUrl(venue)).toBe('/uploads/venue-logos/custom-thumb.png')
-    expect(venueLogoUrl(venue)).toBe('/uploads/venue-logos/custom.png')
-    expect(venueCoverThumbUrl(venue)).toBe('/uploads/venue-covers/cover-thumb.jpg')
-    expect(venueCoverUrl(venue)).toBe('/uploads/venue-covers/cover.jpg')
+    expect(venueLogoThumbUrl(venue)).toBe('/uploads/owners/1/brands/12/logos/custom-thumb.png')
+    expect(venueLogoUrl(venue)).toBe('/uploads/owners/1/brands/12/logos/custom.png')
+    expect(venueCoverThumbUrl(venue)).toBe('/uploads/owners/1/brands/12/covers/cover-thumb.jpg')
+    expect(venueCoverUrl(venue)).toBe('/uploads/owners/1/brands/12/covers/cover.jpg')
   })
 
   it('falls back to category defaults when uploads are missing', () => {
@@ -37,10 +37,10 @@ describe('venueMedia', () => {
     const venue = {
       name: 'N Spa',
       category: 'spa' as const,
-      setup_logo_preview: '/uploads/venue-setup/12/logo.png',
+      setup_logo_preview: '/uploads/owners/1/brands/12/setup/logo.png',
     }
 
-    expect(venueLogoThumbUrl(venue)).toBe('/uploads/venue-setup/12/logo.png')
+    expect(venueLogoThumbUrl(venue)).toBe('/uploads/owners/1/brands/12/setup/logo.png')
     expect(venueHasCustomLogo(venue)).toBe(true)
   })
 
@@ -48,11 +48,11 @@ describe('venueMedia', () => {
     const venue = {
       name: 'N Spa',
       category: 'spa' as const,
-      logo_thumb: '/uploads/venue-logos/final-thumb.jpg',
-      setup_logo_preview: '/uploads/venue-setup/12/logo.png',
+      logo_thumb: '/uploads/owners/1/brands/12/logos/final-thumb.jpg',
+      setup_logo_preview: '/uploads/owners/1/brands/12/setup/logo.png',
     }
 
-    expect(venueLogoThumbUrl(venue)).toBe('/uploads/venue-logos/final-thumb.jpg')
+    expect(venueLogoThumbUrl(venue)).toBe('/uploads/owners/1/brands/12/logos/final-thumb.jpg')
   })
 
   it('detects custom logo and cover uploads', () => {

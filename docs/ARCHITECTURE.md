@@ -248,15 +248,17 @@ Owner and admin media (venue setup files, logos, covers, reward images, onboardi
 
 | Asset | Storage key prefix |
 |-------|-------------------|
-| Brand logo / cover | `uploads/venue-logos/`, `uploads/venue-covers/` |
-| Owner setup files | `uploads/venue-setup/{brand_id}/` |
-| Onboarding draft files | `uploads/onboarding-drafts/{user_id}/` |
-| Reward image | `uploads/reward-milestones/` |
+| Owner media (all uploads) | `uploads/owners/{owner_id}/` |
+| Onboarding drafts | `uploads/owners/{owner_id}/drafts/` |
+| Brand logo | `uploads/owners/{owner_id}/brands/{brand_id}/logos/` |
+| Brand cover | `uploads/owners/{owner_id}/brands/{brand_id}/covers/` |
+| Reward image | `uploads/owners/{owner_id}/brands/{brand_id}/rewards/` |
+| Owner setup files | `uploads/owners/{owner_id}/brands/{brand_id}/setup/` |
 | Default reward (no upload) | `/images/defaults/rewards/default-reward.png` (static) |
 
 **Env:** `MEDIA_DISK=uploads` (dev) or `MEDIA_DISK=s3` + `AWS_*` (production). See `.env.example`.
 
-Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`.
+Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`. Purge all uploads: `php artisan media:purge --clear-db --force`.
 
 ## Docker (local)
 

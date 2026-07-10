@@ -10,7 +10,7 @@ Related: [deploy/DEPLOY.md](../deploy/DEPLOY.md), root [README.md](../README.md)
 
 | Layer | Score | What it proves |
 | ----- | ----- | ---------------- |
-| Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` (incl. **B3** one card per brand, **O12** Files upload/delete rules) + service/feature suites — **369 tests** |
+| Backend API (PHPUnit) | **10/10** | All critical `BUSINESS_RULES.md` invariants via `BusinessRulesComplianceTest` (incl. **B3** one card per brand, **O12** Files upload/delete rules) + service/feature suites — **395 tests** |
 | Web build + types | **10/10** | `vue-tsc --noEmit` + `vite build` in CI; strict TS |
 | Web unit (Vitest) | **10/10** | Core auth/session helpers, onboarding routing (`onboarding`, `ownerOnboarding`, `additionalVenueCreate`), venue roles/categories/media (`venueMedia`, `venueLocationCard`), API errors, workspace store, campaign/listing helpers, date formatting (`formatDate`) — see `npm run test:unit` for current count |
 | Mobile unit (Vitest) | **10/10** | NFC stamp success flow (`completeNfcStampSuccess`), live stamp helpers, customer caches/activity, scan landing, NFC token reader, stamp sync dedup (`stampRealtime`, `stampAck`), localization catalogs |
@@ -47,6 +47,15 @@ Deploy from Mac (`./deploy/push-prod.sh`) waits for this workflow to pass on the
 Runs: PHPUnit (Docker if PHP is not installed locally) → frontend install/build → web Vitest → mobile typecheck → mobile unit tests → **Playwright** when PHP 8.4+ or Docker is available.
 
 Requires **Docker Desktop** for PHPUnit when PHP is not on your PATH.
+
+### Reset demo data + uploads (local)
+
+```bash
+docker compose exec -T app php artisan media:purge --clear-db --force
+docker compose exec -T -e FLOTORY_ALLOW_DESTRUCTIVE_DB=1 app php artisan migrate:fresh --seed --force
+```
+
+Upload paths use `uploads/owners/{owner_id}/brands/{brand_id}/…` — see [ARCHITECTURE.md](./ARCHITECTURE.md#file-uploads).
 
 ### Backend only
 
@@ -156,7 +165,7 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 | `e2e/login.spec.ts` | Login form renders from built assets |
 | `e2e/auth-flows.spec.ts` | Login form, invalid credentials, owner/admin home routing, customer web login rejected, post-login redirect, forgot-password, **AppShell logout** |
 | `e2e/web-routes.spec.ts` | Owner dashboard / rewards / campaigns; `/app` and `/v/:slug` bridge pages |
-| `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, **Files** page (live upload guidance), card → dashboard navigation, customers + profile, seeded rewards, analytics, legacy `/settings` redirect, venue filter switch |
+| `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, **Files** page (live upload guidance), card → dashboard navigation, customers + profile, seeded rewards (including ⋯ menu edit on loyalty preview), analytics, legacy `/settings` redirect, venue filter switch |
 | `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible |
 | `e2e/owner-signup.spec.ts` | Public owner intent redirects to book-demo; `create=1` without invite/ownership blocked |
 | `e2e/owner-invitation.spec.ts` | Register without invite → `/app`; invalid invite; sales-led register → venue setup |

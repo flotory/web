@@ -249,7 +249,7 @@ class AdminVenueManagementController extends Controller
             'logo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
         ]);
 
-        $this->branding->applyLogo($venue, $request->file('logo'));
+        $this->branding->applyLogo($venue, $request->file('logo'), $request->user());
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),
@@ -275,7 +275,7 @@ class AdminVenueManagementController extends Controller
             'cover' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
         ]);
 
-        $this->branding->applyCover($venue, $request->file('cover'));
+        $this->branding->applyCover($venue, $request->file('cover'), $request->user());
 
         return response()->json([
             'venue' => $this->presentDetailVenue($this->freshDetailVenue($venue)),

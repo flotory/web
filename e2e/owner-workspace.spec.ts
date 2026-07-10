@@ -48,6 +48,10 @@ test.describe('Owner workspace', () => {
 
     await expect(page.getByAltText('50% off ice cream')).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText('Free coffee', { exact: true }).first()).toBeVisible()
+
+    await page.getByRole('button', { name: 'Manage 50% off ice cream' }).click()
+    await page.locator('[data-reward-menu] button').filter({ hasText: 'Edit' }).click()
+    await expect(page.locator('#reward-title')).toHaveValue('50% off ice cream')
   })
 
   test('loads analytics and redirects legacy workspace settings to my venues', async ({ page }) => {

@@ -78,8 +78,8 @@ function HomeRewardCarousel({ slides }: HomeRewardCarouselProps) {
               venue={item.card.venue}
               imageUri={rewardImageUrl({
                 title: item.card.summary?.next_reward_title ?? t('home.reward'),
-                image: null,
-                image_thumb: null,
+                image: item.card.summary?.next_reward_image ?? null,
+                image_thumb: item.card.summary?.next_reward_image_thumb ?? null,
               })}
               stampsToGo={item.card.summary?.stamps_to_next ?? null}
               stampProgress={walletCardStampProgress(item.card)}

@@ -171,7 +171,9 @@ class AdminVenueManagementControllerTest extends TestCase
     public function test_admin_can_upload_and_remove_logo_and_cover(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'media-owner@example.com']);
         $venue = $this->createVenue(['slug' => 'admin-media-cafe']);
+        $this->attachMember($venue, $owner, 'owner');
 
         Sanctum::actingAs($admin);
 
@@ -181,7 +183,7 @@ class AdminVenueManagementControllerTest extends TestCase
 
         $logoResponse
             ->assertOk()
-            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/venue-logos/'))
+            ->assertJsonPath('venue.logo', fn (string $path): bool => str_starts_with($path, '/uploads/owners/'))
             ->assertJsonPath('venue.logo_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
 
         $logoPath = public_path(ltrim($logoResponse->json('venue.logo'), '/'));
@@ -194,7 +196,7 @@ class AdminVenueManagementControllerTest extends TestCase
 
         $coverResponse
             ->assertOk()
-            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/venue-covers/'))
+            ->assertJsonPath('venue.cover_image', fn (string $path): bool => str_starts_with($path, '/uploads/owners/'))
             ->assertJsonPath('venue.cover_image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
 
         $this->deleteJson("/api/admin/manage-venues/{$venue->id}/logo")
@@ -211,12 +213,12 @@ class AdminVenueManagementControllerTest extends TestCase
     public function test_admin_logo_upload_replaces_existing_local_file(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'replace-logo-owner@example.com']);
         $venue = $this->createVenue(['slug' => 'admin-replace-logo']);
-        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/old.png'])->save();
-
-        $directory = public_path('uploads/venue-logos');
-        File::ensureDirectoryExists($directory);
-        File::put("{$directory}/old.png", 'old');
+        $this->attachMember($venue, $owner, 'owner');
+        $oldLogo = $this->ownerMediaPath($owner, $venue->brand, 'logos', 'old.png');
+        $venue->brand->forceFill(['logo' => $oldLogo])->save();
+        $this->ensurePublicUploadFile($oldLogo);
 
         Sanctum::actingAs($admin);
 
@@ -224,7 +226,7 @@ class AdminVenueManagementControllerTest extends TestCase
             'logo' => UploadedFile::fake()->image('new-logo.png'),
         ], ['Accept' => 'application/json'])->assertOk();
 
-        $this->assertFileDoesNotExist("{$directory}/old.png");
+        $this->assertFileDoesNotExist(public_path(ltrim($oldLogo, '/')));
     }
 
     public function test_admin_destroy_logo_skips_external_paths(): void

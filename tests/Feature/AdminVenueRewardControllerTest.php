@@ -50,7 +50,9 @@ class AdminVenueRewardControllerTest extends TestCase
     public function test_admin_can_upload_reward_image(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'admin-reward-owner@example.com']);
         $venue = $this->createVenue(['slug' => 'admin-reward-image']);
+        $this->attachMember($venue, $owner, 'owner');
 
         Sanctum::actingAs($admin);
 
@@ -61,7 +63,7 @@ class AdminVenueRewardControllerTest extends TestCase
             'image' => UploadedFile::fake()->image('reward.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/reward-milestones/'));
+            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/owners/'));
     }
 
     public function test_non_admin_cannot_manage_admin_rewards(): void

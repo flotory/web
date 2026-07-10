@@ -245,7 +245,7 @@ export default function CardDetailHeader({
             </View>
           </View>
 
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 16 }}>
             <MilestonePath
               collected={collected}
               total={slotCount}
@@ -260,7 +260,7 @@ export default function CardDetailHeader({
             />
             <Text
               style={withAppFont({
-                marginTop: 12,
+                marginTop: 10,
                 fontSize: 13,
                 fontWeight: '600',
                 color: colors.inkMuted,

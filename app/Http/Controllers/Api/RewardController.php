@@ -40,7 +40,7 @@ class RewardController extends Controller
         $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps']);
 
         if ($request->hasFile('image')) {
-            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue));
+            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue, null, $request->user()));
         }
 
         $reward = $venue->rewards()->create($payload);
@@ -78,7 +78,7 @@ class RewardController extends Controller
 
         if ($request->hasFile('image')) {
             $this->rewardImages->delete($reward);
-            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue, $reward));
+            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue, $reward, $request->user()));
         }
 
         $reward->update($payload);

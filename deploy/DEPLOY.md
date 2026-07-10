@@ -104,7 +104,7 @@ Open the **latest** run on `main`, not an old failed one:
 
 If migrations were added locally, they run automatically via `deploy.sh` on the server.
 
-**No real customer data yet?** Wipe and reseed production in one step:
+**No real customer data yet?** Wipe uploads and reseed production in one step:
 
 ```bash
 REFRESH_DATABASE=1 ./deploy/push-prod.sh
@@ -116,7 +116,20 @@ Or on the server only:
 cd /var/www/web && REFRESH_DATABASE=1 ./deploy/deploy.sh
 ```
 
-This runs `migrate:fresh --seed` (demo venues, accounts, campaigns). Uploads under `public/uploads/` are kept on disk but DB media paths are reset to seeded values.
+This runs `media:purge --clear-db` (empties `uploads/` on S3 or disk), then `migrate:fresh --seed` (demo venues, accounts, campaigns).
+
+To reset media without reseeding the full database:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T app php artisan media:purge --clear-db --force
+```
+
+Local Docker equivalent:
+
+```bash
+docker compose exec -T app php artisan media:purge --clear-db --force
+docker compose exec -T -e FLOTORY_ALLOW_DESTRUCTIVE_DB=1 app php artisan migrate:fresh --seed --force
+```
 
 After enabling **Time Zone API** and setting `GOOGLE_MAPS_SERVER_API_KEY` on the server:
 

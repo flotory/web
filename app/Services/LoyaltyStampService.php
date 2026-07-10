@@ -239,6 +239,8 @@ class LoyaltyStampService
      *     pending_rewards_count: int,
      *     next_reward_title: string|null,
      *     next_reward_stamps: int|null,
+     *     next_reward_image: string|null,
+     *     next_reward_image_thumb: string|null,
      *     stamps_to_next: int|null
      * }
      */
@@ -258,6 +260,8 @@ class LoyaltyStampService
             'pending_rewards_count' => $this->pendingRewardCountFor($customer),
             'next_reward_title' => $next?->title,
             'next_reward_stamps' => $next?->required_stamps,
+            'next_reward_image' => $next?->image,
+            'next_reward_image_thumb' => $next?->image_thumb,
             'stamps_to_next' => $stampsToNext,
         ];
     }

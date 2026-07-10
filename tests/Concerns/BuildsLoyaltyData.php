@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Models\VenueSetupFile;
 use App\Models\Visit;
+use App\Services\OwnerMediaPathService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -192,6 +193,21 @@ trait BuildsLoyaltyData
         }
     }
 
+    protected function ownerMediaPath(User $owner, Brand $brand, string $kind, string $filename = ''): string
+    {
+        $paths = app(OwnerMediaPathService::class);
+        $directory = match ($kind) {
+            'drafts' => $paths->draftsDirectory($owner->id),
+            'logos' => $paths->logosDirectory($owner->id, $brand->id),
+            'covers' => $paths->coversDirectory($owner->id, $brand->id),
+            'rewards' => $paths->rewardsDirectory($owner->id, $brand->id),
+            'setup' => $paths->setupDirectory($owner->id, $brand->id),
+            default => throw new \InvalidArgumentException("Unknown owner media kind: {$kind}"),
+        };
+
+        return $filename === '' ? '/'.$directory : '/'.$directory.'/'.ltrim($filename, '/');
+    }
+
     protected function createVenueSetupFile(Venue $venue, ?User $uploader = null, array $attributes = []): VenueSetupFile
     {
         $uploader ??= $this->createUser();
@@ -202,7 +218,7 @@ trait BuildsLoyaltyData
             'uploaded_by_user_id' => $uploader->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'owner-setup.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/owner-setup.png',
+            'path' => $this->ownerMediaPath($uploader, $venue->brand, 'setup', 'owner-setup.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ], $attributes));
@@ -215,23 +231,24 @@ trait BuildsLoyaltyData
     protected function createListingReadyVenue(array $attributes = [], ?User $owner = null): Venue
     {
         $owner ??= $this->createUser();
-        $logoPath = $attributes['logo'] ?? '/uploads/venue-logos/demo.png';
 
         $venue = $this->createVenueForBrand($this->createBrand(array_merge([
             'status' => $attributes['status'] ?? Brand::STATUS_DRAFT,
             'category' => 'cafe',
-            'logo' => $logoPath,
             'review_note' => $attributes['review_note'] ?? null,
-        ], array_intersect_key($attributes, array_flip(['name', 'slug', 'category', 'logo', 'status', 'review_note'])))), array_merge([
+        ], array_intersect_key($attributes, array_flip(['name', 'slug', 'category', 'status', 'review_note'])))), array_merge([
             'is_primary' => true,
             'address' => '12 Market Street, Torun',
             'latitude' => 53.0101,
             'longitude' => 18.6101,
         ], array_intersect_key($attributes, array_flip(['name', 'slug', 'address', 'latitude', 'longitude']))));
 
+        $this->attachMember($venue, $owner, 'owner');
+
+        $logoPath = $attributes['logo'] ?? $this->ownerMediaPath($owner, $venue->brand, 'logos', 'demo.png');
+        $venue->brand->forceFill(['logo' => $logoPath])->save();
         $this->ensurePublicUploadFile($logoPath);
 
-        $this->attachMember($venue, $owner, 'owner');
         $this->createReward($venue);
         $this->createVenueSetupFile($venue, $owner);
 

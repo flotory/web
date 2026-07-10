@@ -4,6 +4,8 @@ export interface CardSummary {
   pending_rewards_count: number
   next_reward_title: string | null
   next_reward_stamps: number | null
+  next_reward_image?: string | null
+  next_reward_image_thumb?: string | null
   stamps_to_next: number | null
 }
 

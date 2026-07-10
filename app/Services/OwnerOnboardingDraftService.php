@@ -30,6 +30,7 @@ class OwnerOnboardingDraftService
         private OwnerInvitationService $ownerInvitations,
         private VenueSetupFileService $setupFiles,
         private MediaStorageService $media,
+        private OwnerMediaPathService $paths,
     ) {}
 
     /**
@@ -256,7 +257,7 @@ class OwnerOnboardingDraftService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = 'draft-'.Str::lower(Str::random(12)).'.'.$extension;
-        $storageDirectory = 'uploads/onboarding-drafts/'.$user->id;
+        $storageDirectory = $this->paths->draftsDirectory($user->id);
 
         $originalName = $file->getClientOriginalName();
         $byteSize = $file->getSize() ?: 0;
@@ -424,7 +425,7 @@ class OwnerOnboardingDraftService
             return;
         }
 
-        $storageDirectory = 'uploads/venue-setup/'.$brand->id;
+        $storageDirectory = $this->paths->setupDirectory($user->id, $brand->id);
 
         foreach ($files as $draftFile) {
             $extension = pathinfo($draftFile->path, PATHINFO_EXTENSION) ?: 'bin';

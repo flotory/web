@@ -50,8 +50,8 @@ class VenueSetupFileControllerTest extends TestCase
             'latitude' => 53.0101,
             'longitude' => 18.6101,
         ]);
-        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/demo.png'])->save();
         $this->attachMember($venue, $owner, 'owner');
+        $venue->brand->forceFill(['logo' => $this->ownerMediaPath($owner, $venue->brand, 'logos', 'demo.png')])->save();
         $this->createReward($venue);
 
         Sanctum::actingAs($owner);
@@ -88,7 +88,7 @@ class VenueSetupFileControllerTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'logo.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);
@@ -112,12 +112,12 @@ class VenueSetupFileControllerTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'menu.pdf',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/menu.pdf',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'menu.pdf'),
             'mime_type' => 'application/pdf',
             'byte_size' => 2048,
         ]);
 
-        $venue->brand->forceFill(['logo' => '/uploads/venue-logos/demo.png'])->save();
+        $venue->brand->forceFill(['logo' => $this->ownerMediaPath($owner, $venue->brand, 'logos', 'demo.png')])->save();
 
         Sanctum::actingAs($admin);
 
@@ -132,7 +132,9 @@ class VenueSetupFileControllerTest extends TestCase
     public function test_admin_can_upload_and_delete_setup_files(): void
     {
         $admin = $this->createUser(['is_admin' => true]);
+        $owner = $this->createUser(['email' => 'admin-upload-owner@example.com']);
         $venue = $this->createPublishedVenue(['slug' => 'admin-upload-files']);
+        $this->attachMember($venue, $owner, 'owner');
 
         Sanctum::actingAs($admin);
 
@@ -165,7 +167,7 @@ class VenueSetupFileControllerTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'logo.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);
@@ -193,7 +195,7 @@ class VenueSetupFileControllerTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'logo.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);
@@ -217,7 +219,7 @@ class VenueSetupFileControllerTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'logo.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);

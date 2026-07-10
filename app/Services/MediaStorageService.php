@@ -165,4 +165,21 @@ class MediaStorageService
             @unlink($localPath);
         }
     }
+
+    public function deletePrefix(string $prefix): int
+    {
+        $prefix = trim($prefix, '/');
+        $deleted = 0;
+
+        foreach ($this->disk()->allFiles($prefix) as $file) {
+            $this->disk()->delete($file);
+            $deleted++;
+        }
+
+        foreach ($this->disk()->allDirectories($prefix) as $directory) {
+            $this->disk()->deleteDirectory($directory);
+        }
+
+        return $deleted;
+    }
 }

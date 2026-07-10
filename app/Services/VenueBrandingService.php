@@ -3,32 +3,31 @@
 namespace App\Services;
 
 use App\Models\Brand;
+use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 class VenueBrandingService
 {
-    private const LOGO_DIRECTORY = 'uploads/venue-logos';
-
-    private const COVER_DIRECTORY = 'uploads/venue-covers';
-
     public function __construct(
         private ImageThumbnailService $images,
         private MediaStorageService $media,
+        private OwnerMediaPathService $paths,
     ) {}
 
-    public function applyLogo(Venue $venue, UploadedFile $file): Venue
+    public function applyLogo(Venue $venue, UploadedFile $file, ?User $actor = null): Venue
     {
         $brand = $this->brandFor($venue);
         $this->deleteLogo($brand);
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'png');
         $filename = Str::slug($venue->slug).'-'.Str::lower(Str::random(12)).'.'.$extension;
+        $ownerId = $this->paths->ownerIdForBrand($brand, $actor);
 
         $stored = $this->images->storeWithThumbnail(
             $file,
-            self::LOGO_DIRECTORY,
+            $this->paths->logosDirectory($ownerId, $brand->id),
             $filename,
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
@@ -54,17 +53,18 @@ class VenueBrandingService
         return $venue->fresh(['brand']);
     }
 
-    public function applyCover(Venue $venue, UploadedFile $file): Venue
+    public function applyCover(Venue $venue, UploadedFile $file, ?User $actor = null): Venue
     {
         $brand = $this->brandFor($venue);
         $this->deleteCover($brand);
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
         $filename = Str::slug($venue->slug).'-cover-'.Str::lower(Str::random(12)).'.'.$extension;
+        $ownerId = $this->paths->ownerIdForBrand($brand, $actor);
 
         $stored = $this->images->storeWithThumbnail(
             $file,
-            self::COVER_DIRECTORY,
+            $this->paths->coversDirectory($ownerId, $brand->id),
             $filename,
             ImageThumbnailService::THUMB_MAX_COVER,
         );

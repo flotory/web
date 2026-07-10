@@ -24,7 +24,7 @@ interface MilestonePathProps {
   showStampNumbers?: boolean
 }
 
-const CELL_SIZE = 32
+const CELL_SIZE = 38
 
 export default function MilestonePath({
   collected,
@@ -40,7 +40,7 @@ export default function MilestonePath({
   showStampNumbers = false,
 }: MilestonePathProps) {
   const size = Math.round(CELL_SIZE * sizeScale)
-  const cellGap = Math.round(8 * sizeScale)
+  const cellGap = Math.round(5 * sizeScale)
   const gifts = new Set((milestoneStamps?.length ? milestoneStamps : [milestoneStamp ?? total]).filter(Boolean) as number[])
   const claimed = new Set(claimedStamps)
   const highlighted = new Set(highlightStamps)
@@ -224,7 +224,7 @@ export default function MilestonePath({
 
     let backgroundColor = colors.surface
     let borderColor = colors.border
-    let textColor = showStampNumbers && !filled && !isGift ? colors.inkSoft : colors.inkSoft
+    let textColor = showStampNumbers && !filled && !isGift ? colors.inkMuted : colors.inkSoft
 
     if (filled) {
       backgroundColor = colors.accent
@@ -264,7 +264,7 @@ export default function MilestonePath({
         ) : content ? (
           <Text
             style={withAppFont({
-              fontSize: Math.round((filled ? 13 : isGift ? 14 : 12) * sizeScale),
+              fontSize: Math.round(14 * sizeScale),
               fontWeight: '800',
               color: textColor,
             })}
@@ -323,16 +323,13 @@ export default function MilestonePath({
   }
 
   return (
-    <View style={{ gap: cellGap }}>
+    <View style={{ gap: cellGap, alignItems: 'center' }}>
       {rows.map((row, rowIndex) => (
-        <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: cellGap }}>
+        <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: cellGap, justifyContent: 'center' }}>
           {row.map((stamp) => (
-            <View key={stamp} style={{ flex: 1, alignItems: 'center' }}>
+            <View key={stamp} style={{ alignItems: 'center' }}>
               {renderCell(stamp)}
             </View>
-          ))}
-          {Array.from({ length: Math.max(columns - row.length, 0) }, (_, spacer) => (
-            <View key={`spacer-${rowIndex}-${spacer}`} style={{ flex: 1 }} />
           ))}
         </View>
       ))}

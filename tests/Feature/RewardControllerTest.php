@@ -53,7 +53,7 @@ class RewardControllerTest extends TestCase
 
         $response
             ->assertCreated()
-            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/reward-milestones/'))
+            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/owners/'))
             ->assertJsonPath('reward.image_thumb', fn (?string $path): bool => is_string($path) && str_ends_with($path, '-thumb.jpg'));
     }
 
@@ -62,15 +62,14 @@ class RewardControllerTest extends TestCase
         $owner = $this->createUser();
         $venue = $this->createVenue(['slug' => 'update-reward']);
         $this->attachMember($venue, $owner, 'owner');
+        $oldImage = $this->ownerMediaPath($owner, $venue->brand, 'rewards', 'old.jpg');
         $reward = $this->createReward($venue, [
             'title' => 'Old Title',
             'required_stamps' => 5,
-            'image' => '/uploads/reward-milestones/old.jpg',
+            'image' => $oldImage,
         ]);
 
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
-        File::put("{$directory}/old.jpg", 'old');
+        $this->ensurePublicUploadFile($oldImage, 'old');
 
         Sanctum::actingAs($owner);
 
@@ -90,7 +89,7 @@ class RewardControllerTest extends TestCase
             'image' => UploadedFile::fake()->image('new-reward.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertOk()
-            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/reward-milestones/'));
+            ->assertJsonPath('reward.image', fn (string $path): bool => str_starts_with($path, '/uploads/owners/'));
     }
 
     public function test_owner_can_archive_reactivate_and_purge_reward(): void

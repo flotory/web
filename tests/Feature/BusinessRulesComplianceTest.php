@@ -270,7 +270,7 @@ class BusinessRulesComplianceTest extends TestCase
             'uploaded_by_user_id' => $owner->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => 'logo.png',
-            'path' => '/uploads/venue-setup/'.$venue->brand_id.'/logo.png',
+            'path' => $this->ownerMediaPath($owner, $venue->brand, 'setup', 'logo.png'),
             'mime_type' => 'image/png',
             'byte_size' => 1024,
         ]);
