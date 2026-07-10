@@ -82,6 +82,7 @@ export default function CustomerScreen({
     <ScreenGradientLayout
       scrollable={scrollable}
       fixedHeader={scrollable && header ? header : undefined}
+      paddingTop={header ? 0 : undefined}
       flexContent={flexContent}
       tabBarInset={tabBarInset}
       refreshControl={refreshControl}

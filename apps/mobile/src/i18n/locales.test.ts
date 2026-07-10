@@ -14,4 +14,12 @@ describe('mobile localization catalogs', () => {
   it('keeps matching top-level domains between English and Armenian', () => {
     expect(Object.keys(hy).sort()).toEqual(Object.keys(en).sort())
   })
+
+  it('exposes forgot-password copy on login, not in settings', () => {
+    expect(en.login.forgotPassword).toBe('Forgot password?')
+    expect(en.forgotPassword.title).toBe('Forgot password?')
+    expect('forgotPassword' in en.settings).toBe(false)
+    expect(hy.login.forgotPassword).toContain('գաղտնաբառ')
+    expect('forgotPassword' in hy.settings).toBe(false)
+  })
 })

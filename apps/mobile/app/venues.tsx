@@ -18,7 +18,6 @@ import type { DiscoverVenue } from '../src/lib/customerData'
 import { collectDiscoverVenueLocations, sortDiscoverVenuesByNearestLocation } from '../src/lib/distance'
 import { matchesDiscoverCategoryFilter } from '../src/lib/venueCategories'
 import { useAuth } from '../src/providers/AuthProvider'
-import { useLocalePreference } from '../src/providers/LocaleProvider'
 import { colors, space, type as typography } from '../src/theme'
 import { withAppFont } from '../src/lib/typography'
 
@@ -39,7 +38,6 @@ function resultsLabel(count: number, hasFilters: boolean, t: (key: string, optio
 export default function VenuesScreen() {
   const router = useRouter()
   const { t } = useTranslation()
-  const { locale, setLocale } = useLocalePreference()
   const { token, role } = useAuth()
   const isGuest = !token
   const { data, loading, refreshing, error, refresh, reload } = useDiscoverVenues()
@@ -94,10 +92,6 @@ export default function VenuesScreen() {
     router.push(`/v/${venue.slug}`)
   }
 
-  function toggleLocale() {
-    void setLocale(locale === 'hy' ? 'en' : 'hy')
-  }
-
   if (role && role !== 'customer') {
     return null
   }
@@ -112,28 +106,11 @@ export default function VenuesScreen() {
             {isGuest ? t('venues.guestIntro') : t('venues.customerIntro')}
           </Text>
         </View>
-        <View style={{ alignItems: 'flex-end', gap: 8 }}>
-          <Pressable
-            onPress={toggleLocale}
-            style={({ pressed }) => ({
-              marginTop: 4,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 999,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.border,
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '800', fontSize: 13 })}>
-              {locale === 'hy' ? 'EN' : 'Հայ'}
-            </Text>
-          </Pressable>
-          {isGuest ? (
+        {isGuest ? (
           <Pressable
             onPress={() => router.push('/login')}
             style={({ pressed }) => ({
+              marginTop: 4,
               paddingHorizontal: 14,
               paddingVertical: 10,
               borderRadius: 999,
@@ -143,8 +120,7 @@ export default function VenuesScreen() {
           >
             <Text style={withAppFont({ color: colors.primaryText, fontWeight: '800', fontSize: 14 })}>{t('common.signIn')}</Text>
           </Pressable>
-          ) : null}
-        </View>
+        ) : null}
       </View>
     </Animated.View>
   )

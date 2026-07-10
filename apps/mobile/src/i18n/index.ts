@@ -1,4 +1,3 @@
-import { getLocales } from 'expo-localization'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
@@ -9,8 +8,10 @@ import { setRuntimeLocale } from './runtime'
 
 export { localeOptions, resolveLocale, type AppLocale } from './localeConfig'
 
+export const DEFAULT_LOCALE: AppLocale = 'en'
+
 export function deviceLocale(): AppLocale {
-  return resolveLocale(getLocales()[0]?.languageTag) ?? 'en'
+  return DEFAULT_LOCALE
 }
 
 export function currentLocale(): AppLocale {

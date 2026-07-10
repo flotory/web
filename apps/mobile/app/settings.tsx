@@ -5,12 +5,13 @@ import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 
 import ProfileMenuRow from '../src/components/customer/ProfileMenuRow'
+import LanguageSelectRow from '../src/components/customer/LanguageSelectRow'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { apiRequest } from '../src/lib/api'
 import { webAppOrigin } from '../src/lib/config'
 import { useAuth } from '../src/providers/AuthProvider'
-import { localeOptions, type AppLocale } from '../src/i18n'
+import { type AppLocale } from '../src/i18n'
 import { useLocalePreference } from '../src/providers/LocaleProvider'
 import { colors, radius, space, type as typography } from '../src/theme'
 import { profileDisplayName, profileInitials } from '../src/lib/profileDisplay'
@@ -144,48 +145,17 @@ export default function SettingsScreen() {
             onPress={() => router.push('/(customer)/notifications')}
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
-          <ProfileMenuRow
-            icon="language-outline"
+          <LanguageSelectRow
             label={t('settings.language')}
             subtitle={t('settings.languageSubtitle')}
+            value={locale}
+            onChange={(nextLocale) => void handleLocaleChange(nextLocale)}
           />
-          <View style={{ flexDirection: 'row', gap: 10, paddingBottom: 14 }}>
-            {localeOptions.map((option) => {
-              const selected = option.value === locale
-              return (
-                <Pressable
-                  key={option.value}
-                  onPress={() => void handleLocaleChange(option.value)}
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: selected ? colors.accentActive : colors.border,
-                    backgroundColor: selected ? colors.accentSoft : colors.surface,
-                    paddingVertical: 10,
-                    alignItems: 'center',
-                    opacity: pressed ? 0.85 : 1,
-                  })}
-                >
-                  <Text style={withAppFont({ color: selected ? colors.accentActive : colors.inkMuted, fontWeight: '800' })}>
-                    {option.label}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow
             icon="lock-closed-outline"
             label={t('settings.changePassword')}
             onPress={() => router.push('/profile/change-password')}
-          />
-          <View style={{ height: 1, backgroundColor: colors.border }} />
-          <ProfileMenuRow
-            icon="key-outline"
-            label={t('settings.forgotPassword')}
-            onPress={() => openWeb('/forgot-password')}
-            external
           />
           <View style={{ height: 1, backgroundColor: colors.border }} />
           <ProfileMenuRow

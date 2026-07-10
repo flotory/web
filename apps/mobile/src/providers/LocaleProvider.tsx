@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
-import i18n, { deviceLocale, resolveLocale, type AppLocale } from '../i18n'
+import i18n, { DEFAULT_LOCALE, resolveLocale, type AppLocale } from '../i18n'
 import { getSavedLocale, saveLocale } from '../lib/localeStorage'
 
 interface LocaleContextValue {
@@ -13,7 +13,7 @@ interface LocaleContextValue {
 const LocaleContext = createContext<LocaleContextValue | null>(null)
 
 export function LocaleProvider({ children }: PropsWithChildren) {
-  const [locale, setLocaleState] = useState<AppLocale>(resolveLocale(i18n.language) ?? deviceLocale())
+  const [locale, setLocaleState] = useState<AppLocale>(resolveLocale(i18n.language) ?? DEFAULT_LOCALE)
 
   useEffect(() => {
     let active = true

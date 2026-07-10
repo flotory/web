@@ -232,6 +232,23 @@ export default function LoginScreen() {
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
 
+      {!isRegisterMode ? (
+        <Pressable
+          testID="login-forgot-password-link"
+          onPress={() =>
+            router.push({
+              pathname: '/forgot-password',
+              params: email.trim() ? { email: email.trim() } : undefined,
+            })
+          }
+          style={{ alignSelf: 'flex-end' }}
+        >
+          <Text style={withAppFont({ color: colors.accentActive, fontWeight: '700', fontSize: 14 })}>
+            {t('login.forgotPassword')}
+          </Text>
+        </Pressable>
+      ) : null}
+
       {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
       <Pressable
