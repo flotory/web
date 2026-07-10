@@ -115,9 +115,9 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
   const title = campaign.name?.trim() || campaign.headline
   const description = campaign.message
 
-  const isDarkCampaign = featured || campaign.applies_now
+  const isActiveNow = campaign.applies_now
 
-  if (isDarkCampaign) {
+  if (isActiveNow) {
     return (
       <View
         style={{
@@ -136,8 +136,8 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'space-between' }}>
               <View>
                 <CampaignBadge
-                  label={featured ? 'Featured' : 'Active'}
-                  icon={featured ? 'star' : 'flash'}
+                  label="Active"
+                  icon="flash"
                   backgroundColor="transparent"
                   textColor={colors.accent}
                   borderColor={colors.accent}
@@ -234,8 +234,8 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
       }}
     >
       <CampaignBadge
-        label="New"
-        icon="sparkles"
+        label="Scheduled"
+        icon="time-outline"
         backgroundColor={colors.lavender}
         textColor={colors.ink}
         borderColor={colors.lavenderBorder}

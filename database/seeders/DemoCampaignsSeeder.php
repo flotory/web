@@ -25,9 +25,10 @@ class DemoCampaignsSeeder extends Seeder
 
         $service = app(CampaignService::class);
 
+        // Sundays only — avoids overlapping Demo Happy Hour (Mon–Fri 15:00–18:00).
         $quietConfig = [
             'stamp_multiplier' => 2,
-            'days_of_week' => [1, 2, 3, 4, 5, 6, 7],
+            'days_of_week' => [7],
             'duration_days' => 30,
         ];
 

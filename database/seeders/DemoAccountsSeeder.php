@@ -35,6 +35,7 @@ class DemoAccountsSeeder extends Seeder
                 'is_primary' => true,
                 'name' => 'Demo Cafe',
                 'address' => '12 Market Street, Toruń',
+                'timezone' => 'Europe/Warsaw',
             ],
         );
 

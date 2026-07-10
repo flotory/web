@@ -56,16 +56,13 @@ export interface HomeRewardTicketCardProps {
 function TicketStampProgress({
   collected,
   target,
-  completeLabel,
 }: {
   collected: number
   target: number
-  completeLabel: string
 }) {
   const { t } = useTranslation()
   const slots = Math.min(Math.max(target, 1), 10)
   const filled = Math.min(Math.max(collected, 0), slots)
-  const toGo = Math.max(target - collected, 0)
 
   return (
     <View style={{ marginTop: 14 }}>
@@ -82,14 +79,9 @@ function TicketStampProgress({
           />
         ))}
       </View>
-      <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
-          {t('home.progressCount', { current: filled, target })}
-        </Text>
-        <Text style={withAppFont({ fontSize: 13, fontWeight: '800', color: toGo <= 0 ? colors.accent : colors.ink })}>
-          {toGo <= 0 ? completeLabel : t('home.stampToGoInline', { count: toGo })}
-        </Text>
-      </View>
+      <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.inkMuted })}>
+        {t('home.progressCount', { current: filled, target })}
+      </Text>
     </View>
   )
 }
@@ -427,7 +419,6 @@ export default function HomeRewardTicketCard({
             <TicketStampProgress
               collected={stampProgress.collected}
               target={stampProgress.target}
-              completeLabel={isReady ? t('home.unlocked') : t('home.readyToClaim')}
             />
           ) : null}
           {isReady && linkable && unlockId ? (

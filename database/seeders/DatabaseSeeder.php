@@ -76,6 +76,7 @@ class DatabaseSeeder extends Seeder
                 'is_primary' => true,
                 'name' => 'Demo Cafe',
                 'address' => '12 Market Street, Toruń',
+                'timezone' => 'Europe/Warsaw',
                 'latitude' => 53.0105300,
                 'longitude' => 18.6108600,
             ],

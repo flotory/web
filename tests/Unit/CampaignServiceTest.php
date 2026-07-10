@@ -324,4 +324,40 @@ class CampaignServiceTest extends TestCase
         }
     }
 
+    public function test_demo_happy_hour_is_inactive_outside_window_even_with_quiet_day_campaign(): void
+    {
+        $venue = $this->createVenue(['timezone' => 'Europe/Warsaw']);
+        $guest = $this->createUser(['email' => 'demo-guest@example.com']);
+        $customer = $this->createCustomer($venue, $guest);
+        $owner = $this->createUser(['email' => 'demo-owner@example.com']);
+        $this->attachMember($venue, $owner, 'owner');
+
+        Carbon::setTestNow(Carbon::parse('2026-07-10 20:51:00', 'Europe/Warsaw'));
+
+        try {
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::QUIET_DAY, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [7],
+            ], 'Demo · Quiet Day Promotion');
+
+            $this->seedActiveCampaign($venue, $owner, CampaignTemplates::HAPPY_HOUR, [
+                'stamp_multiplier' => 2,
+                'days_of_week' => [1, 2, 3, 4, 5],
+                'start_time' => '15:00',
+                'end_time' => '18:00',
+            ], 'Demo · Happy Hour');
+
+            $this->assertSame(1, $this->campaigns->multiplierFor($customer, $venue));
+            $this->assertNull($this->campaigns->promotionForCustomer($customer));
+
+            $items = $this->campaigns->homeCampaignsForCards(collect([$customer]));
+            $happyHour = collect($items)->firstWhere('name', 'Demo · Happy Hour');
+
+            $this->assertNotNull($happyHour);
+            $this->assertFalse($happyHour['applies_now']);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
 }
