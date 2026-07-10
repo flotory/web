@@ -6,6 +6,7 @@ use App\Console\Commands\GenerateMediaThumbnails;
 use App\Models\Reward;
 use App\Models\Venue;
 use App\Services\ImageThumbnailService;
+use App\Services\MediaStorageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -38,13 +39,10 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
-
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 800, 600),
-            $directory,
+            'uploads/reward-milestones',
             'test-reward.jpg',
             ImageThumbnailService::THUMB_MAX_REWARD,
         );
@@ -61,13 +59,10 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/venue-logos');
-        File::ensureDirectoryExists($directory);
-
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('logo.png', 400, 400),
-            $directory,
+            'uploads/venue-logos',
             'existing-logo.png',
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
@@ -119,13 +114,10 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/venue-covers');
-        File::ensureDirectoryExists($directory);
-
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('cover.jpg', 1200, 600),
-            $directory,
+            'uploads/venue-covers',
             'hero-cover.jpg',
             ImageThumbnailService::THUMB_MAX_COVER,
         );
@@ -149,20 +141,15 @@ class ImageThumbnailServiceTest extends TestCase
         $customer = $this->createCustomer($venue, $user);
         unset($customer);
 
-        $rewardDirectory = public_path('uploads/reward-milestones');
-        $logoDirectory = public_path('uploads/venue-logos');
-        File::ensureDirectoryExists($rewardDirectory);
-        File::ensureDirectoryExists($logoDirectory);
-
         $service = app(ImageThumbnailService::class);
         $rewardStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 640, 480),
-            $rewardDirectory,
+            'uploads/reward-milestones',
             'reward-one.jpg',
         );
         $logoStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('logo.png', 300, 300),
-            $logoDirectory,
+            'uploads/venue-logos',
             'logo-one.png',
             ImageThumbnailService::THUMB_MAX_LOGO,
         );
@@ -206,13 +193,10 @@ class ImageThumbnailServiceTest extends TestCase
         }
 
         $venue = $this->createVenue(['slug' => 'skip-cafe']);
-        $rewardDirectory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($rewardDirectory);
-
         $service = app(ImageThumbnailService::class);
         $rewardStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.jpg', 640, 480),
-            $rewardDirectory,
+            'uploads/reward-milestones',
             'reward-skip.jpg',
         );
 
@@ -233,13 +217,10 @@ class ImageThumbnailServiceTest extends TestCase
         }
 
         $venue = $this->createVenue(['slug' => 'cover-cafe']);
-        $coverDirectory = public_path('uploads/venue-covers');
-        File::ensureDirectoryExists($coverDirectory);
-
         $service = app(ImageThumbnailService::class);
         $coverStored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('cover.jpg', 1400, 700),
-            $coverDirectory,
+            'uploads/venue-covers',
             'venue-cover.jpg',
             ImageThumbnailService::THUMB_MAX_COVER,
         );
@@ -274,13 +255,10 @@ class ImageThumbnailServiceTest extends TestCase
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
-
         $service = app(ImageThumbnailService::class);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('reward.gif', 200, 200),
-            $directory,
+            'uploads/reward-milestones',
             'animated-reward.gif',
         );
 
@@ -290,7 +268,7 @@ class ImageThumbnailServiceTest extends TestCase
 
     public function test_create_thumbnail_returns_null_when_gd_is_unavailable(): void
     {
-        $service = new class extends ImageThumbnailService
+        $service = new class(app(MediaStorageService::class)) extends ImageThumbnailService
         {
             protected function gdIsAvailable(): bool
             {
@@ -298,14 +276,7 @@ class ImageThumbnailServiceTest extends TestCase
             }
         };
 
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
-        $path = "{$directory}/noop.jpg";
-        File::put($path, 'ignored');
-
-        $thumb = $this->invokeCreateThumbnail($service, $path, ImageThumbnailService::THUMB_MAX_REWARD);
-
-        $this->assertNull($thumb);
+        $this->assertNull($this->invokeCreateThumbnail($service, '/uploads/reward-milestones/noop.jpg', ImageThumbnailService::THUMB_MAX_REWARD));
     }
 
     public function test_create_thumbnail_returns_null_for_corrupt_source_file(): void
@@ -316,10 +287,9 @@ class ImageThumbnailServiceTest extends TestCase
 
         $directory = public_path('uploads/reward-milestones');
         File::ensureDirectoryExists($directory);
-        $path = "{$directory}/corrupt.jpg";
-        File::put($path, 'not-an-image');
+        File::put("{$directory}/corrupt.jpg", 'not-an-image');
 
-        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), $path, 320));
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/reward-milestones/corrupt.jpg', 320));
     }
 
     public function test_create_thumbnail_returns_null_for_unsupported_image_type(): void
@@ -330,32 +300,36 @@ class ImageThumbnailServiceTest extends TestCase
 
         $directory = public_path('uploads/reward-milestones');
         File::ensureDirectoryExists($directory);
-        $path = "{$directory}/bitmap.bmp";
-        File::put($path, base64_decode('Qk06AAAAAAAAAD4AAAAoAAAAAQAAAAEAAAABAAEAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAP/A'));
+        File::put("{$directory}/bitmap.bmp", base64_decode('Qk06AAAAAAAAAD4AAAAoAAAAAQAAAAEAAAABAAEAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAP/A'));
 
-        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), $path, 320));
+        $this->assertNull($this->invokeCreateThumbnail(app(ImageThumbnailService::class), '/uploads/reward-milestones/bitmap.bmp', 320));
     }
 
-    public function test_create_thumbnail_returns_null_when_jpeg_write_fails(): void
+    public function test_create_thumbnail_returns_null_when_storage_write_fails(): void
     {
         if (! extension_loaded('gd')) {
             $this->markTestSkipped('GD extension is required for thumbnail generation.');
         }
 
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
+        $media = \Mockery::mock(MediaStorageService::class)->makePartial();
+        $media->shouldReceive('putUploadedFile')->andReturnUsing(function (UploadedFile $file, string $storageDirectory, string $filename) {
+            return app(MediaStorageService::class)->putUploadedFile($file, $storageDirectory, $filename);
+        });
+        $media->shouldReceive('localPathForProcessing')->andReturnUsing(function (?string $path) {
+            return app(MediaStorageService::class)->localPathForProcessing($path);
+        });
+        $media->shouldReceive('releaseTempPath')->andReturnNull();
+        $media->shouldReceive('putContents')->andThrow(new \RuntimeException('storage full'));
 
-        $service = app(ImageThumbnailService::class);
+        $service = new ImageThumbnailService($media);
         $stored = $service->storeWithThumbnail(
             UploadedFile::fake()->image('source.jpg', 40, 40),
-            $directory,
-            'source.jpg',
+            'uploads/reward-milestones',
+            'storage-fail.jpg',
         );
 
-        File::delete(public_path(ltrim($stored['thumb_path'] ?? '', '/')));
-        File::makeDirectory("{$directory}/source-thumb.jpg", 0755, true);
-
-        $this->assertNull($this->invokeCreateThumbnail($service, public_path('uploads/reward-milestones/source.jpg'), 320));
+        $this->assertSame('/uploads/reward-milestones/storage-fail.jpg', $stored['path']);
+        $this->assertNull($stored['thumb_path']);
     }
 
     public function test_generate_media_thumbnails_command_skips_reward_when_thumb_generation_fails(): void
@@ -378,11 +352,11 @@ class ImageThumbnailServiceTest extends TestCase
         $this->assertNull(Reward::query()->first()?->image_thumb);
     }
 
-    private function invokeCreateThumbnail(ImageThumbnailService $service, string $sourcePath, int $maxSize): ?string
+    private function invokeCreateThumbnail(ImageThumbnailService $service, string $publicRelativePath, int $maxSize): ?string
     {
         $method = new \ReflectionMethod(ImageThumbnailService::class, 'createThumbnail');
         $method->setAccessible(true);
 
-        return $method->invoke($service, $sourcePath, $maxSize);
+        return $method->invoke($service, $publicRelativePath, $maxSize);
     }
 }

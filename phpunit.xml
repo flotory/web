@@ -34,5 +34,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="LOYALTY_UNIVERSAL_QR" value="true"/>
         <env name="LOYALTY_LEGACY_CARD_QR" value="false"/>
+        <env name="MEDIA_DISK" value="uploads"/>
     </php>
 </phpunit>

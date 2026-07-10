@@ -2,13 +2,15 @@
 
 namespace Tests\Unit;
 
-use App\Http\Controllers\Api\RewardController;
 use App\Models\Reward;
+use App\Services\ImageThumbnailService;
+use App\Services\MediaStorageService;
+use App\Services\RewardImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use ReflectionMethod;
 use Tests\Concerns\BuildsLoyaltyData;
 use Tests\TestCase;
 
@@ -31,7 +33,7 @@ class RewardControllerImageTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        $this->invokeStoreRewardImage($file, $venue, null);
+        app(RewardImageService::class)->store($file, $venue);
     }
 
     public function test_delete_reward_image_skips_external_paths(): void
@@ -42,7 +44,7 @@ class RewardControllerImageTest extends TestCase
             'image_thumb' => '/uploads/other/thumb.jpg',
         ]);
 
-        $this->invokeDeleteRewardImage($reward);
+        app(RewardImageService::class)->delete($reward);
 
         $this->assertSame('https://cdn.example.com/reward.jpg', $reward->fresh()->image);
     }
@@ -58,53 +60,39 @@ class RewardControllerImageTest extends TestCase
             'image' => '/uploads/reward-milestones/local.jpg',
         ]);
 
-        $this->invokeDeleteRewardImage($reward);
+        app(RewardImageService::class)->delete($reward);
 
         $this->assertFileDoesNotExist("{$directory}/local.jpg");
     }
 
-    public function test_store_reward_image_reports_move_failures(): void
+    public function test_store_reward_image_reports_storage_failures(): void
     {
         $venue = $this->createVenue(['slug' => 'move-failure']);
-        $file = \Mockery::mock(UploadedFile::class);
-        $file->shouldReceive('getClientOriginalExtension')->andReturn('jpg');
-        $file->shouldReceive('extension')->andReturn('jpg');
-        $file->shouldReceive('move')->andThrow(new \RuntimeException('disk full'));
-
-        $this->expectException(ValidationException::class);
-
-        $this->invokeStoreRewardImage($file, $venue, null);
-    }
-
-    public function test_store_reward_image_rejects_non_writable_directory(): void
-    {
-        $venue = $this->createVenue(['slug' => 'readonly-upload']);
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
         $file = UploadedFile::fake()->image('reward.jpg', 100, 100);
 
-        File::shouldReceive('ensureDirectoryExists')->andReturnNull();
-        File::shouldReceive('isWritable')->andReturnFalse();
+        $images = \Mockery::mock(ImageThumbnailService::class);
+        $images->shouldReceive('storeWithThumbnail')
+            ->once()
+            ->andThrow(new \RuntimeException('disk full'));
+
+        $service = new RewardImageService($images, app(MediaStorageService::class));
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Upload folder is not writable');
 
-        $this->invokeStoreRewardImage($file, $venue, null);
+        $service->store($file, $venue);
     }
 
-    private function invokeStoreRewardImage(UploadedFile $file, $venue, ?Reward $reward): array
+    public function test_store_reward_image_skips_writable_check_on_remote_disk(): void
     {
-        $method = new ReflectionMethod(RewardController::class, 'storeRewardImage');
-        $method->setAccessible(true);
+        Storage::fake('s3');
+        config(['filesystems.media_disk' => 's3']);
 
-        return $method->invoke(app(RewardController::class), $file, $venue, $reward);
-    }
+        $venue = $this->createVenue(['slug' => 'remote-upload']);
+        $file = UploadedFile::fake()->image('reward.jpg', 100, 100);
 
-    private function invokeDeleteRewardImage(Reward $reward): void
-    {
-        $method = new ReflectionMethod(RewardController::class, 'deleteRewardImage');
-        $method->setAccessible(true);
+        $stored = app(RewardImageService::class)->store($file, $venue);
 
-        $method->invoke(app(RewardController::class), $reward);
+        $this->assertStringStartsWith('/uploads/reward-milestones/', $stored['image']);
+        Storage::disk('s3')->assertExists(ltrim($stored['image'], '/'));
     }
 }

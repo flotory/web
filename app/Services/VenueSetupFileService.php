@@ -16,6 +16,8 @@ class VenueSetupFileService
 {
     private const MAX_BYTES = 10 * 1024 * 1024;
 
+    public function __construct(private MediaStorageService $media) {}
+
     /**
      * @return list<string>
      */
@@ -55,20 +57,18 @@ class VenueSetupFileService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = Str::slug($venue->slug).'-file-'.Str::lower(Str::random(12)).'.'.$extension;
-        $directory = public_path('uploads/venue-setup/'.$brand->id);
-
-        File::ensureDirectoryExists($directory);
+        $storageDirectory = 'uploads/venue-setup/'.$brand->id;
 
         $originalName = $file->getClientOriginalName();
         $byteSize = $file->getSize() ?: 0;
-        $file->move($directory, $filename);
+        $storedPath = $this->media->putUploadedFile($file, $storageDirectory, $filename);
 
         return VenueSetupFile::query()->create([
             'brand_id' => $brand->id,
             'uploaded_by_user_id' => $user->id,
             'kind' => VenueSetupFile::KIND_FILE,
             'original_name' => $originalName,
-            'path' => '/uploads/venue-setup/'.$brand->id.'/'.$filename,
+            'path' => $storedPath,
             'mime_type' => $mime,
             'byte_size' => $byteSize,
         ]);
@@ -76,12 +76,7 @@ class VenueSetupFileService
 
     public function delete(VenueSetupFile $setupFile): void
     {
-        if (str_starts_with($setupFile->path, '/uploads/venue-setup/')) {
-            $absolute = public_path(ltrim($setupFile->path, '/'));
-            if (File::exists($absolute)) {
-                File::delete($absolute);
-            }
-        }
+        $this->media->delete($setupFile->path);
 
         $setupFile->delete();
     }
@@ -148,11 +143,21 @@ class VenueSetupFileService
                 continue;
             }
 
-            $score = $this->logoLikenessScore($file, public_path(ltrim($path, '/')));
+            $localPath = $this->media->localPathForProcessing($file->path);
 
-            if ($score < $bestScore) {
-                $bestScore = $score;
-                $bestPath = $path;
+            if ($localPath === null) {
+                continue;
+            }
+
+            try {
+                $score = $this->logoLikenessScore($file, $localPath);
+
+                if ($score < $bestScore) {
+                    $bestScore = $score;
+                    $bestPath = $path;
+                }
+            } finally {
+                $this->media->releaseTempPath($localPath, $file->path);
             }
         }
 

@@ -12,7 +12,6 @@ use App\Models\VenueSetupFile;
 use App\Support\VenuePresenter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -30,6 +29,7 @@ class OwnerOnboardingDraftService
         private VenueTimezoneService $timezones,
         private OwnerInvitationService $ownerInvitations,
         private VenueSetupFileService $setupFiles,
+        private MediaStorageService $media,
     ) {}
 
     /**
@@ -256,18 +256,16 @@ class OwnerOnboardingDraftService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = 'draft-'.Str::lower(Str::random(12)).'.'.$extension;
-        $directory = public_path('uploads/onboarding-drafts/'.$user->id);
-
-        File::ensureDirectoryExists($directory);
+        $storageDirectory = 'uploads/onboarding-drafts/'.$user->id;
 
         $originalName = $file->getClientOriginalName();
         $byteSize = $file->getSize() ?: 0;
-        $file->move($directory, $filename);
+        $storedPath = $this->media->putUploadedFile($file, $storageDirectory, $filename);
 
         return OwnerOnboardingDraftFile::query()->create([
             'user_id' => $user->id,
             'original_name' => $originalName,
-            'path' => '/uploads/onboarding-drafts/'.$user->id.'/'.$filename,
+            'path' => $storedPath,
             'mime_type' => $mime,
             'byte_size' => $byteSize,
         ]);
@@ -279,13 +277,7 @@ class OwnerOnboardingDraftService
             abort(404);
         }
 
-        if (str_starts_with($file->path, '/uploads/onboarding-drafts/')) {
-            $absolute = public_path(ltrim($file->path, '/'));
-
-            if (File::exists($absolute)) {
-                File::delete($absolute);
-            }
-        }
+        $this->media->delete($file->path);
 
         $file->delete();
     }
@@ -432,28 +424,23 @@ class OwnerOnboardingDraftService
             return;
         }
 
-        $directory = public_path('uploads/venue-setup/'.$brand->id);
-        File::ensureDirectoryExists($directory);
+        $storageDirectory = 'uploads/venue-setup/'.$brand->id;
 
         foreach ($files as $draftFile) {
-            $source = public_path(ltrim($draftFile->path, '/'));
-
-            if (! File::exists($source)) {
-                continue;
-            }
-
             $extension = pathinfo($draftFile->path, PATHINFO_EXTENSION) ?: 'bin';
             $filename = Str::slug($venue->slug).'-file-'.Str::lower(Str::random(12)).'.'.$extension;
-            $target = $directory.'/'.$filename;
+            $storedPath = $this->media->copy($draftFile->path, $storageDirectory, $filename);
 
-            File::copy($source, $target);
+            if ($storedPath === null) {
+                continue;
+            }
 
             VenueSetupFile::query()->create([
                 'brand_id' => $brand->id,
                 'uploaded_by_user_id' => $user->id,
                 'kind' => VenueSetupFile::KIND_FILE,
                 'original_name' => $draftFile->original_name,
-                'path' => '/uploads/venue-setup/'.$brand->id.'/'.$filename,
+                'path' => $storedPath,
                 'mime_type' => $draftFile->mime_type,
                 'byte_size' => $draftFile->byte_size,
             ]);

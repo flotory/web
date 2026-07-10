@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Brand;
 use App\Models\Venue;
+use App\Services\MediaStorageService;
 use App\Services\VenueSetupFileService;
 
 final class VenuePresenter
@@ -74,15 +75,7 @@ final class VenuePresenter
 
     public static function resolvePublicUploadPath(?string $path): ?string
     {
-        if (! filled($path)) {
-            return null;
-        }
-
-        if (! str_starts_with($path, '/uploads/')) {
-            return $path;
-        }
-
-        return is_file(public_path(ltrim($path, '/'))) ? $path : null;
+        return app(MediaStorageService::class)->url($path);
     }
 
     private static function resolveSetupLogoPreview(Brand $brand): ?string

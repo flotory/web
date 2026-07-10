@@ -7,18 +7,16 @@ use App\Http\Requests\StoreRewardRequest;
 use App\Models\Reward;
 use App\Models\RewardUnlock;
 use App\Models\Venue;
-use App\Services\ImageThumbnailService;
+use App\Services\RewardImageService;
 use App\Support\AuditLog;
 use App\Support\VenueAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AdminVenueRewardController extends Controller
 {
-    public function __construct(private ImageThumbnailService $images) {}
+    public function __construct(private RewardImageService $rewardImages) {}
 
     public function index(int $venue): JsonResponse
     {
@@ -41,7 +39,7 @@ class AdminVenueRewardController extends Controller
         $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps']);
 
         if ($request->hasFile('image')) {
-            $payload = array_merge($payload, $this->storeRewardImage($request->file('image'), $venue, null));
+            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue));
         }
 
         $reward = $venue->rewards()->create($payload);
@@ -72,14 +70,14 @@ class AdminVenueRewardController extends Controller
         $this->ensureUniqueMilestoneThreshold($venue, (int) $payload['required_stamps'], $reward->id);
 
         if ($removeImage) {
-            $this->deleteRewardImage($reward);
+            $this->rewardImages->delete($reward);
             $payload['image'] = null;
             $payload['image_thumb'] = null;
         }
 
         if ($request->hasFile('image')) {
-            $this->deleteRewardImage($reward);
-            $payload = array_merge($payload, $this->storeRewardImage($request->file('image'), $venue, $reward));
+            $this->rewardImages->delete($reward);
+            $payload = array_merge($payload, $this->rewardImages->store($request->file('image'), $venue, $reward));
         }
 
         $reward->update($payload);
@@ -141,7 +139,7 @@ class AdminVenueRewardController extends Controller
             ]);
         }
 
-        $this->deleteRewardImage($reward);
+        $this->rewardImages->delete($reward);
 
         AuditLog::loyalty('reward.admin_purged', $reward, $request->user(), 'success', [
             'status' => 'success',
@@ -157,65 +155,6 @@ class AdminVenueRewardController extends Controller
     private function resolveVenue(int $venueId): Venue
     {
         return Venue::query()->withTrashed()->with('brand')->findOrFail($venueId);
-    }
-
-    private function storeRewardImage($file, Venue $venue, ?Reward $reward): array
-    {
-        $directory = public_path('uploads/reward-milestones');
-        File::ensureDirectoryExists($directory);
-
-        if (! File::isWritable($directory)) {
-            throw ValidationException::withMessages([
-                'image' => ['Upload folder is not writable on the server.'],
-            ]);
-        }
-
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-
-        if (! in_array($extension, $allowed, true)) {
-            throw ValidationException::withMessages([
-                'image' => ['Use JPG, PNG, WEBP, or GIF.'],
-            ]);
-        }
-
-        $seed = $reward?->id ? "{$reward->id}-{$venue->slug}" : $venue->slug;
-        $filename = Str::slug($seed).'-'.Str::lower(Str::random(12)).'.'.$extension;
-
-        try {
-            $stored = $this->images->storeWithThumbnail(
-                $file,
-                $directory,
-                $filename,
-                ImageThumbnailService::THUMB_MAX_REWARD,
-            );
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            throw ValidationException::withMessages([
-                'image' => ['The image could not be saved.'],
-            ]);
-        }
-
-        return [
-            'image' => $stored['path'],
-            'image_thumb' => $stored['thumb_path'],
-        ];
-    }
-
-    private function deleteRewardImage(Reward $reward): void
-    {
-        foreach ([$reward->image, $reward->image_thumb ?? null] as $path) {
-            if (! $path || ! str_starts_with($path, '/uploads/reward-milestones/')) {
-                continue;
-            }
-
-            File::delete(public_path(ltrim($path, '/')));
-        }
-
-        if ($reward->image) {
-            $this->images->deleteThumbnailFor($reward->image);
-        }
     }
 
     private function ensureUniqueMilestoneThreshold(Venue $venue, int $requiredStamps, ?int $ignoreRewardId = null): void

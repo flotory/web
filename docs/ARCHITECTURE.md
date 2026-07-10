@@ -13,7 +13,7 @@ See [README.md](./README.md) for terminology and [MVP_DECISIONS.md](./MVP_DECISI
 | OAuth | Laravel Socialite (Google) via web routes; mobile via web OAuth → `flotory://login?oauth_token=...` |
 | Frontend | Vue 3, Vite, Pinia, Vue Router, TailwindCSS, vue-i18n |
 | Mobile | Expo + React Native (`apps/mobile`), i18next |
-| Uploads | Local filesystem under `public/uploads/` |
+| Uploads | `MEDIA_DISK=uploads` (local `public/uploads/`) or `MEDIA_DISK=s3` (AWS S3) via `MediaStorageService` |
 | Deploy | Docker on VPS; Nginx → Laravel |
 
 ## Repository layout
@@ -244,11 +244,17 @@ Password: `password`. Demo Cafe has active campaigns and an NFC tag (`Counter st
 
 ## File uploads
 
-| Asset | Path |
-|-------|------|
-| Brand logo / cover (stored on brand) | `/uploads/venue-logos/`, `/uploads/venue-covers/` |
-| Reward image (owner upload) | `/uploads/reward-milestones/` |
-| Default reward (no upload) | `/images/defaults/rewards/default-reward.png` |
+Owner and admin media (venue setup files, logos, covers, reward images, onboarding drafts) go through **`MediaStorageService`**. DB paths stay as `/uploads/...`; URLs resolve to same-origin paths locally or full S3/CDN URLs in production.
+
+| Asset | Storage key prefix |
+|-------|-------------------|
+| Brand logo / cover | `uploads/venue-logos/`, `uploads/venue-covers/` |
+| Owner setup files | `uploads/venue-setup/{brand_id}/` |
+| Onboarding draft files | `uploads/onboarding-drafts/{user_id}/` |
+| Reward image | `uploads/reward-milestones/` |
+| Default reward (no upload) | `/images/defaults/rewards/default-reward.png` (static) |
+
+**Env:** `MEDIA_DISK=uploads` (dev) or `MEDIA_DISK=s3` + `AWS_*` (production). See `.env.example`.
 
 Thumbnails: `*-thumb.jpg` via `ImageThumbnailService`. Backfill: `php artisan media:generate-thumbs`.
 

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class ImageThumbnailService
@@ -14,22 +13,24 @@ class ImageThumbnailService
 
     public const THUMB_MAX_COVER = 640;
 
+    public function __construct(private MediaStorageService $media) {}
+
     /**
      * @return array{path: string, thumb_path: string|null}
      */
     public function storeWithThumbnail(
         UploadedFile $file,
-        string $absoluteDirectory,
+        string $storageDirectory,
         string $filename,
         int $thumbMaxSize = self::THUMB_MAX_REWARD,
     ): array {
-        File::ensureDirectoryExists($absoluteDirectory);
+        $relativePath = $this->media->putUploadedFile($file, $storageDirectory, $filename);
 
-        $file->move($absoluteDirectory, $filename);
-
-        $relativePath = $this->relativePublicPath($absoluteDirectory, $filename);
-        $fullPath = public_path(ltrim($relativePath, '/'));
-        $thumbPath = $this->createThumbnail($fullPath, $thumbMaxSize);
+        try {
+            $thumbPath = $this->createThumbnail($relativePath, $thumbMaxSize);
+        } catch (\Throwable) {
+            $thumbPath = null;
+        }
 
         return [
             'path' => $relativePath,
@@ -39,17 +40,11 @@ class ImageThumbnailService
 
     public function createThumbnailFromExisting(string $publicRelativePath, int $thumbMaxSize): ?string
     {
-        if (! str_starts_with($publicRelativePath, '/uploads/')) {
+        if (! $this->media->isManagedPath($publicRelativePath)) {
             return null;
         }
 
-        $fullPath = public_path(ltrim($publicRelativePath, '/'));
-
-        if (! File::exists($fullPath)) {
-            return null;
-        }
-
-        return $this->createThumbnail($fullPath, $thumbMaxSize);
+        return $this->createThumbnail($publicRelativePath, $thumbMaxSize);
     }
 
     public function thumbPathFor(string $publicRelativePath): string
@@ -63,62 +58,84 @@ class ImageThumbnailService
 
     public function deleteThumbnailFor(?string $publicRelativePath): void
     {
-        if (! $publicRelativePath || ! str_starts_with($publicRelativePath, '/uploads/')) {
+        if (! $publicRelativePath || ! $this->media->isManagedPath($publicRelativePath)) {
             return;
         }
 
-        $thumbPath = public_path(ltrim($this->thumbPathFor($publicRelativePath), '/'));
-
-        if (File::exists($thumbPath)) {
-            File::delete($thumbPath);
-        }
+        $this->media->delete($this->thumbPathFor($publicRelativePath));
     }
 
-    private function createThumbnail(string $sourcePath, int $maxSize): ?string
+    private function createThumbnail(string $publicRelativePath, int $maxSize): ?string
     {
         if (! $this->gdIsAvailable()) {
             return null;
         }
 
-        $size = @getimagesize($sourcePath);
+        $sourcePath = $this->media->localPathForProcessing($publicRelativePath);
 
-        if ($size === false) {
+        if ($sourcePath === null) {
             return null;
         }
 
-        [$width, $height, $type] = $size;
-        $source = $this->loadImage($sourcePath, $type);
+        try {
+            $size = @getimagesize($sourcePath);
 
-        if ($source === null) {
-            return null;
-        }
+            if ($size === false) {
+                return null;
+            }
 
-        $scale = min($maxSize / max($width, 1), $maxSize / max($height, 1), 1);
-        $targetWidth = max(1, (int) round($width * $scale));
-        $targetHeight = max(1, (int) round($height * $scale));
+            [$width, $height, $type] = $size;
+            $source = $this->loadImage($sourcePath, $type);
 
-        $target = imagecreatetruecolor($targetWidth, $targetHeight);
-        imagealphablending($target, false);
-        imagesavealpha($target, true);
-        $transparent = imagecolorallocatealpha($target, 0, 0, 0, 127);
-        imagefill($target, 0, 0, $transparent);
-        imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
-        imagedestroy($source);
+            if ($source === null) {
+                return null;
+            }
 
-        $thumbRelative = $this->thumbPathFor('/'.Str::after($sourcePath, public_path().'/'));
-        $thumbAbsolute = public_path(ltrim($thumbRelative, '/'));
+            $scale = min($maxSize / max($width, 1), $maxSize / max($height, 1), 1);
+            $targetWidth = max(1, (int) round($width * $scale));
+            $targetHeight = max(1, (int) round($height * $scale));
 
-        File::ensureDirectoryExists(dirname($thumbAbsolute));
+            $target = imagecreatetruecolor($targetWidth, $targetHeight);
+            imagealphablending($target, false);
+            imagesavealpha($target, true);
+            $transparent = imagecolorallocatealpha($target, 0, 0, 0, 127);
+            imagefill($target, 0, 0, $transparent);
+            imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+            imagedestroy($source);
 
-        if (! @imagejpeg($target, $thumbAbsolute, 82)) {
+            $thumbRelative = $this->thumbPathFor($publicRelativePath);
+            $thumbDirectory = trim(dirname($this->media->toStorageKey($thumbRelative)), '/');
+            $thumbFilename = basename($thumbRelative);
+
+            $tempThumb = tempnam(sys_get_temp_dir(), 'flotory-thumb-');
+
+            if ($tempThumb === false) {
+                imagedestroy($target);
+
+                return null;
+            }
+
+            if (! @imagejpeg($target, $tempThumb, 82)) {
+                imagedestroy($target);
+                @unlink($tempThumb);
+
+                return null;
+            }
+
             imagedestroy($target);
 
-            return null;
+            $storedThumb = $this->media->putContents(
+                $thumbDirectory,
+                $thumbFilename,
+                (string) file_get_contents($tempThumb),
+            );
+
+            @unlink($tempThumb);
+
+            return $storedThumb;
+        } finally {
+            $this->media->releaseTempPath($sourcePath, $publicRelativePath);
         }
-
-        imagedestroy($target);
-
-        return $thumbRelative;
     }
 
     private function loadImage(string $path, int $type): ?\GdImage
@@ -130,13 +147,6 @@ class ImageThumbnailService
             IMAGETYPE_GIF => @imagecreatefromgif($path) ?: null,
             default => null,
         };
-    }
-
-    private function relativePublicPath(string $absoluteDirectory, string $filename): string
-    {
-        $relativeDirectory = Str::after($absoluteDirectory, public_path());
-
-        return rtrim($relativeDirectory, '/')."/{$filename}";
     }
 
     protected function gdIsAvailable(): bool
