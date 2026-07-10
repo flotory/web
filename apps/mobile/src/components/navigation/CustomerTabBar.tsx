@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types'
 import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -13,6 +13,8 @@ import { colors, tabBar as tabBarMetrics, tabBarQr, tabBarSurface } from '../../
 
 const HIDDEN_TABS = new Set(['notifications'])
 const GUEST_TABS = new Set(['venues'])
+
+type TabRoute = BottomTabBarProps['state']['routes'][number]
 
 function tabIcon(name: string, focused: boolean, color: string, size: number) {
   const icons: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
@@ -43,7 +45,7 @@ export default function CustomerTabBar({
     notchDepth: 16,
   })
 
-  const visibleRoutes = state.routes.filter((route) => {
+  const visibleRoutes = state.routes.filter((route: TabRoute) => {
     if (HIDDEN_TABS.has(route.name)) return false
     if (guestMode && !GUEST_TABS.has(route.name)) return false
     return true
@@ -87,12 +89,12 @@ export default function CustomerTabBar({
             paddingHorizontal: 4,
           }}
         >
-          {visibleRoutes.map((route) => {
+          {visibleRoutes.map((route: TabRoute) => {
             const descriptor = descriptors[route.key]
             if (!descriptor) return null
 
             const { options } = descriptor
-            const index = state.routes.findIndex((item) => item.key === route.key)
+            const index = state.routes.findIndex((item: TabRoute) => item.key === route.key)
             const focused = state.index === index
             const isQr = route.name === 'qr'
             const labels: Record<string, string> = {

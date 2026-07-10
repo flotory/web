@@ -35,6 +35,7 @@ export async function fetchRemoteAppConfig(): Promise<RemoteAppConfig | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/public/app-config`, {
       headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(8_000),
     })
 
     if (!response.ok) {

@@ -1,4 +1,4 @@
-import type { Router } from 'expo-router'
+import type { ImperativeRouter } from 'expo-router'
 
 import { refreshCustomerSurfacesAfterStamp } from './customerData'
 import { notifyCustomerSurfaceRefresh } from './customerSurfaceRefresh'
@@ -10,7 +10,7 @@ export async function completeNfcStampSuccess(
   response: NfcStampResponse,
   authToken: string,
   ingestStamp: (payload: StampAddedPayload) => void,
-  router: Pick<Router, 'navigate' | 'replace'>,
+  router: Pick<ImperativeRouter, 'navigate' | 'replace'>,
   navigation: 'navigate' | 'replace' = 'navigate',
 ): Promise<void> {
   const venueId = response.venue?.id ?? response.customer.venue_id

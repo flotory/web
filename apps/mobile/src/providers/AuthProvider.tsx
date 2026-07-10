@@ -49,10 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function boot() {
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Session bootstrap timed out')), 12_000)
+      })
+
       try {
         const stored = await getToken()
         if (!stored) return
-        await hydrateSession(stored)
+        await Promise.race([hydrateSession(stored), timeout])
         setToken(stored)
       } catch {
         await clearToken()

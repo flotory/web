@@ -9,6 +9,11 @@ IOS="$MOBILE/ios"
 TEAM_ID="${DEVELOPMENT_TEAM:-U353R2K2MJ}"
 ARCHIVE_PATH="${ARCHIVE_PATH:-/tmp/Flotory.xcarchive}"
 EXPORT_PATH="${EXPORT_PATH:-/tmp/Flotory-export}"
+EXPORT_OPTIONS="$IOS/ExportOptions.plist"
+
+if [[ ! -f "$EXPORT_OPTIONS" ]]; then
+  cp "$MOBILE/scripts/ExportOptions.plist" "$EXPORT_OPTIONS"
+fi
 
 echo "→ Prebuild iOS (if ios/ missing or stale, run manually first)"
 if [[ ! -d "$IOS/Flotory.xcworkspace" ]]; then

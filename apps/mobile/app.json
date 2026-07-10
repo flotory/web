@@ -3,7 +3,7 @@
     "name": "Flotory",
     "slug": "flotory-mobile",
     "newArchEnabled": false,
-    "version": "1.0.16",
+    "version": "1.0.17",
     "orientation": "portrait",
     "icon": "./assets/flotory-app-icon-padded.png",
     "splash": {
@@ -14,17 +14,26 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "buildNumber": "21",
+      "buildNumber": "22",
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances.",
+        "NSLocalNetworkUsageDescription": "Flotory connects to the development server on your Mac over the local network while you are testing the app.",
+        "NSBonjourServices": [
+          "_http._tcp.",
+          "_http._tcp"
+        ],
         "NFCReaderUsageDescription": "Flotory reads NFC stamp stands at cafes and restaurants to add loyalty stamps to your wallet."
       },
       "entitlements": {
-        "com.apple.developer.nfc.readersession.formats": ["TAG"],
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.nfc.readersession.formats": [
+          "TAG"
+        ],
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "android": {
@@ -73,7 +82,9 @@
         }
       ],
       "./plugins/withNfc.js",
-      "./plugins/withIosBuildFixes.js"
+      "./plugins/withIosBuildFixes.js",
+      "./plugins/withLocalNetworkDev.js",
+      "expo-localization"
     ]
   }
 }
