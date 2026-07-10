@@ -94,7 +94,7 @@ class MediaStorageService
     public function putUploadedFile(UploadedFile $file, string $storageDirectory, string $filename): string
     {
         $directory = trim($storageDirectory, '/');
-        $this->disk()->putFileAs($directory, $file, $filename, 'public');
+        $this->disk()->putFileAs($directory, $file, $filename);
 
         return $this->toPublicPath("{$directory}/{$filename}");
     }
@@ -103,7 +103,7 @@ class MediaStorageService
     {
         $directory = trim($storageDirectory, '/');
         $key = "{$directory}/{$filename}";
-        $this->disk()->put($key, $contents, 'public');
+        $this->disk()->put($key, $contents);
 
         return $this->toPublicPath($key);
     }
