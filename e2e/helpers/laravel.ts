@@ -77,6 +77,6 @@ export function setUserPassword(email: string, password: string): void {
   const safePassword = password.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 
   runTinker(
-    `$user = App\\Models\\User::where('email', '${safeEmail}')->firstOrFail(); $user->password = Illuminate\\Support\\Facades\\Hash::make('${safePassword}'); $user->save(); echo 'ok';`,
+    `App\\Models\\User::where('email', '${safeEmail}')->firstOrFail()->forceFill(['password' => Illuminate\\Support\\Facades\\Hash::make('${safePassword}')])->save(); echo 'ok';`,
   )
 }
