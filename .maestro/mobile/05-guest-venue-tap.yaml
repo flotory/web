@@ -1,0 +1,18 @@
+appId: "${APP_ID}"
+---
+# Guest can open a venue landing page without being bounced back to Venues tab.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Flotory Mobile"
+    timeout: 30000
+- tapOn:
+    id: "login-browse-guest-button"
+- extendedWaitUntil:
+    visible: "Venues"
+    timeout: 30000
+- tapOn: "${TEST_VENUE_NAME}"
+- extendedWaitUntil:
+    visible: "${TEST_VENUE_NAME}"
+    timeout: 30000
+- assertNotVisible: "Collect a stamp"

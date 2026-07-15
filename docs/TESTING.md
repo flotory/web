@@ -164,9 +164,10 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 | ---- | ---- |
 | `e2e/login.spec.ts` | Login form renders from built assets |
 | `e2e/auth-flows.spec.ts` | Login form, invalid credentials, owner/admin home routing, customer web login rejected, post-login redirect, forgot-password, **AppShell logout** |
+| `e2e/password-recovery.spec.ts` | Forgot-password success message, invalid reset link, full reset-token → login flow |
 | `e2e/web-routes.spec.ts` | Owner dashboard / rewards / campaigns; `/app` and `/v/:slug` bridge pages |
 | `e2e/owner-workspace.spec.ts` | My Venues list, venue settings, **Files** page (live upload guidance), card → dashboard navigation, customers + profile, seeded rewards (including ⋯ menu edit on loyalty preview), analytics, legacy `/settings` redirect, venue filter switch |
-| `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible |
+| `e2e/owner-campaigns.spec.ts` | Seeded demo campaigns visible; **pause and resume** Quiet Day |
 | `e2e/owner-signup.spec.ts` | Public owner intent redirects to book-demo; `create=1` without invite/ownership blocked |
 | `e2e/owner-invitation.spec.ts` | Register without invite → `/app`; invalid invite; sales-led register → venue setup |
 | `e2e/contact.spec.ts` | Contact form submission |
@@ -177,6 +178,8 @@ Run `npm run test:unit` for the full suite or `npm run test:unit:web` / `npm run
 Shared helpers: `e2e/helpers/auth.ts` (login, register, venue select, logout), `e2e/helpers/demo.ts` (seeded emails/tokens).
 
 Customer stamp/redeem API contracts are in PHPUnit; device tap flows are in Maestro (`.maestro/mobile`); mobile stamp sync dedup is in Vitest.
+
+Maestro flows: `01-login-home`, `02-wallet-card`, `03-stamp-redeem`, `04-customer-tabs`, `05-guest-venue-tap`, `06-forgot-password`, `07-settings-delete-account`.
 
 Demo data comes from `DatabaseSeeder` + `DemoCampaignsSeeder` + `DemoShowcaseSeeder` (guarded by `DatabaseSeederDemoCampaignsTest`, `DatabaseSeederDemoRewardsTest`, `DemoShowcaseSeederTest`).
 

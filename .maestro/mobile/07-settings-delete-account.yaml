@@ -1,0 +1,20 @@
+appId: "${APP_ID}"
+---
+# Signed-in customer can open settings and reach account actions without signing out.
+- runFlow: 01-login-home.yaml
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Profile"
+    timeout: 20000
+- assertVisible: "Delete account"
+- assertVisible: "Sign out"
+- scrollUntilVisible:
+    element: "Delete account"
+- tapOn: "Delete account"
+- extendedWaitUntil:
+    visible: "Delete account"
+    timeout: 20000
+- assertVisible: "Type DELETE to confirm"
+- assertVisible: "Cancel"
+- tapOn: "Cancel"

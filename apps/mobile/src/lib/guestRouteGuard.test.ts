@@ -24,4 +24,16 @@ describe('guestRouteShouldRedirect', () => {
   it('allows nfc token bridge route', () => {
     expect(guestRouteShouldRedirect(['t', 'abc123'])).toBe(false)
   })
+
+  it('does not redirect when segments are empty', () => {
+    expect(guestRouteShouldRedirect([])).toBe(false)
+  })
+
+  it('does not redirect unknown non-customer roots', () => {
+    expect(guestRouteShouldRedirect(['profile', 'delete-account'])).toBe(false)
+  })
+
+  it('redirects customer root without a tab segment', () => {
+    expect(guestRouteShouldRedirect(['(customer)'])).toBe(false)
+  })
 })

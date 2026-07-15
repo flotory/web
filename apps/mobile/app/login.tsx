@@ -15,17 +15,7 @@ import { withAppFont } from '../src/lib/typography'
 import { useAuth } from '../src/providers/AuthProvider'
 import { colors, type as typography } from '../src/theme'
 
-function readParam(value: string | string[] | undefined): string | null {
-  if (typeof value === 'string' && value.length > 0) {
-    return value
-  }
-
-  if (Array.isArray(value) && typeof value[0] === 'string' && value[0].length > 0) {
-    return value[0]
-  }
-
-  return null
-}
+import { readRouteParam } from '../src/lib/routeParams'
 
 export default function LoginScreen() {
   const { t } = useTranslation()
@@ -52,13 +42,13 @@ export default function LoginScreen() {
   }, [])
 
   useEffect(() => {
-    if (readParam(oauthError) === 'google_auth_failed') {
+    if (readRouteParam(oauthError) === 'google_auth_failed') {
       setError(t('login.googleCouldNotComplete'))
     }
   }, [oauthError, t])
 
   useEffect(() => {
-    const oauthToken = readParam(oauth_token)
+    const oauthToken = readRouteParam(oauth_token)
     if (!oauthToken || booting || token) {
       return
     }
@@ -263,7 +253,11 @@ export default function LoginScreen() {
         </Text>
       </Pressable>
 
-      <Pressable onPress={() => router.push('/(customer)/venues')} style={{ alignItems: 'center', paddingTop: 10 }}>
+      <Pressable
+        testID="login-browse-guest-button"
+        onPress={() => router.push('/(customer)/venues')}
+        style={{ alignItems: 'center', paddingTop: 10 }}
+      >
         <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>{t('login.browseWithoutSignIn')}</Text>
       </Pressable>
     </View>

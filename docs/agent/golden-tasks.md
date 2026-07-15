@@ -111,6 +111,23 @@ On any PR touching `apps/mobile/app/**`, `resources/js/pages/**`, or form compon
 
 ---
 
+## GT-08 — Guest venue navigation
+
+Run after auth/routing changes on mobile.
+
+```bash
+npm run test:unit -- apps/mobile/src/lib/guestRouteGuard.test.ts apps/mobile/src/lib/routeParams.test.ts
+```
+
+| Check | Expected |
+|-------|----------|
+| Unit | `guestRouteShouldRedirect` allows `v`, `login`, `t`; locks other `(customer)/*` tabs |
+| Maestro (optional) | `.maestro/mobile/05-guest-venue-tap.yaml`, `06-forgot-password.yaml`, `07-settings-delete-account.yaml` |
+
+**Rule IDs:** Y* (guest UX)
+
+---
+
 ## Adding golden tasks
 
 Retro agent proposes new GT-* entries after production bugs. Keep each task **observable** and tie to **rule_ids**.
