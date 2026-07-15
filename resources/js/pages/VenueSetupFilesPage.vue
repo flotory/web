@@ -211,11 +211,11 @@ onMounted(loadPage)
     </AppCard>
 
     <div v-else class="space-y-5">
-      <AppCard v-if="venueStatus === 'pending_review'" wrapper-class="border-amber-200 bg-amber-50/80">
-        <p class="text-sm font-bold text-amber-950">
+      <AppCard v-if="venueStatus === 'pending_review'" wrapper-class="border-warning-border bg-warning-bg/80">
+        <p class="text-sm font-bold text-warning-text">
           Uploads locked — {{ listingStatusLabel(venueStatus) }}
         </p>
-        <p class="mt-2 text-sm font-medium text-amber-900/80">
+        <p class="mt-2 text-sm font-medium text-warning-text/80">
           {{ lockReason }}
         </p>
       </AppCard>

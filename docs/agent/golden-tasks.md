@@ -73,6 +73,44 @@ Manual or API test: single tap adds 1 stamp (× multiplier if campaign matches).
 
 ---
 
+## GT-07 — Forms use shared components only
+
+Run when UI adds or changes forms, **before merge**, and in **flotory-retro** after design-system tasks.
+
+```bash
+bash scripts/check-gt07-forms.sh
+```
+
+### Mobile
+
+| Check | Expected |
+|-------|----------|
+| Text fields | `FormField` + `AppTextInput` (not raw `TextInput` in screens) |
+| Search | `SearchInput` (not duplicated search bar markup) |
+| Submit / danger CTAs | `AppButton` (`primary` / `danger` / `ghost`) — not inline `Pressable` + `colors.primary` |
+| Allowed raw `TextInput` | Only inside `AppTextInput.tsx`, `SearchInput.tsx` |
+
+### Web
+
+| Check | Expected |
+|-------|----------|
+| Text / email / password | `AppInput` + `FormLabel` |
+| Textarea | `FormTextarea` |
+| Select | `FormSelect`, `PhoneInput`, or `VenueAddressInput` |
+| Errors / success | `AppAlert` — not `rounded-2xl bg-danger-soft p-3` copy-paste |
+| Destructive actions | `AppButton variant="danger"` |
+
+### Reviewer
+
+On any PR touching `apps/mobile/app/**`, `resources/js/pages/**`, or form components:
+
+- [ ] GT-07 checks pass (run script or equivalent grep)
+- [ ] No new inline hex/rgba when `colors.*` / `overlays.*` / `--flotory-*` exist
+
+**Rule IDs:** Y1, Y2 · **ADR:** [002](../decisions/002-design-system-unification.md)
+
+---
+
 ## Adding golden tasks
 
 Retro agent proposes new GT-* entries after production bugs. Keep each task **observable** and tie to **rule_ids**.

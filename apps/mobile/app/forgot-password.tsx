@@ -1,16 +1,17 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 
+import FormField from '../src/components/ui/FormField'
 import PrimaryButton from '../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../src/components/ui/StickyBackButton'
 import { ApiError } from '../src/lib/api'
 import { requestPasswordReset } from '../src/lib/authApi'
 import { withAppFont } from '../src/lib/typography'
-import { colors, radius, shadows, space, type as typography } from '../src/theme'
+import { colors, radius, space, type as typography } from '../src/theme'
 
 function readParam(value: string | string[] | undefined): string {
   if (typeof value === 'string') {
@@ -107,34 +108,17 @@ export default function ForgotPasswordScreen() {
           </View>
         ) : (
           <View style={{ gap: 16 }}>
-            <View style={{ gap: 8 }}>
-              <Text style={typography.label}>{t('login.email')}</Text>
-              <TextInput
-                testID="forgot-password-email-input"
-                autoCapitalize="none"
-                autoComplete="email"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                placeholder={t('login.email')}
-                placeholderTextColor={colors.inkSoft}
-                style={withAppFont({
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: radius.image,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  fontSize: 16,
-                  color: colors.ink,
-                  ...shadows.sm,
-                })}
-              />
-            </View>
-
-            {error ? (
-              <Text style={withAppFont({ color: colors.danger, fontWeight: '600', fontSize: 14 })}>{error}</Text>
-            ) : null}
+            <FormField
+              label={t('login.email')}
+              testID="forgot-password-email-input"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              placeholder={t('login.email')}
+              error={error || undefined}
+            />
 
             <PrimaryButton
               label={submitting ? t('forgotPassword.sending') : t('forgotPassword.sendLink')}

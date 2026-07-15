@@ -917,7 +917,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
         </p>
         <div class="mt-5 grid gap-2 sm:grid-cols-2">
           <AppButton variant="secondary" :disabled="saving" @click="closeDeleteModal">Cancel</AppButton>
-          <AppButton :disabled="saving" class="bg-danger text-primary-text hover:bg-danger/90" @click="deleteReward(deleteRewardTarget)">
+          <AppButton variant="danger" :disabled="saving" @click="deleteReward(deleteRewardTarget)">
             {{ saving ? 'Deleting...' : 'Yes, delete' }}
           </AppButton>
         </div>
@@ -933,7 +933,7 @@ watch(() => route.query.reward_id, () => applyRouteEditingIntent())
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background-color: #f1f5f9;
+  background-color: var(--flotory-surface-muted);
 }
 
 .reward-media-frame--editor {

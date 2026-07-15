@@ -3,6 +3,7 @@ import { MoreHorizontal, Plus, Search, Store } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -425,7 +426,7 @@ onMounted(async () => {
             required
             hint="Pick a Google suggestion so guests see the right map pin."
           />
-          <p v-if="branchError" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ branchError }}</p>
+          <AppAlert v-if="branchError">{{ branchError }}</AppAlert>
           <div class="grid gap-2 sm:grid-cols-2">
             <AppButton type="button" variant="secondary" :disabled="addBranchAction.loading" @click="closeAddBranchModal">Cancel</AppButton>
             <AsyncActionButton

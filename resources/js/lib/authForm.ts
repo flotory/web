@@ -1,4 +1,4 @@
-/** Shared form control styles — white surface so fields don't look disabled. */
+/** Canonical form control class strings — use via AppInput, FormSelect, FormTextarea, or import directly. */
 const formControlBase =
   'rounded-2xl border border-border bg-surface text-sm font-medium text-ink placeholder:text-ink-soft outline-none transition focus:border-ink-soft'
 

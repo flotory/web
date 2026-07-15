@@ -8,6 +8,7 @@ import AdminVenueListingActions from '@/components/admin/AdminVenueListingAction
 import AdminVenueNfcTags from '@/components/admin/AdminVenueNfcTags.vue'
 import AdminVenueRewards from '@/components/admin/AdminVenueRewards.vue'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -337,7 +338,7 @@ onMounted(loadPage)
               </div>
             </div>
 
-            <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+            <AppAlert v-if="error">{{ error }}</AppAlert>
             <AsyncActionButton
               type="submit"
               idle-label="Save venue"

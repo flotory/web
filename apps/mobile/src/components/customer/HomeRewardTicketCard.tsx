@@ -7,11 +7,11 @@ import Svg, { Line } from 'react-native-svg'
 
 import { rewardImageUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, rewardReady, shadows } from '../../theme'
+import { colors, overlays, radius, rewardReady, shadows } from '../../theme'
 import type { VenueRef } from '../../types/loyalty'
 
 const TICKET_RADIUS = 22
-const READY_BORDER = 'rgba(215, 163, 93, 0.22)'
+const READY_BORDER = overlays.accent22
 const READY_ACCENT_BORDER = 'rgba(215, 163, 93, 0.38)'
 
 function panelBorder(isReady = false) {
@@ -30,7 +30,7 @@ function panelBorder(isReady = false) {
 
 function readyVoucherSurface() {
   return {
-    backgroundColor: '#FFFCF6',
+    backgroundColor: colors.surfaceWarm,
   } as const
 }
 
@@ -295,7 +295,7 @@ function RewardTicketShell({
           flexDirection: 'row',
           alignItems: 'center',
           height: 22,
-          backgroundColor: isReady ? '#FFFCF6' : colors.surface,
+          backgroundColor: isReady ? colors.surfaceWarm : colors.surface,
           borderLeftWidth: 1,
           borderRightWidth: 1,
           borderColor: isReady ? READY_BORDER : colors.border,

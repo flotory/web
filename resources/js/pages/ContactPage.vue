@@ -4,10 +4,13 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
-import { authFieldClass } from '@/lib/authForm'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
+import FormTextarea from '@/components/ui/FormTextarea.vue'
 import { api, ApiError } from '@/lib/api'
 import { legalConfig } from '@/lib/legalConfig'
 import { marketingCardClass } from '@/lib/marketingPage'
@@ -95,30 +98,29 @@ async function submit() {
       <form v-else class="mt-8 space-y-5" @submit.prevent="submit">
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="contact-name">Name</label>
-            <input id="contact-name" v-model="name" required :class="authFieldClass">
+            <FormLabel for-id="contact-name">Name</FormLabel>
+            <AppInput id="contact-name" v-model="name" required />
           </div>
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="contact-email">Email</label>
-            <input id="contact-email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
+            <FormLabel for-id="contact-email">Email</FormLabel>
+            <AppInput id="contact-email" v-model="email" required type="email" autocomplete="email" />
           </div>
         </div>
         <div>
-          <label class="text-sm font-bold text-ink-muted" for="contact-venue">Venue or business (optional)</label>
-          <input id="contact-venue" v-model="venueName" :class="authFieldClass" placeholder="Harbor Coffee">
+          <FormLabel for-id="contact-venue">Venue or business (optional)</FormLabel>
+          <AppInput id="contact-venue" v-model="venueName" placeholder="Harbor Coffee" />
         </div>
         <div>
-          <label class="text-sm font-bold text-ink-muted" for="contact-message">Message</label>
-          <textarea
+          <FormLabel for-id="contact-message">Message</FormLabel>
+          <FormTextarea
             id="contact-message"
             v-model="message"
             required
-            rows="6"
-            class="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
+            :rows="6"
             placeholder="Tell us about your venue and what you&apos;re looking for."
           />
         </div>
-        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+        <AppAlert v-if="error">{{ error }}</AppAlert>
         <AppButton class="w-full sm:w-auto sm:min-w-[12rem]" size="lg" type="submit" :disabled="loading">
           {{ loading ? 'Sending…' : 'Send message' }}
         </AppButton>

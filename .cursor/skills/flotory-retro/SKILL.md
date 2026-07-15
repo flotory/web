@@ -53,6 +53,15 @@ retro:
 
 After skill/rule changes, list which golden tasks from `docs/agent/golden-tasks.md` must be re-run.
 
+| Task type | Re-run |
+|-----------|--------|
+| Campaign / stamp logic | GT-01, GT-02, GT-03, GT-06 |
+| Mobile UI / release | GT-04, GT-05 |
+| Forms / design system | **GT-07** (`bash scripts/check-gt07-forms.sh`) |
+| Full pre-TestFlight | GT-01 – GT-05 + GT-07 |
+
+If GT-07 fails after a UI task, propose skill update in `flotory-mobile` / `flotory-web` / `flotory-design` — do not weaken the check.
+
 ## Must not
 
 - Auto-merge skill/doc changes without user approval.

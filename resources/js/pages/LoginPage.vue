@@ -4,12 +4,14 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import { ApiError } from '@/lib/api'
 import { buildGoogleAuthUrlWithIntent } from '@/lib/onboarding'
-import { authFieldClass } from '@/lib/authForm'
 import { completeSignInNavigation, isLoginCancelledError, loginQueryWithoutOAuthToken } from '@/lib/signInNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -158,12 +160,12 @@ onMounted(() => {
 
       <form class="mt-6 space-y-4" @submit.prevent="submit">
         <div>
-          <label class="text-sm font-bold text-ink-muted" for="email">Email</label>
-          <input id="email" v-model="email" type="email" autocomplete="email" :class="authFieldClass">
+          <FormLabel for-id="email">Email</FormLabel>
+          <AppInput id="email" v-model="email" type="email" autocomplete="email" />
         </div>
         <div>
-          <label class="text-sm font-bold text-ink-muted" for="password">Password</label>
-          <input id="password" v-model="password" type="password" autocomplete="current-password" :class="authFieldClass">
+          <FormLabel for-id="password">Password</FormLabel>
+          <AppInput id="password" v-model="password" type="password" autocomplete="current-password" />
           <p class="mt-2 text-right">
             <RouterLink
               :to="{ name: 'forgot-password', query: email ? { email } : {} }"
@@ -173,7 +175,7 @@ onMounted(() => {
             </RouterLink>
           </p>
         </div>
-        <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+        <AppAlert v-if="error">{{ error }}</AppAlert>
         <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
           {{ loading ? 'Logging in...' : 'Log in' }}
         </AppButton>

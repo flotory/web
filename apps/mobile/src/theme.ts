@@ -42,7 +42,36 @@ export type FlotoryThemeColors = {
   discoverRewardsFill: string
   discoverRewardsText: string
   discoverRewardsBorder: string
+  /** Warm ivory used on reward-ready surfaces */
+  surfaceWarm: string
 }
+
+/** Semi-transparent overlays — use instead of inline rgba on customer UI. */
+export const overlays = {
+  ink03: 'rgba(5, 13, 30, 0.03)',
+  ink04: 'rgba(5, 13, 30, 0.04)',
+  ink06: 'rgba(5, 13, 30, 0.06)',
+  ink72: 'rgba(5, 13, 30, 0.72)',
+  accent22: 'rgba(215, 163, 93, 0.22)',
+  accent28: 'rgba(215, 163, 93, 0.28)',
+  accent35: 'rgba(215, 163, 93, 0.35)',
+  accent40: 'rgba(215, 163, 93, 0.40)',
+  accent45: 'rgba(215, 163, 93, 0.45)',
+  white06: 'rgba(255, 255, 255, 0.06)',
+  white10: 'rgba(255, 255, 255, 0.10)',
+  white14: 'rgba(255, 255, 255, 0.14)',
+  white20: 'rgba(255, 255, 255, 0.20)',
+  white65: 'rgba(255, 255, 255, 0.65)',
+  white75: 'rgba(255, 255, 255, 0.75)',
+  white82: 'rgba(255, 255, 255, 0.82)',
+  scrimBottom: 'rgba(5, 13, 30, 0.72)',
+} as const
+
+/** Fixed gradient anchors for pass / redeem cards (near primarySoft). */
+export const passGradient = {
+  start: '#071225',
+  end: '#0c1a30',
+} as const
 
 /** Premium hospitality palette — navy, gold, ivory, cream */
 const defaultColors: FlotoryThemeColors = {
@@ -85,6 +114,7 @@ const defaultColors: FlotoryThemeColors = {
   discoverRewardsFill: '#BFE4CC',
   discoverRewardsText: '#2E6D4C',
   discoverRewardsBorder: '#A8D4BC',
+  surfaceWarm: '#FFFCF6',
 }
 
 /** Mutable theme colors — updated by ThemeProvider when platform palette loads. */
@@ -92,6 +122,7 @@ export let colors: FlotoryThemeColors = { ...defaultColors }
 
 export function applyThemeColors(partial: Partial<FlotoryThemeColors>): FlotoryThemeColors {
   colors = { ...colors, ...partial }
+  syncDerivedTheme()
   return colors
 }
 
@@ -219,7 +250,7 @@ export const rewardReady = {
   backgroundColor: colors.accentSoft,
   borderColor: colors.accentBorder,
   iconColor: colors.accentActive,
-} as const
+}
 
 export const shadows = {
   sm: {
@@ -250,7 +281,7 @@ export const shadows = {
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-} as const
+}
 
 export const type = {
   hero: {
@@ -291,6 +322,21 @@ export const type = {
     color: colors.inkSoft,
     textTransform: 'uppercase' as const,
   },
+}
+
+export function syncDerivedTheme(): void {
+  shadows.sm.shadowColor = colors.ink
+  shadows.md.shadowColor = colors.ink
+  shadows.button.shadowColor = colors.ink
+  shadows.carousel.shadowColor = colors.ink
+  rewardReady.backgroundColor = colors.accentSoft
+  rewardReady.borderColor = colors.accentBorder
+  rewardReady.iconColor = colors.accentActive
+  type.hero.color = colors.ink
+  type.section.color = colors.ink
+  type.body.color = colors.inkMuted
+  type.caption.color = colors.inkSoft
+  type.label.color = colors.inkSoft
 }
 
 export const defaultFontFamily = fonts.regular

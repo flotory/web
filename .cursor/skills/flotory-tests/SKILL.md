@@ -31,6 +31,12 @@ Add unit tests when patterns exist; flag gaps in handoff.
 
 Before TestFlight, confirm items in `docs/agent/golden-tasks.md` relevant to the change.
 
+**GT-07 (forms):** when UI/forms change, run:
+
+```bash
+bash scripts/check-gt07-forms.sh
+```
+
 ## Handoff
 
 ```yaml

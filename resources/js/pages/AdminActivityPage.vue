@@ -10,6 +10,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import FormSelect from '@/components/ui/FormSelect.vue'
+import PaginationControls from '@/components/ui/PaginationControls.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import { formatShortDate } from '@/lib/formatDate'
@@ -239,24 +240,7 @@ watch(page, loadActivity)
           </AppCard>
         </div>
 
-        <div v-if="lastPage > 1" class="flex justify-center gap-2">
-          <button
-            type="button"
-            class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
-            :disabled="page <= 1"
-            @click="page -= 1"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
-            :disabled="page >= lastPage"
-            @click="page += 1"
-          >
-            Next
-          </button>
-        </div>
+        <PaginationControls v-model:page="page" :last-page="lastPage" />
       </template>
     </div>
   </AppShell>

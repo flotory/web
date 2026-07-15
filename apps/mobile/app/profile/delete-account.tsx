@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import AppButton from '../../src/components/ui/AppButton'
+import FormField from '../../src/components/ui/FormField'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../../src/lib/api'
 import { useAuth } from '../../src/providers/AuthProvider'
@@ -45,67 +47,36 @@ export default function DeleteAccountScreen() {
       </Text>
 
       <View style={{ marginTop: space.sectionY, gap: 12 }}>
-        <Text style={typography.label}>Type DELETE to confirm</Text>
-        <TextInput
+        <FormField
+          label="Type DELETE to confirm"
           value={confirmation}
           onChangeText={setConfirmation}
           autoCapitalize="characters"
           autoCorrect={false}
           placeholder="DELETE"
-          placeholderTextColor={colors.inkSoft}
-          style={{
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: 12,
-            padding: 12,
-            backgroundColor: colors.surface,
-            color: colors.ink,
-          }}
         />
 
         {needsPassword ? (
-          <>
-            <Text style={typography.label}>Password</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Your password"
-              placeholderTextColor={colors.inkSoft}
-              style={{
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 12,
-                padding: 12,
-                backgroundColor: colors.surface,
-                color: colors.ink,
-              }}
-            />
-          </>
+          <FormField
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Your password"
+          />
         ) : null}
 
         {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
-        <Pressable
+        <AppButton
+          label={submitting ? 'Deleting...' : 'Delete my account'}
           onPress={() => void handleDelete()}
           disabled={!canSubmit}
-          style={({ pressed }) => ({
-            marginTop: 8,
-            backgroundColor: colors.danger,
-            borderRadius: 999,
-            paddingVertical: 14,
-            alignItems: 'center',
-            opacity: !canSubmit ? 0.5 : pressed ? 0.92 : 1,
-          })}
-        >
-          <Text style={withAppFont({ color: '#fff', fontWeight: '800', fontSize: 16 })}>
-            {submitting ? 'Deleting...' : 'Delete my account'}
-          </Text>
-        </Pressable>
+          variant="danger"
+          style={{ marginTop: 8 }}
+        />
 
-        <Pressable onPress={() => router.back()} style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700' })}>Cancel</Text>
-        </Pressable>
+        <AppButton label="Cancel" onPress={() => router.back()} variant="ghost" />
       </View>
     </ScreenGradientLayout>
   )

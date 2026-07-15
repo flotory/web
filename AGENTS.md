@@ -90,6 +90,7 @@ Permanent memory lives in the repo — not chat:
 |-------|---------|
 | Backend | `docker compose run --rm app php artisan test --filter=<TestName>` |
 | Mobile | `cd apps/mobile && npm run typecheck` |
+| Forms / design (GT-07) | `bash scripts/check-gt07-forms.sh` |
 | Golden tasks | See `docs/agent/golden-tasks.md` |
 
 ## How to start a task

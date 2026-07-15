@@ -3,6 +3,7 @@ import { Pencil, Plus, Search, Store } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -152,7 +153,7 @@ onMounted(loadVenues)
             hint="Optional. Pick a Google suggestion so we can save map coordinates."
           />
         </div>
-        <p v-if="createError" class="md:col-span-2 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ createError }}</p>
+        <AppAlert v-if="createError" class="md:col-span-2">{{ createError }}</AppAlert>
         <div class="flex flex-wrap gap-2 md:col-span-2">
           <AppButton type="submit" :disabled="creating">{{ creating ? 'Creating…' : 'Create venue' }}</AppButton>
           <AppButton type="button" variant="secondary" @click="formOpen = false; resetCreateForm()">Cancel</AppButton>

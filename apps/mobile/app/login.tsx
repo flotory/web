@@ -1,9 +1,11 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useTranslation } from 'react-i18next'
 
+import AppButton from '../src/components/ui/AppButton'
+import FormField from '../src/components/ui/FormField'
 import GoogleLogo from '../src/components/ui/GoogleLogo'
 import ScreenGradientLayout from '../src/components/ui/ScreenGradientLayout'
 import { ApiError } from '../src/lib/api'
@@ -206,30 +208,27 @@ export default function LoginScreen() {
       </View>
 
       {isRegisterMode ? (
-        <TextInput
+        <FormField
           testID="login-name-input"
           value={name}
           onChangeText={setName}
           placeholder={t('login.fullName')}
-          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
         />
       ) : null}
 
-      <TextInput
+      <FormField
         testID="login-email-input"
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
         placeholder={t('login.email')}
-        style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
-      <TextInput
+      <FormField
         testID="login-password-input"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         placeholder={t('login.password')}
-        style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, backgroundColor: colors.surface }}
       />
 
       {!isRegisterMode ? (
@@ -251,22 +250,12 @@ export default function LoginScreen() {
 
       {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
-      <Pressable
+      <AppButton
         testID="login-submit-button"
-        onPress={handleAuth}
+        label={submitting ? t('login.pleaseWait') : isRegisterMode ? t('login.createAccount') : t('common.signIn')}
+        onPress={() => void handleAuth()}
         disabled={busy}
-        style={{
-          backgroundColor: colors.primary,
-          borderRadius: 999,
-          paddingVertical: 14,
-          alignItems: 'center',
-          opacity: busy ? 0.6 : 1,
-        }}
-      >
-        <Text style={withAppFont({ color: colors.primaryText, fontWeight: '700' })}>
-          {submitting ? t('login.pleaseWait') : isRegisterMode ? t('login.createAccount') : t('common.signIn')}
-        </Text>
-      </Pressable>
+      />
 
       <Pressable onPress={() => setIsRegisterMode((value) => !value)} style={{ alignItems: 'center', paddingTop: 2 }}>
         <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '600' })}>

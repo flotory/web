@@ -5,11 +5,13 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
-import { authFieldClass } from '@/lib/authForm'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,15 +87,15 @@ async function submit() {
 
         <form v-else class="mt-6 space-y-4" @submit.prevent="submit">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="password">New password</label>
-            <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
+            <FormLabel for-id="password">New password</FormLabel>
+            <AppInput id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" />
           </div>
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="password-confirm">Confirm password</label>
-            <input id="password-confirm" v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
+            <FormLabel for-id="password-confirm">Confirm password</FormLabel>
+            <AppInput id="password-confirm" v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" />
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error">{{ error }}</AppAlert>
 
           <AsyncActionButton
             class="w-full"

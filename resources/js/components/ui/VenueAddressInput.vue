@@ -247,12 +247,12 @@ watch(address, (value) => {
     <p v-if="quotaHint" class="mt-2 text-xs font-semibold" :class="quotaRemaining === 0 ? 'text-danger' : 'text-ink-muted'">
       {{ quotaHint }}
     </p>
-    <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-amber-800">
+    <p v-if="!mapsConfigured" class="mt-2 text-xs font-semibold text-warning-text">
       <template v-if="isLocalDev">
-        Google address search is not configured. Add <code class="rounded bg-amber-100 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
-        <code class="rounded bg-amber-100 px-1">.env.secrets</code>, run
-        <code class="rounded bg-amber-100 px-1">./scripts/setup-local.sh</code>, then restart Docker
-        (<code class="rounded bg-amber-100 px-1">docker compose up --build</code>).
+        Google address search is not configured. Add <code class="rounded bg-warning-bg px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
+        <code class="rounded bg-warning-bg px-1">.env.secrets</code>, run
+        <code class="rounded bg-warning-bg px-1">./scripts/setup-local.sh</code>, then restart Docker
+        (<code class="rounded bg-warning-bg px-1">docker compose up --build</code>).
       </template>
       <template v-else>
         Google address search is not available right now. You can still save the venue and add the address later.

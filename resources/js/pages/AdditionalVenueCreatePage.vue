@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ListingChecklist from '@/components/loyalty/ListingChecklist.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -623,7 +624,7 @@ watch(
           </div>
         </template>
 
-        <p v-if="error" class="mt-5 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+        <AppAlert v-if="error" class="mt-5">{{ error }}</AppAlert>
 
         <div class="mt-8 flex flex-wrap gap-3">
           <AppButton

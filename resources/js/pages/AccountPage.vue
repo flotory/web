@@ -5,8 +5,11 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AppShell from '@/layouts/AppShell.vue'
@@ -14,7 +17,6 @@ import { useLocaleSwitcher } from '@/composables/useLocaleSwitcher'
 import { currencyOptions } from '@/lib/currency'
 import { localeOptions, type AppLocale } from '@/i18n'
 import FormSelect from '@/components/ui/FormSelect.vue'
-import { authFieldClass, formFieldClass } from '@/lib/authForm'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrencyStore } from '@/stores/currency'
@@ -212,38 +214,36 @@ async function updateCurrency(event: Event) {
 
         <form class="mt-5 space-y-4" @submit.prevent="saveProfile">
           <div>
-            <label class="text-sm font-bold text-ink" for="account-name">{{ t('account.nameLabel') }}</label>
-            <input
+            <FormLabel for-id="account-name" class="text-ink">{{ t('account.nameLabel') }}</FormLabel>
+            <AppInput
               id="account-name"
               v-model="name"
               required
               maxlength="120"
               autocomplete="name"
-              :class="formFieldClass"
-            >
+            />
           </div>
 
           <div>
-            <label class="text-sm font-bold text-ink" for="account-email">{{ t('account.emailLabel') }}</label>
-            <input
+            <FormLabel for-id="account-email" class="text-ink">{{ t('account.emailLabel') }}</FormLabel>
+            <AppInput
               id="account-email"
-              :value="auth.user?.email ?? ''"
+              :model-value="auth.user?.email ?? ''"
               type="email"
               readonly
-              class="mt-2 h-12 w-full cursor-not-allowed rounded-2xl border border-border bg-surface-muted px-4 text-sm font-medium text-ink-muted"
-            >
+              class="cursor-not-allowed bg-surface-muted text-ink-muted"
+            />
             <p class="mt-1.5 text-xs font-medium text-ink-soft">{{ t('account.emailHint') }}</p>
           </div>
 
           <div>
-            <label class="text-sm font-bold text-ink" for="account-birthday">{{ t('account.birthdayLabel') }}</label>
-            <input
+            <FormLabel for-id="account-birthday" class="text-ink">{{ t('account.birthdayLabel') }}</FormLabel>
+            <AppInput
               id="account-birthday"
               v-model="birthday"
               type="date"
               :max="new Date().toISOString().slice(0, 10)"
-              :class="formFieldClass"
-            >
+            />
             <p class="mt-1.5 text-xs font-medium text-ink-soft">{{ t('account.birthdayHint') }}</p>
           </div>
 
@@ -332,45 +332,42 @@ async function updateCurrency(event: Event) {
 
         <form class="mt-5 space-y-4" @submit.prevent="submitPassword">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="current-password">{{ t('account.currentPassword') }}</label>
-            <input
+            <FormLabel for-id="current-password">{{ t('account.currentPassword') }}</FormLabel>
+            <AppInput
               id="current-password"
               v-model="currentPassword"
               required
               type="password"
               autocomplete="current-password"
-              :class="authFieldClass"
               :placeholder="t('account.currentPasswordPlaceholder')"
-            >
+            />
           </div>
           <div class="grid gap-4 sm:grid-cols-2">
             <div>
-              <label class="text-sm font-bold text-ink-muted" for="new-password">{{ t('account.newPassword') }}</label>
-              <input
+              <FormLabel for-id="new-password">{{ t('account.newPassword') }}</FormLabel>
+              <AppInput
                 id="new-password"
                 v-model="newPassword"
                 required
                 minlength="8"
                 type="password"
                 autocomplete="new-password"
-                :class="authFieldClass"
-              >
+              />
             </div>
             <div>
-              <label class="text-sm font-bold text-ink-muted" for="confirm-password">{{ t('account.confirmPassword') }}</label>
-              <input
+              <FormLabel for-id="confirm-password">{{ t('account.confirmPassword') }}</FormLabel>
+              <AppInput
                 id="confirm-password"
                 v-model="confirmPassword"
                 required
                 minlength="8"
                 type="password"
                 autocomplete="new-password"
-                :class="authFieldClass"
-              >
+              />
             </div>
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error">{{ error }}</AppAlert>
 
           <AsyncActionButton
             :idle-label="t('account.updatePassword')"

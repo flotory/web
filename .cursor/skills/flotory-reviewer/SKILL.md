@@ -20,6 +20,7 @@ description: Readonly PR review for Flotory diffs — scope, rule_ids, design to
 - [ ] No `rule_ids` violated
 - [ ] Campaign logic not duplicated outside `CampaignEngine` / `CampaignService`
 - [ ] Mobile: tokens not inline hex; `applies_now` for active campaign UI
+- [ ] **GT-07:** forms use `FormField`/`AppTextInput` (mobile) or `AppInput`/`AppAlert` (web) — run `bash scripts/check-gt07-forms.sh` when forms touched
 - [ ] Seeders idempotent
 - [ ] Tests cover behavior change
 - [ ] No secrets, no accidental version bump

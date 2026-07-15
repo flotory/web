@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import QrcodeVue from 'qrcode.vue'
 
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -273,7 +274,7 @@ onMounted(loadVenue)
             </div>
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error">{{ error }}</AppAlert>
             <AsyncActionButton
               type="submit"
               idle-label="Save venue"

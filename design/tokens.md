@@ -2,43 +2,79 @@
 
 Source of truth for the Design agent. Code must match these files.
 
+## Fonts (intentional cross-platform split)
+
+| Surface | Font | File |
+|---------|------|------|
+| **Mobile (customer)** | Noto Sans Armenian | `apps/mobile/src/lib/typography.ts` |
+| **Web (owner + marketing)** | Plus Jakarta Sans | `resources/css/app.css` `@theme --font-sans` |
+
+Same **semantic** tokens (accent, surface, ink); different families for locale coverage.
+
 ## Mobile (`apps/mobile/src/theme.ts`)
 
 | Token | Use |
 |-------|-----|
 | `colors.accent` | Gold accent, badges, campaign highlights |
 | `colors.accentActive` | Stronger accent text |
-| `colors.accentSoft` | Soft accent backgrounds |
-| `colors.accentBorder` | Accent borders |
-| `colors.campaignBg` | Dark campaign card background |
-| `colors.campaignBorder` | Dark campaign card border |
-| `colors.surface` | Light card background |
-| `colors.lavender` / `lavenderBorder` | Scheduled / secondary badges |
+| `colors.accentSoft` / `accentBorder` | Soft accent backgrounds / borders |
+| `colors.campaignBg` / `campaignBorder` | Dark campaign card |
+| `colors.surface` / `surfaceMuted` / `surfaceWarm` | Cards, warm ivory `#FFFCF6` |
+| `colors.lavender` / `lavenderBorder` | Scheduled badges |
 | `colors.ink` / `inkMuted` / `inkSoft` | Text hierarchy |
 | `colors.primaryText` | Text on dark/cover headers |
-| `radius.card`, `radius.button` | Corner radius |
-| `shadows.md`, `shadows.sm` | iOS elevation |
-| `space.screenX`, `space.cardPad` | Layout spacing |
+| `overlays.*` | Semi-transparent scrims (never inline rgba when token exists) |
+| `passGradient.start` / `end` | Redeem pass dark gradient anchors |
+| `radius.*`, `shadows.*`, `space.*` | Layout |
+| `type.*` | Typography presets (refresh on palette via `syncDerivedTheme()`) |
 
 Typography: `withAppFont()` + `fonts` from `src/lib/typography.ts`.
 
-## Web (`resources/js/`)
+### Shared mobile components
 
-Prefer Tailwind semantic classes backed by CSS variables:
+| Component | Path |
+|-----------|------|
+| `AppButton` | `variants: primary \| secondary \| danger \| ghost` |
+| `AppTextInput` | Single-line input |
+| `FormField` | Label + input + error/success |
+| `SearchInput` | Search bar shell |
+| `PrimaryButton` / `SecondaryButton` | Thin wrappers over `AppButton` |
 
-- `bg-surface`, `bg-surface-muted`
-- `border-border`, `border-accent-border`
-- `text-ink`, `text-ink-muted`
-- `var(--flotory-accent)` for accent fills/outlines
+## Web (`resources/css/app.css`)
+
+Tailwind v4 `@theme` maps to `--flotory-*` CSS variables (runtime palette via `applyPalette.ts`).
+
+| Utility | Maps to |
+|---------|---------|
+| `bg-surface`, `text-ink`, `border-border` | Core surfaces |
+| `bg-warning-bg`, `text-warning-text`, `border-warning-border` | Pending/dev banners |
+| `bg-danger`, `bg-danger-soft` | Errors / destructive |
+| `.btn-glow`, `.shadow-card` | Marketing + card elevation |
+
+### Shared web components
+
+| Component | Path |
+|-----------|------|
+| `AppButton` | `primary \| secondary \| ghost \| danger` |
+| `AppInput` | Text input (`authForm` classes) |
+| `FormLabel` | Field labels |
+| `FormTextarea` | Multi-line |
+| `FormSelect` | Native select |
+| `AppAlert` | Error / success / info banners |
+| `PaginationControls` | Admin list pagination |
+
+Form class helpers: `resources/js/lib/authForm.ts` (canonical).
 
 ## Rules
 
-1. **No inline hex** in components when a token exists.
-2. New colors require updates here + `theme.ts` + web CSS vars + **user approval**.
-3. Customer app and owner web may differ intentionally; document parity gaps in PR/task yaml.
+1. **No inline hex** when a token exists.
+2. **No inline rgba** on customer UI when `overlays.*` fits.
+3. New colors → update this file + mobile `theme.ts` + web `:root` + **user approval**.
+4. Third-party brand colors (Google logo) are allowed exceptions.
 
 ## Changelog
 
 | Date | Change |
 |------|--------|
 | 2026-07-15 | Initial token map for agent workflow |
+| 2026-07-15 | Added overlays, passGradient, surfaceWarm; web warning tokens; shared form/button components |

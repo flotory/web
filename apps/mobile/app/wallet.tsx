@@ -1,20 +1,21 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Redirect, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { Animated, Pressable, Text, TextInput, View } from 'react-native'
+import { Animated, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import WalletStackedCards from '../src/components/customer/WalletStackedCards'
 import CustomerScreen, { CustomerScreenLoading } from '../src/components/ui/CustomerScreen'
 import ScreenSkeleton from '../src/components/ui/ScreenSkeleton'
+import SearchInput from '../src/components/ui/SearchInput'
 import StateCard from '../src/components/ui/StateCard'
 import { useCustomerCards } from '../src/hooks/useCustomerCards'
 import { useAuth } from '../src/providers/AuthProvider'
 import { useCustomerSurfaceRefresh } from '../src/hooks/useCustomerSurfaceRefresh'
 import { useFadeOnReady } from '../src/hooks/useFadeOnReady'
 import { withAppFont } from '../src/lib/typography'
-import { colors, radius, space, tabBar } from '../src/theme'
+import { colors, space, tabBar } from '../src/theme'
 
 export default function WalletScreen() {
   const { t } = useTranslation()
@@ -69,31 +70,11 @@ export default function WalletScreen() {
         </Pressable>
       </View>
       {cardList.length > 0 ? (
-        <View
-          style={{
-            marginTop: space.sectionGap,
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.surface,
-            borderRadius: radius.image,
-            borderWidth: 1,
-            borderColor: colors.border,
-            paddingHorizontal: 14,
-          }}
-        >
-          <Ionicons name="search" size={18} color={colors.inkSoft} />
-          <TextInput
+        <View style={{ marginTop: space.sectionGap }}>
+          <SearchInput
             value={search}
-            onChangeText={setSearch}
+            onChange={setSearch}
             placeholder={t('wallet.searchPlaceholder')}
-            placeholderTextColor={colors.inkSoft}
-            style={{
-              flex: 1,
-              marginLeft: 8,
-              paddingVertical: 12,
-              color: colors.ink,
-              fontSize: 15,
-            }}
           />
         </View>
       ) : null}

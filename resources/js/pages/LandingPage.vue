@@ -206,16 +206,6 @@ const trustPoints = [
   color: var(--flotory-ink-soft);
 }
 
-.btn-glow {
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--flotory-accent) 35%, transparent);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
-}
-
-.btn-glow:hover {
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--flotory-accent) 45%, transparent);
-  transform: translateY(-1px);
-}
-
 @media (max-width: 640px) {
   .hero-heading {
     line-height: 1.1;

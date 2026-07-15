@@ -7,7 +7,7 @@ defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'ghost'
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
     size?: 'sm' | 'md' | 'lg'
     type?: 'button' | 'submit' | 'reset'
   }>(),
@@ -27,6 +27,7 @@ const classes = computed(() =>
       primary: 'bg-primary text-primary-text shadow-lg shadow-primary/15 hover:bg-primary-soft',
       secondary: 'bg-surface text-ink border border-border hover:bg-surface-muted',
       ghost: 'bg-transparent text-ink-muted hover:bg-surface-muted hover:text-ink',
+      danger: 'bg-danger text-primary-text shadow-lg shadow-danger/15 hover:bg-danger/90',
     }[props.variant],
     {
       sm: 'h-9 px-4 text-sm',

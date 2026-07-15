@@ -21,15 +21,13 @@ retro:
       change: Created
     - type: golden_task
       file: docs/agent/golden-tasks.md
-      change: GT-01, GT-02
+      change: GT-07 forms use shared components only
     - type: exemplar
       file: docs/agent/exemplars/campaign-applies-now.md
       change: Created
 
   golden_tasks_rerun:
-    - GT-01
-    - GT-02
-    - GT-04
+    - GT-07
 
   user_approved_updates: [] # fill after user says yes
 

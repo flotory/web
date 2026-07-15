@@ -4,7 +4,7 @@ import { Image, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
-import { colors, radius } from '../../theme'
+import { colors, overlays, passGradient, radius } from '../../theme'
 
 const HERO_HEIGHT = 200
 
@@ -29,14 +29,14 @@ export default function RedeemPassCard({
 
   return (
     <LinearGradient
-      colors={['#071225', colors.primary, '#0c1a30']}
+      colors={[passGradient.start, colors.primary, passGradient.end]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{
         borderRadius: radius.card,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(215, 163, 93, 0.28)',
+        borderColor: overlays.accent28,
       }}
     >
       <View style={{ height: HERO_HEIGHT, backgroundColor: colors.primarySoft }}>
@@ -73,7 +73,7 @@ export default function RedeemPassCard({
             borderRadius: 8,
             backgroundColor: 'rgba(5, 13, 30, 0.65)',
             borderWidth: 1,
-            borderColor: 'rgba(215, 163, 93, 0.35)',
+            borderColor: overlays.accent35,
           }}
         >
           <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />
@@ -119,9 +119,9 @@ export default function RedeemPassCard({
             paddingHorizontal: 12,
             paddingVertical: 8,
             borderRadius: 12,
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            backgroundColor: overlays.white06,
             borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderColor: overlays.white10,
           }}
         >
           {logoUri ? (
@@ -140,10 +140,10 @@ export default function RedeemPassCard({
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name="storefront-outline" size={14} color="rgba(255,255,255,0.8)" />
+              <Ionicons name="storefront-outline" size={14} color={overlays.white82} />
             </View>
           )}
-          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.92)' })} numberOfLines={1}>
+          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.primaryText })} numberOfLines={1}>
             {venueName}
           </Text>
         </View>
@@ -151,14 +151,14 @@ export default function RedeemPassCard({
         {requiredStamps != null && requiredStamps > 0 ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="ticket-outline" size={16} color={colors.accent} />
-            <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.75)' })}>
+            <Text style={withAppFont({ fontSize: 14, fontWeight: '600', color: overlays.white75 })}>
               {t('redeem.unlockedAfter', { count: requiredStamps })}
             </Text>
           </View>
         ) : null}
 
         {description?.trim() ? (
-          <Text style={withAppFont({ fontSize: 15, lineHeight: 22, color: 'rgba(255,255,255,0.72)' })}>
+          <Text style={withAppFont({ fontSize: 15, lineHeight: 22, color: overlays.white75 })}>
             {description.trim()}
           </Text>
         ) : null}

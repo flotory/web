@@ -50,7 +50,7 @@ const boxStyle = computed(() => {
   <div
     v-else
     class="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-5 py-10 text-center"
-    :class="dark ? 'border-white/30 bg-white/10' : 'border-border bg-[#e8e4dc]'"
+    :class="dark ? 'border-white/30 bg-white/10' : 'border-border bg-surface-muted'"
     :style="boxStyle"
   >
     <p

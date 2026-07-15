@@ -45,6 +45,11 @@
   --color-danger: var(--flotory-danger);
   --color-danger-soft: var(--flotory-danger-soft);
 
+  --color-warning: var(--flotory-warning-text);
+  --color-warning-bg: var(--flotory-warning-bg);
+  --color-warning-border: var(--flotory-warning-border);
+  --color-warning-text: var(--flotory-warning-text);
+
   --color-campaign: var(--flotory-campaign-bg);
   --color-campaign-border: var(--flotory-campaign-border);
   --color-reward-ready: var(--flotory-reward-ready-accent);
@@ -94,6 +99,9 @@
   --flotory-success-border: #a8d4bc;
   --flotory-danger: #9e4a44;
   --flotory-danger-soft: #f3c7c3;
+  --flotory-warning-bg: #fffbeb;
+  --flotory-warning-border: #fde68a;
+  --flotory-warning-text: #78350f;
   --flotory-campaign-bg: #050d1e;
   --flotory-campaign-border: #d7a35d;
   --flotory-reward-ready-accent: #d7a35d;
@@ -161,7 +169,21 @@ body {
 }
 
 .bg-auth-gradient {
-  background: radial-gradient(circle at top, var(--flotory-primary) 0%, #020617 55%);
+  background: radial-gradient(circle at top, var(--flotory-primary) 0%, var(--flotory-primary-soft) 55%);
+}
+
+.btn-glow {
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--flotory-accent) 35%, transparent);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--flotory-accent) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.shadow-card {
+  box-shadow: 0 1px 2px rgba(8, 18, 51, 0.04), 0 12px 32px rgba(8, 18, 51, 0.06);
 }
 
 .bg-marketing-page {

@@ -5,6 +5,7 @@ Record **why** we built something — agents read these to avoid repeating mista
 | ADR | Title |
 |-----|-------|
 | [001](./001-campaign-applies-now-ui.md) | Campaign active UI uses `applies_now` |
+| [002](./002-design-system-unification.md) | Shared tokens + form/button components |
 
 ## When to add an ADR
 

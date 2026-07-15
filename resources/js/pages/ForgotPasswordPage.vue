@@ -5,11 +5,13 @@ import { RouterLink, useRoute } from 'vue-router'
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
 import AsyncActionButton from '@/components/ui/AsyncActionButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { api, ApiError } from '@/lib/api'
-import { authFieldClass } from '@/lib/authForm'
 
 const route = useRoute()
 const email = ref('')
@@ -59,11 +61,11 @@ async function submit() {
 
         <form v-if="!message" class="mt-6 space-y-4" @submit.prevent="submit">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="email">Email</label>
-            <input id="email" v-model="email" required type="email" autocomplete="email" :class="authFieldClass">
+            <FormLabel for-id="email">Email</FormLabel>
+            <AppInput id="email" v-model="email" required type="email" autocomplete="email" />
           </div>
 
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error">{{ error }}</AppAlert>
 
           <AsyncActionButton
             class="w-full"
@@ -79,9 +81,9 @@ async function submit() {
           />
         </form>
 
-        <div v-else class="mt-6 rounded-2xl bg-success-bg p-4 text-sm font-semibold text-success-text border border-success-border">
+        <AppAlert v-else variant="success" class="mt-6 border border-success-border">
           {{ message }}
-        </div>
+        </AppAlert>
 
         <p class="mt-5 text-center text-sm text-ink-muted">
           Remember your password?

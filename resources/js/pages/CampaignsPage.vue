@@ -7,6 +7,7 @@ import CampaignIcon from '@/components/campaigns/CampaignIcon.vue'
 import CampaignWizard from '@/components/campaigns/CampaignWizard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import FilterPills from '@/components/ui/FilterPills.vue'
 import FormSelect from '@/components/ui/FormSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageSection from '@/components/ui/PageSection.vue'
@@ -17,7 +18,6 @@ import {
   campaignTemplateMeta,
   campaignTemplateTone,
 } from '@/lib/campaignTemplates'
-import { cn } from '@/lib/utils'
 
 const {
   workspace,
@@ -127,24 +127,7 @@ const {
             <div
               class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-muted/50 px-5 py-3"
             >
-              <div class="flex gap-1 sm:gap-2">
-                <button
-                  v-for="tab in historyTabs"
-                  :key="tab.id"
-                  type="button"
-                  :class="
-                    cn(
-                      'rounded-full px-3.5 py-1.5 text-sm font-bold transition',
-                      historyFilter === tab.id
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-ink-muted hover:bg-surface hover:text-ink',
-                    )
-                  "
-                  @click="historyFilter = tab.id"
-                >
-                  {{ tab.label }}
-                </button>
-              </div>
+              <FilterPills v-model="historyFilter" :options="historyTabs" />
               <label class="flex items-center gap-2">
                 <span class="sr-only">Sort campaigns</span>
                 <FormSelect v-model="historySort" size="compact">

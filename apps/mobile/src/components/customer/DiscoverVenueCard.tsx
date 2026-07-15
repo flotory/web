@@ -10,7 +10,7 @@ import { venueCoverUrl } from '../../lib/media'
 import { openVenueInMaps } from '../../lib/openMaps'
 import type { WalletCard } from '../../types/loyalty'
 import PressableCard from '../ui/PressableCard'
-import { colors, media, radius, shadows } from '../../theme'
+import { colors, media, overlays, radius, shadows } from '../../theme'
 import { withAppFont } from '../../lib/typography'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
@@ -142,7 +142,7 @@ export default function DiscoverVenueCard({
             >
               {venue.name}
             </Text>
-            <Text style={withAppFont({ marginTop: 2, fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' })} numberOfLines={1}>
+            <Text style={withAppFont({ marginTop: 2, fontSize: 13, fontWeight: '600', color: overlays.white82 })} numberOfLines={1}>
               {locationLabel}
             </Text>
           </View>
@@ -176,9 +176,9 @@ export default function DiscoverVenueCard({
               paddingHorizontal: 10,
               paddingVertical: 5,
               borderRadius: 999,
-              backgroundColor: 'rgba(5, 13, 30, 0.72)',
+              backgroundColor: overlays.ink72,
               borderWidth: 1,
-              borderColor: 'rgba(215, 163, 93, 0.35)',
+              borderColor: overlays.accent35,
             }}
           >
             <Ionicons name="checkmark-circle" size={13} color={colors.accent} />

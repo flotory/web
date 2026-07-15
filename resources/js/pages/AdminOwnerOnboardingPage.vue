@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -162,7 +163,7 @@ onMounted(loadInvitations)
       </form>
 
       <p v-if="success" class="mt-3 text-sm font-semibold text-accent-active">{{ success }}</p>
-      <p v-if="error" class="mt-3 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+      <AppAlert v-if="error" class="mt-3">{{ error }}</AppAlert>
     </AppCard>
 
     <AppCard>

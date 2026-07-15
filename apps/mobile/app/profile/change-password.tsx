@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import FormField from '../../src/components/ui/FormField'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
 import ScreenGradientLayout from '../../src/components/ui/ScreenGradientLayout'
 import { StickyBackHeader } from '../../src/components/ui/StickyBackButton'
@@ -10,45 +11,7 @@ import { ApiError } from '../../src/lib/api'
 import { updatePassword } from '../../src/lib/profileApi'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
-import { colors, radius, shadows, space, type as typography } from '../../src/theme'
-
-function PasswordField({
-  label,
-  value,
-  onChangeText,
-  autoComplete,
-}: {
-  label: string
-  value: string
-  onChangeText: (value: string) => void
-  autoComplete?: 'password' | 'password-new' | 'current-password'
-}) {
-  return (
-    <View style={{ gap: 8 }}>
-      <Text style={typography.label}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoComplete={autoComplete}
-        placeholderTextColor={colors.inkSoft}
-        style={withAppFont({
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: radius.image,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          fontSize: 16,
-          color: colors.ink,
-          ...shadows.sm,
-        })}
-      />
-    </View>
-  )
-}
+import { colors, radius, space, type as typography } from '../../src/theme'
 
 export default function ChangePasswordScreen() {
   const router = useRouter()
@@ -90,10 +53,10 @@ export default function ChangePasswordScreen() {
         password: newPassword,
         password_confirmation: confirmPassword,
       })
+      setSuccess('Password updated.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess('Password updated successfully.')
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : 'Could not update password.')
     } finally {
@@ -119,43 +82,62 @@ export default function ChangePasswordScreen() {
           <Text style={typography.label}>Security</Text>
           <Text style={{ ...typography.hero, marginTop: 6, fontSize: 28, lineHeight: 34 }}>Change password</Text>
           <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
-            Signed in as {user?.email ?? 'your account'}.
+            {user?.email ? `Signed in as ${user.email}` : 'Update your account password.'}
           </Text>
         </View>
 
+        {success ? (
+          <View
+            style={{
+              borderRadius: radius.card,
+              borderWidth: 1,
+              borderColor: colors.successBorder,
+              backgroundColor: colors.successBg,
+              padding: 16,
+            }}
+          >
+            <Text style={withAppFont({ color: colors.successText, fontWeight: '600', fontSize: 14, lineHeight: 20 })}>
+              {success}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={{ gap: 16 }}>
-          <PasswordField
+          <FormField
             label="Current password"
             value={currentPassword}
             onChangeText={setCurrentPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             autoComplete="current-password"
           />
-          <PasswordField
+          <FormField
             label="New password"
             value={newPassword}
             onChangeText={setNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             autoComplete="password-new"
           />
-          <PasswordField
+          <FormField
             label="Confirm new password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             autoComplete="password-new"
+            error={error || undefined}
+          />
+
+          <PrimaryButton
+            label={submitting ? 'Saving…' : 'Update password'}
+            onPress={() => void handleSubmit()}
+            disabled={submitting || !currentPassword || !newPassword || !confirmPassword}
           />
         </View>
-
-        {error ? (
-          <Text style={withAppFont({ color: colors.danger, fontWeight: '600', fontSize: 14 })}>{error}</Text>
-        ) : null}
-        {success ? (
-          <Text style={withAppFont({ color: colors.successText, fontWeight: '600', fontSize: 14 })}>{success}</Text>
-        ) : null}
-
-        <PrimaryButton
-          label={submitting ? 'Saving…' : 'Update password'}
-          onPress={() => void handleSubmit()}
-          disabled={submitting || !currentPassword || !newPassword || !confirmPassword}
-        />
       </ScrollView>
     </ScreenGradientLayout>
   )

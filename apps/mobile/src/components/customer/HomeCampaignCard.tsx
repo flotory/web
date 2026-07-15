@@ -3,7 +3,7 @@ import { Image, Platform, Text, View } from 'react-native'
 import { campaignEndsLabel } from '../../lib/campaignEndsLabel'
 import { venueCoverUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
-import { colors, radius, shadows } from '../../theme'
+import { colors, overlays, radius, shadows } from '../../theme'
 import type { HomeCampaign, VenueRef } from '../../types/loyalty'
 
 interface HomeCampaignCardProps {
@@ -57,7 +57,7 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
         height: 54,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: dark ? 'rgba(215, 163, 93, 0.45)' : colors.accentBorder,
+        borderColor: dark ? overlays.accent45 : colors.accentBorder,
         backgroundColor: dark ? 'rgba(5, 13, 30, 0.92)' : colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
@@ -71,7 +71,7 @@ function MultiplierStampBadge({ multiplier, dark }: { multiplier: number; dark?:
           height: 44,
           borderRadius: 11,
           borderWidth: 1,
-          borderColor: dark ? 'rgba(215, 163, 93, 0.28)' : 'rgba(215, 163, 93, 0.4)',
+          borderColor: dark ? overlays.accent28 : overlays.accent40,
         }}
       />
       <Text style={withAppFont({ fontSize: 14, fontWeight: '900', color: dark ? colors.accent : colors.accentActive, lineHeight: 16 })}>
@@ -147,7 +147,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                     marginTop: 12,
                     fontSize: 12,
                     fontWeight: '600',
-                    color: 'rgba(255,255,255,0.65)',
+                    color: overlays.white65,
                     letterSpacing: 0.3,
                   })}
                   numberOfLines={1}
@@ -173,7 +173,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                     fontSize: 13,
                     fontWeight: '500',
                     lineHeight: 19,
-                    color: 'rgba(255,255,255,0.75)',
+                    color: overlays.white75,
                   })}
                   numberOfLines={2}
                 >
@@ -193,7 +193,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                       height: 92,
                       borderRadius: 16,
                       borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.14)',
+                      borderColor: overlays.white14,
                     }}
                     resizeMode="cover"
                   />
@@ -203,9 +203,9 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
                       width: 92,
                       height: 92,
                       borderRadius: 16,
-                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      backgroundColor: overlays.white06,
                       borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.1)',
+                      borderColor: overlays.white10,
                     }}
                   />
                 )}

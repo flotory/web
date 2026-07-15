@@ -10,6 +10,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import PaginationControls from '@/components/ui/PaginationControls.vue'
 import AppShell from '@/layouts/AppShell.vue'
 import { useVenueReviewQueue } from '@/composables/useVenueReviewQueue'
 import { formatShortDate } from '@/lib/formatDate'
@@ -153,25 +154,7 @@ onMounted(loadVenues)
         <EmptyState title="No venues in this queue" message="Try another filter or check back later." />
       </AppCard>
 
-      <div v-if="lastPage > 1" class="flex items-center justify-center gap-2">
-        <button
-          type="button"
-          class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
-          :disabled="page <= 1"
-          @click="page -= 1"
-        >
-          Previous
-        </button>
-        <span class="text-sm font-semibold text-ink-muted">Page {{ page }} of {{ lastPage }}</span>
-        <button
-          type="button"
-          class="rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-40"
-          :disabled="page >= lastPage"
-          @click="page += 1"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls v-model:page="page" :last-page="lastPage" show-page-label />
     </div>
 
     <div

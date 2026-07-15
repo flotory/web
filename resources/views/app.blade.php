@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="/icons/icon-180.png?v={{ $iconV }}">
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
   </head>
-  <body class="bg-slate-950 font-sans text-slate-950 antialiased">
+  <body class="font-sans antialiased">
     <script>
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
       if (!location.hash) window.scrollTo(0, 0);

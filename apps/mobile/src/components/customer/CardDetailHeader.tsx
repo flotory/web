@@ -13,7 +13,7 @@ import { formatVenueCategoryLabel, venueCategoryIcon } from '../../lib/venueCate
 import { venueCoverUrl, venueLogoUrl } from '../../lib/media'
 import { hasVenueMapTarget, openVenueInMaps } from '../../lib/openMaps'
 import { withAppFont } from '../../lib/typography'
-import { colors, media, radius, shadows, space } from '../../theme'
+import { colors, media, overlays, radius, shadows, space } from '../../theme'
 import type { MilestoneProgress, RewardRef, VenuePromotion, VenueRef } from '../../types/loyalty'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
@@ -95,7 +95,7 @@ export default function CardDetailHeader({
           )}
 
           <LinearGradient
-            colors={['transparent', 'rgba(5, 13, 30, 0.72)']}
+            colors={['transparent', overlays.scrimBottom]}
             style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 }}
           />
 
@@ -110,9 +110,9 @@ export default function CardDetailHeader({
               paddingHorizontal: 10,
               paddingVertical: 5,
               borderRadius: 999,
-              backgroundColor: 'rgba(5, 13, 30, 0.72)',
+              backgroundColor: overlays.ink72,
               borderWidth: 1,
-              borderColor: 'rgba(215, 163, 93, 0.35)',
+              borderColor: overlays.accent35,
             }}
           >
             <Ionicons name="card-outline" size={13} color={colors.accent} />
@@ -142,7 +142,7 @@ export default function CardDetailHeader({
                   height: 52,
                   borderRadius: 16,
                   borderWidth: 2,
-                  borderColor: 'rgba(255,255,255,0.2)',
+                  borderColor: overlays.white20,
                 }}
                 resizeMode="cover"
               />
@@ -166,7 +166,7 @@ export default function CardDetailHeader({
                     marginTop: 4,
                     fontSize: 13,
                     fontWeight: '600',
-                    color: 'rgba(255,255,255,0.82)',
+                    color: overlays.white82,
                   })}
                   numberOfLines={1}
                 >

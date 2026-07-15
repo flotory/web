@@ -7,14 +7,17 @@ import FlotoryLogo from '@/components/brand/FlotoryLogo.vue'
 import ListingChecklist from '@/components/loyalty/ListingChecklist.vue'
 import OwnerOnboardingProgress from '@/components/onboarding/OwnerOnboardingProgress.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import FormSelect from '@/components/ui/FormSelect.vue'
+import FormTextarea from '@/components/ui/FormTextarea.vue'
 import LocaleSwitcher from '@/components/ui/LocaleSwitcher.vue'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import VenueAddressInput from '@/components/ui/VenueAddressInput.vue'
 import { api, ApiError, apiErrorMessage } from '@/lib/api'
-import { authFieldClass } from '@/lib/authForm'
 import { normalizeVenueCategory, VENUE_CATEGORY_GROUPS, categoryLabel, type VenueCategory } from '@/lib/venueCategories'
 import {
   clampOnboardingStep,
@@ -629,12 +632,16 @@ watch(
             </p>
             <div class="mt-6 grid gap-4">
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-name">Venue name<span class="text-danger" aria-hidden="true"> *</span></label>
-                <input id="onboarding-name" v-model="name" required :class="authFieldClass" placeholder="Harbor Coffee">
+                <FormLabel for-id="onboarding-name">
+                  Venue name<span class="text-danger" aria-hidden="true"> *</span>
+                </FormLabel>
+                <AppInput id="onboarding-name" v-model="name" required placeholder="Harbor Coffee" />
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label class="text-sm font-bold text-ink-muted" for="onboarding-category">Category<span class="text-danger" aria-hidden="true"> *</span></label>
+                  <FormLabel for-id="onboarding-category">
+                    Category<span class="text-danger" aria-hidden="true"> *</span>
+                  </FormLabel>
                   <FormSelect id="onboarding-category" v-model="category" class="mt-2 w-full">
                     <optgroup v-for="group in VENUE_CATEGORY_GROUPS" :key="group.label" :label="group.label">
                       <option v-for="id in group.ids" :key="id" :value="id">
@@ -677,8 +684,8 @@ watch(
               />
               <PhoneInput id="onboarding-phone" v-model="phone" label="Phone" />
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-website">Website</label>
-                <input id="onboarding-website" v-model="website" :class="authFieldClass" placeholder="https://example.com">
+                <FormLabel for-id="onboarding-website">Website</FormLabel>
+                <AppInput id="onboarding-website" v-model="website" placeholder="https://example.com" />
               </div>
             </div>
           </template>
@@ -757,28 +764,26 @@ watch(
             </p>
             <div class="mt-6 grid gap-4">
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-reward-title">Reward title</label>
-                <input id="onboarding-reward-title" v-model="rewardTitle" required :class="authFieldClass">
+                <FormLabel for-id="onboarding-reward-title">Reward title</FormLabel>
+                <AppInput id="onboarding-reward-title" v-model="rewardTitle" required />
               </div>
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-reward-stamps">Stamps required</label>
-                <input
+                <FormLabel for-id="onboarding-reward-stamps">Stamps required</FormLabel>
+                <AppInput
                   id="onboarding-reward-stamps"
                   v-model.number="rewardStamps"
                   type="number"
                   min="1"
                   max="100"
                   required
-                  :class="authFieldClass"
-                >
+                />
               </div>
               <div>
-                <label class="text-sm font-bold text-ink-muted" for="onboarding-reward-description">Description</label>
-                <textarea
+                <FormLabel for-id="onboarding-reward-description">Description</FormLabel>
+                <FormTextarea
                   id="onboarding-reward-description"
                   v-model="rewardDescription"
-                  rows="4"
-                  class="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:border-ink-soft"
+                  :rows="4"
                 />
               </div>
             </div>
@@ -802,7 +807,7 @@ watch(
             </div>
           </template>
 
-          <p v-if="error" class="mt-5 rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error" class="mt-5">{{ error }}</AppAlert>
 
           <div class="mt-8 flex flex-wrap gap-3">
             <AppButton

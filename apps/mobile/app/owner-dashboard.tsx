@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { apiRequest } from '../src/lib/api'
 import { useAuth } from '../src/providers/AuthProvider'
 import { withAppFont } from '../src/lib/typography'
+import { colors, radius, shadows, space } from '../src/theme'
 
 interface DashboardPayload {
   venue?: {
@@ -17,6 +18,25 @@ interface DashboardPayload {
     returning_customers?: number
   }
   insights?: Array<{ text: string }>
+}
+
+function KpiCard({ label, value }: { label: string; value: number }) {
+  return (
+    <View
+      style={{
+        width: '47%',
+        backgroundColor: colors.surface,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 14,
+        ...shadows.sm,
+      }}
+    >
+      <Text style={withAppFont({ color: colors.inkMuted, fontWeight: '700', fontSize: 12 })}>{label}</Text>
+      <Text style={withAppFont({ marginTop: 6, fontSize: 28, fontWeight: '800', color: colors.ink })}>{value}</Text>
+    </View>
+  )
 }
 
 export default function OwnerDashboardScreen() {
@@ -54,48 +74,67 @@ export default function OwnerDashboardScreen() {
 
   if (role !== 'owner') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#f8fafc' }}>
-        <Text style={withAppFont({ fontWeight: '700' })}>Owner dashboard unavailable.</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: space.screenX,
+          backgroundColor: colors.bg,
+        }}
+      >
+        <Text style={withAppFont({ fontWeight: '700', color: colors.ink })}>Owner dashboard unavailable.</Text>
       </View>
     )
   }
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
+        <ActivityIndicator color={colors.accent} />
       </View>
     )
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f8fafc' }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={withAppFont({ fontSize: 28, fontWeight: '800', marginTop: 12 })}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ padding: space.screenX, gap: 12, paddingBottom: 32 }}
+    >
+      <Text style={withAppFont({ fontSize: 28, fontWeight: '800', marginTop: 12, color: colors.ink })}>
         {dashboard?.venue?.name ?? 'Owner Dashboard'}
       </Text>
-      {error ? <Text style={{ color: '#b91c1c' }}>{error}</Text> : null}
+      {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {kpis.map((kpi) => (
-          <View key={kpi.label} style={{ width: '47%', backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
-            <Text style={withAppFont({ color: '#64748b', fontWeight: '700', fontSize: 12 })}>{kpi.label}</Text>
-            <Text style={withAppFont({ marginTop: 6, fontSize: 28, fontWeight: '800' })}>{kpi.value}</Text>
-          </View>
+          <KpiCard key={kpi.label} label={kpi.label} value={kpi.value} />
         ))}
       </View>
 
-      <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
-        <Text style={withAppFont({ fontSize: 16, fontWeight: '800' })}>Insights</Text>
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: radius.card,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 14,
+          ...shadows.sm,
+        }}
+      >
+        <Text style={withAppFont({ fontSize: 16, fontWeight: '800', color: colors.ink })}>Insights</Text>
         {(dashboard?.insights ?? []).slice(0, 5).map((insight, index) => (
-          <Text key={`${insight.text}-${index}`} style={{ marginTop: 8, color: '#334155' }}>
+          <Text
+            key={`${insight.text}-${index}`}
+            style={withAppFont({ marginTop: 8, color: colors.inkMuted, lineHeight: 20 })}
+          >
             • {insight.text}
           </Text>
         ))}
         {(dashboard?.insights ?? []).length === 0 ? (
-          <Text style={{ marginTop: 8, color: '#64748b' }}>Insights appear after activity.</Text>
+          <Text style={withAppFont({ marginTop: 8, color: colors.inkSoft })}>Insights appear after activity.</Text>
         ) : null}
       </View>
     </ScrollView>
   )
 }
-

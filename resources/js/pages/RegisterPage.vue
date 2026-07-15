@@ -4,11 +4,13 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 
 import MarketingPageShell from '@/components/layout/MarketingPageShell.vue'
 import { marketingCardClass } from '@/lib/marketingPage'
+import AppAlert from '@/components/ui/AppAlert.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import { ApiError, api } from '@/lib/api'
-import { authFieldClass } from '@/lib/authForm'
 import { OWNER_VENUE_SETUP_PATH } from '@/lib/venueRoles'
 import { completeSignInNavigation, isLoginCancelledError } from '@/lib/signInNavigation'
 import { useAuthStore } from '@/stores/auth'
@@ -162,22 +164,22 @@ onMounted(() => {
 
         <form class="mt-6 space-y-4" @submit.prevent="submit">
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="name">Your name</label>
-            <input id="name" v-model="name" required :class="authFieldClass">
+            <FormLabel for-id="name">Your name</FormLabel>
+            <AppInput id="name" v-model="name" required />
           </div>
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="email">Email</label>
-            <input id="email" v-model="email" required type="email" readonly :class="authFieldClass">
+            <FormLabel for-id="email">Email</FormLabel>
+            <AppInput id="email" v-model="email" required type="email" readonly />
           </div>
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="password">Password</label>
-            <input id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
+            <FormLabel for-id="password">Password</FormLabel>
+            <AppInput id="password" v-model="password" required minlength="8" type="password" autocomplete="new-password" />
           </div>
           <div>
-            <label class="text-sm font-bold text-ink-muted" for="password-confirm">Confirm password</label>
-            <input id="password-confirm" v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" :class="authFieldClass">
+            <FormLabel for-id="password-confirm">Confirm password</FormLabel>
+            <AppInput id="password-confirm" v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" />
           </div>
-          <p v-if="error" class="rounded-2xl bg-danger-soft p-3 text-sm font-semibold text-danger">{{ error }}</p>
+          <AppAlert v-if="error">{{ error }}</AppAlert>
           <AppButton class="w-full" size="lg" type="submit" :disabled="loading">
             {{ loading ? 'Creating account…' : (isNewVenueOnboarding ? 'Continue to venue setup' : 'Open dashboard') }}
           </AppButton>

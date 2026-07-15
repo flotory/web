@@ -36,3 +36,11 @@ Before TestFlight:
 ```
 Run golden tasks GT-01 through GT-05 from docs/agent/golden-tasks.md
 ```
+
+Before merge (UI / forms):
+
+```
+bash scripts/check-gt07-forms.sh
+```
+
+See **GT-07** in [golden-tasks.md](./golden-tasks.md).

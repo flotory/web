@@ -1,0 +1,50 @@
+id: audit-design-system-gaps
+title: Audit color palette and shared UI component gaps
+requester: narek
+status: building
+created: 2026-07-15
+
+problem: |
+  Walk through Flotory frontends and find gaps: inconsistent colors/palettes,
+  inline styles instead of tokens, duplicated buttons/selects/forms instead of
+  shared components. Goal is unified fonts and colors across mobile and web.
+
+agents:
+  orchestrator: done
+  domain: done
+  design: in_progress
+  spec: done
+  backend: skip
+  mobile: in_progress
+  web: in_progress
+  tests: skip
+  reviewer: pending
+  security: skip
+  docs: skip
+  release: skip
+
+rule_ids: [Y1, Y2]
+
+domain_verdict: ALLOW
+domain_notes: |
+  UX consistency audit. No business rule changes. Read-only inventory.
+
+design_verdict: APPROVE
+design_ref: design/tokens.md
+
+acceptance:
+  - Inventory mobile inline colors vs theme.ts
+  - Inventory web color/font patterns vs shared tokens
+  - List duplicated button/form/select patterns
+  - Prioritized recommendations (mobile vs web vs shared)
+
+api_contract:
+  unchanged: true
+
+file_ownership:
+  mobile: [apps/mobile/]
+  web: [resources/js/]
+
+out_of_scope:
+  - Implementing fixes in this task (audit only)
+  - Backend changes

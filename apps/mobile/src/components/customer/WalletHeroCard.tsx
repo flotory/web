@@ -64,7 +64,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                   style={withAppFont({
                     fontSize: 14,
                     fontWeight: '700',
-                    color: 'rgba(255,255,255,0.95)',
+                    color: colors.primaryText,
                   })}
                 >
                   <Text style={{ fontSize: 18, fontWeight: '800', color: colors.accent }}>
@@ -89,7 +89,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                   style={withAppFont({
                     fontSize: 12,
                     fontWeight: '600',
-                    color: 'rgba(255,255,255,0.9)',
+                    color: colors.primaryText,
                     textAlign: 'right',
                   })}
                 >

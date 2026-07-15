@@ -5,6 +5,8 @@ import { computed, ref, watch } from 'vue'
 import CampaignIcon from '@/components/campaigns/CampaignIcon.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import FormLabel from '@/components/ui/FormLabel.vue'
 import { api, apiErrorMessage } from '@/lib/api'
 import {
   WEEKDAYS,
@@ -173,37 +175,21 @@ function setMultiplier(value: number) {
 
       <div class="flex-1 overflow-y-auto px-5 py-5">
         <template v-if="step === 'configure'">
-          <label class="block">
-            <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign name</span>
-            <input
-              v-model="name"
-              type="text"
-              class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-accent focus:outline-none"
-            />
-          </label>
+          <div>
+            <FormLabel class="text-xs font-bold uppercase tracking-wide">Campaign name</FormLabel>
+            <AppInput v-model="name" type="text" />
+          </div>
 
           <div class="mt-6 space-y-5">
             <div v-if="templateId === 'bring_back_customers'" class="space-y-4">
-              <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Inactive days</span>
-                <input
-                  v-model.number="config.inactive_days"
-                  type="number"
-                  min="7"
-                  max="180"
-                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                />
-              </label>
-              <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign duration (days)</span>
-                <input
-                  v-model.number="config.duration_days"
-                  type="number"
-                  min="1"
-                  max="90"
-                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                />
-              </label>
+              <div>
+                <FormLabel class="text-xs font-bold uppercase tracking-wide">Inactive days</FormLabel>
+                <AppInput v-model.number="config.inactive_days" type="number" min="7" max="180" />
+              </div>
+              <div>
+                <FormLabel class="text-xs font-bold uppercase tracking-wide">Campaign duration (days)</FormLabel>
+                <AppInput v-model.number="config.duration_days" type="number" min="1" max="90" />
+              </div>
             </div>
 
             <div v-if="templateId === 'quiet_day_promotion'" class="space-y-4">
@@ -223,16 +209,10 @@ function setMultiplier(value: number) {
                   </button>
                 </div>
               </div>
-              <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Campaign duration (days)</span>
-                <input
-                  v-model.number="config.duration_days"
-                  type="number"
-                  min="1"
-                  max="90"
-                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                />
-              </label>
+              <div>
+                <FormLabel class="text-xs font-bold uppercase tracking-wide">Campaign duration (days)</FormLabel>
+                <AppInput v-model.number="config.duration_days" type="number" min="1" max="90" />
+              </div>
             </div>
 
             <div v-if="templateId === 'happy_hour'" class="space-y-4">
@@ -252,44 +232,26 @@ function setMultiplier(value: number) {
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3">
-                <label class="block">
-                  <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Start</span>
-                  <input
-                    v-model="config.start_time"
-                    type="time"
-                    class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                  />
-                </label>
-                <label class="block">
-                  <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">End</span>
-                  <input
-                    v-model="config.end_time"
-                    type="time"
-                    class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                  />
-                </label>
+                <div>
+                  <FormLabel class="text-xs font-bold uppercase tracking-wide">Start</FormLabel>
+                  <AppInput v-model="config.start_time" type="time" />
+                </div>
+                <div>
+                  <FormLabel class="text-xs font-bold uppercase tracking-wide">End</FormLabel>
+                  <AppInput v-model="config.end_time" type="time" />
+                </div>
               </div>
             </div>
 
             <div v-if="templateId === 'vip_rewards'" class="space-y-4">
-              <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum lifetime stamps</span>
-                <input
-                  v-model.number="config.min_lifetime_stamps"
-                  type="number"
-                  min="1"
-                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                />
-              </label>
-              <label class="block">
-                <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">Minimum rewards claimed</span>
-                <input
-                  v-model.number="config.min_rewards_claimed"
-                  type="number"
-                  min="0"
-                  class="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm font-semibold"
-                />
-              </label>
+              <div>
+                <FormLabel class="text-xs font-bold uppercase tracking-wide">Minimum lifetime stamps</FormLabel>
+                <AppInput v-model.number="config.min_lifetime_stamps" type="number" min="1" />
+              </div>
+              <div>
+                <FormLabel class="text-xs font-bold uppercase tracking-wide">Minimum rewards claimed</FormLabel>
+                <AppInput v-model.number="config.min_rewards_claimed" type="number" min="0" />
+              </div>
               <p class="text-xs text-ink-muted">Customer qualifies if either condition is met.</p>
             </div>
 

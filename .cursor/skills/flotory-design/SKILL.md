@@ -33,13 +33,15 @@ user_decision_required: false # true if NEEDS_NEW_TOKENS
 
 ## Mobile rules
 
-- Import from `src/theme.ts`: `colors`, `radius`, `shadows`, `space`.
+- Import from `src/theme.ts`: `colors`, `overlays`, `passGradient`, `radius`, `shadows`, `space`.
+- Components: `AppButton`, `AppTextInput`, `FormField`, `SearchInput`.
 - Typography: `withAppFont()`.
 - Campaign active = **`applies_now`**, not carousel index.
 
 ## Web rules
 
-- Prefer semantic Tailwind: `bg-surface`, `border-accent-border`, `text-ink-muted`.
+- Prefer semantic Tailwind: `bg-surface`, `border-accent-border`, `text-ink-muted`, `bg-warning-bg`.
+- Components: `AppButton`, `AppInput`, `FormLabel`, `FormTextarea`, `FormSelect`, `AppAlert`.
 - No one-off colors for accent — use CSS vars.
 
 ## New tokens

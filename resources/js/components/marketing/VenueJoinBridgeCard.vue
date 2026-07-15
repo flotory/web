@@ -307,10 +307,6 @@ const stampSlots = computed(() => {
   display: block;
 }
 
-.btn-glow {
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--flotory-accent) 35%, transparent);
-}
-
 .cta-note {
   margin-top: -0.35rem;
   text-align: center;

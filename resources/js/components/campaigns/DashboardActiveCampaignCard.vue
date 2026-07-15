@@ -51,7 +51,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
           :tone="campaignTemplateTone(campaign.template_id)"
           size="md"
         />
-        <h3 class="truncate text-base font-bold text-white">
+        <h3 class="truncate text-base font-bold text-primary-text">
           {{ campaign.name }}
         </h3>
       </div>
@@ -70,7 +70,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
             v-for="day in WEEKDAYS"
             :key="day.iso"
             class="rounded-md px-2 py-0.5 text-xs font-semibold"
-            :class="activeDays.includes(day.iso) ? 'text-white' : 'text-white/40'"
+            :class="activeDays.includes(day.iso) ? 'text-primary-text' : 'text-primary-text/40'"
             :style="
               activeDays.includes(day.iso)
                 ? { backgroundColor: 'rgba(255,255,255,0.14)' }
@@ -83,19 +83,19 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
 
         <p
           v-if="timeRange"
-          class="mt-2 flex items-center gap-1.5 text-xs font-medium text-white/70"
+          class="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary-text/70"
         >
           <Clock3 class="size-3.5 shrink-0" aria-hidden="true" />
           {{ timeRange }}
         </p>
 
         <div v-if="criteriaChips.length" class="space-y-1.5">
-          <p class="text-xs font-medium text-white/70">Customers with</p>
+          <p class="text-xs font-medium text-primary-text/70">Customers with</p>
           <div class="flex flex-wrap gap-1.5">
             <span
               v-for="chip in criteriaChips"
               :key="chip"
-              class="rounded-md px-2 py-0.5 text-xs font-semibold text-white/90 border border-white/15"
+              class="rounded-md px-2 py-0.5 text-xs font-semibold text-primary-text/90 border border-primary-text/15"
               :style="{ backgroundColor: 'rgba(255,255,255,0.08)' }"
             >
               {{ chip }}
@@ -105,7 +105,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
 
         <p
           v-if="!showDayRow && !timeRange && !criteriaChips.length && campaign.schedule_summary"
-          class="text-xs font-medium leading-relaxed text-white/75"
+          class="text-xs font-medium leading-relaxed text-primary-text/75"
         >
           {{ campaign.schedule_summary }}
         </p>
@@ -118,7 +118,7 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
         >
           {{ multiplier }}×
         </p>
-        <p class="mt-0.5 text-xs font-semibold text-white/65">stamps</p>
+        <p class="mt-0.5 text-xs font-semibold text-primary-text/65">stamps</p>
       </div>
     </div>
 
@@ -126,8 +126,8 @@ const multiplier = computed(() => campaignMultiplier(props.campaign))
       class="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"
       :style="{ borderColor: 'rgba(255,255,255,0.12)' }"
     >
-      <p class="text-sm text-white/75">
-        <span class="font-semibold text-white/90">Targets:</span>
+      <p class="text-sm text-primary-text/75">
+        <span class="font-semibold text-primary-text/90">Targets:</span>
         {{ targetLabel }}
       </p>
 

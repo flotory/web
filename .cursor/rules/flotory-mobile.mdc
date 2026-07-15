@@ -12,9 +12,10 @@ alwaysApply: false
 
 ## Design tokens
 
-- Use `apps/mobile/src/theme.ts` (`colors`, `radius`, `shadows`, `space`).
+- Use `colors`, `overlays`, `passGradient` from `src/theme.ts`.
 - Use `withAppFont()` from `src/lib/typography.ts`.
-- No inline hex when a token exists.
+- Forms: `FormField` + `AppTextInput`; buttons: `AppButton`; search: `SearchInput`.
+- No inline hex/rgba when a token exists.
 
 ## Campaign UI
 

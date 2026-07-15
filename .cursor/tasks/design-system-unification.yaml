@@ -1,0 +1,33 @@
+id: design-system-unification
+title: Unify colors, typography, and shared UI components (mobile + web)
+requester: narek
+status: done
+created: 2026-07-15
+parent: audit-design-system-gaps
+
+problem: |
+  Cover all design system gaps from audit: tokens, shared inputs/buttons/alerts,
+  remove inline colors, wire unused components, web form consolidation.
+
+rule_ids: [Y1, Y2]
+
+domain_verdict: ALLOW
+
+design_verdict: APPROVE_WITH_TOKENS
+
+agents:
+  backend: skip
+  mobile: in_progress
+  web: in_progress
+  docs: pending
+
+acceptance:
+  - Mobile overlay tokens replace repeated rgba/hex in customer components
+  - Mobile TextInput, FormField, Button variants used in auth/profile/wallet
+  - Web AppInput, FormLabel, AppAlert; AppButton danger variant
+  - Hex violations tokenized; owner-dashboard on-palette
+  - SecondaryButton/AppText wired or removed; authForm exports used or trimmed
+  - design/tokens.md updated
+
+out_of_scope:
+  - Changing Noto (mobile) vs Jakarta (web) font families — intentional per locale
