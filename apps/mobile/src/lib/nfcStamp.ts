@@ -44,12 +44,36 @@ export async function fetchNfcTagPreview(token: string): Promise<NfcTagPreview> 
   }
 }
 
-export async function submitNfcStamp(token: string, authToken: string): Promise<NfcStampResponse> {
-  nfcLog('submitNfcStamp: start', { token: `${token.slice(0, 4)}…${token.slice(-4)}` })
+/**
+ * Coordinates read at the moment of the tap. The server checks them against the
+ * venue (BUSINESS_RULES S10) — without them an enforced backend rejects the tap.
+ */
+export interface NfcStampLocation {
+  latitude: number
+  longitude: number
+  accuracy?: number | null
+}
+
+export async function submitNfcStamp(
+  token: string,
+  authToken: string,
+  location?: NfcStampLocation | null,
+): Promise<NfcStampResponse> {
+  nfcLog('submitNfcStamp: start', {
+    token: `${token.slice(0, 4)}…${token.slice(-4)}`,
+    hasLocation: Boolean(location),
+  })
   try {
     const response = await apiRequest<NfcStampResponse>(`/nfc/t/${encodeURIComponent(token)}/stamp`, {
       method: 'POST',
       token: authToken,
+      body: location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            ...(typeof location.accuracy === 'number' ? { accuracy: location.accuracy } : {}),
+          }
+        : undefined,
     })
     nfcLog('submitNfcStamp: success', {
       stamps: response.stamps,

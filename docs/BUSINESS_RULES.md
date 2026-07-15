@@ -98,6 +98,12 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **S8.** Recommended ops practice: **different NFC token per branch** so visit analytics attribute taps to the correct location. Shared tokens across branches merge analytics into one location bucket.
 
+**S9.** **A stamp means the customer was physically at the venue.** Possession of a tag token is **not** proof of presence — the token is printed on a public stand and is readable by any phone. Every stamp award must independently establish presence.
+
+**S10.** Presence is currently established by a **geofence**: the client sends its coordinates with the tap and the server rejects the award when the customer is further than `loyalty.nfc.geofence.radius_meters` from the stand's venue. This is a **client-asserted** claim and is defeated by a mock-location app — it is a mitigation, not proof. See [ADR 003](./decisions/003-nfc-presence-geofence.md).
+
+**S11.** A tappable venue **always has coordinates**: publication requires a mapped address (`VenuePublicationService::isPublic` → `hasMappedAddress`), and `assertPublic` runs before the geofence. The fence therefore can never be skipped for want of a venue location. **If `isPublic` is ever loosened to drop the coordinate requirement, S10 silently stops protecting anything** — the geofence check fails closed to make that break loudly instead.
+
 ---
 
 ## Reward rules
@@ -232,6 +238,10 @@ Stamp **campaigns** are operational **multipliers** on stamp awards only. They a
 **Z7.** API IDs and NFC tag tokens must not allow cross-user data access.
 
 **Z8.** Dangerous operations (delete venue, purge reward, remove member) require explicit UI confirmation.
+
+**Z9.** **NFC tag tokens are public, not secret.** They are printed on stands in public rooms. Treat any control that relies on a token staying confidential (log masking, obfuscation) as protecting nothing. Authenticity of a tap must come from something the attacker cannot replay — see **S9**.
+
+**Z10.** Security review asks **"what could a motivated customer do to profit here?"**, not only "does this diff violate Z1–Z9?". Rate limits, cooldowns, and reward thresholds are security-relevant even when no endpoint changes.
 
 ---
 

@@ -19,7 +19,7 @@
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and distances.",
+        "NSLocationWhenInUseUsageDescription": "Flotory uses your location to show nearby venues and to confirm you are at the venue when you collect a stamp.",
         "NSLocalNetworkUsageDescription": "Flotory connects to the development server on your Mac over the local network while you are testing the app.",
         "NSBonjourServices": [
           "_http._tcp.",
@@ -69,7 +69,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Flotory uses your location to show nearby venues and distances."
+          "locationWhenInUsePermission": "Flotory uses your location to show nearby venues and to confirm you are at the venue when you collect a stamp."
         }
       ],
       "expo-web-browser",

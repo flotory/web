@@ -20,6 +20,31 @@ return [
         'debounce_seconds' => (int) env('LOYALTY_NFC_DEBOUNCE_SECONDS', 3),
         'max_stamps_per_window' => (int) env('LOYALTY_NFC_MAX_STAMPS_PER_WINDOW', 10),
         'window_seconds' => (int) env('LOYALTY_NFC_WINDOW_SECONDS', 120),
+
+        /*
+        |----------------------------------------------------------------------
+        | Presence geofence (BUSINESS_RULES S9–S11, Z9)
+        |----------------------------------------------------------------------
+        |
+        | A tag token is public, so presence must be established separately.
+        | The client sends its coordinates and the server checks the distance
+        | to the stand's venue.
+        |
+        | enforce=false is MONITOR MODE: out-of-range and coordinate-less taps
+        | are logged but still awarded. Ship the app that sends coordinates,
+        | watch nfc.geofence.* logs until old clients drain, then set
+        | LOYALTY_NFC_GEOFENCE_ENFORCE=true. While enforce=false the geofence
+        | provides NO protection — an attacker simply omits the coordinates.
+        |
+        */
+        'geofence' => [
+            'enforce' => (bool) env('LOYALTY_NFC_GEOFENCE_ENFORCE', false),
+            'radius_meters' => (int) env('LOYALTY_NFC_GEOFENCE_RADIUS_METERS', 200),
+
+            // Added to the radius to absorb poor indoor GPS, capped so a
+            // client cannot claim absurd accuracy to widen the fence itself.
+            'accuracy_allowance_max_meters' => (int) env('LOYALTY_NFC_GEOFENCE_ACCURACY_ALLOWANCE_METERS', 100),
+        ],
     ],
 
 ];

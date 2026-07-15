@@ -12,6 +12,7 @@ import {
 } from '../lib/nfcReader'
 import { completeNfcStampSuccess } from '../lib/completeNfcStampSuccess'
 import { submitNfcStamp } from '../lib/nfcStamp'
+import { readTapLocation } from '../lib/tapLocation'
 import { useAuth } from '../providers/AuthProvider'
 import { useRealtime } from '../providers/RealtimeProvider'
 
@@ -58,7 +59,8 @@ export function useNfcStampScan() {
         token: `${nfcToken.slice(0, 4)}…${nfcToken.slice(-4)}`,
       })
 
-      const response = await submitNfcStamp(nfcToken, authToken)
+      const location = await readTapLocation()
+      const response = await submitNfcStamp(nfcToken, authToken, location)
       await completeNfcStampSuccess(response, authToken, ingestStamp, router)
       void hapticSuccess()
 

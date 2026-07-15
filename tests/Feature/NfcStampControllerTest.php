@@ -264,4 +264,157 @@ class NfcStampControllerTest extends TestCase
             Carbon::setTestNow();
         }
     }
+
+    /**
+     * BUSINESS_RULES S9 — the tag token is public (Z9), so holding it must not be
+     * enough. This is the replay a customer performs after reading the stand once.
+     */
+    public function test_nfc_stamp_rejects_replayed_token_from_outside_venue(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', true);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue(['latitude' => 53.0101, 'longitude' => 18.6101]);
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        // ~2.5 km away — the customer's sofa, holding a token they read at the counter.
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 53.0301,
+            'longitude' => 18.6301,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('location');
+
+        $this->assertDatabaseCount(StampEvent::class, 0);
+    }
+
+    public function test_nfc_stamp_allows_tap_at_the_venue(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', true);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue(['latitude' => 53.0101, 'longitude' => 18.6101]);
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 53.0102,
+            'longitude' => 18.6102,
+            'accuracy' => 25,
+        ])->assertCreated();
+
+        $this->assertDatabaseCount(StampEvent::class, 1);
+    }
+
+    /** Omitting coordinates must not be a way around the fence. */
+    public function test_nfc_stamp_rejects_missing_coordinates_when_enforced(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', true);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue();
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('location');
+
+        $this->assertDatabaseCount(StampEvent::class, 0);
+    }
+
+    /** A wildly optimistic accuracy claim must not widen the customer's own fence. */
+    public function test_nfc_stamp_caps_the_accuracy_allowance(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', true);
+        config()->set('loyalty.nfc.geofence.radius_meters', 200);
+        config()->set('loyalty.nfc.geofence.accuracy_allowance_max_meters', 100);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue(['latitude' => 53.0101, 'longitude' => 18.6101]);
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 53.0301,
+            'longitude' => 18.6301,
+            'accuracy' => 999_999,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('location');
+    }
+
+    /**
+     * S11 — the geofence can never be skipped for want of a venue location,
+     * because a venue without coordinates is not public and cannot be tapped
+     * at all. This pins that dependency: if publication ever stops requiring a
+     * mapped address, this test tells you the fence lost its footing.
+     */
+    public function test_venue_without_coordinates_cannot_be_tapped_at_all(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', true);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue(['latitude' => null, 'longitude' => null]);
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 53.0101,
+            'longitude' => 18.6101,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('venue');
+
+        $this->assertDatabaseCount(StampEvent::class, 0);
+    }
+
+    /** Monitor mode keeps clients that predate the coordinate payload working. */
+    public function test_nfc_stamp_allows_out_of_range_tap_in_monitor_mode(): void
+    {
+        config()->set('loyalty.nfc.geofence.enforce', false);
+
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue(['latitude' => 53.0101, 'longitude' => 18.6101]);
+        $tag = $this->createNfcTag($venue);
+        $this->createReward($venue, ['required_stamps' => 10]);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 53.0301,
+            'longitude' => 18.6301,
+        ])->assertCreated();
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('token'); // debounce, not the fence
+    }
+
+    public function test_nfc_stamp_rejects_malformed_coordinates(): void
+    {
+        $customerUser = $this->createUser();
+        $venue = $this->createPublishedVenue();
+        $tag = $this->createNfcTag($venue);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->postJson("/api/nfc/t/{$tag->token}/stamp", [
+            'latitude' => 91,
+            'longitude' => 18.6101,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('latitude');
+    }
 }

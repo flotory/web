@@ -9,6 +9,7 @@ import { ApiError } from '../../src/lib/api'
 import { hapticSuccess } from '../../src/lib/haptics'
 import { completeNfcStampSuccess } from '../../src/lib/completeNfcStampSuccess'
 import { fetchNfcTagPreview, submitNfcStamp } from '../../src/lib/nfcStamp'
+import { readTapLocation } from '../../src/lib/tapLocation'
 import { withAppFont } from '../../src/lib/typography'
 import { useAuth } from '../../src/providers/AuthProvider'
 import { useRealtime } from '../../src/providers/RealtimeProvider'
@@ -72,7 +73,8 @@ export default function NfcTapScreen() {
     setError('')
 
     try {
-      const response = await submitNfcStamp(tokenForStamp, authToken)
+      const location = await readTapLocation()
+      const response = await submitNfcStamp(tokenForStamp, authToken, location)
       await completeStampSuccess(response, authToken, ingestStamp, router, t('nfc.stampAdded'))
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : t('nfc.addError'))

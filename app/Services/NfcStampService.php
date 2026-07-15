@@ -7,8 +7,10 @@ use App\Models\StampEvent;
 use App\Models\User;
 use App\Models\Venue;
 use App\Support\AuditLog;
+use App\Support\Geo;
 use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class NfcStampService
@@ -110,7 +112,7 @@ class NfcStampService
     /**
      * @return array<string, mixed>
      */
-    public function awardStampFromTap(User $user, NfcTag $tag): array
+    public function awardStampFromTap(User $user, NfcTag $tag, ?TapLocation $location = null): array
     {
         $venue = Venue::withTrashed()->find($tag->venue_id);
 
@@ -121,6 +123,7 @@ class NfcStampService
         }
 
         $this->publication->assertPublic($venue);
+        $this->guardPresence($user, $tag, $venue, $location);
         $this->guardNfcRateLimits($user, $tag);
 
         $customer = $this->enrollment->findOrJoin($user, $venue, null, 'nfc_auto_join');
@@ -160,6 +163,90 @@ class NfcStampService
                 'venue' => $venue,
             ];
         });
+    }
+
+    /**
+     * BUSINESS_RULES S9–S11: a tag token is public, so the tap must independently
+     * establish that the customer is at the venue.
+     *
+     * When `enforce` is false this only reports — see config/loyalty.php for why
+     * that mode provides no protection and how to graduate out of it.
+     */
+    private function guardPresence(User $user, NfcTag $tag, Venue $venue, ?TapLocation $location): void
+    {
+        $enforce = (bool) config('loyalty.nfc.geofence.enforce', false);
+
+        $context = [
+            'user_id' => $user->id,
+            'venue_id' => $venue->id,
+            'nfc_tag_id' => $tag->id,
+            'enforced' => $enforce,
+        ];
+
+        // S11 — assertPublic() guarantees coordinates, so this is unreachable today.
+        // It fails closed on purpose: if isPublic ever stops requiring a mapped
+        // address, the fence must break loudly rather than wave every tap through.
+        if ($venue->latitude === null || $venue->longitude === null) {
+            Log::error('nfc.geofence.venue_missing_coordinates', $context);
+
+            if ($enforce) {
+                throw ValidationException::withMessages([
+                    'location' => 'This venue is not set up for stamps yet.',
+                ]);
+            }
+
+            return;
+        }
+
+        if ($location === null) {
+            Log::warning('nfc.geofence.missing_coordinates', $context);
+
+            if ($enforce) {
+                throw ValidationException::withMessages([
+                    'location' => 'Turn on location to collect a stamp — we check that you are at the venue.',
+                ]);
+            }
+
+            return;
+        }
+
+        $distance = Geo::distanceMeters(
+            $location->latitude,
+            $location->longitude,
+            (float) $venue->latitude,
+            (float) $venue->longitude,
+        );
+
+        $allowed = (float) config('loyalty.nfc.geofence.radius_meters', 200)
+            + $location->accuracyAllowanceMeters(
+                (int) config('loyalty.nfc.geofence.accuracy_allowance_max_meters', 100),
+            );
+
+        if ($distance <= $allowed) {
+            return;
+        }
+
+        Log::warning('nfc.geofence.out_of_range', $context + [
+            'distance_meters' => round($distance),
+            'allowed_meters' => round($allowed),
+            'accuracy_meters' => $location->accuracyMeters,
+        ]);
+
+        if (! $enforce) {
+            return;
+        }
+
+        AuditLog::loyalty('stamp.nfc_tap.rejected_out_of_range', $venue, $user, 'failure', [
+            'status' => 'failure',
+            'nfc_tag_id' => $tag->id,
+            'venue_id' => $venue->id,
+            'distance_meters' => round($distance),
+            'allowed_meters' => round($allowed),
+        ]);
+
+        throw ValidationException::withMessages([
+            'location' => 'You need to be at the venue to collect a stamp.',
+        ]);
     }
 
     private function guardNfcRateLimits(User $user, NfcTag $tag): void

@@ -6,6 +6,7 @@ Record **why** we built something — agents read these to avoid repeating mista
 |-----|-------|
 | [001](./001-campaign-applies-now-ui.md) | Campaign active UI uses `applies_now` |
 | [002](./002-design-system-unification.md) | Shared tokens + form/button components |
+| [003](./003-nfc-presence-geofence.md) | NFC taps are geofenced — a tag token is not proof of presence |
 
 ## When to add an ADR
 
