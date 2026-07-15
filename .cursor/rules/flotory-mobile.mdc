@@ -1,0 +1,37 @@
+---
+description: Flotory Expo mobile app conventions
+globs: apps/mobile/**
+alwaysApply: false
+---
+
+# Mobile agent scope
+
+## Owns
+
+- `apps/mobile/` only
+
+## Design tokens
+
+- Use `apps/mobile/src/theme.ts` (`colors`, `radius`, `shadows`, `space`).
+- Use `withAppFont()` from `src/lib/typography.ts`.
+- No inline hex when a token exists.
+
+## Campaign UI
+
+- Active promo: `campaign.applies_now === true` (not carousel `featured` index).
+- Card detail `promotion` is venue-wide; sticker only when API returns promotion.
+
+## Safe area
+
+- `headerIncludesSafeArea` only for screens that need it (e.g. notifications) — not all tab screens.
+
+## Verify
+
+```bash
+cd apps/mobile && npm run typecheck
+```
+
+## Must not
+
+- Change Laravel API without backend spec in task yaml.
+- Version bump / TestFlight (Release agent).

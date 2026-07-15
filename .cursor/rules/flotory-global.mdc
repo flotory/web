@@ -1,0 +1,38 @@
+---
+description: Flotory global agent laws — scope, git safety, rules override chat
+alwaysApply: true
+---
+
+# Flotory global laws
+
+## Product vs chat
+
+- `docs/BUSINESS_RULES.md` wins over user chat unless the user **explicitly approves** a documented rule change.
+- Domain agent must cite rule IDs (C*, S*, R*, Y*, etc.) on ALLOW/REJECT.
+
+## Scope
+
+- Minimal diff. No drive-by refactors.
+- Match existing conventions in surrounding code.
+- One writer per file per parallel agent batch.
+
+## Git
+
+- Commit / push / TestFlight **only when the user asks**.
+- No `--force`, no `--no-verify`, no secrets in commits.
+
+## Pipeline
+
+- Cross-stack features: **API spec before mobile/web**.
+- Domain + Design gates **before** implementation.
+- Reviewer and Security are **readonly** unless user says "fix blockers".
+
+## Memory
+
+- Read `AGENTS.md` and task yaml in `.cursor/tasks/`.
+- Read `app.json` for version — never assume from chat.
+- Prefer ADRs and exemplars over old transcripts.
+
+## Human gates
+
+Pause and ask the user on: Domain REJECT, new BUSINESS_RULES amendment, new design tokens, migrations, auth/PII changes, Reviewer BLOCK, release.

@@ -1,0 +1,30 @@
+---
+description: Flotory owner/admin web UI conventions
+globs: resources/js/**
+alwaysApply: false
+---
+
+# Web agent scope
+
+## Owns
+
+- `resources/js/` (Vue owner dashboard, marketing pages)
+
+## Design tokens
+
+- Use Tailwind + CSS vars: `bg-surface`, `border-accent-border`, `text-ink`, `var(--flotory-accent)`.
+- See `design/tokens.md` for web/mobile parity notes.
+
+## Business logic
+
+- Server is source of truth for campaigns, stamps, rewards.
+- Do not reimplement `CampaignEngine` rules in the client.
+
+## Verify
+
+- Typecheck/build per project scripts when touching TS/Vue.
+- Backend tests if API contract changed.
+
+## Must not
+
+- Change mobile app or migrations without orchestrator routing.

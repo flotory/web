@@ -1,0 +1,39 @@
+# Copy to task yaml `retro` section when complete.
+
+retro:
+  completed: true
+  task_id: fix-example
+  date: 2026-07-15
+
+  what_worked:
+    - Domain gate caught rule IDs before mobile work
+    - PHPUnit regression locked backend behavior
+
+  what_failed:
+    - Mobile initially used featured index as active proxy
+
+  proposed_updates:
+    - type: skill
+      file: .cursor/skills/flotory-mobile/SKILL.md
+      change: Document applies_now vs featured (done in v1)
+    - type: adr
+      file: docs/decisions/001-campaign-applies-now-ui.md
+      change: Created
+    - type: golden_task
+      file: docs/agent/golden-tasks.md
+      change: GT-01, GT-02
+    - type: exemplar
+      file: docs/agent/exemplars/campaign-applies-now.md
+      change: Created
+
+  golden_tasks_rerun:
+    - GT-01
+    - GT-02
+    - GT-04
+
+  user_approved_updates: [] # fill after user says yes
+
+  skill_changelog:
+    - skill: flotory-mobile
+      version: v1
+      note: Initial agent workflow bootstrap

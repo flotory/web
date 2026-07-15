@@ -21,6 +21,11 @@ Small, focused docs — one topic per file. Start here.
 | [APP_STORE_SUBMIT.md](./APP_STORE_SUBMIT.md) | iOS App Store ops — review status, resubmit, after approval |
 | [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) | Shipped phases + what's next |
 | [PROJECT_BUSINESS_REFERENCE.md](./PROJECT_BUSINESS_REFERENCE.md) | QA audit — flows, edge cases, pre-release checklist |
+| [agent/README.md](./agent/README.md) | **Agent workflow** — orchestrator, skills, golden tasks, retro |
+
+## Agent development (Cursor)
+
+Start at repo root [AGENTS.md](../AGENTS.md). Skills live in `.cursor/skills/flotory-*/`.
 
 ## Operations
 

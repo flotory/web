@@ -1,0 +1,53 @@
+# Copy to .cursor/tasks/<task-id>.yaml — Orchestrator maintains this file.
+
+id: example-task-id
+title: Short title
+requester: narek
+status: planning # planning | domain | design | spec | building | testing | review | blocked | done | cancelled
+created: 2026-07-15
+
+problem: |
+  What is wrong or what we want.
+
+agents:
+  orchestrator: pending
+  domain: pending
+  design: pending
+  spec: pending
+  backend: skip
+  mobile: skip
+  web: skip
+  tests: pending
+  reviewer: pending
+  security: skip
+  docs: skip
+  release: skip
+
+rule_ids: [] # e.g. [C6, C11, Y3] — from Domain agent
+
+domain_verdict: null # ALLOW | REJECT
+domain_notes: |
+
+design_verdict: null # APPROVE | APPROVE_WITH_TOKENS | NEEDS_NEW_TOKENS
+design_ref: design/campaign-states.md
+
+acceptance:
+  - Observable behavior 1
+  - Observable behavior 2
+
+api_contract:
+  unchanged: true
+  changes: []
+
+file_ownership:
+  backend: []
+  mobile: []
+  web: []
+
+out_of_scope: []
+
+handoffs: {}
+
+retro:
+  completed: false
+  artifact_updates: []
