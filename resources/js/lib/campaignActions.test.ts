@@ -20,13 +20,18 @@ import { toast } from '@/lib/toast'
 
 const campaign: Campaign = {
   id: 7,
-  title: 'Happy Hour',
+  venue_id: 3,
+  template_id: 'happy_hour',
+  name: 'Happy Hour',
   status: 'draft',
-  type: 'multiplier',
-  multiplier: 2,
   starts_at: null,
   ends_at: null,
-  schedule: null,
+  config: { stamp_multiplier: 2 },
+  push_enabled: false,
+  audience_count: 12,
+  activated_at: null,
+  created_at: '2026-01-01T00:00:00.000Z',
+  updated_at: '2026-01-01T00:00:00.000Z',
 }
 
 describe('updateCampaignStatus', () => {
