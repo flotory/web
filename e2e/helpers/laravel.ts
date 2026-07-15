@@ -13,24 +13,47 @@ function lastOutputLine(output: string): string {
   return lines.at(-1) ?? ''
 }
 
+function hostPhpSupportsE2e(): boolean {
+  try {
+    execSync('php -r \'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);\'', {
+      cwd: ROOT,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 function runTinker(php: string): string {
   const statement = php.trim().endsWith(';') ? php.trim() : `${php.trim()};`
-  const command = `php artisan tinker --execute=${JSON.stringify(statement)} --env=e2e --no-ansi`
-  const dockerCommand = `docker compose run --rm --no-deps app ${command}`
+  const tinker = `php artisan tinker --execute=${JSON.stringify(statement)} --env=e2e --no-ansi`
 
-  for (const attempt of [command, dockerCommand]) {
-    try {
-      return execSync(attempt, {
-        cwd: ROOT,
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim()
-    } catch {
-      // Try docker when host PHP is unavailable (common on Mac without PHP 8.4).
+  const commands: string[] = []
+  if (hostPhpSupportsE2e()) {
+    commands.push(tinker)
+  }
+  commands.push(`docker compose run --rm --no-deps -T app ${tinker}`)
+
+  let lastError: unknown
+
+  for (const command of commands) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return execSync(command, {
+          cwd: ROOT,
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim()
+      } catch (error) {
+        lastError = error
+      }
     }
   }
 
-  throw new Error('Could not run artisan tinker for e2e helpers. Use PHP 8.4 locally or Docker.')
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Could not run artisan tinker for e2e helpers. Use PHP 8.4 locally or Docker.')
 }
 
 /** Create a password reset token against the e2e sqlite database. */

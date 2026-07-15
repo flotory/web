@@ -24,6 +24,10 @@ test.describe('Password recovery', () => {
 })
 
 test.describe('Password reset with token', () => {
+  test.beforeEach(() => {
+    setUserPassword(DEMO_OWNER_EMAIL, DEMO_PASSWORD)
+  })
+
   test.afterEach(() => {
     setUserPassword(DEMO_OWNER_EMAIL, DEMO_PASSWORD)
   })
