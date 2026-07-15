@@ -1,0 +1,28 @@
+id: fix-guest-venue-tap-refresh
+title: Guest user venue tap refreshes instead of opening venue rewards
+requester: narek
+status: done
+
+fix_summary: |
+  GuestRouteGuard redirected any route whose segment[1] !== 'venues', including /v/[slug].
+  Guests were bounced back to Venues tab immediately after tap (looked like refresh).
+created: 2026-07-15
+
+problem: |
+  Unregistered user taps a venue — screen refreshes instead of opening venue
+  with rewards / join flow.
+
+rule_ids: [U1, Y1]
+
+domain_verdict: ALLOW
+
+agents:
+  mobile: in_progress
+  backend: pending
+  tests: pending
+  reviewer: pending
+
+acceptance:
+  - Guest (no account / not signed in) can tap venue and see venue detail + rewards
+  - No full-screen refresh loop on tap
+  - Registered user flow unchanged

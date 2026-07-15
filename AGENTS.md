@@ -95,11 +95,18 @@ Permanent memory lives in the repo — not chat:
 
 ## How to start a task
 
-Tell Cursor:
+**Default:** just describe what you want — orchestration runs automatically.
 
-> Use **flotory-orchestrator**. Task: \<your intent\>
+Examples:
+- "Fix guest venue tap refreshing"
+- "Add birthday campaign"
+- "Bump TestFlight"
 
-Orchestrator creates the task yaml, runs Domain → Design → Spec, then delegates.
+Optional explicit trigger still works: `Orchestrate: …`
+
+**Skip pipeline:** say `quick fix only` or `skip orchestrator` for trivial one-line changes.
+
+Read `AGENTS.md` and maintain `.cursor/tasks/<id>.yaml` for every dev task.
 
 ## Getting smarter
 

@@ -72,11 +72,11 @@ export default function DeleteAccountScreen() {
           label={submitting ? 'Deleting...' : 'Delete my account'}
           onPress={() => void handleDelete()}
           disabled={!canSubmit}
-          variant="danger"
+          variant="ghost"
           style={{ marginTop: 8 }}
         />
 
-        <AppButton label="Cancel" onPress={() => router.back()} variant="ghost" />
+        <AppButton label="Cancel" onPress={() => router.back()} variant="danger" />
       </View>
     </ScreenGradientLayout>
   )

@@ -4,7 +4,7 @@ import { Animated, Pressable, Text, View, type ViewStyle } from 'react-native'
 
 import { hapticLightTap } from '../../lib/haptics'
 import { withAppFont } from '../../lib/typography'
-import { colors, motion, radius, shadows } from '../../theme'
+import { colors, motion, radius, shadows, type as typography } from '../../theme'
 
 export type AppButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
@@ -109,7 +109,7 @@ export default function AppButton({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {icon ? <Ionicons name={icon} size={20} color={variantStyles.iconColor} /> : null}
-          <Text style={withAppFont({ color: variantStyles.labelColor, fontWeight: '800', fontSize: 16 })}>{label}</Text>
+          <Text style={withAppFont({ ...typography.buttonLabel, color: variantStyles.labelColor })}>{label}</Text>
         </View>
       </Animated.View>
     </Pressable>

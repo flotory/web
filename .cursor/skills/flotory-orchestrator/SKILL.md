@@ -1,6 +1,6 @@
 ---
 name: flotory-orchestrator
-description: Plans and routes Flotory development tasks across specialist agents. Use when starting a feature, bug fix, or release, or when the user says orchestrate, agent workflow, or multi-layer work.
+description: Default mode for all Flotory development in this repo. Plans and routes tasks across Domain, Design, Backend, Mobile, Web, Tests, and Reviewer agents. Automatically applies to bug fixes, features, audits, and releases unless the user says skip orchestrator or asks a question-only query.
 ---
 
 # Flotory Orchestrator

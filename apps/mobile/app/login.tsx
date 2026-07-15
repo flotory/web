@@ -13,7 +13,7 @@ import { isAppleSignInAvailable, startAppleSignIn } from '../src/lib/appleAuth'
 import { startGoogleBrowserSignIn } from '../src/lib/googleBrowserAuth'
 import { withAppFont } from '../src/lib/typography'
 import { useAuth } from '../src/providers/AuthProvider'
-import { colors } from '../src/theme'
+import { colors, type as typography } from '../src/theme'
 
 function readParam(value: string | string[] | undefined): string | null {
   if (typeof value === 'string' && value.length > 0) {
@@ -190,13 +190,13 @@ export default function LoginScreen() {
           borderWidth: 1,
           borderColor: colors.border,
           borderRadius: 999,
-          paddingVertical: 14,
+          paddingVertical: 13,
           backgroundColor: colors.surface,
           opacity: busy ? 0.6 : 1,
         }}
       >
         <GoogleLogo size={20} />
-        <Text style={withAppFont({ color: colors.ink, fontWeight: '700' })}>
+        <Text style={withAppFont({ ...typography.buttonLabel, color: colors.ink })}>
           {googleLoading ? t('login.connectingGoogle') : t('login.continueWithGoogle')}
         </Text>
       </Pressable>

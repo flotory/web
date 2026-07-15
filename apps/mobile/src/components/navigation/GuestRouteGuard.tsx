@@ -1,9 +1,10 @@
 import { useRouter, useSegments } from 'expo-router'
 import { useEffect } from 'react'
 
+import { guestRouteShouldRedirect } from '../../lib/guestRouteGuard'
 import { useAuth } from '../../providers/AuthProvider'
 
-/** Keeps logged-out users on the guest Venues tab after sign-out or deep links. */
+/** Keeps logged-out users on guest-safe routes; allows venue landing `/v/[slug]`. */
 export default function GuestRouteGuard() {
   const { token, booting } = useAuth()
   const segments = useSegments() as string[]
@@ -12,8 +13,7 @@ export default function GuestRouteGuard() {
   useEffect(() => {
     if (booting || token) return
 
-    const tab = segments[1]
-    if (tab && tab !== 'venues') {
+    if (guestRouteShouldRedirect(segments)) {
       router.replace('/(customer)/venues')
     }
   }, [booting, router, segments, token])

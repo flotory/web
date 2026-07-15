@@ -322,6 +322,11 @@ export const type = {
     color: colors.inkSoft,
     textTransform: 'uppercase' as const,
   },
+  buttonLabel: {
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+    fontWeight: '800' as const,
+  },
 }
 
 export function syncDerivedTheme(): void {

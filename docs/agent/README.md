@@ -21,26 +21,10 @@ How we develop Flotory with orchestrated agents, rules, and continuous learning.
 
 ## Quick start
 
-```
-Use flotory-orchestrator. Task: <your intent>
-```
+**Default:** describe what you want in chat — orchestration runs automatically (`alwaysApply` global rule + `AGENTS.md`).
 
-After merge:
+Optional: `Orchestrate: …` · Skip: `quick fix only` or `skip orchestrator`
 
-```
-Use flotory-retro for task <id>
-```
+After merge: `flotory-retro` for task `<id>`
 
-Before TestFlight:
-
-```
-Run golden tasks GT-01 through GT-05 from docs/agent/golden-tasks.md
-```
-
-Before merge (UI / forms):
-
-```
-bash scripts/check-gt07-forms.sh
-```
-
-See **GT-07** in [golden-tasks.md](./golden-tasks.md).
+Before TestFlight: golden tasks GT-01–GT-05 + GT-07 (`bash scripts/check-gt07-forms.sh`)
