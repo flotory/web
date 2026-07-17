@@ -52,4 +52,35 @@ class DemoShowcaseSeederTest extends TestCase
             ->assertJsonCount(count($monthlyActivity), 'monthly_activity')
             ->assertJsonPath('stats.total_customers', Customer::query()->where('brand_id', $venue->brand_id)->count());
     }
+
+    /**
+     * The showcase dashboard is a sales surface — it must read as growth, not
+     * decline. The seeder used to park recent months near MAX where random
+     * jitter decided the trend sign, so the demo often opened on red down-arrows
+     * (visits ↓20%). Lock in an upward trailing-28-day trend.
+     */
+    public function test_demo_visits_trend_up_not_down(): void
+    {
+        $this->seed();
+
+        $venue = Venue::query()->where('slug', 'demo-cafe')->firstOrFail();
+        $now = now();
+
+        $last28 = Visit::query()
+            ->where('venue_id', $venue->id)
+            ->where('created_at', '>=', $now->copy()->subDays(28))
+            ->count();
+
+        $previous28 = Visit::query()
+            ->where('venue_id', $venue->id)
+            ->where('created_at', '>=', $now->copy()->subDays(56))
+            ->where('created_at', '<', $now->copy()->subDays(28))
+            ->count();
+
+        $this->assertGreaterThan(
+            $previous28,
+            $last28,
+            "Demo visits must trend up: last 28 days ({$last28}) should exceed the previous 28 ({$previous28}).",
+        );
+    }
 }

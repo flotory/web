@@ -319,28 +319,45 @@ class DemoShowcaseSeeder extends Seeder
     private function buildMonthlyVisitPlan(): array
     {
         $plan = [];
+        $months = self::MONTHS_OF_HISTORY;
 
-        for ($offset = self::MONTHS_OF_HISTORY - 1; $offset >= 0; $offset--) {
+        // Daily visit rate climbs steadily so every trailing window out-performs
+        // the one before it — a showcase venue must read as GROWING, never
+        // churning. The old plan parked recent months near MAX where ±12 random
+        // jitter swamped the month-over-month signal, so the dashboard's
+        // 28-day-vs-previous-28-day trend landed negative on an unlucky roll
+        // (the churn story). Here the deterministic ramp dominates a small
+        // jitter, so the trend is reliably positive. Full months stay inside
+        // [MIN, MAX]; guarded by DemoShowcaseSeederTest.
+        $oldestDaily = self::MIN_MONTHLY_VISITS / 30.0 * 1.1;   // ~1.8/day  (~55/month)
+        $newestDaily = self::MAX_MONTHLY_VISITS / 30.0 * 0.95;  // ~4.75/day (~142/month)
+
+        for ($offset = $months - 1; $offset >= 0; $offset--) {
             $monthStart = now()->startOfMonth()->subMonths($offset);
             $monthEnd = $monthStart->copy()->endOfMonth();
             $rangeEnd = $monthEnd->lessThan($this->historyEnd) ? $monthEnd : $this->historyEnd->copy();
-            $ageIndex = self::MONTHS_OF_HISTORY - 1 - $offset;
-            $center = self::MIN_MONTHLY_VISITS
-                + ($ageIndex / max(1, self::MONTHS_OF_HISTORY - 1))
-                * (self::MAX_MONTHLY_VISITS - self::MIN_MONTHLY_VISITS);
+            $isCurrent = $offset === 0;
 
-            $visits = $this->rng->numberBetween(
-                max(self::MIN_MONTHLY_VISITS, (int) round($center) - 12),
-                min(self::MAX_MONTHLY_VISITS, (int) round($center) + 12),
-            );
+            // 0 for the oldest month … 1 for the newest.
+            $ageFraction = ($months - 1 - $offset) / max(1, $months - 1);
+            $dailyRate = $oldestDaily + ($newestDaily - $oldestDaily) * $ageFraction;
 
-            if ($offset === 0) {
-                $dayFraction = now()->day / now()->daysInMonth();
-                $visits = max(
-                    self::MIN_MONTHLY_VISITS,
-                    min(self::MAX_MONTHLY_VISITS, (int) round($visits * max(0.12, $dayFraction))),
-                );
+            // The still-running month reads as the strongest yet, so the most
+            // recent trailing window is clearly the best.
+            if ($isCurrent) {
+                $dailyRate *= 1.15;
             }
+
+            // ±3% organic jitter — far below the month-over-month growth, so it
+            // never inverts the trend.
+            $dailyRate *= $this->rng->numberBetween(97, 103) / 100.0;
+
+            $days = $isCurrent ? max(1, now()->day) : $monthStart->daysInMonth;
+
+            $visits = max(
+                self::MIN_MONTHLY_VISITS,
+                min(self::MAX_MONTHLY_VISITS, (int) round($dailyRate * $days)),
+            );
 
             $plan[] = [
                 'key' => $monthStart->format('Y-m'),
