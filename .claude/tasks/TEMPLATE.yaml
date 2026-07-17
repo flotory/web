@@ -1,4 +1,4 @@
-# Copy to .cursor/tasks/<task-id>.yaml — Orchestrator maintains this file.
+# Copy to .claude/tasks/<task-id>.yaml — Orchestrator maintains this file.
 
 id: example-task-id
 title: Short title

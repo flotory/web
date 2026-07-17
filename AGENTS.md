@@ -2,7 +2,7 @@
 
 **One front door:** you describe intent → **Orchestrator** runs the pipeline → specialists implement → gates verify → you approve ship.
 
-Read this file first. Use skills in `.cursor/skills/flotory-*/SKILL.md` for each role.
+Read this file first. Use skills in `.claude/skills/flotory-*/SKILL.md` for each role.
 
 ## The 12 agents
 
@@ -27,7 +27,7 @@ Read this file first. Use skills in `.cursor/skills/flotory-*/SKILL.md` for each
 
 ```
 You
- → 1 Orchestrator (create .cursor/tasks/<id>.yaml)
+ → 1 Orchestrator (create .claude/tasks/<id>.yaml)
  → 2 Domain (ALLOW / REJECT + rule_ids)     ← blocks illegal product
  → 3 Design (tokens + UX states)            ← blocks off-brand UI
  → 4 Spec (acceptance + API contract)
@@ -58,7 +58,7 @@ Skip agents when N/A (e.g. web on mobile-only copy fix).
 
 ## Task memory
 
-Each feature: `.cursor/tasks/<task-id>.yaml` (copy from `.cursor/tasks/TEMPLATE.yaml`).
+Each feature: `.claude/tasks/<task-id>.yaml` (copy from `.claude/tasks/TEMPLATE.yaml`).
 
 Permanent memory lives in the repo — not chat:
 
@@ -69,7 +69,7 @@ Permanent memory lives in the repo — not chat:
 | `design/tokens.md`, `design/campaign-states.md` | Design constraints |
 | `docs/agent/golden-tasks.md` | Regression exam before TestFlight |
 | `docs/agent/exemplars/` | Merged patterns to copy |
-| `.cursor/skills/flotory-*/` | Agent instructions (version in skill changelog) |
+| `.claude/skills/flotory-*/` | Agent instructions (version in skill changelog) |
 
 ## Layer ownership
 
@@ -106,7 +106,7 @@ Optional explicit trigger still works: `Orchestrate: …`
 
 **Skip pipeline:** say `quick fix only` or `skip orchestrator` for trivial one-line changes.
 
-Read `AGENTS.md` and maintain `.cursor/tasks/<id>.yaml` for every dev task.
+Read `AGENTS.md` and maintain `.claude/tasks/<id>.yaml` for every dev task.
 
 ## Getting smarter
 

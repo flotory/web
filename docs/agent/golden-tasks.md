@@ -128,6 +128,42 @@ npm run test:unit -- apps/mobile/src/lib/guestRouteGuard.test.ts apps/mobile/src
 
 ---
 
+## GT-09 — A stamp requires presence
+
+Run after any change to NFC stamping, the geofence, or its config — **and before
+flipping `LOYALTY_NFC_GEOFENCE_ENFORCE`**.
+
+The parts PHPUnit covers:
+
+```bash
+docker compose exec -T app php artisan test --filter=NfcStampControllerTest
+```
+
+| Check | Expected |
+|-------|----------|
+| Replay from outside the radius | 422, no `StampEvent` row |
+| Tap with no coordinates, enforced | 422 — omitting the field is not a bypass |
+| Absurd claimed `accuracy` | 422 — the allowance is capped |
+| Tap at the venue | 201 |
+| Venue without coordinates | 422 `venue` — publication already blocks it (S11) |
+
+**The part PHPUnit cannot cover — do this on a real device before enforcing:**
+
+| Check | Expected |
+|-------|----------|
+| Real phone at the real venue | Stamp lands. **If this fails, you have broken paying customers**, which costs more than the fraud. |
+| Location permission denied | Clear prompt to enable location — not a generic error |
+| Location slow / indoors | Tap does not hang; 4s timeout then the server decides |
+| Old build (no coordinates) | Still stamps while `enforce=false`; check `nfc.geofence.missing_coordinates` is logged |
+
+Tune the radius from `nfc.geofence.out_of_range` logs, never from intuition —
+indoor GPS is worse than you think, and a false rejection at the counter is the
+expensive failure.
+
+**Rule IDs:** S9, S10, S11, Z9 · **ADR:** [003](../decisions/003-nfc-presence-geofence.md)
+
+---
+
 ## Adding golden tasks
 
 Retro agent proposes new GT-* entries after production bugs. Keep each task **observable** and tie to **rule_ids**.

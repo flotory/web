@@ -10,7 +10,7 @@ description: Readonly PR review for Flotory diffs — scope, rule_ids, design to
 ## Inputs
 
 - `git diff` (or branch diff)
-- `.cursor/tasks/<id>.yaml`
+- `.claude/tasks/<id>.yaml`
 - `rule_ids` from Domain
 - Relevant ADRs in `docs/decisions/`
 

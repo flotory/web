@@ -37,4 +37,7 @@ pnpm-debug.log*
 .DS_Store
 .idea
 .vscode
-.claude/
+
+# Claude Code: agent skills and task memory are committed; local-only settings are not.
+.claude/settings.local.json
+.claude/*.local.json

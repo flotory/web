@@ -25,7 +25,7 @@ Small, focused docs — one topic per file. Start here.
 
 ## Agent development (Cursor)
 
-Start at repo root [AGENTS.md](../AGENTS.md). Skills live in `.cursor/skills/flotory-*/`.
+Start at repo root [AGENTS.md](../AGENTS.md). Skills live in `.claude/skills/flotory-*/`.
 
 ## Operations
 

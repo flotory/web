@@ -14,7 +14,7 @@ retro:
 
   proposed_updates:
     - type: skill
-      file: .cursor/skills/flotory-mobile/SKILL.md
+      file: .claude/skills/flotory-mobile/SKILL.md
       change: Document applies_now vs featured (done in v1)
     - type: adr
       file: docs/decisions/001-campaign-applies-now-ui.md

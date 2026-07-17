@@ -13,9 +13,10 @@ How we develop Flotory with orchestrated agents, rules, and continuous learning.
 
 | Path | Purpose |
 | --- | --- |
-| `.cursor/rules/` | Global + layer rules (auto-applied) |
-| `.cursor/skills/flotory-*/` | Invoke per agent role |
-| `.cursor/tasks/` | Per-feature task yaml |
+| `CLAUDE.md` (root) | Global agent laws (always loaded) |
+| `app/CLAUDE.md`, `apps/mobile/CLAUDE.md`, `resources/js/CLAUDE.md` | Layer rules (auto-load in that dir) |
+| `.claude/skills/flotory-*/` | Invoke per agent role (`/flotory-<role>`) |
+| `.claude/tasks/` | Per-feature task yaml |
 | `design/tokens.md` | Design agent token map |
 | `docs/decisions/` | ADRs |
 

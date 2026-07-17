@@ -10,7 +10,7 @@ You do **not** implement code. You plan, delegate, and merge handoffs.
 ## Startup
 
 1. Read `AGENTS.md`.
-2. Copy `.cursor/tasks/TEMPLATE.yaml` → `.cursor/tasks/<id>.yaml`.
+2. Copy `.claude/tasks/TEMPLATE.yaml` → `.claude/tasks/<id>.yaml`.
 3. Classify task: feature | bugfix | release | docs-only.
 
 ## Phase 0 — Gates (mandatory for features & cross-stack bugs)
