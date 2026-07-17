@@ -183,7 +183,10 @@ const stats = computed(() => {
       tone: 'green' as const,
     },
     {
-      label: 'Repeat rate',
+      // Not a "repeat rate" — this is claimed ÷ unlocked rewards
+      // (VenueAnalyticsService::claimRateBetween). Retention lives in
+      // "Returning guests" above. Label it for what it measures.
+      label: 'Rewards claimed',
       value: `${dashboard.value?.stats.claim_rate_last_28_days ?? 0}%`,
       trend: trends?.repeat_rate?.change_pct ?? null,
       icon: ShieldCheck,
