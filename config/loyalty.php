@@ -18,8 +18,14 @@ return [
 
     'nfc' => [
         'debounce_seconds' => (int) env('LOYALTY_NFC_DEBOUNCE_SECONDS', 3),
-        'max_stamps_per_window' => (int) env('LOYALTY_NFC_MAX_STAMPS_PER_WINDOW', 10),
-        'window_seconds' => (int) env('LOYALTY_NFC_WINDOW_SECONDS', 120),
+
+        // Presence-independent ceiling (BUSINESS_RULES S6, Z10): at most 3 stamps
+        // per user per venue per hour. "One stamp = one visit" means a real
+        // customer never needs more; anything above is farming. This is the
+        // damage-control cap that works even while the geofence is in monitor
+        // mode — it does not prove presence, it just makes replay slow.
+        'max_stamps_per_window' => (int) env('LOYALTY_NFC_MAX_STAMPS_PER_WINDOW', 3),
+        'window_seconds' => (int) env('LOYALTY_NFC_WINDOW_SECONDS', 3600),
 
         /*
         |----------------------------------------------------------------------

@@ -104,6 +104,8 @@ When code, UI, or support docs disagree with this file, **fix the product or upd
 
 **S11.** A tappable venue **always has coordinates**: publication requires a mapped address (`VenuePublicationService::isPublic` → `hasMappedAddress`), and `assertPublic` runs before the geofence. The fence therefore can never be skipped for want of a venue location. **If `isPublic` is ever loosened to drop the coordinate requirement, S10 silently stops protecting anything** — the geofence check fails closed to make that break loudly instead.
 
+**S12.** A customer earns at most **3 stamps per venue per hour** (`loyalty.nfc.max_stamps_per_window` / `window_seconds`). "One stamp = one visit" (S1) means a real customer never approaches this; the cap exists to slow farming and works even while the geofence is in monitor mode (S10). It is **not** a presence check — a determined replayer still earns up to 3/hour remotely until the geofence enforces.
+
 ---
 
 ## Reward rules
