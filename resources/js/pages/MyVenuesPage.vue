@@ -57,6 +57,9 @@ const totals = computed(() => ({
   rewards: activeVenues.value.reduce((sum, venue) => sum + (venue.rewards_count ?? 0), 0),
 }))
 
+// "visits" not "scans" (BUSINESS_RULES S3), and singular when count is 1.
+const pluralize = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`
+
 const filteredVenues = computed(() => {
   let items = [...activeVenues.value]
 
@@ -220,7 +223,7 @@ onMounted(async () => {
     >
       <template #meta>
         <span class="text-sm font-semibold text-ink-soft">
-          {{ totals.venues }} venues · {{ totals.visits }} scans this week · {{ totals.rewards }} active rewards
+          {{ pluralize(totals.venues, 'venue') }} · {{ pluralize(totals.visits, 'visit') }} · {{ pluralize(totals.rewards, 'active reward') }}
         </span>
       </template>
       <template #actions>
