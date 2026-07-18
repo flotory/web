@@ -71,10 +71,13 @@ new design tokens · migrations · auth/PII changes · Reviewer BLOCK · any rel
 **Git:** commit / push / TestFlight only when asked. No `--force`, no
 `--no-verify`, no secrets in commits.
 
-## Skills
+## Skills and agents
 
-Role instructions live in `.claude/skills/flotory-*/SKILL.md` — one per pipeline
-role, invokable as `/flotory-<role>`. Read the relevant one before acting in that
-role. `flotory-security` is worth reading before any change that gates value.
+Builder/support roles are skills in `.claude/skills/flotory-*/SKILL.md`, invokable
+as `/flotory-<role>`. The three gate roles — **Domain, Reviewer, Security** — are
+tool-locked **subagents** in `.claude/agents/`, restricted to Read/Grep/Glob and
+spawned with the Agent tool, so their readonly review is enforced, not requested.
+Read the relevant role before acting in it; `flotory-security` is worth reading
+before any change that gates value.
 Layer-specific conventions load automatically from the nested `CLAUDE.md` in
 `app/`, `apps/mobile/`, and `resources/js/`.

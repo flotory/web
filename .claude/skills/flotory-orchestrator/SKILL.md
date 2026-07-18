@@ -13,11 +13,20 @@ You do **not** implement code. You plan, delegate, and merge handoffs.
 2. Copy `.claude/tasks/TEMPLATE.yaml` → `.claude/tasks/<id>.yaml`.
 3. Classify task: feature | bugfix | release | docs-only.
 
+## The gate agents are tool-locked subagents
+
+**Domain**, **Reviewer**, and **Security** are `.claude/agents/*.md` subagents,
+not skills — spawn them with the Agent tool. They are locked to Read/Grep/Glob,
+so "readonly" is enforced: they physically cannot edit, write, or run commands.
+Because they have no Bash, **include the diff or the list of changed files in the
+spawn prompt** (they read full files with Read for context). Their verdict comes
+back to you; you route any fix to the owning builder.
+
 ## Phase 0 — Gates (mandatory for features & cross-stack bugs)
 
-1. **Domain** (`flotory-domain`) → update task yaml with `domain_verdict`, `rule_ids`.
+1. **Domain** (spawn `flotory-domain` subagent) → record `domain_verdict`, `rule_ids`.
    - If **REJECT**: stop builders; present user options A/B/C (see AGENTS.md).
-2. **Design** (`flotory-design`) → update `design_verdict`, token map for UI work.
+2. **Design** (`flotory-design` skill) → `design_verdict`, token map for UI work.
    - If **NEEDS_NEW_TOKENS**: pause for user approval.
 3. **Spec** — fill `acceptance`, `api_contract`, `file_ownership`, `out_of_scope`.
 
@@ -29,9 +38,10 @@ You do **not** implement code. You plan, delegate, and merge handoffs.
 
 ## Phase 2 — Verify
 
-- **Tests** (`flotory-tests`) — run verify commands; cite `rule_ids` in tests.
-- **Reviewer** (`flotory-reviewer`) — readonly diff review.
-- **Security** (`flotory-security`) — when auth, customer data, or new API endpoints.
+- **Tests** (`flotory-tests` skill) — run verify commands; cite `rule_ids` in tests.
+- **Reviewer** (spawn `flotory-reviewer` subagent) — pass it the diff; tool-locked.
+- **Security** (spawn `flotory-security` subagent) — when anything gates value, not
+  just new endpoints; pass it the diff; tool-locked.
 
 ## Phase 3 — Ship (user must ask)
 

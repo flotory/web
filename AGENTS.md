@@ -6,20 +6,25 @@ Read this file first. Use skills in `.claude/skills/flotory-*/SKILL.md` for each
 
 ## The 12 agents
 
-| # | Agent | Skill | Writes code? |
-|---|--------|-------|--------------|
-| 1 | **Orchestrator** | `flotory-orchestrator` | No |
-| 2 | **Domain** | `flotory-domain` | No (rules gate) |
-| 3 | **Design** | `flotory-design` | No (token gate) |
+| # | Agent | Kind | Writes code? |
+|---|--------|------|--------------|
+| 1 | **Orchestrator** | `flotory-orchestrator` skill | No |
+| 2 | **Domain** | `flotory-domain` **subagent** (Read/Grep/Glob) | No — enforced readonly |
+| 3 | **Design** | `flotory-design` skill | No (token gate) |
 | 4 | **Spec** | (part of orchestrator) | No |
-| 5 | **Backend** | `flotory-backend` | Yes — `app/`, `database/`, `routes/`, `tests/` |
-| 6 | **Mobile** | `flotory-mobile` | Yes — `apps/mobile/` |
-| 7 | **Web** | `flotory-web` | Yes — `resources/js/` |
-| 8 | **Tests** | `flotory-tests` | Yes — tests only |
-| 9 | **Reviewer** | `flotory-reviewer` | **Readonly** |
-| 10 | **Security** | `flotory-security` | **Readonly** |
-| 11 | **Docs** | `flotory-docs` | Docs / ADRs only |
-| 12 | **Release** | `flotory-release` | `app.json`, plist, submit scripts |
+| 5 | **Backend** | `flotory-backend` skill | Yes — `app/`, `database/`, `routes/`, `tests/` |
+| 6 | **Mobile** | `flotory-mobile` skill | Yes — `apps/mobile/` |
+| 7 | **Web** | `flotory-web` skill | Yes — `resources/js/` |
+| 8 | **Tests** | `flotory-tests` skill | Yes — tests only |
+| 9 | **Reviewer** | `flotory-reviewer` **subagent** (Read/Grep/Glob) | No — enforced readonly |
+| 10 | **Security** | `flotory-security` **subagent** (Read/Grep/Glob) | No — enforced readonly |
+| 11 | **Docs** | `flotory-docs` skill | Docs / ADRs only |
+| 12 | **Release** | `flotory-release` skill | `app.json`, plist, submit scripts |
+
+The three gate roles are **tool-locked subagents** in `.claude/agents/` — spawned
+with the Agent tool, restricted to Read/Grep/Glob, so "readonly" is enforced by
+the harness, not requested in prose. The rest are skills in `.claude/skills/`.
+The orchestrator passes the diff to each gate subagent (they have no Bash).
 
 **Learning loop:** `flotory-retro` after every task → update skills, ADRs, golden tasks.
 
