@@ -38,7 +38,11 @@ export default function CustomerTabBar({
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const { startScan, scanning: nfcScanning } = useNfcStampScanAction()
-  const barHeight = tabBarMetrics.height + insets.bottom
+  // Trim the safe-area gap a little so the tabs sit lower, while keeping clearance
+  // for the home indicator. Devices without a safe area (home-button iPhones,
+  // insets.bottom == 0) are left flush as before.
+  const bottomInset = insets.bottom > 0 ? Math.max(insets.bottom - 10, 8) : 0
+  const barHeight = tabBarMetrics.height + bottomInset
   const surfacePath = buildTabBarSurfacePath(width, barHeight, {
     cornerRadius: 18,
     notchWidth: 78,
@@ -65,7 +69,7 @@ export default function CustomerTabBar({
           : { elevation: tabBarSurface.shadow.elevation }),
       }}
     >
-      <View style={{ height: barHeight, paddingBottom: insets.bottom }}>
+      <View style={{ height: barHeight, paddingBottom: bottomInset }}>
         <Svg
           width={width}
           height={barHeight}

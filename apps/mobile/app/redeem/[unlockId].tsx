@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
@@ -153,13 +153,18 @@ export default function RedeemRewardScreen() {
   const stickyBack = <StickyBackHeader onPress={handleBack} topInset={insets.top} />
 
   return (
-    <ScreenGradientLayout
-      scrollable={false}
-      flexContent
-      tabBarInset={false}
-      fixedHeader={stickyBack}
-      paddingTop={0}
-    >
+    <>
+      {/* Disable the iOS left-edge swipe-back on this screen: it starts in the
+          same zone as the slide-to-redeem thumb and steals the gesture, so the
+          slide reads as "go back". Users go back via the sticky header button. */}
+      <Stack.Screen options={{ gestureEnabled: false }} />
+      <ScreenGradientLayout
+        scrollable={false}
+        flexContent
+        tabBarInset={false}
+        fixedHeader={stickyBack}
+        paddingTop={0}
+      >
       <View style={{ flex: 1 }}>
         <ScrollView
           style={{ flex: 1 }}
@@ -252,6 +257,7 @@ export default function RedeemRewardScreen() {
           </View>
         ) : null}
       </View>
-    </ScreenGradientLayout>
+      </ScreenGradientLayout>
+    </>
   )
 }
