@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import type { TFunction } from 'i18next'
 
+import en from '../i18n/locales/en'
 import {
   buildScanLandingQuickFacts,
   categoryEmoji,
@@ -12,34 +14,55 @@ import {
   progressDotSymbols,
 } from './venueScanLanding'
 
+// Resolve real en strings with i18next-style plural + {{var}} interpolation.
+const t = ((key: string, opts?: Record<string, unknown>) => {
+  const [ns, ...rest] = key.split('.')
+  const leaf = rest.join('.')
+  const table = (en as Record<string, Record<string, string>>)[ns] ?? {}
+  const count = opts?.count as number | undefined
+  let str =
+    table[leaf] ??
+    (count != null ? table[`${leaf}_${count === 1 ? 'one' : 'other'}`] : undefined) ??
+    key
+  if (opts) {
+    for (const [k, v] of Object.entries(opts)) {
+      str = str.replace(new RegExp(`{{${k}}}`, 'g'), String(v))
+    }
+  }
+  return str
+}) as unknown as TFunction
+
 describe('venueScanLanding mobile', () => {
   it('formats hero line and progress dots', () => {
-    expect(formatHeroRewardLine({ id: 1, title: 'Free coffee', required_stamps: 10 }, 'Coffee Lab')).toBe('Free coffee')
-    expect(formatHeroRewardLine(null, 'Coffee Lab')).toBe('Collect stamps at Coffee Lab and unlock rewards.')
-    expect(formatUnlockRequirement(3)).toBe('Unlocks after 3 stamps')
-    expect(formatUnlockRequirement(1)).toBe('Unlocks after 1 stamp')
+    expect(formatHeroRewardLine({ id: 1, title: 'Free coffee', required_stamps: 10 }, 'Coffee Lab', t)).toBe('Free coffee')
+    expect(formatHeroRewardLine(null, 'Coffee Lab', t)).toBe('Collect stamps at Coffee Lab and unlock rewards.')
+    expect(formatUnlockRequirement(3, t)).toBe('Unlocks after 3 stamps')
+    expect(formatUnlockRequirement(1, t)).toBe('Unlocks after 1 stamp')
     expect(progressDotSymbols(10, 5)).toContain('●')
-    expect(formatHeroSubtitle('Coffee Lab')).toContain('Coffee Lab')
+    expect(formatHeroSubtitle('Coffee Lab', t)).toContain('Coffee Lab')
   })
 
   it('builds quick facts and social proof labels', () => {
-    expect(buildScanLandingQuickFacts({ firstRewardStamps: 3, milestoneCount: 2 })).toEqual([
+    expect(buildScanLandingQuickFacts({ firstRewardStamps: 3, milestoneCount: 2 }, t)).toEqual([
       { icon: 'stamps', text: 'First reward unlocks after 3 stamps' },
       { icon: 'rewards', text: '2 rewards available' },
       { icon: 'join', text: 'Takes less than 30 seconds to join' },
     ])
     expect(
-      buildScanLandingQuickFacts({
-        firstRewardStamps: 5,
-        milestoneCount: 1,
-        membership: { stamps: 4, target: 5, stampsToNext: 1, pendingRewardsCount: 0 },
-      }),
+      buildScanLandingQuickFacts(
+        {
+          firstRewardStamps: 5,
+          milestoneCount: 1,
+          membership: { stamps: 4, target: 5, stampsToNext: 1, pendingRewardsCount: 0 },
+        },
+        t,
+      ),
     ).toEqual([
       { icon: 'stamps', text: '4 / 5 stamps on your card' },
       { icon: 'stamps', text: '1 stamp to next reward' },
       { icon: 'nfc', text: 'Tap the NFC stand at the counter to collect stamps' },
     ])
-    expect(formatMemberStampCaption({ stamps: 4, target: 5, stampsToNext: 1, pendingRewardsCount: 0 })).toBe(
+    expect(formatMemberStampCaption({ stamps: 4, target: 5, stampsToNext: 1, pendingRewardsCount: 0 }, t)).toBe(
       '1 stamp to your next reward',
     )
     expect(membershipFromWalletCard({ stamps: 7, summary: { stamps: 7, next_reward_stamps: 10, stamps_to_next: 3 } })).toEqual({

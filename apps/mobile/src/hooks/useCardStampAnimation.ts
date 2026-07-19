@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardDetailPayload } from '../lib/customerData'
 import { hapticLightTap, hapticSuccess } from '../lib/haptics'
@@ -44,6 +45,7 @@ export function useCardStampAnimation({
 }) {
   const { latestStamp, clearLatestStamp } = useRealtime()
   const lastAnimatedStampSignature = useRef('')
+  const { t } = useTranslation()
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const [displayStamps, setDisplayStamps] = useState<number | null>(null)
   const [animatingSlots, setAnimatingSlots] = useState<number[]>([])
@@ -111,8 +113,8 @@ export function useCardStampAnimation({
         if (stampPayload.cycle_completed) {
           setRewardUnlockedModal({
             visible: true,
-            title: 'Reward unlocked!',
-            subtitle: `${stampPayload.venue.name} · Ready to redeem`,
+            title: t('toast.rewardUnlocked'),
+            subtitle: `${stampPayload.venue.name} · ${t('toast.readyToRedeem')}`,
           })
           schedule(() => {
             setRewardUnlockedModal((current) => ({ ...current, visible: false }))

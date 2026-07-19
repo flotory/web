@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import type { ComponentProps } from 'react'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { buildScanLandingQuickFacts, type ScanLandingMembership, type ScanLandingQuickFactIcon } from '../../lib/venueScanLanding'
 import { withAppFont } from '../../lib/typography'
@@ -22,7 +23,8 @@ interface VenueScanQuickFactsProps {
 }
 
 export default function VenueScanQuickFacts({ firstRewardStamps, milestoneCount, membership }: VenueScanQuickFactsProps) {
-  const facts = buildScanLandingQuickFacts({ firstRewardStamps, milestoneCount, membership })
+  const { t } = useTranslation()
+  const facts = buildScanLandingQuickFacts({ firstRewardStamps, milestoneCount, membership }, t)
 
   return (
     <View style={{ gap: 12 }}>

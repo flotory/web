@@ -131,7 +131,7 @@ export default function CardDetailScreen() {
   const stamps = stampCount
   const milestones = sortedMilestones
   const promotion = payload?.promotion
-  const bannerCopy = scanBanner ? stampBannerCopy(scanBanner) : null
+  const bannerCopy = scanBanner ? stampBannerCopy(scanBanner, t) : null
 
   return (
     <>

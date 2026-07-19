@@ -20,9 +20,9 @@ describe('format helpers', () => {
 
     expect(formatRelativeTime(yesterday, t)).toBe('Yesterday')
     expect(formatRelativeTime(null, t)).toBe('')
-    expect(formatVenueCategoryLabel('cafe')).toBe('Cafe / Coffee shop')
-    expect(formatVenueCategoryLabel('salon')).toBe('Hair & beauty salon')
-    expect(formatVenueCategoryLabel('other')).toBe('Other')
-    expect(formatVenueCategoryLabel('tea house')).toBe('Cafe / Coffee shop')
+    expect(formatVenueCategoryLabel('cafe', t)).toBe('venues.cat_cafe')
+    expect(formatVenueCategoryLabel('salon', t)).toBe('venues.cat_salon')
+    expect(formatVenueCategoryLabel('other', t)).toBe('venues.cat_other')
+    expect(formatVenueCategoryLabel('tea house', t)).toBe('venues.cat_cafe')
   })
 })

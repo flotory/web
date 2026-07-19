@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 export interface Coordinates {
   latitude: number
   longitude: number
@@ -34,28 +36,28 @@ export function haversineDistanceKm(from: Coordinates, to: Coordinates): number 
   return EARTH_RADIUS_KM * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
 }
 
-export function formatDistanceKm(distanceKm: number): string {
+export function formatDistanceKm(distanceKm: number, t: TFunction): string {
   if (!Number.isFinite(distanceKm) || distanceKm < 0) {
     return ''
   }
 
   if (distanceKm < 1) {
-    return `${Math.max(1, Math.round(distanceKm * 1000))} m away`
+    return t('distance.metersAway', { count: Math.max(1, Math.round(distanceKm * 1000)) })
   }
 
   if (distanceKm < 10) {
-    return `${distanceKm.toFixed(1)} km away`
+    return t('distance.kmAway', { value: distanceKm.toFixed(1) })
   }
 
-  return `${Math.round(distanceKm)} km away`
+  return t('distance.kmAway', { value: Math.round(distanceKm) })
 }
 
-export function distanceLabelForVenue(customer: Coordinates, venue: VenueCoordinates): string | null {
+export function distanceLabelForVenue(customer: Coordinates, venue: VenueCoordinates, t: TFunction): string | null {
   if (!hasVenueCoordinates(venue)) {
     return null
   }
 
-  return formatDistanceKm(haversineDistanceKm(customer, venue))
+  return formatDistanceKm(haversineDistanceKm(customer, venue), t)
 }
 
 export interface DiscoverVenueLocation {
@@ -149,6 +151,7 @@ export type DiscoverVenueDistanceFields = {
 export function sortDiscoverVenuesByNearestLocation<T extends DiscoverVenueLike & { name: string }>(
   venues: T[],
   customer: Coordinates | null,
+  t: TFunction,
 ): Array<T & DiscoverVenueDistanceFields> {
   const enriched = venues.map((venue) => {
     if (!customer) {
@@ -182,7 +185,7 @@ export function sortDiscoverVenuesByNearestLocation<T extends DiscoverVenueLike 
     return {
       ...venue,
       distanceKm: nearest.distanceKm,
-      distanceLabel: formatDistanceKm(nearest.distanceKm),
+      distanceLabel: formatDistanceKm(nearest.distanceKm, t),
       nearestAddress: nearest.location.address ?? venue.address ?? null,
       nearestLocationName: nearest.location.name ?? venue.name,
       nearestLatitude: nearest.location.latitude,
@@ -218,6 +221,7 @@ export function sortDiscoverVenuesByNearestLocation<T extends DiscoverVenueLike 
 export function sortVenuesByDistance<T extends VenueCoordinates & { name: string }>(
   venues: T[],
   customer: Coordinates | null,
+  t: TFunction,
 ): Array<T & { distanceKm: number | null; distanceLabel: string | null }> {
   const enriched = venues.map((venue) => {
     if (!customer || !hasVenueCoordinates(venue)) {
@@ -233,7 +237,7 @@ export function sortVenuesByDistance<T extends VenueCoordinates & { name: string
     return {
       ...venue,
       distanceKm,
-      distanceLabel: formatDistanceKm(distanceKm),
+      distanceLabel: formatDistanceKm(distanceKm, t),
     }
   })
 

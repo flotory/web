@@ -76,7 +76,7 @@ export default function VenuesScreen() {
       return haystack.includes(query)
     })
 
-    return sortDiscoverVenuesByNearestLocation(matches, coords)
+    return sortDiscoverVenuesByNearestLocation(matches, coords, t)
   }, [categoryFilter, coords, search, venues])
 
   function openVenue(venue: DiscoverVenue) {

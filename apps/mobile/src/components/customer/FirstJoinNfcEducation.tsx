@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import {
   firstJoinEducationCopy,
@@ -13,7 +14,8 @@ interface FirstJoinNfcEducationProps {
 }
 
 export default function FirstJoinNfcEducation({ variant = 'qr_join' }: FirstJoinNfcEducationProps) {
-  const copy = firstJoinEducationCopy(variant)
+  const { t } = useTranslation()
+  const copy = firstJoinEducationCopy(variant, t)
 
   return (
     <View

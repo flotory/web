@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Image, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { rewardImageUrl } from '../../lib/media'
 import { venueCategoryIcon } from '../../lib/venueCategories'
@@ -22,6 +23,7 @@ interface VenueScanRewardHeroCardProps {
 }
 
 export default function VenueScanRewardHeroCard({ venueName, category, hero, membership }: VenueScanRewardHeroCardProps) {
+  const { t } = useTranslation()
   const heroImageUri =
     hero && (hero.image_thumb || hero.image) ? rewardImageUrl(hero) ?? undefined : undefined
   const slots = membership?.target ?? (hero ? Math.min(Math.max(hero.required_stamps, 1), 10) : 0)
@@ -61,10 +63,10 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero, mem
 
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={withAppFont({ fontSize: 18, fontWeight: '800', color: colors.ink, lineHeight: 24 })}>
-            {formatHeroRewardLine(hero, venueName)}
+            {formatHeroRewardLine(hero, venueName, t)}
           </Text>
           <Text style={withAppFont({ marginTop: 6, fontSize: 13, lineHeight: 20, color: colors.inkMuted })}>
-            {formatHeroSubtitle(venueName)}
+            {formatHeroSubtitle(venueName, t)}
           </Text>
 
           {hero || membership ? (
@@ -88,13 +90,13 @@ export default function VenueScanRewardHeroCard({ venueName, category, hero, mem
                     {membership.stamps} / {membership.target} stamps
                   </Text>
                   <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
-                    {formatMemberStampCaption(membership)}
+                    {formatMemberStampCaption(membership, t)}
                   </Text>
                 </>
               ) : hero ? (
                 <>
                   <Text style={withAppFont({ marginTop: 10, fontSize: 13, fontWeight: '700', color: colors.ink })}>
-                    {formatUnlockRequirement(hero.required_stamps)}
+                    {formatUnlockRequirement(hero.required_stamps, t)}
                   </Text>
                   <Text style={withAppFont({ marginTop: 4, fontSize: 12, lineHeight: 18, color: colors.inkMuted })}>
                     Join to start at 0 stamps

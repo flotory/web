@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
+import type { TFunction } from 'i18next'
 import {
   collectDiscoverVenueLocations,
   nearestDiscoverVenueLocation,
   sortDiscoverVenuesByNearestLocation,
 } from './distance'
+
+const t = ((k: string) => k) as unknown as TFunction
 
 describe('discover venue distance', () => {
   const customer = { latitude: 41.708, longitude: 44.768 }
@@ -57,11 +60,11 @@ describe('discover venue distance', () => {
       },
     ]
 
-    const sorted = sortDiscoverVenuesByNearestLocation(venues, customer)
+    const sorted = sortDiscoverVenuesByNearestLocation(venues, customer, t)
 
     expect(sorted[0]?.name).toBe('Mio Gelato')
     expect(sorted[0]?.nearestLocationName).toBe('Mio Gelato · Vake')
-    expect(sorted[0]?.distanceLabel).toMatch(/away$/)
+    expect(sorted[0]?.distanceLabel).toMatch(/^distance\.(meters|km)Away$/)
     expect(sorted[1]?.name).toBe('Far Cafe')
   })
 })

@@ -149,7 +149,7 @@ export default function RedeemRewardScreen() {
   }
 
   const venue = item.customer.venue
-  const venueName = venue?.name ?? 'Venue'
+  const venueName = venue?.name ?? t('common.venue')
   const stickyBack = <StickyBackHeader onPress={handleBack} topInset={insets.top} />
 
   return (

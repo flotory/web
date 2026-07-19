@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 export interface VenueHeroReward {
   id: number
   title: string
@@ -26,85 +28,79 @@ export interface ScanLandingQuickFact {
   text: string
 }
 
-export function formatUnlockRequirement(requiredStamps: number): string {
+export function formatUnlockRequirement(requiredStamps: number, t: TFunction): string {
   if (requiredStamps <= 0) {
-    return 'Join to start collecting stamps'
+    return t('scanLanding.joinToStart')
   }
 
-  if (requiredStamps === 1) {
-    return 'Unlocks after 1 stamp'
-  }
-
-  return `Unlocks after ${requiredStamps} stamps`
+  return t('scanLanding.unlocksAfter', { count: requiredStamps })
 }
 
-export function formatHeroRewardLine(hero: VenueHeroReward | null | undefined, venueName: string): string {
+export function formatHeroRewardLine(
+  hero: VenueHeroReward | null | undefined,
+  venueName: string,
+  t: TFunction,
+): string {
   if (!hero) {
-    return `Collect stamps at ${venueName} and unlock rewards.`
+    return t('scanLanding.heroNoReward', { venue: venueName })
   }
 
   if (hero.title.trim() !== '') {
     return hero.title
   }
 
-  return `Collect ${hero.required_stamps} stamps for a reward`
+  return t('scanLanding.heroRewardStamps', { count: hero.required_stamps })
 }
 
-export function formatHeroSubtitle(venueName: string): string {
-  return `Collect stamps when you tap the NFC stand and unlock rewards from ${venueName}.`
+export function formatHeroSubtitle(venueName: string, t: TFunction): string {
+  return t('scanLanding.heroSubtitle', { venue: venueName })
 }
 
-export function formatMemberStampCaption(membership: ScanLandingMembership): string {
+export function formatMemberStampCaption(membership: ScanLandingMembership, t: TFunction): string {
   if (membership.pendingRewardsCount > 0) {
-    return membership.pendingRewardsCount === 1
-      ? 'You have a reward ready in Wallet'
-      : `${membership.pendingRewardsCount} rewards ready in Wallet`
+    return t('scanLanding.rewardReadyInWallet', { count: membership.pendingRewardsCount })
   }
 
   if (membership.stampsToNext <= 0) {
-    return 'You are on your loyalty card'
+    return t('scanLanding.onYourCard')
   }
 
-  if (membership.stampsToNext === 1) {
-    return '1 stamp to your next reward'
-  }
-
-  return `${membership.stampsToNext} stamps to your next reward`
+  return t('scanLanding.stampsToNext', { count: membership.stampsToNext })
 }
 
-export function buildScanLandingQuickFacts(options: {
-  firstRewardStamps?: number | null
-  milestoneCount: number
-  membership?: ScanLandingMembership | null
-}): ScanLandingQuickFact[] {
+export function buildScanLandingQuickFacts(
+  options: {
+    firstRewardStamps?: number | null
+    milestoneCount: number
+    membership?: ScanLandingMembership | null
+  },
+  t: TFunction,
+): ScanLandingQuickFact[] {
   const { firstRewardStamps, milestoneCount, membership } = options
 
   if (membership) {
     const facts: ScanLandingQuickFact[] = [
       {
         icon: 'stamps',
-        text: `${membership.stamps} / ${membership.target} stamps on your card`,
+        text: t('scanLanding.stampsOnCard', { stamps: membership.stamps, target: membership.target }),
       },
     ]
 
     if (membership.pendingRewardsCount > 0) {
       facts.push({
         icon: 'rewards',
-        text:
-          membership.pendingRewardsCount === 1
-            ? 'Reward ready — open your card to redeem'
-            : `${membership.pendingRewardsCount} rewards ready — open your card`,
+        text: t('scanLanding.rewardReadyOpen', { count: membership.pendingRewardsCount }),
       })
     } else if (membership.stampsToNext > 0) {
       facts.push({
         icon: 'stamps',
-        text: membership.stampsToNext === 1 ? '1 stamp to next reward' : `${membership.stampsToNext} stamps to next reward`,
+        text: t('scanLanding.stampsToNextShort', { count: membership.stampsToNext }),
       })
     }
 
     facts.push({
       icon: 'nfc',
-      text: 'Tap the NFC stand at the counter to collect stamps',
+      text: t('scanLanding.tapNfcToCollect'),
     })
 
     return facts
@@ -115,20 +111,20 @@ export function buildScanLandingQuickFacts(options: {
   if (firstRewardStamps && firstRewardStamps > 0) {
     facts.push({
       icon: 'stamps',
-      text: formatUnlockRequirement(firstRewardStamps).replace(/^Unlocks/, 'First reward unlocks'),
+      text: t('scanLanding.firstRewardUnlocks', { count: firstRewardStamps }),
     })
   }
 
   if (milestoneCount > 0) {
     facts.push({
       icon: 'rewards',
-      text: milestoneCount === 1 ? '1 reward available' : `${milestoneCount} rewards available`,
+      text: t('scanLanding.rewardsAvailable', { count: milestoneCount }),
     })
   }
 
   facts.push({
     icon: 'join',
-    text: 'Takes less than 30 seconds to join',
+    text: t('scanLanding.quickJoin'),
   })
 
   return facts

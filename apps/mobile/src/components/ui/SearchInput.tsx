@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import AppTextInput from './AppTextInput'
 import { colors, radius, shadows } from '../../theme'
@@ -15,10 +16,11 @@ interface SearchInputProps {
 export default function SearchInput({
   value,
   onChange,
-  placeholder = 'Search',
+  placeholder,
   onClear,
   testID,
 }: SearchInputProps) {
+  const { t } = useTranslation()
   return (
     <View
       style={{
@@ -38,7 +40,7 @@ export default function SearchInput({
         testID={testID}
         value={value}
         onChangeText={onChange}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('common.search')}
         compact
         style={{ flex: 1, borderWidth: 0, paddingHorizontal: 0, shadowOpacity: 0, elevation: 0 }}
       />
@@ -50,7 +52,7 @@ export default function SearchInput({
           }}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Clear search"
+          accessibilityLabel={t('common.clearSearch')}
         >
           <Ionicons name="close-circle" size={20} color={colors.inkSoft} />
         </Pressable>

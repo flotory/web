@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { colors, space } from '../../theme'
 
@@ -9,11 +10,12 @@ interface StickyBackButtonProps {
 }
 
 export default function StickyBackButton({ onPress, style }: StickyBackButtonProps) {
+  const { t } = useTranslation()
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Go back"
+      accessibilityLabel={t('common.goBack')}
       style={[
         {
           width: 40,

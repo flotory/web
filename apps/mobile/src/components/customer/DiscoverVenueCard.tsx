@@ -54,7 +54,7 @@ export default function DiscoverVenueCard({
 }: DiscoverVenueCardProps) {
   const { t } = useTranslation()
   const cover = venueCoverUrl(venue)
-  const categoryLabel = formatVenueCategoryLabel(venue.category)
+  const categoryLabel = formatVenueCategoryLabel(venue.category, t)
   const hasMultipleLocations = (venue.branches_count ?? 0) > 1
   const nearestBranchLabel =
     hasMultipleLocations
@@ -63,7 +63,7 @@ export default function DiscoverVenueCard({
       ? nearestLocationName
       : null
   const locationLabel = nearestBranchLabel
-    ?? (hasMultipleLocations ? `${venue.branches_count} locations` : categoryLabel)
+    ?? (hasMultipleLocations ? t('venues.locationsCount', { count: venue.branches_count }) : categoryLabel)
   const joined = (venue.joined_count ?? 0) > 0
   const status = discoverVenuePill(joined, venue.rewards_count, card, t)
   const pillStyle = PILL_STYLES[status.tone]
@@ -184,7 +184,7 @@ export default function DiscoverVenueCard({
             }}
           >
             <Ionicons name="checkmark-circle" size={13} color={colors.accent} />
-            <Text style={withAppFont({ fontSize: 11, fontWeight: '800', color: colors.primaryText })}>Joined</Text>
+            <Text style={withAppFont({ fontSize: 11, fontWeight: '800', color: colors.primaryText })}>{t('venues.joined')}</Text>
           </View>
         ) : null}
       </View>
@@ -243,7 +243,7 @@ export default function DiscoverVenueCard({
               })}
             >
               <Ionicons name="map-outline" size={14} color={colors.ink} />
-              <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.ink })}>Directions</Text>
+              <Text style={withAppFont({ fontSize: 12, fontWeight: '700', color: colors.ink })}>{t('venues.directions')}</Text>
             </Pressable>
           ) : null}
 

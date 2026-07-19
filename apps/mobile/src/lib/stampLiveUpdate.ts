@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { RewardRef } from '../types/loyalty'
 import type { StampAddedPayload } from '../types/realtime'
 import type { NfcStampResponse } from './nfcStamp'
@@ -111,20 +113,20 @@ export function rewardEarnedThisScan(
   return null
 }
 
-export function stampBannerCopy(payload: StampAddedPayload): { title: string; subtitle: string } {
-  const venue = payload.venue.name ?? 'your venue'
+export function stampBannerCopy(payload: StampAddedPayload, t: TFunction): { title: string; subtitle: string } {
+  const venue = payload.venue.name ?? t('common.venue')
   const count = payload.added_stamps
 
   if (payload.cycle_completed) {
     const singleRewardJourney = payload.milestones.length === 1
     return {
-      title: singleRewardJourney ? 'Reward unlocked!' : 'Cycle complete!',
+      title: singleRewardJourney ? t('toast.rewardUnlocked') : t('toast.cycleComplete'),
       subtitle: venue,
     }
   }
 
   return {
-    title: count === 1 ? '+1 stamp added' : `+${count} stamps added`,
+    title: t('toast.stampAdded', { count }),
     subtitle: venue,
   }
 }

@@ -42,7 +42,7 @@ export default function CardDetailHeader({
   const { t } = useTranslation()
   const cover = venueCoverUrl(venue ?? undefined)
   const logo = venueLogoUrl(venue ?? undefined)
-  const categoryLabel = venue?.category ? formatVenueCategoryLabel(venue.category) : null
+  const categoryLabel = venue?.category ? formatVenueCategoryLabel(venue.category, t) : null
   const mapTarget = {
     latitude: venue?.latitude,
     longitude: venue?.longitude,

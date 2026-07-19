@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import type { TFunction } from 'i18next'
 import type { Ionicons } from '@expo/vector-icons'
 
 type IoniconName = ComponentProps<typeof Ionicons>['name']
@@ -52,10 +53,11 @@ export function normalizeVenueCategory(category: string | null | undefined): Ven
   return 'cafe'
 }
 
-export function formatVenueCategoryLabel(category: string | null | undefined): string {
-  if (!category) return 'Loyalty'
+export function formatVenueCategoryLabel(category: string | null | undefined, t: TFunction): string {
+  if (!category) return t('venues.categoryLoyalty')
   const normalized = normalizeVenueCategory(category)
-  return VENUE_CATEGORIES.find((item) => item.id === normalized)?.label ?? 'Venue'
+  const found = VENUE_CATEGORIES.find((item) => item.id === normalized)
+  return found ? t(`venues.cat_${found.id}`) : t('common.venue')
 }
 
 export function venueCategoryAssetGroup(category: string | null | undefined): VenueCategoryAssetGroup {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { TFunction } from 'i18next'
 
 import type { NfcStampResponse } from './nfcStamp'
 import {
@@ -137,9 +138,14 @@ describe('rewardEarnedThisScan', () => {
   })
 })
 
+const t = ((key: string, opts?: { count?: number }) => {
+  if (key === 'toast.stampAdded') return opts?.count === 1 ? '+1 stamp added' : `+${opts?.count} stamps added`
+  return { 'toast.cycleComplete': 'Cycle complete!', 'toast.rewardUnlocked': 'Reward unlocked!', 'common.venue': 'Venue' }[key] ?? key
+}) as unknown as TFunction
+
 describe('stampBannerCopy', () => {
   it('uses singular and plural titles and cycle-complete copy', () => {
-    expect(stampBannerCopy(nfcResponseToStampPayload(nfcResponse()))).toEqual({
+    expect(stampBannerCopy(nfcResponseToStampPayload(nfcResponse()), t)).toEqual({
       title: '+1 stamp added',
       subtitle: 'Demo Cafe',
     })
@@ -153,6 +159,7 @@ describe('stampBannerCopy', () => {
             message: 'Cycle complete!',
           }),
         ),
+        t,
       ),
     ).toEqual({
       title: 'Cycle complete!',
