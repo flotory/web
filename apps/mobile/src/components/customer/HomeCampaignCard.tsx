@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Image, Platform, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { campaignEndsLabel } from '../../lib/campaignEndsLabel'
 import { venueCoverUrl } from '../../lib/media'
 import { withAppFont } from '../../lib/typography'
@@ -110,6 +111,7 @@ function EndsRow({ label, tone }: { label: string; tone: 'gold' | 'muted' }) {
 }
 
 export default function HomeCampaignCard({ campaign, width, featured, venue }: HomeCampaignCardProps) {
+  const { t } = useTranslation()
   const endsLabel = campaignEndsLabel(campaign.days_left)
   const cover = venueCoverUrl(venue ?? { name: campaign.venue_name })
   const title = campaign.name?.trim() || campaign.headline
@@ -136,7 +138,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'space-between' }}>
               <View>
                 <CampaignBadge
-                  label="Active"
+                  label={t('home.campaignActive')}
                   icon="flash"
                   backgroundColor="transparent"
                   textColor={colors.accent}
@@ -234,7 +236,7 @@ export default function HomeCampaignCard({ campaign, width, featured, venue }: H
       }}
     >
       <CampaignBadge
-        label="Scheduled"
+        label={t('home.campaignScheduled')}
         icon="time-outline"
         backgroundColor={colors.lavender}
         textColor={colors.ink}

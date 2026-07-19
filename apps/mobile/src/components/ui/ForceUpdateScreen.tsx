@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import StateCard from './StateCard'
 import ScreenGradientLayout from './ScreenGradientLayout'
@@ -17,19 +18,21 @@ export default function ForceUpdateScreen({
   requiredVersion,
   updateUrl,
 }: ForceUpdateScreenProps) {
+  const { t } = useTranslation()
+
   return (
     <ScreenGradientLayout scrollable={false} tabBarInset={false}>
       <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: space.screenX }}>
         <StateCard
           icon="cloud-download-outline"
-          title="Update Flotory"
+          title={t('forceUpdate.title')}
           message={
             requiredVersion
-              ? `This version (${currentVersion}) is no longer supported. Install ${requiredVersion} or newer to keep collecting stamps.`
-              : 'A newer version of Flotory is required to continue.'
+              ? t('forceUpdate.messageWithVersion', { current: currentVersion, required: requiredVersion })
+              : t('forceUpdate.message')
           }
           primaryAction={{
-            label: 'Get the update',
+            label: t('forceUpdate.action'),
             onPress: () => {
               void Linking.openURL(updateUrl)
             },
@@ -44,7 +47,7 @@ export default function ForceUpdateScreen({
             color: colors.inkMuted,
           })}
         >
-          After updating, reopen Flotory from your home screen.
+          {t('forceUpdate.footer')}
         </Text>
       </View>
     </ScreenGradientLayout>

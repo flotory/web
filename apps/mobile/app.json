@@ -14,7 +14,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.flotory.mobile",
-      "buildNumber": "29",
+      "buildNumber": "30",
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "Flotory",

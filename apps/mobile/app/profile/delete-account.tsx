@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import AppButton from '../../src/components/ui/AppButton'
 import FormField from '../../src/components/ui/FormField'
@@ -11,6 +12,7 @@ import { colors, space, type as typography } from '../../src/theme'
 import { withAppFont } from '../../src/lib/typography'
 
 export default function DeleteAccountScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const { user, deleteAccount } = useAuth()
   const [confirmation, setConfirmation] = useState('')
@@ -31,7 +33,7 @@ export default function DeleteAccountScreen() {
       })
       router.replace('/login')
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Could not delete account.')
+      setError(exception instanceof ApiError ? exception.message : t('deleteAccount.error'))
     } finally {
       setSubmitting(false)
     }
@@ -41,14 +43,14 @@ export default function DeleteAccountScreen() {
 
   return (
     <ScreenGradientLayout scrollable contentContainerStyle={{ padding: space.screenX, paddingTop: 24 }}>
-      <Text style={typography.hero}>Delete account</Text>
+      <Text style={typography.hero}>{t('deleteAccount.title')}</Text>
       <Text style={{ ...typography.body, marginTop: 10 }}>
-        This permanently deletes your Flotory account, loyalty cards, stamps, and reward history. This cannot be undone.
+        {t('deleteAccount.warning')}
       </Text>
 
       <View style={{ marginTop: space.sectionY, gap: 12 }}>
         <FormField
-          label="Type DELETE to confirm"
+          label={t('deleteAccount.confirmLabel')}
           value={confirmation}
           onChangeText={setConfirmation}
           autoCapitalize="characters"
@@ -58,25 +60,25 @@ export default function DeleteAccountScreen() {
 
         {needsPassword ? (
           <FormField
-            label="Password"
+            label={t('deleteAccount.password')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="Your password"
+            placeholder={t('deleteAccount.passwordPlaceholder')}
           />
         ) : null}
 
         {error ? <Text style={withAppFont({ color: colors.danger, fontWeight: '600' })}>{error}</Text> : null}
 
         <AppButton
-          label={submitting ? 'Deleting...' : 'Delete my account'}
+          label={submitting ? t('deleteAccount.deleting') : t('deleteAccount.confirm')}
           onPress={() => void handleDelete()}
           disabled={!canSubmit}
           variant="ghost"
           style={{ marginTop: 8 }}
         />
 
-        <AppButton label="Cancel" onPress={() => router.back()} variant="danger" />
+        <AppButton label={t('deleteAccount.cancel')} onPress={() => router.back()} variant="danger" />
       </View>
     </ScreenGradientLayout>
   )

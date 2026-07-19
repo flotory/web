@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import SearchInput from '../ui/SearchInput'
 
 interface DiscoverSearchBarProps {
@@ -7,12 +9,14 @@ interface DiscoverSearchBarProps {
 }
 
 export default function DiscoverSearchBar({ value, onChange, onClear }: DiscoverSearchBarProps) {
+  const { t } = useTranslation()
+
   return (
     <SearchInput
       value={value}
       onChange={onChange}
       onClear={onClear}
-      placeholder="Search venues or cuisines"
+      placeholder={t('venues.searchPlaceholder')}
     />
   )
 }

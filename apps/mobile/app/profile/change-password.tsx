@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 
 import FormField from '../../src/components/ui/FormField'
 import PrimaryButton from '../../src/components/ui/PrimaryButton'
@@ -14,6 +15,7 @@ import { useAuth } from '../../src/providers/AuthProvider'
 import { colors, radius, space, type as typography } from '../../src/theme'
 
 export default function ChangePasswordScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { token, user } = useAuth()
@@ -34,12 +36,12 @@ export default function ChangePasswordScreen() {
 
   async function handleSubmit() {
     if (!token) {
-      setError('Sign in required.')
+      setError(t('changePassword.signInRequired'))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.')
+      setError(t('changePassword.mismatch'))
       return
     }
 
@@ -53,12 +55,12 @@ export default function ChangePasswordScreen() {
         password: newPassword,
         password_confirmation: confirmPassword,
       })
-      setSuccess('Password updated.')
+      setSuccess(t('changePassword.success'))
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (exception) {
-      setError(exception instanceof ApiError ? exception.message : 'Could not update password.')
+      setError(exception instanceof ApiError ? exception.message : t('changePassword.updateError'))
     } finally {
       setSubmitting(false)
     }
@@ -79,10 +81,10 @@ export default function ChangePasswordScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View>
-          <Text style={typography.label}>Security</Text>
-          <Text style={{ ...typography.hero, marginTop: 6, fontSize: 28, lineHeight: 34 }}>Change password</Text>
+          <Text style={typography.label}>{t('changePassword.eyebrow')}</Text>
+          <Text style={{ ...typography.hero, marginTop: 6, fontSize: 28, lineHeight: 34 }}>{t('changePassword.title')}</Text>
           <Text style={{ ...typography.body, marginTop: 8, fontSize: 15 }}>
-            {user?.email ? `Signed in as ${user.email}` : 'Update your account password.'}
+            {user?.email ? t('changePassword.signedInAs', { email: user.email }) : t('changePassword.subtitle')}
           </Text>
         </View>
 
@@ -104,7 +106,7 @@ export default function ChangePasswordScreen() {
 
         <View style={{ gap: 16 }}>
           <FormField
-            label="Current password"
+            label={t('changePassword.currentPassword')}
             value={currentPassword}
             onChangeText={setCurrentPassword}
             secureTextEntry
@@ -113,7 +115,7 @@ export default function ChangePasswordScreen() {
             autoComplete="current-password"
           />
           <FormField
-            label="New password"
+            label={t('changePassword.newPassword')}
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry
@@ -122,7 +124,7 @@ export default function ChangePasswordScreen() {
             autoComplete="password-new"
           />
           <FormField
-            label="Confirm new password"
+            label={t('changePassword.confirmPassword')}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -133,7 +135,7 @@ export default function ChangePasswordScreen() {
           />
 
           <PrimaryButton
-            label={submitting ? 'Saving…' : 'Update password'}
+            label={submitting ? t('changePassword.saving') : t('changePassword.save')}
             onPress={() => void handleSubmit()}
             disabled={submitting || !currentPassword || !newPassword || !confirmPassword}
           />

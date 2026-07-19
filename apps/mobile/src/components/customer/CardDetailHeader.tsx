@@ -225,7 +225,7 @@ export default function CardDetailHeader({
         <View style={{ padding: space.cardPad }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <HomeSectionHeader title={goalTitle} label="Your progress" />
+              <HomeSectionHeader title={goalTitle} label={t('card.yourProgress')} />
             </View>
             <View
               style={{

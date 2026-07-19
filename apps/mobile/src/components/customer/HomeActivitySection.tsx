@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import type { ActivityRow } from '../../types/loyalty'
 import { withAppFont } from '../../lib/typography'
@@ -10,13 +11,15 @@ interface HomeActivitySectionProps {
 }
 
 export default function HomeActivitySection({ activity }: HomeActivitySectionProps) {
+  const { t } = useTranslation()
+
   if (activity.length === 0) {
     return null
   }
 
   return (
     <View style={{ paddingHorizontal: space.screenX }}>
-      <HomeSectionHeader title="Recent activity" label="Your wallet" />
+      <HomeSectionHeader title={t('home.recentActivity')} label={t('home.yourWallet')} />
       <View style={{ marginTop: 14, gap: 12 }}>
         {activity.map((row) => (
           <View key={row.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>

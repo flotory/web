@@ -5,7 +5,7 @@ import hy from './locales/hy'
 
 describe('mobile localization catalogs', () => {
   it('includes Armenian strings for priority customer flows', () => {
-    expect(hy.tabs.wallet).toBe('Դրամապանակ')
+    expect(hy.tabs.wallet).toBe('Քարտեր')
     expect(hy.home.startFirstCard).toContain('լոյալության')
     expect(hy.redeem.slideToRedeem).toContain('Սահեցրեք')
     expect(hy.join.startCollecting).toContain('պարգևներ')

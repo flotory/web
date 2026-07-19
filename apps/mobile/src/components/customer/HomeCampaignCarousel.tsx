@@ -1,6 +1,7 @@
 import { Link } from 'expo-router'
 import { useMemo } from 'react'
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import HomeCampaignCard from './HomeCampaignCard'
 import HomeSectionHeader from '../ui/HomeSectionHeader'
@@ -22,6 +23,7 @@ function campaignCardWidth(contentWidth: number, featured: boolean): number {
 }
 
 export default function HomeCampaignCarousel({ campaigns, venueById }: HomeCampaignCarouselProps) {
+  const { t } = useTranslation()
   const { width: screenWidth } = useWindowDimensions()
 
   const contentWidth = screenWidth - space.screenX * 2
@@ -45,7 +47,7 @@ export default function HomeCampaignCarousel({ campaigns, venueById }: HomeCampa
     <View style={{ minHeight: featuredHeight }}>
       <View style={{ paddingHorizontal: space.screenX }}>
         <HomeSectionHeader
-          title="Active campaigns"
+          title={t('home.activeCampaigns')}
           trailing={campaigns.length > 1 ? 'Swipe' : undefined}
         />
       </View>
