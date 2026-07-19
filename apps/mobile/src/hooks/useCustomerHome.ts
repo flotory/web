@@ -1,5 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { HomeRewardSlide } from '../components/customer/HomeRewardCarousel'
 import { buildHomeActivity, fetchCustomerCardsList } from '../lib/customerData'
@@ -19,6 +20,7 @@ const PULL_REFRESH_TIMEOUT_MS = 10_000
 const PULL_REFRESH_MIN_VISIBLE_MS = 550
 
 export function useCustomerHome() {
+  const { t } = useTranslation()
   const router = useRouter()
   const { role, user, token } = useAuth()
   const { latestStamp } = useRealtime()
@@ -188,12 +190,12 @@ export function useCustomerHome() {
   const headerRewardTitle = useMemo(() => {
     if (primaryReady) return primaryReady.reward.title
     const nextCards = [...cards].filter((card) => card.venue).sort((a, b) => (a.summary?.stamps_to_next ?? 999) - (b.summary?.stamps_to_next ?? 999))
-    return nextCards[0]?.summary?.next_reward_title ?? 'your next reward'
-  }, [cards, primaryReady])
+    return nextCards[0]?.summary?.next_reward_title ?? t('home.nextReward')
+  }, [cards, primaryReady, t])
 
   const activity = useMemo(
-    () => buildHomeActivity(cards, readyItems),
-    [cards, readyItems],
+    () => buildHomeActivity(cards, readyItems, t),
+    [cards, readyItems, t],
   )
 
   useEffect(() => {

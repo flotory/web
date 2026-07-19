@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import type { TFunction } from 'i18next'
 
 import { formatRelativeTime, formatVenueCategoryLabel, greetingForHour } from './format'
+
+const t = ((key: string) =>
+  ({ 'activity.today': 'Today', 'activity.yesterday': 'Yesterday', 'activity.lastWeek': 'Last week' })[key] ??
+  key) as unknown as TFunction
 
 describe('format helpers', () => {
   it('greets based on the hour', () => {
@@ -13,8 +18,8 @@ describe('format helpers', () => {
     const now = Date.now()
     const yesterday = new Date(now - 24 * 60 * 60 * 1000).toISOString()
 
-    expect(formatRelativeTime(yesterday)).toBe('Yesterday')
-    expect(formatRelativeTime(null)).toBe('')
+    expect(formatRelativeTime(yesterday, t)).toBe('Yesterday')
+    expect(formatRelativeTime(null, t)).toBe('')
     expect(formatVenueCategoryLabel('cafe')).toBe('Cafe / Coffee shop')
     expect(formatVenueCategoryLabel('salon')).toBe('Hair & beauty salon')
     expect(formatVenueCategoryLabel('other')).toBe('Other')

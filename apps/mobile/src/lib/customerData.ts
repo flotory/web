@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { ActivityRow, ApiClaimedReward, RewardJourney, RewardRef, RewardWalletItem, WalletCard } from '../types/loyalty'
 import { apiRequest } from './api'
 import { formatRelativeTime } from './format'
@@ -77,16 +79,20 @@ export function readCachedCardDetail(token: string, venueId: string): CardDetail
   return readCache<CardDetailPayload>(`${cacheKey('customer', token)}:card:${venueId}`)
 }
 
-export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletItem[]): ActivityRow[] {
+export function buildHomeActivity(
+  cards: WalletCard[],
+  readyItems: RewardWalletItem[],
+  t: TFunction,
+): ActivityRow[] {
   const rows: ActivityRow[] = []
 
   for (const card of cards.slice(0, 3)) {
-    const venueName = card.venue?.name ?? 'Venue'
+    const venueName = card.venue?.name ?? t('common.venue')
     for (const visit of card.recent_visits ?? []) {
       rows.push({
         id: `visit-${visit.id}`,
-        label: `Stamp added · ${venueName}`,
-        time: formatRelativeTime(visit.created_at),
+        label: t('activity.stampAdded', { venue: venueName }),
+        time: formatRelativeTime(visit.created_at, t),
       })
     }
   }
@@ -94,8 +100,8 @@ export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletI
   for (const item of readyItems.slice(0, 2)) {
     rows.push({
       id: `unlock-${item.unlock_id}`,
-      label: `Reward unlocked · ${item.customer.venue?.name ?? 'Venue'}`,
-      time: 'Today',
+      label: t('activity.rewardUnlocked', { venue: item.customer.venue?.name ?? t('common.venue') }),
+      time: t('activity.today'),
     })
   }
 
@@ -103,8 +109,8 @@ export function buildHomeActivity(cards: WalletCard[], readyItems: RewardWalletI
     if (card.created_at) {
       rows.push({
         id: `join-${card.id}`,
-        label: `Joined ${card.venue?.name ?? 'venue'}`,
-        time: formatRelativeTime(card.created_at),
+        label: t('activity.joined', { venue: card.venue?.name ?? t('common.venue') }),
+        time: formatRelativeTime(card.created_at, t),
       })
     }
   }

@@ -48,7 +48,7 @@ export default function HomeCampaignCarousel({ campaigns, venueById }: HomeCampa
       <View style={{ paddingHorizontal: space.screenX }}>
         <HomeSectionHeader
           title={t('home.activeCampaigns')}
-          trailing={campaigns.length > 1 ? 'Swipe' : undefined}
+          trailing={campaigns.length > 1 ? t('home.swipe') : undefined}
         />
       </View>
       <ScrollView

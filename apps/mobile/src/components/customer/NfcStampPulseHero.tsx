@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, Easing, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 
 import { usePulseRing } from '../../hooks/usePulseRing'
 import { withAppFont } from '../../lib/typography'
@@ -8,18 +10,18 @@ import { colors, motion, shadows } from '../../theme'
 
 export type NfcStampScanPhase = 'idle' | 'checking' | 'scanning' | 'stamping' | 'error' | 'unsupported'
 
-function phaseHint(phase: NfcStampScanPhase): string {
+function phaseHint(phase: NfcStampScanPhase, t: TFunction): string {
   switch (phase) {
     case 'checking':
-      return 'Starting NFC…'
+      return t('nfc.starting')
     case 'scanning':
-      return 'Hold near the stand'
+      return t('nfc.holdNearStand')
     case 'stamping':
-      return 'Adding your stamp…'
+      return t('nfc.adding')
     case 'unsupported':
-      return 'Tap the physical tag to open Flotory'
+      return t('nfc.tapPhysicalTag')
     default:
-      return 'Hold your phone near the NFC stand'
+      return t('nfc.holdPhoneNear')
   }
 }
 
@@ -35,6 +37,7 @@ interface NfcStampPulseHeroProps {
 }
 
 export default function NfcStampPulseHero({ phase, showHint = true }: NfcStampPulseHeroProps) {
+  const { t } = useTranslation()
   const ringsActive = phase === 'checking' || phase === 'scanning' || phase === 'stamping'
   const gentlePulse = phase === 'idle' || phase === 'error'
   const ringOne = usePulseRing(ringsActive, 0)
@@ -189,7 +192,7 @@ export default function NfcStampPulseHero({ phase, showHint = true }: NfcStampPu
             maxWidth: 300,
           })}
         >
-          {phaseHint(phase)}
+          {phaseHint(phase, t)}
         </Text>
       ) : null}
     </View>

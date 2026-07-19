@@ -1,6 +1,7 @@
 import { Link } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Image, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import WalletMilestoneSlots from './WalletMilestoneSlots'
 import PressableCard from '../ui/PressableCard'
@@ -17,6 +18,7 @@ interface WalletHeroCardProps {
 }
 
 export default function WalletHeroCard({ item }: WalletHeroCardProps) {
+  const { t } = useTranslation()
   const progress = walletMilestoneProgress(item.summary, item.stamps)
   const cover = venueCoverUrl(item.venue ?? undefined)
 
@@ -93,7 +95,7 @@ export default function WalletHeroCard({ item }: WalletHeroCardProps) {
                     textAlign: 'right',
                   })}
                 >
-                  {progress.toNext === 1 ? 'stamp to go' : 'stamps to go'}
+                  {t('home.stampToGo', { count: progress.toNext })}
                 </Text>
               </View>
             </View>

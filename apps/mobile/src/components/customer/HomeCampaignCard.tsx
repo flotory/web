@@ -112,7 +112,7 @@ function EndsRow({ label, tone }: { label: string; tone: 'gold' | 'muted' }) {
 
 export default function HomeCampaignCard({ campaign, width, featured, venue }: HomeCampaignCardProps) {
   const { t } = useTranslation()
-  const endsLabel = campaignEndsLabel(campaign.days_left)
+  const endsLabel = campaignEndsLabel(campaign.days_left, t)
   const cover = venueCoverUrl(venue ?? { name: campaign.venue_name })
   const title = campaign.name?.trim() || campaign.headline
   const description = campaign.message

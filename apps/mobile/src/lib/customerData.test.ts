@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import type { TFunction } from 'i18next'
 
 import { buildHomeActivity, findWalletCardForBrand, findWalletCardForLoyaltyVenue } from './customerData'
 import type { RewardWalletItem, WalletCard } from '../types/loyalty'
+
+const t = ((key: string) => key) as unknown as TFunction
 
 const venue = { id: 10, name: 'Demo Cafe', slug: 'demo-cafe' }
 const brandId = 1
@@ -33,6 +36,7 @@ describe('buildHomeActivity', () => {
     const rows = buildHomeActivity(
       [card(1, 4, '2026-06-01T10:00:00Z'), card(2, 2, '2026-06-02T10:00:00Z')],
       [readyItem(7), readyItem(8)],
+      t,
     )
 
     expect(rows).toHaveLength(3)
@@ -40,7 +44,7 @@ describe('buildHomeActivity', () => {
   })
 
   it('includes join rows when there is room after visits', () => {
-    const rows = buildHomeActivity([card(1, 4, '2026-06-01T10:00:00Z')], [])
+    const rows = buildHomeActivity([card(1, 4, '2026-06-01T10:00:00Z')], [], t)
 
     expect(rows.map((row) => row.id)).toEqual(['visit-10', 'join-1'])
   })
@@ -48,7 +52,7 @@ describe('buildHomeActivity', () => {
   it('dedupes rows with the same id', () => {
     const single = card(1, 4, '2026-06-01T10:00:00Z')
 
-    const rows = buildHomeActivity([single, { ...single }], [])
+    const rows = buildHomeActivity([single, { ...single }], [], t)
 
     expect(rows.filter((row) => row.id === 'join-1')).toHaveLength(1)
   })

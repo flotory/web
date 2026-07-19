@@ -53,7 +53,7 @@ export default function CardDetailHeader({
   const coverHeight = media.coverHeight
 
   const slotCount = Math.max(progressTarget, 1)
-  const goalTitle = nextReward?.title ?? 'Your next reward'
+  const goalTitle = nextReward?.title ?? t('home.nextReward')
   const collected = Math.min(stamps, slotCount)
   const toGo = Math.max(progressTarget - collected, 0)
   const redeemedMilestones = milestones.filter((item) => item.claimed)
@@ -117,7 +117,7 @@ export default function CardDetailHeader({
           >
             <Ionicons name="card-outline" size={13} color={colors.accent} />
             <Text style={withAppFont({ fontSize: 11, fontWeight: '800', color: colors.primaryText })}>
-              YOUR LOYALTY CARD
+              {t('card.loyaltyCardBadge')}
             </Text>
           </View>
 
@@ -269,10 +269,10 @@ export default function CardDetailHeader({
               })}
             >
               {hasRedeemedReward && toGo <= 0
-                ? 'Reward used — keep collecting for your next treat'
+                ? t('card.rewardUsed')
                 : toGo > 0
-                  ? `${toGo} ${toGo === 1 ? 'stamp' : 'stamps'} until “${goalTitle}”`
-                  : 'Ready to claim — open Rewards'}
+                  ? t('card.stampsUntil', { count: toGo, reward: goalTitle })
+                  : t('card.readyToClaimOpen')}
             </Text>
           </View>
 

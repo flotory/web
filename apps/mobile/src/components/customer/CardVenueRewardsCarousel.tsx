@@ -1,4 +1,5 @@
 import { ScrollView, useWindowDimensions, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { buildCardVenueRewardSlides, type CardVenueRewardSlide } from '../../lib/cardVenueRewardSlides'
 import { rewardImageUrl } from '../../lib/media'
@@ -64,6 +65,7 @@ export default function CardVenueRewardsCarousel({
   venueId,
   pendingUnlocks = [],
 }: CardVenueRewardsCarouselProps) {
+  const { t } = useTranslation()
   const { width: screenWidth } = useWindowDimensions()
   const slides = buildCardVenueRewardSlides(milestones, stamps, pendingUnlocks)
 
@@ -78,19 +80,15 @@ export default function CardVenueRewardsCarousel({
   const useCarousel = slides.length > 1
 
   const sectionLabel =
-    readyCount > 0
-      ? readyCount === 1
-        ? '1 ready to redeem'
-        : `${readyCount} ready to redeem`
-      : 'Coming up'
+    readyCount > 0 ? t('card.readyToRedeemCount', { count: readyCount }) : t('card.comingUp')
 
   return (
     <View style={{ marginTop: space.sectionY }}>
       <View style={{ paddingHorizontal: space.screenX, marginBottom: 14 }}>
         <HomeSectionHeader
-          title={venue?.name ? `Rewards at ${venue.name}` : 'Venue rewards'}
+          title={venue?.name ? t('card.rewardsAt', { venue: venue.name }) : t('card.venueRewards')}
           label={sectionLabel}
-          trailing={useCarousel ? 'Swipe' : undefined}
+          trailing={useCarousel ? t('home.swipe') : undefined}
         />
       </View>
 

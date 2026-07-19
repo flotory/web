@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { ActionSheetIOS, Alert, Platform, Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { localeOptions, type AppLocale } from '../../i18n'
 import { withAppFont } from '../../lib/typography'
@@ -13,11 +14,12 @@ interface LanguageSelectRowProps {
 }
 
 export default function LanguageSelectRow({ label, subtitle, value, onChange }: LanguageSelectRowProps) {
+  const { t } = useTranslation()
   const selectedLabel = localeOptions.find((option) => option.value === value)?.label ?? 'English'
 
   function openPicker() {
     const optionLabels = localeOptions.map((option) => option.label)
-    const cancelLabel = 'Cancel'
+    const cancelLabel = t('common.cancel')
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(

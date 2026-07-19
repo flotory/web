@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import type { CustomerLocationStatus } from '../../hooks/useCustomerLocation'
 import { withAppFont } from '../../lib/typography'
@@ -21,6 +22,8 @@ export default function DiscoverLocationBanner({
   onRequestLocation,
   onOpenSettings,
 }: DiscoverLocationBannerProps) {
+  const { t } = useTranslation()
+
   if (status === 'loading') {
     return (
       <View
@@ -35,7 +38,7 @@ export default function DiscoverLocationBanner({
         }}
       >
         <Ionicons name="locate-outline" size={18} color={colors.inkMuted} />
-        <Text style={withAppFont({ flex: 1, fontSize: 14, color: colors.inkMuted })}>Finding venues near you…</Text>
+        <Text style={withAppFont({ flex: 1, fontSize: 14, color: colors.inkMuted })}>{t('location.finding')}</Text>
       </View>
     )
   }
@@ -44,7 +47,7 @@ export default function DiscoverLocationBanner({
     if (locatedVenueCount === 0) {
       return (
         <Text style={withAppFont({ fontSize: 13, color: colors.inkMuted, lineHeight: 19, paddingHorizontal: 2 })}>
-          No venues have a map location yet. Distance will show when owners add an address on the web.
+          {t('location.noMapLocation')}
         </Text>
       )
     }
@@ -64,14 +67,14 @@ export default function DiscoverLocationBanner({
         }}
       >
         <View style={{ gap: 4 }}>
-          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>Location is off</Text>
+          <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>{t('location.off')}</Text>
           <Text style={withAppFont({ fontSize: 13, color: colors.inkMuted, lineHeight: 19 })}>
-            Allow location to sort venues by distance and show how far away they are.
+          {t('location.offMessage')}
           </Text>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Open location settings"
+          accessibilityLabel={t('location.openSettingsA11y')}
           onPress={onOpenSettings}
           style={({ pressed }) => ({
             alignSelf: 'flex-start',
@@ -84,7 +87,7 @@ export default function DiscoverLocationBanner({
             opacity: pressed ? 0.9 : 1,
           })}
         >
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>Open settings</Text>
+          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>{t('location.openSettings')}</Text>
         </Pressable>
       </View>
     )
@@ -102,11 +105,11 @@ export default function DiscoverLocationBanner({
         }}
       >
         <Text style={withAppFont({ fontSize: 13, color: colors.inkMuted, lineHeight: 19 })}>
-          Could not read your location. Try again or check that location services are enabled.
+          {t('location.unavailableMessage')}
         </Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Try location again"
+          accessibilityLabel={t('location.tryAgainA11y')}
           onPress={onRequestLocation}
           style={({ pressed }) => ({
             alignSelf: 'flex-start',
@@ -119,7 +122,7 @@ export default function DiscoverLocationBanner({
             opacity: pressed ? 0.9 : 1,
           })}
         >
-          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>Try again</Text>
+          <Text style={withAppFont({ fontSize: 13, fontWeight: '700', color: colors.ink })}>{t('location.tryAgain')}</Text>
         </Pressable>
       </View>
     )
@@ -128,7 +131,7 @@ export default function DiscoverLocationBanner({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Use location to show nearby venues"
+      accessibilityLabel={t('location.enableA11y')}
       onPress={onRequestLocation}
       style={({ pressed }) => ({
         flexDirection: 'row',
@@ -156,9 +159,9 @@ export default function DiscoverLocationBanner({
         <Ionicons name="location-outline" size={20} color={colors.accentActive} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>Show nearby venues</Text>
+        <Text style={withAppFont({ fontSize: 15, fontWeight: '700', color: colors.ink })}>{t('location.showNearby')}</Text>
         <Text style={withAppFont({ marginTop: 2, fontSize: 13, color: colors.inkMuted, lineHeight: 18 })}>
-          We sort nearest-first once you allow location.
+          {t('location.showNearbySubtitle')}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />

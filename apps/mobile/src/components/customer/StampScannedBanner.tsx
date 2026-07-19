@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
 import { Animated, PanResponder, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 
 import { withAppFont } from '../../lib/typography'
 import { colors, motion } from '../../theme'
@@ -23,6 +24,7 @@ export default function StampScannedBanner({
   onDismiss,
   autoHideMs = motion.stampBannerShowMs,
 }: StampScannedBannerProps) {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const opacity = useRef(new Animated.Value(0)).current
   const translateY = useRef(new Animated.Value(-10)).current
@@ -148,7 +150,7 @@ export default function StampScannedBanner({
       {...panResponder.panHandlers}
     >
       {onPress ? (
-        <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="View loyalty card">
+        <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={t('nfc.viewLoyaltyCard')}>
           {content}
         </Pressable>
       ) : (

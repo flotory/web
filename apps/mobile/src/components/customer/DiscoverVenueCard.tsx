@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ComponentProps } from 'react'
 import { Image, Platform, Pressable, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import type { DiscoverVenue } from '../../lib/customerData'
 import { discoverVenuePill } from '../../lib/discoverVenuePill'
@@ -51,6 +52,7 @@ export default function DiscoverVenueCard({
   distanceLabel,
   onPress,
 }: DiscoverVenueCardProps) {
+  const { t } = useTranslation()
   const cover = venueCoverUrl(venue)
   const categoryLabel = formatVenueCategoryLabel(venue.category)
   const hasMultipleLocations = (venue.branches_count ?? 0) > 1
@@ -63,7 +65,7 @@ export default function DiscoverVenueCard({
   const locationLabel = nearestBranchLabel
     ?? (hasMultipleLocations ? `${venue.branches_count} locations` : categoryLabel)
   const joined = (venue.joined_count ?? 0) > 0
-  const status = discoverVenuePill(joined, venue.rewards_count, card)
+  const status = discoverVenuePill(joined, venue.rewards_count, card, t)
   const pillStyle = PILL_STYLES[status.tone]
   const canOpenMaps = Boolean(distanceLabel)
   const coverHeight = media.coverHeight

@@ -1,17 +1,12 @@
 import { Pressable, ScrollView, Text } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 import { colors } from '../../theme'
 import { withAppFont } from '../../lib/typography'
 
 export type DiscoverCategoryFilter = 'all' | 'coffee' | 'food' | 'desserts' | 'more'
 
-const PILLS: { id: DiscoverCategoryFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'coffee', label: 'Coffee' },
-  { id: 'food', label: 'Food' },
-  { id: 'desserts', label: 'Desserts' },
-  { id: 'more', label: 'More' },
-]
+const PILL_IDS: DiscoverCategoryFilter[] = ['all', 'coffee', 'food', 'desserts', 'more']
 
 interface DiscoverCategoryPillsProps {
   value: DiscoverCategoryFilter
@@ -19,18 +14,20 @@ interface DiscoverCategoryPillsProps {
 }
 
 export default function DiscoverCategoryPills({ value, onChange }: DiscoverCategoryPillsProps) {
+  const { t } = useTranslation()
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: 8, paddingRight: 4 }}
     >
-      {PILLS.map((pill) => {
-        const active = value === pill.id
+      {PILL_IDS.map((id) => {
+        const active = value === id
         return (
           <Pressable
-            key={pill.id}
-            onPress={() => onChange(pill.id)}
+            key={id}
+            onPress={() => onChange(id)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             style={({ pressed }) => ({
@@ -50,7 +47,7 @@ export default function DiscoverCategoryPills({ value, onChange }: DiscoverCateg
                 color: active ? colors.primaryText : colors.inkMuted,
               })}
             >
-              {pill.label}
+              {t(`venues.category_${id}`)}
             </Text>
           </Pressable>
         )

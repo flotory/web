@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { WalletCard } from '../types/loyalty'
 
 export type DiscoverVenuePillTone = 'ready' | 'progress' | 'catalog'
@@ -7,9 +9,9 @@ export interface DiscoverVenuePill {
   tone: DiscoverVenuePillTone
 }
 
-function shortRewardTitle(title: string | null | undefined, maxLen = 22): string {
+function shortRewardTitle(title: string | null | undefined, t: TFunction, maxLen = 22): string {
   const trimmed = title?.trim()
-  if (!trimmed) return 'your reward'
+  if (!trimmed) return t('venuePill.yourReward')
   if (trimmed.length <= maxLen) return trimmed
   return `${trimmed.slice(0, maxLen - 1)}…`
 }
@@ -18,12 +20,13 @@ function shortRewardTitle(title: string | null | undefined, maxLen = 22): string
 export function discoverVenuePill(
   joined: boolean,
   rewardsCount: number | undefined,
-  card?: WalletCard | null,
+  card: WalletCard | null | undefined,
+  t: TFunction,
 ): DiscoverVenuePill {
   const pending = card?.summary?.pending_rewards_count ?? 0
   if (joined && pending > 0) {
     return {
-      label: pending === 1 ? '1 reward ready to claim' : `${pending} rewards ready to claim`,
+      label: t('venuePill.readyToClaim', { count: pending }),
       tone: 'ready',
     }
   }
@@ -35,33 +38,33 @@ export function discoverVenuePill(
     const nextTitle = card.summary.next_reward_title
 
     if (toNext <= 0 && nextTitle) {
-      return { label: shortRewardTitle(nextTitle) + ' unlocked', tone: 'ready' }
+      return { label: t('venuePill.unlocked', { reward: shortRewardTitle(nextTitle, t) }), tone: 'ready' }
     }
 
     if (toNext > 0 && nextTitle) {
       return {
-        label: `${toNext} stamp${toNext === 1 ? '' : 's'} to ${shortRewardTitle(nextTitle)}`,
+        label: t('venuePill.stampsTo', { count: toNext, reward: shortRewardTitle(nextTitle, t) }),
         tone: 'progress',
       }
     }
 
     return {
-      label: `${Math.min(stamps, target)} of ${target} stamps`,
+      label: t('venuePill.ofStamps', { current: Math.min(stamps, target), target }),
       tone: 'progress',
     }
   }
 
   if (joined) {
-    return { label: 'Your loyalty card', tone: 'progress' }
+    return { label: t('venuePill.yourLoyaltyCard'), tone: 'progress' }
   }
 
   const count = rewardsCount ?? 0
   if (count > 0) {
     return {
-      label: count === 1 ? '1 reward to earn' : `${count} rewards to earn`,
+      label: t('venuePill.toEarn', { count }),
       tone: 'catalog',
     }
   }
 
-  return { label: 'Loyalty rewards', tone: 'catalog' }
+  return { label: t('venuePill.loyaltyRewards'), tone: 'catalog' }
 }
