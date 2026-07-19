@@ -15,6 +15,17 @@ if [[ ! -f "$EXPORT_OPTIONS" ]]; then
   cp "$MOBILE/scripts/ExportOptions.plist" "$EXPORT_OPTIONS"
 fi
 
+# Non-interactive auth via App Store Connect API key, if configured.
+CREDS="$MOBILE/scripts/asc-credentials.sh"
+[[ -f "$CREDS" ]] && source "$CREDS"
+AUTH_ARGS=()
+if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" && -f "${ASC_KEY_PATH:-}" ]]; then
+  AUTH_ARGS=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+  echo "→ Auth: App Store Connect API key ${ASC_KEY_ID} (non-interactive)"
+else
+  echo "→ Auth: interactive Xcode signing (no API key configured — see asc-credentials.example.sh)"
+fi
+
 echo "→ Prebuild iOS (if ios/ missing or stale, run manually first)"
 if [[ ! -d "$IOS/Flotory.xcworkspace" ]]; then
   (cd "$MOBILE" && npm run prebuild:ios)
@@ -25,13 +36,13 @@ echo "→ Archive Release build"
 xcodebuild -workspace "$IOS/Flotory.xcworkspace" -scheme Flotory \
   -configuration Release -archivePath "$ARCHIVE_PATH" \
   -destination 'generic/platform=iOS' "DEVELOPMENT_TEAM=$TEAM_ID" \
-  -allowProvisioningUpdates archive
+  -allowProvisioningUpdates ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} archive
 
 echo "→ Export and upload to App Store Connect"
 xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" \
   -exportPath "$EXPORT_PATH" \
   -exportOptionsPlist "$IOS/ExportOptions.plist" \
-  -allowProvisioningUpdates
+  -allowProvisioningUpdates ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}
 
 echo "✓ Upload complete. Open App Store Connect → select build → Submit for Review."
 echo "  Guide: docs/APP_STORE_SUBMIT.md"

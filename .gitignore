@@ -22,6 +22,8 @@
 /.env.local
 /deploy/config.sh
 /deploy/config.secrets.sh
+/apps/mobile/scripts/asc-credentials.sh
+*.p8
 /.phpunit.result.cache
 /.phpunit.cache
 /database/e2e.sqlite
